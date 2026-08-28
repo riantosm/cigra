@@ -1,5 +1,43 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+# Development Log
+
+Catatan progres harian pengerjaan project. Urutan **terbaru di paling atas**. Tambahkan entri baru
+dengan template berikut setiap kali menyelesaikan pekerjaan untuk hari itu:
+
+```md
+## DD Bulan YYYY
+
+**Dikerjakan:**
+- ...
+
+**Kendala / catatan:**
+- ...
+```
+
+---
+
+## 28 Agustus 2026
+
+**Dikerjakan:**
+- -
+
+**Kendala / catatan:**
+- -
+
+## 27 Agustus 2026
+
+**Dikerjakan:**
+- Init project dari template React Native, rapikan struktur folder.
+- Bikin login page (masih mock, belum connect ke backend).
+- Bikin bottom tab dengan 5 menu: Home, Riwayat, Emergency, Buku Saku, Profile.
+- Setup Redux buat auth (biar user tetap login walau app ditutup).
+- Setup axios buat nanti connect ke API.
+- Bikin komponen dasar yang bisa dipakai berulang (button, input, card, dll) plus warna & style aplikasi.
+
+**Kendala / catatan:**
+- Belum ada backend/API asli — login dan data lain masih mock/placeholder.
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
