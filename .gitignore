@@ -66,6 +66,13 @@ yarn-error.log
 # testing
 /coverage
 
+# env
+.env
+
+# others
+CLAUDE.md
+.claude
+
 # Yarn
 .yarn/*
 !.yarn/patches

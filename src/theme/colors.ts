@@ -1,0 +1,17 @@
+export const colors = {
+  background: '#F2F5FB',
+  surface: '#FFFFFF',
+  border: '#E4E9F2',
+  text: '#0F172A',
+  textMuted: '#64748B',
+  primary: '#2563EB',
+  primaryForeground: '#FFFFFF',
+  danger: '#DC2626',
+  dangerForeground: '#FFFFFF',
+  gradientEntryStart: '#F59E0B',
+  gradientEntryEnd: '#EF4444',
+  gradientWeaponStart: '#8B5CF6',
+  gradientWeaponEnd: '#4F46E5',
+  gradientHealthStart: '#10B981',
+  gradientHealthEnd: '#0EA5E9',
+} as const;
