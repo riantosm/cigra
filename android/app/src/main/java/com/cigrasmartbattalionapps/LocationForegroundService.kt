@@ -1,0 +1,207 @@
+package com.cigrasmartbattalionapps
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Build
+import android.os.HandlerThread
+import android.os.IBinder
+import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
+/**
+ * Foreground service yang menjaga notifikasi persisten tetap tampil dan mengirim posisi GPS
+ * terkini ke POST /locations tiap UPLOAD_INTERVAL_SECONDS, terus berjalan walau Activity/JS
+ * ditutup. Auth token dibaca dari TrackingPrefs (bukan AsyncStorage) karena AsyncStorage butuh
+ * bridge RN yang belum tentu hidup saat service ini jalan sendirian di background.
+ */
+class LocationForegroundService : Service() {
+
+  companion object {
+    private const val TAG = "LocationTracking"
+    private const val NOTIFICATION_ID = 4821
+    private const val CHANNEL_ID = "location_tracking_channel"
+    private const val UPLOAD_INTERVAL_SECONDS = 45L
+    private const val MIN_UPDATE_INTERVAL_MS = 15_000L
+    private const val MIN_UPDATE_DISTANCE_M = 15f
+
+    fun start(context: Context) {
+      val intent = Intent(context, LocationForegroundService::class.java)
+      ContextCompat.startForegroundService(context, intent)
+    }
+
+    fun stop(context: Context) {
+      context.stopService(Intent(context, LocationForegroundService::class.java))
+    }
+  }
+
+  private var locationManager: LocationManager? = null
+  private var handlerThread: HandlerThread? = null
+  private var executor: ScheduledExecutorService? = null
+
+  @Volatile private var lastLocation: Location? = null
+
+  private val locationListener = LocationListener { location -> lastLocation = location }
+
+  override fun onCreate() {
+    super.onCreate()
+    locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    startForegroundNotification()
+    startLocationUpdates()
+    startUploadLoop()
+  }
+
+  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+
+  override fun onBind(intent: Intent?): IBinder? = null
+
+  override fun onDestroy() {
+    executor?.shutdownNow()
+    val manager = locationManager
+    if (manager != null &&
+      ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+      PackageManager.PERMISSION_GRANTED
+    ) {
+      manager.removeUpdates(locationListener)
+    }
+    handlerThread?.quitSafely()
+    super.onDestroy()
+  }
+
+  private fun startForegroundNotification() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val channel = NotificationChannel(
+        CHANNEL_ID,
+        "Pelacakan Lokasi",
+        NotificationManager.IMPORTANCE_LOW,
+      ).apply {
+        description = "Notifikasi wajib selama aplikasi melacak lokasi Anda"
+        setShowBadge(false)
+      }
+      val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+      manager.createNotificationChannel(channel)
+    }
+
+    val openAppIntent = packageManager.getLaunchIntentForPackage(packageName)
+    val contentIntent = PendingIntent.getActivity(
+      this,
+      0,
+      openAppIntent,
+      PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+      .setContentTitle("Smart Battalion aktif")
+      .setContentText("Lokasi Anda sedang dibagikan ke komando")
+      .setSmallIcon(R.mipmap.ic_launcher)
+      .setOngoing(true)
+      .setContentIntent(contentIntent)
+      .setPriority(NotificationCompat.PRIORITY_LOW)
+      .build()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+    } else {
+      startForeground(NOTIFICATION_ID, notification)
+    }
+  }
+
+  private fun startLocationUpdates() {
+    val manager = locationManager ?: return
+    if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+      PackageManager.PERMISSION_GRANTED
+    ) {
+      Log.w(TAG, "ACCESS_FINE_LOCATION belum diberikan, menghentikan service")
+      stopSelf()
+      return
+    }
+
+    handlerThread = HandlerThread("LocationTrackingThread").apply { start() }
+    val looper = handlerThread!!.looper
+
+    lastLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+      ?: manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+    manager.getProviders(true).forEach { provider ->
+      try {
+        manager.requestLocationUpdates(provider, MIN_UPDATE_INTERVAL_MS, MIN_UPDATE_DISTANCE_M, locationListener, looper)
+      } catch (error: SecurityException) {
+        Log.w(TAG, "Gagal mendaftarkan provider $provider", error)
+      }
+    }
+  }
+
+  private fun startUploadLoop() {
+    executor = Executors.newSingleThreadScheduledExecutor()
+    executor?.scheduleWithFixedDelay(
+      { uploadCurrentLocation() },
+      0,
+      UPLOAD_INTERVAL_SECONDS,
+      TimeUnit.SECONDS,
+    )
+  }
+
+  private fun uploadCurrentLocation() {
+    val location = lastLocation ?: return
+    val token = TrackingPrefs.getAuthToken(this) ?: return
+
+    try {
+      val body = JSONObject().apply {
+        put("latitude", location.latitude)
+        put("longitude", location.longitude)
+        if (location.hasAccuracy()) put("accuracy", location.accuracy.toDouble())
+        if (location.hasAltitude()) put("altitude", location.altitude)
+        if (location.hasBearing()) put("heading", location.bearing.toDouble())
+        if (location.hasSpeed()) put("speed", location.speed.toDouble())
+        put("captured_at", isoFormat(location.time))
+        put("source", "mobile")
+      }
+
+      val url = URL(BuildConfig.API_BASE_URL + "/locations")
+      val connection = url.openConnection() as HttpURLConnection
+      connection.requestMethod = "POST"
+      connection.setRequestProperty("Content-Type", "application/json")
+      connection.setRequestProperty("Accept", "application/json")
+      connection.setRequestProperty("Authorization", "Bearer $token")
+      connection.doOutput = true
+      connection.connectTimeout = 15_000
+      connection.readTimeout = 15_000
+      connection.outputStream.use { it.write(body.toString().toByteArray()) }
+
+      val responseCode = connection.responseCode
+      if (responseCode !in 200..299) {
+        val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() }
+        Log.w(TAG, "Upload lokasi gagal, kode: $responseCode, body: $errorBody")
+      }
+      connection.disconnect()
+    } catch (error: Exception) {
+      Log.w(TAG, "Upload lokasi error", error)
+    }
+  }
+
+  private fun isoFormat(timeMillis: Long): String {
+    val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+    format.timeZone = TimeZone.getTimeZone("UTC")
+    return format.format(Date(timeMillis))
+  }
+}

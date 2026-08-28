@@ -5,6 +5,7 @@ import axios from 'axios';
 import { getMeApi, loginApi, logoutApi } from '@/services/api/auth.service';
 import { setAuthToken } from '@/services/api/axiosInstance';
 import type { AuthState, AuthUser, LoginPayload } from '@/types';
+import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '@/utils/location';
 
 const initialState: AuthState = {
   isLogin: false,
@@ -46,9 +47,20 @@ export const login = createAsyncThunk<LoginThunkResult, LoginPayload, { rejectVa
       // /auth/me gagal diambil — tetap lanjut pakai data user dari response login.
     }
 
+    try {
+      await startBackgroundLocationTracking();
+    } catch {
+      // Izin lokasi latar belakang gagal/ditolak — tidak menggagalkan login, tracking cukup
+      // dicoba lagi nanti (mis. dari layar Profile) daripada memblokir user masuk aplikasi.
+    }
+
     return { user, token: result.access_token };
   },
 );
+
+export const refreshUser = createAsyncThunk('auth/refreshUser', async () => {
+  return await getMeApi();
+});
 
 export const logout = createAsyncThunk('auth/logout', async () => {
   try {
@@ -57,6 +69,7 @@ export const logout = createAsyncThunk('auth/logout', async () => {
     // Token lokal tetap dihapus meski API logout gagal, supaya user selalu bisa keluar.
   } finally {
     await setAuthToken(null);
+    await stopBackgroundLocationTracking();
   }
 });
 
@@ -88,6 +101,9 @@ const authSlice = createSlice({
         state.isLogin = false;
         state.user = null;
         state.token = null;
+      })
+      .addCase(refreshUser.fulfilled, (state, action: PayloadAction<AuthUser>) => {
+        state.user = action.payload;
       });
   },
 });

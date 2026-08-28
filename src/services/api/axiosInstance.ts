@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 import axios from 'axios';
 
+import { locationTracking } from '@/native/locationTracking';
 import { AUTH_TOKEN_STORAGE_KEY } from '@/utils/constants';
 
 export async function getAuthToken(): Promise<string | null> {
@@ -14,6 +15,9 @@ export async function setAuthToken(token: string | null): Promise<void> {
   } else {
     await AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
   }
+  // Foreground service lokasi berjalan native dan tetap hidup walau JS/app di-kill,
+  // jadi dia butuh salinan token sendiri di luar AsyncStorage untuk bisa autentikasi upload.
+  locationTracking.syncAuthToken(token);
 }
 
 type UnauthorizedHandler = () => void;

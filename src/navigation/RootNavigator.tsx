@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import MainTabNavigator from '@/navigation/MainTabNavigator';
@@ -5,11 +6,30 @@ import { ROUTES } from '@/navigation/paths';
 import RequireAuth from '@/navigation/RequireAuth';
 import RequireGuest from '@/navigation/RequireGuest';
 import type { RootStackParamList } from '@/navigation/types';
+import { locationTracking } from '@/native/locationTracking';
 import LoginScreen from '@/screens/Login';
+import { getAuthToken } from '@/services/api/axiosInstance';
+import { useAppSelector } from '@/store/hooks';
+import { startBackgroundLocationTracking } from '@/utils/location';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
+  const isLogin = useAppSelector(state => state.auth.isLogin);
+
+  useEffect(() => {
+    // Sesi yang sudah login dipulihkan dari redux-persist (bukan lewat thunk `login`) tidak pernah
+    // memanggil setAuthToken(), jadi TrackingPrefs di sisi native belum punya salinan token —
+    // sinkronkan dulu di sini setiap kali app dibuka dengan sesi aktif, sebelum menyalakan tracking.
+    if (isLogin) {
+      (async () => {
+        const token = await getAuthToken();
+        locationTracking.syncAuthToken(token);
+        await startBackgroundLocationTracking();
+      })().catch(() => {});
+    }
+  }, [isLogin]);
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name={ROUTES.login}>

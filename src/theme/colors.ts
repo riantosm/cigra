@@ -8,10 +8,13 @@ export const colors = {
   primaryForeground: '#FFFFFF',
   danger: '#DC2626',
   dangerForeground: '#FFFFFF',
+  success: '#16A34A',
+  warning: '#F59E0B',
   gradientEntryStart: '#F59E0B',
   gradientEntryEnd: '#EF4444',
   gradientWeaponStart: '#8B5CF6',
   gradientWeaponEnd: '#4F46E5',
   gradientHealthStart: '#10B981',
   gradientHealthEnd: '#0EA5E9',
+  overlay: 'rgba(15, 23, 42, 0.45)',
 } as const;

@@ -1,13 +1,53 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 
+import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
 import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
+import {
+  LocationUnavailableError,
+  getCurrentCoordinates,
+  openAppSettings,
+  openLocationSettings,
+} from '@/utils/location';
+import type { LocationErrorReason } from '@/utils/location';
 
 export default function HomeScreen() {
   const user = useAppSelector(state => state.auth.user);
+  const [locationIssue, setLocationIssue] = useState<{ reason: LocationErrorReason; message: string } | null>(
+    null,
+  );
+
+  const ensureLocationReady = useCallback(async () => {
+    try {
+      await getCurrentCoordinates();
+      setLocationIssue(null);
+    } catch (error) {
+      if (error instanceof LocationUnavailableError) {
+        setLocationIssue({ reason: error.reason, message: error.message });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    ensureLocationReady();
+  }, [ensureLocationReady]);
+
+  useEffect(() => {
+    // Pengguna biasanya mengaktifkan izin/GPS lewat Settings lalu kembali ke app —
+    // cek ulang saat app kembali aktif supaya popup langsung tertutup tanpa perlu aksi lain.
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        ensureLocationReady();
+      }
+    });
+    return () => subscription.remove();
+  }, [ensureLocationReady]);
+
+  const isGpsIssue = locationIssue?.reason === 'gps-disabled';
 
   return (
     <MainLayout title="Home">
@@ -21,6 +61,20 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Selamat datang di Smart Battalion</Text>
         </MotiView>
       </View>
+
+      <StatusModal
+        visible={locationIssue !== null}
+        variant="error"
+        title={isGpsIssue ? 'Aktifkan Lokasi' : 'Izin Lokasi Diperlukan'}
+        message={locationIssue?.message ?? ''}
+        onRequestClose={() => {}}
+        primaryAction={
+          isGpsIssue
+            ? { label: 'Buka Pengaturan Lokasi', onPress: openLocationSettings }
+            : { label: 'Izinkan Lagi', onPress: ensureLocationReady }
+        }
+        secondaryAction={isGpsIssue ? undefined : { label: 'Buka Pengaturan', onPress: openAppSettings }}
+      />
     </MainLayout>
   );
 }

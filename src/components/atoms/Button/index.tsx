@@ -66,16 +66,12 @@ const Button = forwardRef<ComponentRef<typeof Pressable>, ButtonProps>(function 
         setPressed(false);
         onPressOut?.(event);
       }}
+      style={style}
       {...rest}>
       <MotiView
         animate={{ scale: pressed ? 0.96 : 1 }}
         transition={pressTransition}
-        style={[
-          styles.container,
-          containerVariantStyle[variant],
-          isDisabled && styles.disabled,
-          style,
-        ]}>
+        style={[styles.container, containerVariantStyle[variant], isDisabled && styles.disabled]}>
         {loading ? (
           <ActivityIndicator color={indicatorColorByVariant[variant]} />
         ) : (
