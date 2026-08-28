@@ -20,7 +20,14 @@ dengan template berikut setiap kali menyelesaikan pekerjaan untuk hari itu:
 ## 28 Agustus 2026
 
 **Dikerjakan:**
-- -
+- Integrasi dengan field `roles` dari response API `/auth/login` & `/auth/me` buat nentuin topic
+- Setup push notification pakai Firebase Cloud Messaging (FCM) + Notifee — broadcast alert panic
+  button ke topic `all_users` dan topic per-role (komandan/anggota), lengkap dengan channel
+  darurat (sirene custom) dan dedupe biar device pengirim tidak dapat notif dobel.
+  per-role yang di-subscribe tiap device.
+- Tambah logo app di NavBar & halaman Login, perbarui app icon Android & iOS.
+- Tampilkan waktu "terakhir diperbarui" untuk lokasi user di halaman Profile.
+- Generate APK untuk keperluan testing — versi `0.1` (versionCode 1).
 
 **Kendala / catatan:**
 - -
