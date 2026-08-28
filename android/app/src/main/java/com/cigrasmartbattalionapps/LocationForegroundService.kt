@@ -113,7 +113,7 @@ class LocationForegroundService : Service() {
     val notification = NotificationCompat.Builder(this, CHANNEL_ID)
       .setContentTitle("Smart Battalion aktif")
       .setContentText("Lokasi Anda sedang dibagikan ke komando")
-      .setSmallIcon(R.mipmap.ic_launcher)
+      .setSmallIcon(R.drawable.ic_notification)
       .setOngoing(true)
       .setContentIntent(contentIntent)
       .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -173,7 +173,6 @@ class LocationForegroundService : Service() {
         if (location.hasAltitude()) put("altitude", location.altitude)
         if (location.hasBearing()) put("heading", location.bearing.toDouble())
         if (location.hasSpeed()) put("speed", location.speed.toDouble())
-        put("captured_at", isoFormat(location.time))
         put("source", "mobile")
       }
 

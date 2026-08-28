@@ -28,6 +28,15 @@ const statusColor: Record<LocationStatus, string> = {
   offline: colors.danger,
 };
 
+function formatUpdatedAt(capturedAt: string | undefined): string | null {
+  if (!capturedAt) return null;
+  const date = new Date(capturedAt);
+  if (Number.isNaN(date.getTime())) return null;
+  const datePart = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const timePart = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  return `${datePart}, ${timePart}`;
+}
+
 function extractErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
     const message = error.response?.data?.message;
@@ -209,6 +218,11 @@ export default function ProfileScreen() {
                 <Text style={styles.coordinates}>
                   {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
                 </Text>
+                {formatUpdatedAt(coords.captured_at) ? (
+                  <Text style={styles.locationUpdatedAt}>
+                    Terakhir diperbarui: {formatUpdatedAt(coords.captured_at)}
+                  </Text>
+                ) : null}
                 <Text style={styles.locationMuted}>Ketuk untuk buka di Google Maps</Text>
               </Pressable>
             ) : (
@@ -325,6 +339,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
+  },
+  locationUpdatedAt: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   locationMuted: {
     fontSize: 13,

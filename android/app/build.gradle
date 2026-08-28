@@ -124,3 +124,10 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// google-services.json belum ada sampai project Firebase dibuat di console dan file-nya
+// diunduh ke android/app/ — plugin ini sengaja hanya di-apply kalau file itu sudah ada,
+// supaya build tetap jalan normal (tanpa push notification) sebelum setup Firebase selesai.
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
+}

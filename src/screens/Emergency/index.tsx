@@ -12,6 +12,7 @@ import { sendPanicButtonApi } from '@/services/api/panicButton.service';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
+import { displayLocalEmergencyAlert } from '@/utils/pushNotifications';
 
 function extractErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
@@ -50,7 +51,8 @@ export default function EmergencyScreen() {
     setIsSending(true);
     try {
       const { latitude, longitude } = await getCurrentCoordinates();
-      await sendPanicButtonApi({ latitude, longitude });
+      const result = await sendPanicButtonApi({ latitude, longitude });
+      await displayLocalEmergencyAlert(String(result.id));
       setModal({
         visible: true,
         variant: 'success',

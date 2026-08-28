@@ -8,6 +8,7 @@ export interface AuthUser {
   is_active?: number;
   personnel?: unknown;
   family?: unknown;
+  roles?: string[];
 }
 
 export interface AuthState {

@@ -6,6 +6,7 @@ import { getMeApi, loginApi, logoutApi } from '@/services/api/auth.service';
 import { setAuthToken } from '@/services/api/axiosInstance';
 import type { AuthState, AuthUser, LoginPayload } from '@/types';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '@/utils/location';
+import { teardownPushNotifications } from '@/utils/pushNotifications';
 
 const initialState: AuthState = {
   isLogin: false,
@@ -70,6 +71,7 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   } finally {
     await setAuthToken(null);
     await stopBackgroundLocationTracking();
+    await teardownPushNotifications();
   }
 });
 

@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { logo } from '@/assets';
 import Button from '@/components/atoms/Button';
 import TextField from '@/components/atoms/TextField';
 import AuthLayout from '@/components/templates/AuthLayout';
@@ -29,6 +30,10 @@ export default function LoginScreen(_props: LoginScreenProps) {
 
   return (
     <AuthLayout>
+      <View style={styles.logoBadge}>
+        <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
+      </View>
+
       <View style={styles.header}>
         <Text style={styles.title}>Selamat Datang</Text>
         <Text style={styles.subtitle}>Masuk untuk melanjutkan ke Smart Battalion</Text>
@@ -73,6 +78,23 @@ export default function LoginScreen(_props: LoginScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  logoBadge: {
+    alignSelf: 'center',
+    width: 96,
+    height: 96,
+    borderRadius: 28,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    marginBottom: 24,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
   header: {
     marginBottom: 40,
     gap: 8,

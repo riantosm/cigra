@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
+import { logo } from '@/assets';
 import { colors } from '@/theme/colors';
 
 export interface NavBarProps {
@@ -13,7 +14,12 @@ export default function NavBar(props: NavBarProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+      <View style={styles.left}>
+        <View style={styles.logoBadge}>
+          <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
+        </View>
+        <Text style={styles.title}>{title}</Text>
+      </View>
       {right}
     </View>
   );
@@ -21,7 +27,7 @@ export default function NavBar(props: NavBarProps) {
 
 const styles = StyleSheet.create({
   container: {
-    height: 56,
+    height: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -29,6 +35,21 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
     paddingHorizontal: 20,
+  },
+  left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logoBadge: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 18,

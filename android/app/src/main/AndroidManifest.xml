@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -45,5 +45,17 @@
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
       </receiver>
+
+      <!-- Channel dipakai FCM saat menampilkan notifikasi otomatis ketika app di background/killed.
+           tools:replace dibutuhkan karena react-native-firebase/messaging sudah mendeklarasikan
+           meta-data yang sama (dengan value kosong) di manifest library-nya sendiri. -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_channel_id"
+        android:value="smart_battalion_alerts_v3"
+        tools:replace="android:value" />
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_icon"
+        android:resource="@drawable/ic_notification"
+        tools:replace="android:resource" />
     </application>
 </manifest>

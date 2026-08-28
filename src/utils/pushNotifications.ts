@@ -1,0 +1,202 @@
+import { Platform } from 'react-native';
+import Config from 'react-native-config';
+import { getMessaging, getToken, onMessage, subscribeToTopic, unsubscribeFromTopic } from '@react-native-firebase/messaging';
+import type { RemoteMessage } from '@react-native-firebase/messaging';
+import notifee, { AndroidImportance, AndroidVisibility } from '@notifee/react-native';
+
+// Channel Android khusus notifikasi darurat — importance HIGH + bypassDnd supaya tetap
+// berbunyi walau HP dalam mode Do Not Disturb. `sound: 'siren'` merujuk ke
+// android/app/src/main/res/raw/siren.mp3 (salinan dari src/assets/sound/Siren.mp3).
+//
+// PENTING: setelan channel Android (sound, importance, bypassDnd) terkunci begitu channel
+// dengan ID tertentu pernah dibuat di suatu device — panggilan createChannel() berikutnya
+// dengan ID yang sama diam-diam diabaikan meski isinya beda. Kalau perlu ubah setelan channel
+// lagi di masa depan, ganti ID ini (mis. jadi _v3) supaya Android membuat channel baru.
+const ALERT_CHANNEL_ID = 'smart_battalion_alerts_v3';
+const ALERT_SOUND = 'siren';
+// 5x getar panjang (800ms) berturut-turut, dipisah jeda 300ms. Semua nilai harus > 0.
+const ALERT_VIBRATION_PATTERN = [100, 800, 300, 800, 300, 800, 300, 800, 300, 800];
+const BROADCAST_TOPIC = Config.FCM_TOPIC || 'all_users';
+
+// Kunci data payload yang HARUS disertakan backend saat broadcast FCM untuk sebuah panic
+// button ke topic di atas — dipakai untuk dedupe supaya device yang memicunya sendiri tidak
+// dapat notifikasi dobel (satu dari displayLocalEmergencyAlert, satu lagi dari broadcast FCM
+// yang otomatis juga sampai ke device ini karena ikut subscribe topic yang sama).
+const PANIC_EVENT_DATA_KEY = 'panic_button_id';
+const DEDUPE_WINDOW_MS = 60_000;
+
+const recentlyDisplayedEventIds = new Map<string, number>();
+
+function pruneExpiredEventIds(): void {
+  const now = Date.now();
+  for (const [id, seenAt] of recentlyDisplayedEventIds) {
+    if (now - seenAt > DEDUPE_WINDOW_MS) recentlyDisplayedEventIds.delete(id);
+  }
+}
+
+function rememberLocalEvent(eventId: string): void {
+  pruneExpiredEventIds();
+  recentlyDisplayedEventIds.set(eventId, Date.now());
+}
+
+function wasRecentlyDisplayedLocally(eventId: string): boolean {
+  pruneExpiredEventIds();
+  return recentlyDisplayedEventIds.has(eventId);
+}
+
+async function ensureAlertChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  await notifee.createChannel({
+    id: ALERT_CHANNEL_ID,
+    name: 'Peringatan Darurat',
+    importance: AndroidImportance.HIGH,
+    visibility: AndroidVisibility.PUBLIC,
+    sound: ALERT_SOUND,
+    vibration: true,
+    vibrationPattern: ALERT_VIBRATION_PATTERN,
+    bypassDnd: true,
+  });
+}
+
+// Android 13+ butuh izin runtime terpisah untuk menampilkan notifikasi sama sekali.
+async function ensureNotificationPermission(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  await notifee.requestPermission();
+}
+
+async function showAlertNotification(title?: string, body?: string): Promise<void> {
+  await notifee.displayNotification({
+    title,
+    body,
+    android: {
+      channelId: ALERT_CHANNEL_ID,
+      importance: AndroidImportance.HIGH,
+      sound: ALERT_SOUND,
+      // Diset ulang di level notifikasi (bukan cuma channel) — beberapa ROM (mis. Samsung One
+      // UI) kadang tidak konsisten mewarisi vibrationPattern dari channel saja.
+      vibrationPattern: ALERT_VIBRATION_PATTERN,
+      pressAction: { id: 'default' },
+    },
+  });
+}
+
+// Dipakai baik oleh onMessage (foreground) maupun setBackgroundMessageHandler (index.js) —
+// FCM TIDAK otomatis menampilkan notifikasi saat app di foreground di Android, jadi ini yang
+// menampilkannya secara manual lewat channel custom di atas.
+//
+// Dedupe: kalau backend menyertakan `panic_button_id` di data payload dan device ini baru saja
+// menampilkan alert local untuk ID yang sama (dari displayLocalEmergencyAlert di bawah), pesan
+// FCM ini di-skip — mencegah device yang memicu panic button dapat notifikasi dobel (local +
+// broadcast FCM yang ikut sampai ke device sendiri karena sama-sama subscribe topic ini).
+export async function displayRemoteMessage(remoteMessage: RemoteMessage): Promise<void> {
+  const { notification, data } = remoteMessage;
+  if (!notification) return;
+
+  const eventId = typeof data?.[PANIC_EVENT_DATA_KEY] === 'string' ? data[PANIC_EVENT_DATA_KEY] : null;
+  if (eventId && wasRecentlyDisplayedLocally(eventId)) return;
+
+  await showAlertNotification(notification.title, notification.body);
+}
+
+// Dipanggil dari layar Emergency setelah sinyal darurat berhasil dikirim, supaya orang yang
+// menekan tombol juga langsung dengar sirene di device-nya sendiri — terpisah dari broadcast ke
+// pengguna lain, yang baru benar-benar terkirim setelah backend mengirim FCM ke topic ini
+// (lihat catatan di .env.example soal kirim lewat Firebase Admin SDK/Console).
+//
+// `eventId` = id record panic-button dari response POST /panic-buttons, dipakai untuk dedupe
+// di displayRemoteMessage di atas — backend HARUS menyertakan id yang sama persis sebagai
+// data.panic_button_id saat broadcast FCM untuk kejadian ini.
+export async function displayLocalEmergencyAlert(eventId: string): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  try {
+    await ensureNotificationPermission();
+    await ensureAlertChannel();
+    rememberLocalEvent(eventId);
+    await showAlertNotification('Sinyal Darurat', 'Sinyal darurat telah dikirim ke komando.');
+  } catch {
+    // Firebase/Notifee belum siap — jangan sampai gagal menampilkan alert menghentikan alur panic button.
+  }
+}
+
+let isFirebaseReady = false;
+let unsubscribeOnMessage: (() => void) | null = null;
+let subscribedTopics: string[] = [];
+
+// Selain BROADCAST_TOPIC (semua device), device juga subscribe ke satu topic per role yang
+// dimiliki user (mis. "komandan", "anggota") — jadi backend bisa kirim FCM cuma ke topic role
+// tertentu dan hanya device dengan role itu yang menerima, tanpa perlu simpan token per-device.
+function resolveTopics(roles: string[]): string[] {
+  const roleTopics = roles.map(role => role.trim()).filter(Boolean);
+  return [BROADCAST_TOPIC, ...new Set(roleTopics)];
+}
+
+// Setup Firebase/Notifee sekali saja (izin, channel, token, listener foreground) — idempoten,
+// terpisah dari sinkronisasi topic di bawah supaya perubahan role tidak perlu setup ulang.
+async function ensureFirebaseReady(): Promise<void> {
+  if (isFirebaseReady) return;
+
+  await ensureNotificationPermission();
+  await ensureAlertChannel();
+
+  const messaging = getMessaging();
+  await getToken(messaging);
+
+  unsubscribeOnMessage = onMessage(messaging, async remoteMessage => {
+    await displayRemoteMessage(remoteMessage);
+  });
+
+  isFirebaseReady = true;
+}
+
+// Menyamakan topic yang di-subscribe dengan `roles` saat ini: subscribe topic yang baru muncul,
+// unsubscribe topic yang sudah tidak ada di roles (mis. role dicabut admin tanpa user logout).
+// Aman dipanggil berkali-kali dengan roles yang sama — hanya melakukan diff, tidak re-subscribe
+// topic yang memang tidak berubah.
+async function syncSubscribedTopics(roles: string[]): Promise<void> {
+  const messaging = getMessaging();
+  const desiredTopics = resolveTopics(roles);
+
+  const toSubscribe = desiredTopics.filter(topic => !subscribedTopics.includes(topic));
+  const toUnsubscribe = subscribedTopics.filter(topic => !desiredTopics.includes(topic));
+
+  await Promise.all([
+    ...toSubscribe.map(topic => subscribeToTopic(messaging, topic)),
+    ...toUnsubscribe.map(topic => unsubscribeFromTopic(messaging, topic)),
+  ]);
+
+  subscribedTopics = desiredTopics;
+}
+
+// Dipanggil setiap kali ada sesi login aktif ATAU roles user berubah (termasuk sesi yang
+// dipulihkan dari redux-persist, dan saat refreshUser mengembalikan roles baru — lihat
+// RootNavigator, effect-nya depend ke `roles` supaya perubahan role langsung men-trigger ini).
+// `roles` = AuthUser.roles (mis. ['komandan'] atau ['anggota']). Best-effort: kalau
+// google-services.json belum ada, Firebase belum terkonfigurasi dan semua panggilan di bawah
+// akan gagal — dibiarkan gagal senyap supaya tidak mengganggu fitur lain.
+export async function initializePushNotifications(roles: string[] = []): Promise<void> {
+  if (Platform.OS !== 'android') return;
+
+  try {
+    await ensureFirebaseReady();
+    await syncSubscribedTopics(roles);
+  } catch {
+    // Firebase belum dikonfigurasi (belum ada google-services.json) — abaikan, coba lagi nanti.
+  }
+}
+
+export async function teardownPushNotifications(): Promise<void> {
+  if (Platform.OS !== 'android' || !isFirebaseReady) return;
+
+  unsubscribeOnMessage?.();
+  unsubscribeOnMessage = null;
+  isFirebaseReady = false;
+
+  try {
+    const messaging = getMessaging();
+    await Promise.all(subscribedTopics.map(topic => unsubscribeFromTopic(messaging, topic)));
+  } catch {
+    // abaikan — token/izin mungkin sudah tidak valid saat logout.
+  } finally {
+    subscribedTopics = [];
+  }
+}
