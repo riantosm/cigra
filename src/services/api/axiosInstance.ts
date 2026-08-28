@@ -28,6 +28,11 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler): void {
 export const axiosInstance = axios.create({
   baseURL: Config.API_BASE_URL,
   timeout: 15000,
+  // Tanpa header ini backend Laravel me-redirect (302 ke halaman login HTML) alih-alih
+  // membalas 401 JSON untuk request yang butuh auth (mis. /auth/me, /auth/logout).
+  headers: {
+    Accept: 'application/json',
+  },
 });
 
 axiosInstance.interceptors.request.use(async config => {
@@ -41,7 +46,10 @@ axiosInstance.interceptors.request.use(async config => {
 axiosInstance.interceptors.response.use(
   response => response,
   async error => {
-    if (error.response?.status === 401) {
+    // Request logout yang gagal dengan 401 tidak boleh memicu unauthorizedHandler lagi,
+    // karena itu akan memanggil logout() -> /auth/logout -> 401 -> logout() tanpa henti.
+    const isLogoutRequest = typeof error.config?.url === 'string' && error.config.url.includes('/auth/logout');
+    if (error.response?.status === 401 && !isLogoutRequest) {
       await setAuthToken(null);
       unauthorizedHandler?.();
     }

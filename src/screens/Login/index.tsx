@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import Button from '@/components/atoms/Button';
 import TextField from '@/components/atoms/TextField';
@@ -16,12 +17,14 @@ export default function LoginScreen(_props: LoginScreenProps) {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(state => state.auth.isLoading);
   const error = useAppSelector(state => state.auth.error);
-  const [username, setUsername] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   function handleSubmit() {
+    if (!identifier || !password || isLoading) return;
     dispatch(clearAuthError());
-    dispatch(login({ username, password }));
+    dispatch(login({ login: identifier, password }));
   }
 
   return (
@@ -33,18 +36,24 @@ export default function LoginScreen(_props: LoginScreenProps) {
 
       <View style={styles.form}>
         <TextField
-          label="Username"
-          placeholder="admin"
+          label="Email, Username, atau NRP"
+          placeholder="Masukkan email, username, atau NRP"
           autoCapitalize="none"
           autoCorrect={false}
-          value={username}
-          onChangeText={setUsername}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          value={identifier}
+          onChangeText={setIdentifier}
         />
         <TextField
+          ref={passwordRef}
           label="Password"
-          placeholder="admin"
+          placeholder="Masukkan password"
           secureTextEntry
           autoCapitalize="none"
+          returnKeyType="done"
+          onSubmitEditing={handleSubmit}
           value={password}
           onChangeText={setPassword}
         />
@@ -55,7 +64,7 @@ export default function LoginScreen(_props: LoginScreenProps) {
           label="Masuk"
           onPress={handleSubmit}
           loading={isLoading}
-          disabled={!username || !password}
+          disabled={!identifier || !password}
           style={styles.submit}
         />
       </View>

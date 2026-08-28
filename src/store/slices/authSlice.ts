@@ -1,9 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
+import axios from 'axios';
 
+import { getMeApi, loginApi, logoutApi } from '@/services/api/auth.service';
 import { setAuthToken } from '@/services/api/axiosInstance';
-import type { AuthState, LoginPayload, LoginResponse } from '@/types';
-import { MOCK_CREDENTIALS } from '@/utils/constants';
+import type { AuthState, AuthUser, LoginPayload } from '@/types';
 
 const initialState: AuthState = {
   isLogin: false,
@@ -13,31 +14,50 @@ const initialState: AuthState = {
   error: null,
 };
 
-// Backend belum tersedia, jadi login di-mock lokal (admin/admin).
-// Begitu API auth siap, ganti body thunk ini dengan `await loginApi(payload)` dari auth.service.ts.
-export const login = createAsyncThunk<LoginResponse, LoginPayload, { rejectValue: string }>(
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message;
+    if (typeof message === 'string') return message;
+  }
+  return fallback;
+}
+
+interface LoginThunkResult {
+  user: AuthUser;
+  token: string;
+}
+
+export const login = createAsyncThunk<LoginThunkResult, LoginPayload, { rejectValue: string }>(
   'auth/login',
   async (payload, { rejectWithValue }) => {
-    await new Promise<void>(resolve => setTimeout(() => resolve(), 600));
-
-    if (
-      payload.username !== MOCK_CREDENTIALS.username ||
-      payload.password !== MOCK_CREDENTIALS.password
-    ) {
-      return rejectWithValue('Username atau password salah');
+    let result;
+    try {
+      result = await loginApi(payload);
+    } catch (error) {
+      return rejectWithValue(extractErrorMessage(error, 'Login gagal'));
     }
 
-    const response: LoginResponse = {
-      user: { id: '1', name: 'Admin', username: payload.username },
-      token: 'mock-token',
-    };
-    await setAuthToken(response.token);
-    return response;
+    await setAuthToken(result.access_token);
+
+    let user: AuthUser = result.user;
+    try {
+      user = await getMeApi();
+    } catch {
+      // /auth/me gagal diambil — tetap lanjut pakai data user dari response login.
+    }
+
+    return { user, token: result.access_token };
   },
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-  await setAuthToken(null);
+  try {
+    await logoutApi();
+  } catch {
+    // Token lokal tetap dihapus meski API logout gagal, supaya user selalu bisa keluar.
+  } finally {
+    await setAuthToken(null);
+  }
 });
 
 const authSlice = createSlice({
@@ -54,7 +74,7 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
+      .addCase(login.fulfilled, (state, action: PayloadAction<LoginThunkResult>) => {
         state.isLoading = false;
         state.isLogin = true;
         state.user = action.payload.user;

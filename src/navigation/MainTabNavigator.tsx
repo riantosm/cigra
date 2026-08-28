@@ -63,7 +63,6 @@ export default function MainTabNavigator() {
         component={EmergencyScreen}
         options={{
           title: 'Emergency',
-          tabBarShowLabel: false,
           // eslint-disable-next-line react/no-unstable-nested-components
           tabBarButton: buttonProps => <EmergencyTabButton {...buttonProps} />,
         }}
