@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fallback splash for API < 31, where the Android 12 SplashScreen theme attributes
+     (windowSplashScreenBackground/windowSplashScreenAnimatedIcon in styles.xml) don't exist yet —
+     this drawable is what android:windowBackground shows instead while MainActivity is starting. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/white" />
+    <!-- @drawable/splash_logo now has ~16.6% transparent padding baked in on every side (matching
+         Android's adaptive-icon safe-zone ratio), so the box here must be sized up from the visible
+         160dp logo we actually want (160 / 0.667 ≈ 240dp) — otherwise this fallback would render the
+         logo visibly smaller than the Android 12+ native splash screen, which assumes that same ratio. -->
+    <item android:width="240dp" android:height="240dp" android:gravity="center">
+        <bitmap android:src="@drawable/splash_logo" android:gravity="center" />
+    </item>
+</layer-list>

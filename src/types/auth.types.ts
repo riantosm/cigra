@@ -1,3 +1,27 @@
+export interface PersonnelAssignment {
+  position?: string;
+  unit?: string;
+  start_date?: string;
+}
+
+export interface Personnel {
+  id: number;
+  full_name: string;
+  service_number: string;
+  rank: string;
+  birth_place: string;
+  birth_date: string;
+  birth_date_formatted: string;
+  blood_type: string;
+  gender: string;
+  address: string;
+  phone: string;
+  photo: string | null;
+  status: string;
+  current_assignment: PersonnelAssignment | null;
+  assignments: unknown[];
+}
+
 export interface AuthUser {
   id: number;
   name: string;
@@ -5,10 +29,11 @@ export interface AuthUser {
   email: string;
   tenant_id: number;
   must_change_password: boolean;
-  is_active?: number;
-  personnel?: unknown;
+  is_active?: boolean;
+  personnel?: Personnel | null;
   family?: unknown;
   roles?: string[];
+  permissions?: string[];
 }
 
 export interface AuthState {

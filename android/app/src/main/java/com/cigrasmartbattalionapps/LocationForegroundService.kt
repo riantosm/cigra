@@ -44,6 +44,7 @@ class LocationForegroundService : Service() {
     private const val UPLOAD_INTERVAL_SECONDS = 45L
     private const val MIN_UPDATE_INTERVAL_MS = 15_000L
     private const val MIN_UPDATE_DISTANCE_M = 15f
+    private const val STALE_FIX_THRESHOLD_MS = 120_000L
 
     fun start(context: Context) {
       val intent = Intent(context, LocationForegroundService::class.java)
@@ -61,7 +62,12 @@ class LocationForegroundService : Service() {
 
   @Volatile private var lastLocation: Location? = null
 
-  private val locationListener = LocationListener { location -> lastLocation = location }
+  private val locationListener = LocationListener { location ->
+    val current = lastLocation
+    if (current == null || isMoreUsefulLocation(location, current)) {
+      lastLocation = location
+    }
+  }
 
   override fun onCreate() {
     super.onCreate()
@@ -142,12 +148,44 @@ class LocationForegroundService : Service() {
     lastLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
       ?: manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
-    manager.getProviders(true).forEach { provider ->
+    // GPS_PROVIDER jauh lebih akurat (~5-20m) daripada NETWORK_PROVIDER (triangulasi wifi/seluler,
+    // bisa 100m+) — dulu service ini subscribe ke SEMUA provider yang ada, jadi fix Network yang
+    // datang belakangan bisa menimpa fix GPS yang sudah bagus (lihat isMoreUsefulLocation di bawah
+    // yang sekarang mencegah itu juga). Prioritaskan GPS; Network cuma fallback kalau perangkat ini
+    // memang tidak listed GPS_PROVIDER sama sekali.
+    val availableProviders = manager.getProviders(true)
+    val providers = if (availableProviders.contains(LocationManager.GPS_PROVIDER)) {
+      listOf(LocationManager.GPS_PROVIDER)
+    } else {
+      availableProviders
+    }
+
+    providers.forEach { provider ->
       try {
         manager.requestLocationUpdates(provider, MIN_UPDATE_INTERVAL_MS, MIN_UPDATE_DISTANCE_M, locationListener, looper)
       } catch (error: SecurityException) {
         Log.w(TAG, "Gagal mendaftarkan provider $provider", error)
       }
+    }
+  }
+
+  // Adaptasi pola "isBetterLocation" dari dokumentasi Android: fix baru dipakai kalau signifikan
+  // lebih baru, atau akurasinya lebih baik/setara (provider sama) dari fix yang sudah ada — supaya
+  // fix GPS yang bagus tidak pernah tertimpa balik oleh fix lama/kurang akurat yang datang telat.
+  private fun isMoreUsefulLocation(newLocation: Location, current: Location): Boolean {
+    val timeDeltaMs = newLocation.time - current.time
+    if (timeDeltaMs > STALE_FIX_THRESHOLD_MS) return true
+    if (timeDeltaMs < -STALE_FIX_THRESHOLD_MS) return false
+
+    val isMoreAccurate = newLocation.accuracy < current.accuracy
+    val isSignificantlyLessAccurate = newLocation.accuracy - current.accuracy > 200f
+    val isSameProvider = newLocation.provider == current.provider
+
+    return when {
+      isMoreAccurate -> true
+      isSignificantlyLessAccurate -> false
+      isSameProvider -> true
+      else -> false
     }
   }
 

@@ -1,9 +1,17 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <!-- Light.NoActionBar (not DayNight) — the app is light-mode only (see src/theme/colors.ts), so
+         native chrome including the launch splash must never switch with system dark mode. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- API < 31: shown as the activity's window background while it's starting. -->
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+        <!-- API 31+ (Android 12 SplashScreen): both attributes exist even though minSdk is 24 —
+             aapt2 compiles them fine at compileSdk 37 and the OS ignores unknown theme attributes
+             on older versions, so a single styles.xml covers every supported API level. -->
+        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
     </style>
 
 </resources>

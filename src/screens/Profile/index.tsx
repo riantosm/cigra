@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import axios from 'axios';
 
+import Badge from '@/components/atoms/Badge';
 import Button from '@/components/atoms/Button';
+import Icon from '@/components/atoms/Icon';
 import Card from '@/components/molecules/Card';
+import InfoRow from '@/components/molecules/InfoRow';
+import SectionCard from '@/components/molecules/SectionCard';
 import StatusModal from '@/components/organisms/StatusModal';
 import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
@@ -13,8 +17,31 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout, refreshUser } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
 import type { LocationStatus, MyLocationResult } from '@/types';
-import { contentEnterTransition } from '@/utils/motion';
+import { contentEnterTransition, pressTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
+
+function orDash(value: string | null | undefined): string {
+  return value && value.trim().length > 0 ? value : '-';
+}
+
+function genderLabel(gender: string | null | undefined): string {
+  if (gender === 'male') return 'Laki-laki';
+  if (gender === 'female') return 'Perempuan';
+  if (!gender) return '-';
+  return gender.charAt(0).toUpperCase() + gender.slice(1);
+}
+
+function formatBirth(place: string | null | undefined, dateFormatted: string | null | undefined): string {
+  if (place && dateFormatted) return `${place}, ${dateFormatted}`;
+  return orDash(place || dateFormatted);
+}
+
+function formatDateShort(date: string | null | undefined): string {
+  if (!date) return '-';
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 const statusLabel: Record<LocationStatus, string> = {
   fresh: 'Aktif',
@@ -74,7 +101,11 @@ export default function ProfileScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [modal, setModal] = useState<StatusModalState>(closedModalState);
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const [permissionsExpanded, setPermissionsExpanded] = useState(false);
   const coords = myLocation?.location ?? null;
+  const personnel = user?.personnel;
+  const isActive = personnel ? personnel.status === 'active' : (user?.is_active ?? true);
 
   function closeModal() {
     setModal(closedModalState());
@@ -179,18 +210,107 @@ export default function ProfileScreen() {
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}>
           <Card style={styles.card}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarLabel}>{(user?.name ?? 'U').charAt(0).toUpperCase()}</Text>
-            </View>
-            <View style={styles.identity}>
-              <Text style={styles.name}>{user?.name ?? '-'}</Text>
-              <Text style={styles.username}>@{user?.username ?? '-'}</Text>
+            <View style={styles.identityRow}>
+              {personnel?.photo && !photoFailed ? (
+                <Image
+                  source={{ uri: personnel.photo }}
+                  style={styles.avatarImage}
+                  onError={() => setPhotoFailed(true)}
+                />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarLabel}>{(user?.name ?? 'U').charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+              <View style={styles.identity}>
+                <Text style={styles.name}>{user?.name ?? '-'}</Text>
+                <Badge label={isActive ? 'AKTIF' : 'NONAKTIF'} variant={isActive ? 'success' : 'neutral'} />
+                <View style={styles.identityMeta}>
+                  <View style={styles.identityMetaRow}>
+                    <Icon name="id-card" size={14} color={colors.textMuted} />
+                    <Text style={styles.identityMetaText}>{user?.username ?? '-'}</Text>
+                  </View>
+                  <View style={styles.identityMetaRow}>
+                    <Icon name="mail" size={14} color={colors.textMuted} />
+                    <Text style={styles.identityMetaText} numberOfLines={1}>
+                      {user?.email ?? '-'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
           </Card>
 
+          {personnel ? (
+            <SectionCard icon="profile" title="Data Personel">
+              <InfoRow icon="profile" label="Nama Lengkap" value={orDash(personnel.full_name)} />
+              <InfoRow icon="id-card" label="Nomor Dinas" value={orDash(personnel.service_number)} />
+              <InfoRow icon="rank" label="Pangkat" value={orDash(personnel.rank)} />
+              <InfoRow
+                icon="cake"
+                label="Tempat, Tanggal Lahir"
+                value={formatBirth(personnel.birth_place, personnel.birth_date_formatted)}
+              />
+              <InfoRow icon="blood-drop" label="Golongan Darah" value={orDash(personnel.blood_type)} />
+              <InfoRow icon="profile" label="Jenis Kelamin" value={genderLabel(personnel.gender)} />
+              <InfoRow icon="map-pin" label="Alamat" value={orDash(personnel.address)} />
+              <InfoRow icon="phone" label="No. Telepon" value={orDash(personnel.phone)} />
+            </SectionCard>
+          ) : null}
+
+          {personnel?.current_assignment ? (
+            <SectionCard icon="briefcase" title="Penugasan Saat Ini">
+              <InfoRow icon="briefcase" label="Jabatan" value={orDash(personnel.current_assignment.position)} />
+              <InfoRow icon="building" label="Satuan" value={orDash(personnel.current_assignment.unit)} />
+              <InfoRow icon="calendar" label="Sejak" value={formatDateShort(personnel.current_assignment.start_date)} />
+            </SectionCard>
+          ) : null}
+
+          {(user?.roles?.length || user?.permissions?.length) ? (
+            <SectionCard icon="shield-check" title="Peran & Akses">
+              {user?.roles?.length ? (
+                <View style={styles.accessBlock}>
+                  <Text style={styles.accessLabel}>Peran (Role)</Text>
+                  <View style={styles.chipRow}>
+                    {user.roles.map(role => (
+                      <Badge key={role} label={role} variant="primary" />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+              {user?.permissions?.length ? (
+                <View style={styles.accessBlock}>
+                  <Pressable
+                    style={styles.accordionHeader}
+                    hitSlop={8}
+                    onPress={() => setPermissionsExpanded(value => !value)}>
+                    <Text style={styles.accessLabel}>Izin Akses (Permissions) · {user.permissions.length}</Text>
+                    <MotiView animate={{ rotate: permissionsExpanded ? '180deg' : '0deg' }} transition={pressTransition}>
+                      <Icon name="chevron-down" size={16} color={colors.textMuted} />
+                    </MotiView>
+                  </Pressable>
+                  {permissionsExpanded ? (
+                    <MotiView
+                      from={{ opacity: 0, translateY: -4 }}
+                      animate={{ opacity: 1, translateY: 0 }}
+                      transition={pressTransition}
+                      style={styles.chipRow}>
+                      {user.permissions.map(permission => (
+                        <Badge key={permission} label={permission} variant="primary" />
+                      ))}
+                    </MotiView>
+                  ) : null}
+                </View>
+              ) : null}
+            </SectionCard>
+          ) : null}
+
           <Card style={styles.locationCard}>
             <View style={styles.locationHeader}>
-              <Text style={styles.locationTitle}>Posisi Saya</Text>
+              <View style={styles.locationTitleGroup}>
+                <Icon name="map-pin" size={18} color={colors.primary} />
+                <Text style={styles.locationTitle}>Posisi Saya</Text>
+              </View>
               <View style={styles.locationHeaderActions}>
                 {myLocation ? (
                   <View style={[styles.statusBadge, { backgroundColor: statusColor[myLocation.status] }]}>
@@ -263,17 +383,26 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   card: {
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 32,
+    paddingVertical: 20,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
   },
   avatar: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
+    height: 72,
+    width: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
+  },
+  avatarImage: {
+    height: 72,
+    width: 72,
+    borderRadius: 36,
+    backgroundColor: colors.neutralSurface,
   },
   avatarLabel: {
     fontSize: 24,
@@ -281,17 +410,48 @@ const styles = StyleSheet.create({
     color: colors.primaryForeground,
   },
   identity: {
-    alignItems: 'center',
-    gap: 2,
+    flex: 1,
+    alignItems: 'flex-start',
+    gap: 6,
   },
   name: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
   },
-  username: {
+  identityMeta: {
+    marginTop: 4,
+    gap: 6,
+  },
+  identityMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  identityMetaText: {
+    flexShrink: 1,
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  accessBlock: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: 8,
+  },
+  accessLabel: {
     fontSize: 14,
     color: colors.textMuted,
+  },
+  accordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   locationCard: {
     marginTop: 16,
@@ -307,10 +467,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  locationTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   locationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   statusBadge: {
     paddingHorizontal: 10,
