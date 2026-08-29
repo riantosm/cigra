@@ -57,11 +57,7 @@ function errorForGeolocationCode(code: number): LocationUnavailableError {
   }
 }
 
-export async function getCurrentCoordinates(): Promise<Coordinates> {
-  if (Platform.OS === 'android') {
-    await ensureAndroidPermission();
-  }
-
+function requestPosition(options: { enableHighAccuracy: boolean; timeout: number; maximumAge: number }): Promise<Coordinates> {
   return new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(
       position => {
@@ -71,9 +67,38 @@ export async function getCurrentCoordinates(): Promise<Coordinates> {
         });
       },
       error => reject(errorForGeolocationCode(error.code)),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+      options,
     );
   });
+}
+
+export interface GetCurrentCoordinatesOptions {
+  // GPS butuh lebih lama untuk fix baru (cold start setelah boot/lama tidak dipakai), terutama
+  // di APK release yang dipakai di kondisi nyata (bukan device testing yang GPS-nya sudah "hangat").
+  // 15 detik sering kurang dan memicu error timeout padahal GPS sebenarnya aktif.
+  timeout?: number;
+  // Kalau fix akurat timeout, coba sekali lagi pakai provider yang lebih longgar (network/cache)
+  // sebelum benar-benar gagal — cocok untuk gate pre-warming di Home yang cuma perlu tahu layanan
+  // lokasi memang berfungsi, TAPI jangan dipakai di alur yang akurasinya kritis (panic button,
+  // update posisi manual) karena hasilnya bisa jadi lokasi lama/kurang akurat.
+  allowFallbackToLowAccuracy?: boolean;
+}
+
+export async function getCurrentCoordinates(options: GetCurrentCoordinatesOptions = {}): Promise<Coordinates> {
+  const { timeout = 25000, allowFallbackToLowAccuracy = false } = options;
+
+  if (Platform.OS === 'android') {
+    await ensureAndroidPermission();
+  }
+
+  try {
+    return await requestPosition({ enableHighAccuracy: true, timeout, maximumAge: 10000 });
+  } catch (error) {
+    if (allowFallbackToLowAccuracy && error instanceof LocationUnavailableError && error.reason === 'gps-disabled') {
+      return requestPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+    }
+    throw error;
+  }
 }
 
 export function openAppSettings(): void {

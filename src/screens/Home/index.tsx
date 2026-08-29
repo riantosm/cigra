@@ -25,7 +25,9 @@ export default function HomeScreen() {
 
   const ensureLocationReady = useCallback(async () => {
     try {
-      await getCurrentCoordinates();
+      // Gate ini cuma perlu tahu layanan lokasi memang berfungsi (bukan alur yang akurasinya
+      // kritis seperti panic button), jadi izinkan fallback ke provider longgar kalau GPS lambat.
+      await getCurrentCoordinates({ allowFallbackToLowAccuracy: true });
       setLocationIssue(null);
     } catch (error) {
       if (error instanceof LocationUnavailableError) {
