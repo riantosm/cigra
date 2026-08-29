@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { logo } from '@/assets';
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
 
 export interface NavBarProps {
@@ -18,9 +19,9 @@ export default function NavBar(props: NavBarProps) {
     <View style={styles.container}>
       <View style={styles.left}>
         {onBack ? (
-          <Pressable onPress={onBack} hitSlop={12} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Kembali">
+          <PressableScale onPress={onBack} hitSlop={12} contentStyle={styles.backButton} accessibilityRole="button" accessibilityLabel="Kembali">
             <Icon name="arrow-left" size={22} color={colors.text} />
-          </Pressable>
+          </PressableScale>
         ) : (
           <View style={styles.logoBadge}>
             <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />

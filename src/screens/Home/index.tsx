@@ -8,6 +8,7 @@ import { MotiView } from 'moti';
 import MenuCard from '@/components/molecules/MenuCard';
 import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
+import { useDoubleBackToExit } from '@/hooks/useDoubleBackToExit';
 import { ROUTES } from '@/navigation/paths';
 import type { CatalogResourceKey, MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -40,6 +41,7 @@ export default function HomeScreen() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<HomeNavigationProp>();
   const user = useAppSelector(state => state.auth.user);
+  useDoubleBackToExit();
   const [locationIssue, setLocationIssue] = useState<{ reason: LocationErrorReason; message: string } | null>(
     null,
   );

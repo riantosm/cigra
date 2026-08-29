@@ -1,5 +1,7 @@
 package com.cigrasmartbattalionapps
 
+import android.content.Context
+import android.location.LocationManager
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -40,5 +42,20 @@ class LocationTrackingModule(reactContext: ReactApplicationContext) :
   @ReactMethod
   fun getStoredAuthToken(promise: Promise) {
     promise.resolve(TrackingPrefs.getAuthToken(reactApplicationContext))
+  }
+
+  // Cek status toggle layanan lokasi (GPS/Network provider) di level OS, terpisah dari izin
+  // runtime ACCESS_FINE_LOCATION — dipakai untuk menampilkan status di panel Pengaturan.
+  @ReactMethod
+  fun isLocationServicesEnabled(promise: Promise) {
+    try {
+      val manager =
+        reactApplicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+      val enabled = manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+        manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+      promise.resolve(enabled)
+    } catch (error: Exception) {
+      promise.reject("LOCATION_SERVICES_CHECK_ERROR", error)
+    }
   }
 }

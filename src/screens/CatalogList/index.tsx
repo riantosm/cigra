@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import Badge from '@/components/atoms/Badge';
+import PressableScale from '@/components/atoms/PressableScale';
 import TextField from '@/components/atoms/TextField';
 import Card from '@/components/molecules/Card';
 import MainLayout from '@/components/templates/MainLayout';
@@ -99,9 +100,9 @@ export default function CatalogListScreen(props: Props) {
             ListEmptyComponent={<Text style={styles.centerState}>Belum ada data.</Text>}
             ListFooterComponent={isLoadingMore ? <ActivityIndicator style={styles.footerLoading} color={colors.primary} /> : undefined}
             renderItem={({ item }) => (
-              <Pressable
-                onPress={() => navigation.navigate(ROUTES.catalogDetail, { resource, id: item.id })}
-                style={({ pressed }) => [pressed && styles.rowPressed]}>
+              <PressableScale
+                scaleTo={0.98}
+                onPress={() => navigation.navigate(ROUTES.catalogDetail, { resource, id: item.id })}>
                 <Card style={styles.row}>
                   <View style={styles.rowText}>
                     <Text style={styles.rowTitle}>{item.title}</Text>
@@ -109,7 +110,7 @@ export default function CatalogListScreen(props: Props) {
                   </View>
                   {item.badgeLabel ? <Badge label={item.badgeLabel} variant={item.badgeVariant ?? 'neutral'} /> : null}
                 </Card>
-              </Pressable>
+              </PressableScale>
             )}
           />
         )}
@@ -145,9 +146,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-  },
-  rowPressed: {
-    opacity: 0.7,
   },
   rowText: {
     flex: 1,

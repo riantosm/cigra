@@ -42,6 +42,12 @@ export interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
+  // Diisi dari response login/verifikasi OTP, dan disinkronkan ulang tiap refreshUser() —
+  // dipakai RequireGuest/RequireAuth untuk memaksa ke layar ChangePassword sebelum Main.
+  requiresPasswordChange: boolean;
+  // Token sekali-pakai dari response login pertama — dipakai ChangePassword untuk verifikasi
+  // tanpa perlu current_password. Null kalau user harus verifikasi pakai current_password.
+  resetToken: string | null;
 }
 
 export interface LoginPayload {
@@ -54,8 +60,47 @@ export interface LoginResult {
   token_type: string;
   expires_in: number;
   requires_password_change: boolean;
-  reset_token: string;
+  reset_token: string | null;
   user: AuthUser;
+}
+
+export interface OtpRequestPayload {
+  login: string;
+}
+
+export interface OtpVerifyPayload {
+  login: string;
+  otp: string;
+}
+
+export interface OtpVerifyResult {
+  access_token: string;
+  requires_password_change: boolean;
+  reset_token: string | null;
+  user: Pick<AuthUser, 'id' | 'name' | 'username'>;
+}
+
+export interface ForgotPasswordPayload {
+  login: string;
+}
+
+export interface ResetPasswordPayload {
+  login: string;
+  otp: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export interface SimpleApiMessage {
+  success: boolean;
+  message: string;
+}
+
+export interface ChangePasswordPayload {
+  current_password?: string;
+  reset_token?: string;
+  password: string;
+  password_confirmation: string;
 }
 
 export interface RefreshTokenResult {

@@ -12,9 +12,12 @@ export type CatalogResourceKey =
 
 export type RootStackParamList = {
   [ROUTES.login]: undefined;
+  [ROUTES.forgotPassword]: undefined;
+  [ROUTES.changePassword]: undefined;
   [ROUTES.main]: undefined;
   [ROUTES.catalogList]: { resource: CatalogResourceKey };
   [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string };
+  [ROUTES.settings]: undefined;
 };
 
 export type MainTabParamList = {

@@ -1,9 +1,10 @@
 import { forwardRef, useState } from 'react';
 import type { ComponentRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import type { StyleProp, TextInputProps, ViewStyle } from 'react-native';
 
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
 
 export interface TextFieldProps extends TextInputProps {
@@ -34,14 +35,14 @@ const TextField = forwardRef<ComponentRef<typeof TextInput>, TextFieldProps>(
             {...rest}
           />
           {secureTextEntry ? (
-            <Pressable
+            <PressableScale
               onPress={() => setIsPasswordVisible(visible => !visible)}
               hitSlop={12}
               style={styles.eyeButton}
               accessibilityRole="button"
               accessibilityLabel={isPasswordVisible ? 'Sembunyikan password' : 'Tampilkan password'}>
               <Icon name={isPasswordVisible ? 'eye-off' : 'eye'} size={20} color={colors.textMuted} />
-            </Pressable>
+            </PressableScale>
           ) : null}
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}

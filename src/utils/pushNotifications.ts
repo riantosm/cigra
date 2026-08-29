@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import Config from 'react-native-config';
 import { getMessaging, getToken, onMessage, subscribeToTopic, unsubscribeFromTopic } from '@react-native-firebase/messaging';
 import type { RemoteMessage } from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance, AndroidVisibility } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidVisibility, AuthorizationStatus } from '@notifee/react-native';
 
 // Channel Android khusus notifikasi darurat — importance HIGH + bypassDnd supaya tetap
 // berbunyi walau HP dalam mode Do Not Disturb. `sound: 'siren'` merujuk ke
@@ -62,6 +62,13 @@ async function ensureAlertChannel(): Promise<void> {
 async function ensureNotificationPermission(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await notifee.requestPermission();
+}
+
+// Cek status izin notifikasi tanpa memicu dialog permintaan izin — dipakai untuk menampilkan
+// status di UI (mis. panel pengaturan di Profile). notifee menormalkan cek ini lintas platform.
+export async function isNotificationPermissionGranted(): Promise<boolean> {
+  const settings = await notifee.getNotificationSettings();
+  return settings.authorizationStatus === AuthorizationStatus.AUTHORIZED;
 }
 
 async function showAlertNotification(title?: string, body?: string): Promise<void> {

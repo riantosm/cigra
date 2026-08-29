@@ -11,6 +11,7 @@ export const colors = {
   success: '#16A34A',
   successSurface: '#DCFCE7',
   warning: '#F59E0B',
+  dangerSurface: '#FEE2E2',
   primarySurface: '#DBEAFE',
   neutralSurface: '#F1F5F9',
   gradientEntryStart: '#F59E0B',

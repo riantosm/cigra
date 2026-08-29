@@ -1,10 +1,10 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, isAnyOf } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-import { getMeApi, loginApi, logoutApi } from '@/services/api/auth.service';
+import { getMeApi, loginApi, logoutApi, verifyLoginOtpApi } from '@/services/api/auth.service';
 import { setAuthToken } from '@/services/api/axiosInstance';
-import type { AuthState, AuthUser, LoginPayload } from '@/types';
+import type { AuthState, AuthUser, LoginPayload, OtpVerifyPayload, OtpVerifyResult } from '@/types';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '@/utils/location';
 import { teardownPushNotifications } from '@/utils/pushNotifications';
 
@@ -14,6 +14,8 @@ const initialState: AuthState = {
   token: null,
   isLoading: false,
   error: null,
+  requiresPasswordChange: false,
+  resetToken: null,
 };
 
 function extractErrorMessage(error: unknown, fallback: string): string {
@@ -27,6 +29,8 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 interface LoginThunkResult {
   user: AuthUser;
   token: string;
+  requiresPasswordChange: boolean;
+  resetToken: string | null;
 }
 
 export const login = createAsyncThunk<LoginThunkResult, LoginPayload, { rejectValue: string }>(
@@ -55,13 +59,64 @@ export const login = createAsyncThunk<LoginThunkResult, LoginPayload, { rejectVa
       // dicoba lagi nanti (mis. dari layar Profile) daripada memblokir user masuk aplikasi.
     }
 
-    return { user, token: result.access_token };
+    return {
+      user,
+      token: result.access_token,
+      requiresPasswordChange: result.requires_password_change,
+      resetToken: result.reset_token,
+    };
   },
 );
 
 export const refreshUser = createAsyncThunk('auth/refreshUser', async () => {
   return await getMeApi();
 });
+
+function minimalAuthUser(user: OtpVerifyResult['user'], requiresPasswordChange: boolean): AuthUser {
+  return {
+    id: user.id,
+    name: user.name,
+    username: user.username,
+    email: '',
+    tenant_id: 0,
+    must_change_password: requiresPasswordChange,
+  };
+}
+
+export const loginWithOtp = createAsyncThunk<LoginThunkResult, OtpVerifyPayload, { rejectValue: string }>(
+  'auth/loginWithOtp',
+  async (payload, { rejectWithValue }) => {
+    let result;
+    try {
+      result = await verifyLoginOtpApi(payload);
+    } catch (error) {
+      return rejectWithValue(extractErrorMessage(error, 'Verifikasi OTP gagal'));
+    }
+
+    await setAuthToken(result.access_token);
+
+    let user: AuthUser = minimalAuthUser(result.user, result.requires_password_change);
+    try {
+      user = await getMeApi();
+    } catch {
+      // /auth/me gagal diambil — tetap lanjut pakai data user minimal dari response OTP.
+    }
+
+    try {
+      await startBackgroundLocationTracking();
+    } catch {
+      // Izin lokasi latar belakang gagal/ditolak — tidak menggagalkan login, sama seperti alur
+      // login password.
+    }
+
+    return {
+      user,
+      token: result.access_token,
+      requiresPasswordChange: result.requires_password_change,
+      resetToken: result.reset_token,
+    };
+  },
+);
 
 export const logout = createAsyncThunk('auth/logout', async () => {
   try {
@@ -82,33 +137,56 @@ const authSlice = createSlice({
     clearAuthError(state) {
       state.error = null;
     },
+    logoutLocal(state) {
+      state.isLogin = false;
+      state.user = null;
+      state.token = null;
+      state.requiresPasswordChange = false;
+      state.resetToken = null;
+    },
+    passwordChanged(state) {
+      state.requiresPasswordChange = false;
+      state.resetToken = null;
+      if (state.user) state.user.must_change_password = false;
+    },
   },
   extraReducers: builder => {
     builder
-      .addCase(login.pending, state => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(login.fulfilled, (state, action: PayloadAction<LoginThunkResult>) => {
-        state.isLoading = false;
-        state.isLogin = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-      })
-      .addCase(login.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload ?? 'Login gagal';
-      })
       .addCase(logout.fulfilled, state => {
         state.isLogin = false;
         state.user = null;
         state.token = null;
+        state.requiresPasswordChange = false;
+        state.resetToken = null;
       })
       .addCase(refreshUser.fulfilled, (state, action: PayloadAction<AuthUser>) => {
         state.user = action.payload;
+        // /auth/me adalah sumber kebenaran yang bertahan lama untuk flag ini (dipanggil ulang di
+        // RootNavigator/Home/Profile) — sinkronkan supaya reset password paksa dari admin di
+        // tengah sesi juga langsung terdeteksi, bukan cuma sesaat setelah login.
+        state.requiresPasswordChange = action.payload.must_change_password;
+      })
+      .addMatcher(isAnyOf(login.pending, loginWithOtp.pending), state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addMatcher(
+        isAnyOf(login.fulfilled, loginWithOtp.fulfilled),
+        (state, action: PayloadAction<LoginThunkResult>) => {
+          state.isLoading = false;
+          state.isLogin = true;
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.requiresPasswordChange = action.payload.requiresPasswordChange;
+          state.resetToken = action.payload.resetToken;
+        },
+      )
+      .addMatcher(isAnyOf(login.rejected, loginWithOtp.rejected), (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? 'Login gagal';
       });
   },
 });
 
-export const { clearAuthError } = authSlice.actions;
+export const { clearAuthError, logoutLocal, passwordChanged } = authSlice.actions;
 export default authSlice.reducer;

@@ -12,13 +12,14 @@ export interface RequireGuestProps extends PropsWithChildren {
 
 export default function RequireGuest(props: RequireGuestProps) {
   const isLogin = useAppSelector(state => state.auth.isLogin);
+  const requiresPasswordChange = useAppSelector(state => state.auth.requiresPasswordChange);
 
   useEffect(() => {
     if (isLogin) {
-      props.navigation.replace(ROUTES.main);
+      props.navigation.replace(requiresPasswordChange ? ROUTES.changePassword : ROUTES.main);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLogin]);
+  }, [isLogin, requiresPasswordChange]);
 
   if (isLogin) {
     return null;

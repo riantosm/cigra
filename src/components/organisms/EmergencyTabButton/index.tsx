@@ -1,31 +1,23 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import { MotiView } from 'moti';
 
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
-import { pressTransition } from '@/utils/motion';
 
 export default function EmergencyTabButton(props: BottomTabBarButtonProps) {
   const { onPress } = props;
-  const [pressed, setPressed] = useState(false);
 
   return (
-    <Pressable
+    <PressableScale
+      scaleTo={0.94}
       accessibilityRole="button"
       accessibilityLabel="Emergency"
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      style={styles.wrapper}>
-      <MotiView
-        animate={{ scale: pressed ? 0.94 : 1 }}
-        transition={pressTransition}
-        style={styles.button}>
-        <Icon name="emergency" size={30} color={colors.dangerForeground} />
-      </MotiView>
-    </Pressable>
+      style={styles.wrapper}
+      contentStyle={styles.button}>
+      <Icon name="emergency" size={30} color={colors.dangerForeground} />
+    </PressableScale>
   );
 }
 

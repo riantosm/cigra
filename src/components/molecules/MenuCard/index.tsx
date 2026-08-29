@@ -1,12 +1,10 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
-import { MotiView } from 'moti';
 
 import type { IconName } from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import GradientIconBadge from '@/components/molecules/GradientIconBadge';
 import { colors } from '@/theme/colors';
-import { pressTransition } from '@/utils/motion';
 
 export interface MenuCardProps extends PressableProps {
   icon: IconName;
@@ -18,31 +16,14 @@ export interface MenuCardProps extends PressableProps {
 }
 
 export default function MenuCard(props: MenuCardProps) {
-  const { icon, gradientStart, gradientEnd, title, subtitle, style, onPressIn, onPressOut, ...rest } =
-    props;
-  const [pressed, setPressed] = useState(false);
+  const { icon, gradientStart, gradientEnd, title, subtitle, style, ...rest } = props;
 
   return (
-    <Pressable
-      onPressIn={event => {
-        setPressed(true);
-        onPressIn?.(event);
-      }}
-      onPressOut={event => {
-        setPressed(false);
-        onPressOut?.(event);
-      }}
-      style={style}
-      {...rest}>
-      <MotiView
-        animate={{ scale: pressed ? 0.97 : 1 }}
-        transition={pressTransition}
-        style={styles.card}>
-        <GradientIconBadge icon={icon} gradientStart={gradientStart} gradientEnd={gradientEnd} />
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
-      </MotiView>
-    </Pressable>
+    <PressableScale scaleTo={0.97} style={style} contentStyle={styles.card} {...rest}>
+      <GradientIconBadge icon={icon} gradientStart={gradientStart} gradientEnd={gradientEnd} />
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
+    </PressableScale>
   );
 }
 

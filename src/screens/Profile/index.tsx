@@ -1,24 +1,34 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MotiView } from 'moti';
 
 import Badge from '@/components/atoms/Badge';
-import Button from '@/components/atoms/Button';
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
 import InfoRow from '@/components/molecules/InfoRow';
 import SectionCard from '@/components/molecules/SectionCard';
 import StatusModal from '@/components/organisms/StatusModal';
 import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
+import { ROUTES } from '@/navigation/paths';
+import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getMyLocationApi, sendLocationApi } from '@/services/api/location.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { logout, refreshUser } from '@/store/slices/authSlice';
+import { refreshUser } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
 import type { LocationStatus, MyLocationResult } from '@/types';
 import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, genderLabel, orDash } from '@/utils/format';
 import { contentEnterTransition, pressTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
+
+type ProfileNavigationProp = CompositeNavigationProp<
+  MainTabScreenProps<'Profile'>['navigation'],
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const statusLabel: Record<LocationStatus, string> = {
   fresh: 'Aktif',
@@ -53,13 +63,13 @@ function closedModalState(): StatusModalState {
 }
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<ProfileNavigationProp>();
   const dispatch = useAppDispatch();
   const user = useAppSelector(state => state.auth.user);
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [modal, setModal] = useState<StatusModalState>(closedModalState);
   const [photoFailed, setPhotoFailed] = useState(false);
   const [permissionsExpanded, setPermissionsExpanded] = useState(false);
@@ -138,27 +148,19 @@ export default function ProfileScreen() {
     }
   }
 
-  async function performLogout() {
-    closeModal();
-    setIsLoggingOut(true);
-    await dispatch(logout());
-    // Tidak perlu setIsLoggingOut(false) di sini — begitu isLogin jadi false,
-    // RequireAuth langsung mengarahkan keluar dari layar ini.
-  }
-
-  function confirmLogout() {
-    setModal({
-      visible: true,
-      variant: 'error',
-      title: 'Keluar dari Aplikasi?',
-      message: 'Anda perlu login kembali untuk melanjutkan pelacakan lokasi dan fitur lainnya.',
-      primaryAction: { label: 'Logout', variant: 'danger', onPress: performLogout },
-      secondaryAction: { label: 'Batal', onPress: closeModal },
-    });
-  }
-
   return (
-    <MainLayout title="Profile">
+    <MainLayout
+      title="Profile"
+      right={
+        <PressableScale
+          onPress={() => navigation.navigate(ROUTES.settings)}
+          hitSlop={12}
+          contentStyle={styles.settingsButton}
+          accessibilityRole="button"
+          accessibilityLabel="Pengaturan">
+          <Icon name="settings" size={22} color={colors.text} />
+        </PressableScale>
+      }>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
@@ -240,15 +242,15 @@ export default function ProfileScreen() {
               ) : null}
               {user?.permissions?.length ? (
                 <View style={styles.accessBlock}>
-                  <Pressable
-                    style={styles.accordionHeader}
+                  <PressableScale
+                    contentStyle={styles.accordionHeader}
                     hitSlop={8}
                     onPress={() => setPermissionsExpanded(value => !value)}>
                     <Text style={styles.accessLabel}>Izin Akses (Permissions) · {user.permissions.length}</Text>
                     <MotiView animate={{ rotate: permissionsExpanded ? '180deg' : '0deg' }} transition={pressTransition}>
                       <Icon name="chevron-down" size={16} color={colors.textMuted} />
                     </MotiView>
-                  </Pressable>
+                  </PressableScale>
                   {permissionsExpanded ? (
                     <MotiView
                       from={{ opacity: 0, translateY: -4 }}
@@ -277,24 +279,24 @@ export default function ProfileScreen() {
                     <Text style={styles.statusBadgeLabel}>{statusLabel[myLocation.status]}</Text>
                   </View>
                 ) : null}
-                <Pressable
+                <PressableScale
                   onPress={handleManualUpdate}
                   disabled={isUpdatingLocation}
                   hitSlop={8}
-                  style={styles.refreshButton}>
+                  contentStyle={styles.refreshButton}>
                   {isUpdatingLocation ? (
                     <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <Text style={styles.refreshGlyph}>⟳</Text>
                   )}
-                </Pressable>
+                </PressableScale>
               </View>
             </View>
 
             {isLoadingLocation ? (
               <Text style={styles.locationMuted}>Memuat posisi...</Text>
             ) : coords ? (
-              <Pressable onPress={openInMaps}>
+              <PressableScale onPress={openInMaps}>
                 <Text style={styles.coordinates}>
                   {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
                 </Text>
@@ -304,19 +306,11 @@ export default function ProfileScreen() {
                   </Text>
                 ) : null}
                 <Text style={styles.locationMuted}>Ketuk untuk buka di Google Maps</Text>
-              </Pressable>
+              </PressableScale>
             ) : (
               <Text style={styles.locationMuted}>Posisi belum tersedia.</Text>
             )}
           </Card>
-
-          <Button
-            label="Logout"
-            variant="danger"
-            loading={isLoggingOut}
-            style={styles.logout}
-            onPress={confirmLogout}
-          />
         </MotiView>
       </ScrollView>
 
@@ -476,7 +470,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
   },
-  logout: {
-    marginTop: 24,
+  settingsButton: {
+    height: 44,
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -10,
   },
 });

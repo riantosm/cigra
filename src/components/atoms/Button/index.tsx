@@ -1,11 +1,10 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 import type { ComponentRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
-import { MotiView } from 'moti';
 
+import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
-import { pressTransition } from '@/utils/motion';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
@@ -41,44 +40,22 @@ const Button = forwardRef<ComponentRef<typeof Pressable>, ButtonProps>(function 
   props,
   ref,
 ) {
-  const {
-    label,
-    variant = 'primary',
-    loading = false,
-    disabled = false,
-    style,
-    onPressIn,
-    onPressOut,
-    ...rest
-  } = props;
-  const [pressed, setPressed] = useState(false);
+  const { label, variant = 'primary', loading = false, disabled = false, style, ...rest } = props;
   const isDisabled = disabled || loading;
 
   return (
-    <Pressable
+    <PressableScale
       ref={ref}
       disabled={isDisabled}
-      onPressIn={event => {
-        setPressed(true);
-        onPressIn?.(event);
-      }}
-      onPressOut={event => {
-        setPressed(false);
-        onPressOut?.(event);
-      }}
       style={style}
+      contentStyle={[styles.container, containerVariantStyle[variant], isDisabled && styles.disabled]}
       {...rest}>
-      <MotiView
-        animate={{ scale: pressed ? 0.96 : 1 }}
-        transition={pressTransition}
-        style={[styles.container, containerVariantStyle[variant], isDisabled && styles.disabled]}>
-        {loading ? (
-          <ActivityIndicator color={indicatorColorByVariant[variant]} />
-        ) : (
-          <Text style={[styles.label, { color: labelVariantColor[variant] }]}>{label}</Text>
-        )}
-      </MotiView>
-    </Pressable>
+      {loading ? (
+        <ActivityIndicator color={indicatorColorByVariant[variant]} />
+      ) : (
+        <Text style={[styles.label, { color: labelVariantColor[variant] }]}>{label}</Text>
+      )}
+    </PressableScale>
   );
 });
 

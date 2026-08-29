@@ -9,7 +9,10 @@ import type { RootStackParamList } from '@/navigation/types';
 import { locationTracking } from '@/native/locationTracking';
 import CatalogDetailScreen from '@/screens/CatalogDetail';
 import CatalogListScreen from '@/screens/CatalogList';
+import ChangePasswordScreen from '@/screens/ChangePassword';
+import ForgotPasswordScreen from '@/screens/ForgotPassword';
 import LoginScreen from '@/screens/Login';
+import SettingsScreen from '@/screens/Settings';
 import { getAuthToken, setAuthToken } from '@/services/api/axiosInstance';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
@@ -68,6 +71,20 @@ export default function RootNavigator() {
           </RequireGuest>
         )}
       </Stack.Screen>
+      <Stack.Screen name={ROUTES.forgotPassword}>
+        {screenProps => (
+          <RequireGuest navigation={screenProps.navigation}>
+            <ForgotPasswordScreen {...screenProps} />
+          </RequireGuest>
+        )}
+      </Stack.Screen>
+      <Stack.Screen name={ROUTES.changePassword}>
+        {screenProps => (
+          <RequireAuth navigation={screenProps.navigation} skipPasswordChangeGate>
+            <ChangePasswordScreen {...screenProps} />
+          </RequireAuth>
+        )}
+      </Stack.Screen>
       <Stack.Screen name={ROUTES.main}>
         {screenProps => (
           <RequireAuth navigation={screenProps.navigation}>
@@ -77,6 +94,7 @@ export default function RootNavigator() {
       </Stack.Screen>
       <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
       <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
+      <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
     </Stack.Navigator>
   );
 }

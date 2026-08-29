@@ -4,29 +4,90 @@ import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { logo } from '@/assets';
 import Button from '@/components/atoms/Button';
+import PressableScale from '@/components/atoms/PressableScale';
 import TextField from '@/components/atoms/TextField';
 import AuthLayout from '@/components/templates/AuthLayout';
+import { useDoubleBackToExit } from '@/hooks/useDoubleBackToExit';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
+import { requestLoginOtpApi } from '@/services/api/auth.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { clearAuthError, login } from '@/store/slices/authSlice';
+import { clearAuthError, login, loginWithOtp } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
+import { extractErrorMessage } from '@/utils/format';
+import { appVersion } from '@/utils/version';
 
 export type LoginScreenProps = RootStackScreenProps<typeof ROUTES.login>;
 
-export default function LoginScreen(_props: LoginScreenProps) {
+type LoginMode = 'password' | 'otp';
+type OtpStep = 'request' | 'verify';
+
+export default function LoginScreen(props: LoginScreenProps) {
+  const { navigation } = props;
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(state => state.auth.isLoading);
   const error = useAppSelector(state => state.auth.error);
+  useDoubleBackToExit();
+
+  const [mode, setMode] = useState<LoginMode>('password');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
 
-  function handleSubmit() {
+  const [otpStep, setOtpStep] = useState<OtpStep>('request');
+  const [otpCode, setOtpCode] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpInfo, setOtpInfo] = useState<string | null>(null);
+  const otpRef = useRef<ComponentRef<typeof TextInput>>(null);
+
+  function switchMode(nextMode: LoginMode) {
+    if (nextMode === mode) return;
+    setMode(nextMode);
+    dispatch(clearAuthError());
+    setOtpStep('request');
+    setOtpCode('');
+    setOtpError(null);
+    setOtpInfo(null);
+  }
+
+  function handlePasswordSubmit() {
     if (!identifier || !password || isLoading) return;
     dispatch(clearAuthError());
     dispatch(login({ login: identifier, password }));
   }
+
+  async function handleRequestOtp() {
+    if (!identifier || isSendingOtp) return;
+    setOtpError(null);
+    setIsSendingOtp(true);
+    try {
+      const message = await requestLoginOtpApi({ login: identifier });
+      setOtpInfo(message);
+      setOtpStep('verify');
+      requestAnimationFrame(() => otpRef.current?.focus());
+    } catch (requestError) {
+      setOtpError(extractErrorMessage(requestError, 'Gagal mengirim kode OTP.'));
+    } finally {
+      setIsSendingOtp(false);
+    }
+  }
+
+  function handleChangeIdentifier() {
+    setOtpStep('request');
+    setOtpCode('');
+    setOtpInfo(null);
+    setOtpError(null);
+  }
+
+  function handleVerifyOtp() {
+    if (!identifier || !otpCode || isLoading) return;
+    setOtpError(null);
+    dispatch(clearAuthError());
+    dispatch(loginWithOtp({ login: identifier, otp: otpCode }));
+  }
+
+  const otpErrorMessage = otpError ?? (mode === 'otp' ? error : null);
 
   return (
     <AuthLayout>
@@ -39,40 +100,133 @@ export default function LoginScreen(_props: LoginScreenProps) {
         <Text style={styles.subtitle}>Masuk untuk melanjutkan ke Smart Battalion</Text>
       </View>
 
-      <View style={styles.form}>
-        <TextField
-          label="Email, Username, atau NRP"
-          placeholder="Masukkan email, username, atau NRP"
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => passwordRef.current?.focus()}
-          value={identifier}
-          onChangeText={setIdentifier}
-        />
-        <TextField
-          ref={passwordRef}
-          label="Password"
-          placeholder="Masukkan password"
-          secureTextEntry
-          autoCapitalize="none"
-          returnKeyType="done"
-          onSubmitEditing={handleSubmit}
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <Button
-          label="Masuk"
-          onPress={handleSubmit}
-          loading={isLoading}
-          disabled={!identifier || !password}
-          style={styles.submit}
-        />
+      <View style={styles.modeSwitch}>
+        <PressableScale
+          style={styles.modeTabWrapper}
+          contentStyle={[styles.modeTab, mode === 'password' && styles.modeTabActive]}
+          onPress={() => switchMode('password')}>
+          <Text style={[styles.modeTabLabel, mode === 'password' && styles.modeTabLabelActive]}>
+            Password
+          </Text>
+        </PressableScale>
+        <PressableScale
+          style={styles.modeTabWrapper}
+          contentStyle={[styles.modeTab, mode === 'otp' && styles.modeTabActive]}
+          onPress={() => switchMode('otp')}>
+          <Text style={[styles.modeTabLabel, mode === 'otp' && styles.modeTabLabelActive]}>
+            Kode OTP
+          </Text>
+        </PressableScale>
       </View>
+
+      {mode === 'password' ? (
+        <View style={styles.form}>
+          <TextField
+            label="Email, Username, atau NRP"
+            placeholder="Masukkan email, username, atau NRP"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            value={identifier}
+            onChangeText={setIdentifier}
+          />
+          <TextField
+            ref={passwordRef}
+            label="Password"
+            placeholder="Masukkan password"
+            secureTextEntry
+            autoCapitalize="none"
+            returnKeyType="done"
+            onSubmitEditing={handlePasswordSubmit}
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <PressableScale
+            style={styles.forgotLink}
+            onPress={() => navigation.navigate(ROUTES.forgotPassword)}>
+            <Text style={styles.forgotLinkLabel}>Lupa password?</Text>
+          </PressableScale>
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <Button
+            label="Masuk"
+            onPress={handlePasswordSubmit}
+            loading={isLoading}
+            disabled={!identifier || !password}
+            style={styles.submit}
+          />
+        </View>
+      ) : (
+        <View style={styles.form}>
+          <TextField
+            label="Email, Username, atau NRP"
+            placeholder="Masukkan email, username, atau NRP"
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={otpStep === 'request'}
+            returnKeyType="done"
+            onSubmitEditing={handleRequestOtp}
+            value={identifier}
+            onChangeText={setIdentifier}
+          />
+
+          {otpStep === 'verify' ? (
+            <>
+              {otpInfo ? <Text style={styles.info}>{otpInfo}</Text> : null}
+              <TextField
+                ref={otpRef}
+                label="Kode OTP"
+                placeholder="Masukkan 6 digit kode OTP"
+                keyboardType="number-pad"
+                maxLength={6}
+                returnKeyType="done"
+                onSubmitEditing={handleVerifyOtp}
+                value={otpCode}
+                onChangeText={setOtpCode}
+              />
+
+              <View style={styles.otpActions}>
+                <PressableScale onPress={handleChangeIdentifier} disabled={isSendingOtp}>
+                  <Text style={styles.forgotLinkLabel}>Ganti akun</Text>
+                </PressableScale>
+                <PressableScale onPress={handleRequestOtp} disabled={isSendingOtp}>
+                  <Text style={styles.forgotLinkLabel}>
+                    {isSendingOtp ? 'Mengirim...' : 'Kirim ulang kode'}
+                  </Text>
+                </PressableScale>
+              </View>
+
+              {otpErrorMessage ? <Text style={styles.error}>{otpErrorMessage}</Text> : null}
+
+              <Button
+                label="Verifikasi & Masuk"
+                onPress={handleVerifyOtp}
+                loading={isLoading}
+                disabled={!identifier || !otpCode}
+                style={styles.submit}
+              />
+            </>
+          ) : (
+            <>
+              {otpError ? <Text style={styles.error}>{otpError}</Text> : null}
+
+              <Button
+                label="Kirim Kode OTP"
+                onPress={handleRequestOtp}
+                loading={isSendingOtp}
+                disabled={!identifier}
+                style={styles.submit}
+              />
+            </>
+          )}
+        </View>
+      )}
+
+      <Text style={styles.version}>v{appVersion}</Text>
     </AuthLayout>
   );
 }
@@ -96,7 +250,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   header: {
-    marginBottom: 40,
+    marginBottom: 24,
     gap: 8,
   },
   title: {
@@ -108,8 +262,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textMuted,
   },
+  modeSwitch: {
+    flexDirection: 'row',
+    backgroundColor: colors.neutralSurface,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+  },
+  modeTabWrapper: {
+    flex: 1,
+  },
+  modeTab: {
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modeTabActive: {
+    backgroundColor: colors.surface,
+  },
+  modeTabLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  modeTabLabelActive: {
+    color: colors.primary,
+  },
   form: {
     gap: 16,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    marginTop: -8,
+  },
+  forgotLinkLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  otpActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  info: {
+    fontSize: 13,
+    color: colors.success,
   },
   error: {
     fontSize: 14,
@@ -117,5 +314,11 @@ const styles = StyleSheet.create({
   },
   submit: {
     marginTop: 8,
+  },
+  version: {
+    marginTop: 24,
+    alignSelf: 'center',
+    fontSize: 12,
+    color: colors.textMuted,
   },
 });

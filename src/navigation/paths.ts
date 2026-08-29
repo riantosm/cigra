@@ -1,5 +1,7 @@
 export const ROUTES = {
   login: 'Login',
+  forgotPassword: 'ForgotPassword',
+  changePassword: 'ChangePassword',
   main: 'Main',
   home: 'Home',
   riwayat: 'Riwayat',
@@ -8,4 +10,5 @@ export const ROUTES = {
   profile: 'Profile',
   catalogList: 'CatalogList',
   catalogDetail: 'CatalogDetail',
+  settings: 'Settings',
 } as const;

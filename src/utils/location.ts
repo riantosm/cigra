@@ -101,6 +101,21 @@ export async function getCurrentCoordinates(options: GetCurrentCoordinatesOption
   }
 }
 
+// Cek status izin lokasi tanpa memicu dialog permintaan izin (beda dari ensureAndroidPermission
+// di atas) — dipakai untuk menampilkan status di UI (mis. panel pengaturan di Profile).
+// iOS tidak punya API cek non-invasive setara tanpa library tambahan, jadi dianggap selalu aktif
+// sama seperti fallback iOS lain di file ini (lihat ensureBackgroundTrackingPermissions).
+export async function isLocationPermissionGranted(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  return PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+}
+
+// Status toggle layanan lokasi (GPS/Network provider) di level OS — beda dari izin runtime di
+// atas (bisa saja izin sudah diberikan tapi GPS-nya sendiri masih dimatikan user).
+export async function isGpsEnabled(): Promise<boolean> {
+  return locationTracking.isLocationServicesEnabled();
+}
+
 export function openAppSettings(): void {
   Linking.openSettings();
 }
