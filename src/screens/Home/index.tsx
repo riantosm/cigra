@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, StyleSheet, Text, View } from 'react-native';
+import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MotiView } from 'moti';
 
+import MenuCard from '@/components/molecules/MenuCard';
 import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
+import { ROUTES } from '@/navigation/paths';
+import type { CatalogResourceKey, MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
+import { catalogResourceConfigs } from '@/utils/catalogResources';
 import { contentEnterTransition } from '@/utils/motion';
 import {
   LocationUnavailableError,
@@ -16,8 +23,22 @@ import {
 } from '@/utils/location';
 import type { LocationErrorReason } from '@/utils/location';
 
+type HomeNavigationProp = CompositeNavigationProp<
+  MainTabScreenProps<'Home'>['navigation'],
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
+const catalogMenuOrder: CatalogResourceKey[] = [
+  'personnel',
+  'persit',
+  'vehicles',
+  'weapon-categories',
+  'weapon-assignments',
+];
+
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
+  const navigation = useNavigation<HomeNavigationProp>();
   const user = useAppSelector(state => state.auth.user);
   const [locationIssue, setLocationIssue] = useState<{ reason: LocationErrorReason; message: string } | null>(
     null,
@@ -59,7 +80,7 @@ export default function HomeScreen() {
 
   return (
     <MainLayout title="Home">
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container}>
         <MotiView
           from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -68,7 +89,29 @@ export default function HomeScreen() {
           <Text style={styles.title}>Welcome, {user?.name ?? 'User'} 👋</Text>
           <Text style={styles.subtitle}>Selamat datang di Smart Battalion</Text>
         </MotiView>
-      </View>
+
+        <MotiView
+          from={{ opacity: 0, translateY: 16 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={contentEnterTransition}
+          style={styles.grid}>
+          {catalogMenuOrder.map(resource => {
+            const config = catalogResourceConfigs[resource];
+            return (
+              <View key={resource} style={styles.gridItem}>
+                <MenuCard
+                  icon={config.icon}
+                  title={config.menuTitle}
+                  subtitle={config.menuSubtitle}
+                  gradientStart={config.gradientStart}
+                  gradientEnd={config.gradientEnd}
+                  onPress={() => navigation.navigate(ROUTES.catalogList, { resource })}
+                />
+              </View>
+            );
+          })}
+        </MotiView>
+      </ScrollView>
 
       <StatusModal
         visible={locationIssue !== null}
@@ -89,15 +132,14 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingTop: 32,
     paddingBottom: 96,
   },
   content: {
     alignItems: 'center',
     gap: 8,
+    marginBottom: 32,
   },
   title: {
     fontSize: 24,
@@ -107,5 +149,13 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: colors.textMuted,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  gridItem: {
+    width: '47%',
   },
 });

@@ -1,23 +1,31 @@
 import type { ReactNode } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { logo } from '@/assets';
+import Icon from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
 
 export interface NavBarProps {
   title: string;
   right?: ReactNode;
+  onBack?: () => void;
 }
 
 export default function NavBar(props: NavBarProps) {
-  const { title, right } = props;
+  const { title, right, onBack } = props;
 
   return (
     <View style={styles.container}>
       <View style={styles.left}>
-        <View style={styles.logoBadge}>
-          <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
-        </View>
+        {onBack ? (
+          <Pressable onPress={onBack} hitSlop={12} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Kembali">
+            <Icon name="arrow-left" size={22} color={colors.text} />
+          </Pressable>
+        ) : (
+          <View style={styles.logoBadge}>
+            <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
+          </View>
+        )}
         <Text style={styles.title}>{title}</Text>
       </View>
       {right}
@@ -46,6 +54,13 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -10,
   },
   logoImage: {
     width: '100%',

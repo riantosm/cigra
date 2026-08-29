@@ -3,9 +3,18 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { ROUTES } from '@/navigation/paths';
 
+export type CatalogResourceKey =
+  | 'personnel'
+  | 'persit'
+  | 'vehicles'
+  | 'weapon-categories'
+  | 'weapon-assignments';
+
 export type RootStackParamList = {
   [ROUTES.login]: undefined;
   [ROUTES.main]: undefined;
+  [ROUTES.catalogList]: { resource: CatalogResourceKey };
+  [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string };
 };
 
 export type MainTabParamList = {

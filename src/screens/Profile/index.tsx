@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
-import axios from 'axios';
 
 import Badge from '@/components/atoms/Badge';
 import Button from '@/components/atoms/Button';
@@ -17,31 +16,9 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout, refreshUser } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
 import type { LocationStatus, MyLocationResult } from '@/types';
+import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, genderLabel, orDash } from '@/utils/format';
 import { contentEnterTransition, pressTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
-
-function orDash(value: string | null | undefined): string {
-  return value && value.trim().length > 0 ? value : '-';
-}
-
-function genderLabel(gender: string | null | undefined): string {
-  if (gender === 'male') return 'Laki-laki';
-  if (gender === 'female') return 'Perempuan';
-  if (!gender) return '-';
-  return gender.charAt(0).toUpperCase() + gender.slice(1);
-}
-
-function formatBirth(place: string | null | undefined, dateFormatted: string | null | undefined): string {
-  if (place && dateFormatted) return `${place}, ${dateFormatted}`;
-  return orDash(place || dateFormatted);
-}
-
-function formatDateShort(date: string | null | undefined): string {
-  if (!date) return '-';
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return date;
-  return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-}
 
 const statusLabel: Record<LocationStatus, string> = {
   fresh: 'Aktif',
@@ -54,23 +31,6 @@ const statusColor: Record<LocationStatus, string> = {
   stale: colors.warning,
   offline: colors.danger,
 };
-
-function formatUpdatedAt(capturedAt: string | undefined): string | null {
-  if (!capturedAt) return null;
-  const date = new Date(capturedAt);
-  if (Number.isNaN(date.getTime())) return null;
-  const datePart = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  const timePart = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  return `${datePart}, ${timePart}`;
-}
-
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (axios.isAxiosError(error)) {
-    const message = error.response?.data?.message;
-    if (typeof message === 'string') return message;
-  }
-  return fallback;
-}
 
 interface StatusModalState {
   visible: boolean;
@@ -338,9 +298,9 @@ export default function ProfileScreen() {
                 <Text style={styles.coordinates}>
                   {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
                 </Text>
-                {formatUpdatedAt(coords.captured_at) ? (
+                {formatDateTime(coords.captured_at) ? (
                   <Text style={styles.locationUpdatedAt}>
-                    Terakhir diperbarui: {formatUpdatedAt(coords.captured_at)}
+                    Terakhir diperbarui: {formatDateTime(coords.captured_at)}
                   </Text>
                 ) : null}
                 <Text style={styles.locationMuted}>Ketuk untuk buka di Google Maps</Text>

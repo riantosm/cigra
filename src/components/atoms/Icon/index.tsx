@@ -23,7 +23,10 @@ export type IconName =
   | 'calendar'
   | 'shield-check'
   | 'mail'
-  | 'chevron-down';
+  | 'chevron-down'
+  | 'arrow-left'
+  | 'car'
+  | 'users';
 
 export interface IconProps {
   name: IconName;
@@ -63,6 +66,10 @@ const pathByName: Record<IconName, string> = {
   'shield-check': 'M12 3l8 3v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3ZM9 12l2 2 4-4',
   mail: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1ZM3.5 6.5 12 13l8.5-6.5',
   'chevron-down': 'M6 9l6 6 6-6',
+  'arrow-left': 'M19 12H5M12 19l-7-7 7-7',
+  car: 'M3 17v-5l2-5h10l3 5h1a1 1 0 0 1 1 1v4H3ZM5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM21 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z',
+  users:
+    'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2.5 20a6.5 6.5 0 0 1 13 0M17 11a3 3 0 1 0 0-6M21.5 20a6.5 6.5 0 0 0-5.5-6.4',
 };
 
 export default function Icon(props: IconProps) {

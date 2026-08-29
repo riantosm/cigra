@@ -6,4 +6,6 @@ export const ROUTES = {
   emergency: 'Emergency',
   bukuSaku: 'BukuSaku',
   profile: 'Profile',
+  catalogList: 'CatalogList',
+  catalogDetail: 'CatalogDetail',
 } as const;

@@ -7,6 +7,8 @@ import RequireAuth from '@/navigation/RequireAuth';
 import RequireGuest from '@/navigation/RequireGuest';
 import type { RootStackParamList } from '@/navigation/types';
 import { locationTracking } from '@/native/locationTracking';
+import CatalogDetailScreen from '@/screens/CatalogDetail';
+import CatalogListScreen from '@/screens/CatalogList';
 import LoginScreen from '@/screens/Login';
 import { getAuthToken, setAuthToken } from '@/services/api/axiosInstance';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -73,6 +75,8 @@ export default function RootNavigator() {
           </RequireAuth>
         )}
       </Stack.Screen>
+      <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
+      <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
     </Stack.Navigator>
   );
 }

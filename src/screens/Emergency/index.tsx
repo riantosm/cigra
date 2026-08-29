@@ -27,6 +27,7 @@ interface StatusModalState {
   variant: StatusModalVariant;
   title: string;
   message: string;
+  primaryAction: StatusModalAction;
   secondaryAction?: StatusModalAction;
 }
 
@@ -35,6 +36,7 @@ const initialModalState: StatusModalState = {
   variant: 'success',
   title: '',
   message: '',
+  primaryAction: { label: 'OK', onPress: () => {} },
   secondaryAction: undefined,
 };
 
@@ -46,7 +48,19 @@ export default function EmergencyScreen() {
     setModal(initialModalState);
   }
 
-  async function handlePanicPress() {
+  function confirmPanicPress() {
+    setModal({
+      visible: true,
+      variant: 'error',
+      title: 'Kirim Sinyal Darurat?',
+      message: 'Lokasi Anda saat ini akan langsung dikirim ke komando sebagai sinyal darurat. Pastikan ini bukan percobaan.',
+      primaryAction: { label: 'Kirim', variant: 'danger', onPress: sendPanicSignal },
+      secondaryAction: { label: 'Batal', onPress: closeModal },
+    });
+  }
+
+  async function sendPanicSignal() {
+    closeModal();
     if (isSending) return;
     setIsSending(true);
     try {
@@ -58,6 +72,7 @@ export default function EmergencyScreen() {
         variant: 'success',
         title: 'Sinyal Terkirim',
         message: 'Sinyal darurat berhasil dikirim beserta lokasi Anda.',
+        primaryAction: { label: 'OK', onPress: closeModal },
       });
     } catch (error) {
       if (error instanceof LocationUnavailableError) {
@@ -67,6 +82,7 @@ export default function EmergencyScreen() {
           variant: 'error',
           title: isGpsIssue ? 'Aktifkan Lokasi' : 'Izin Lokasi Diperlukan',
           message: error.message,
+          primaryAction: { label: 'OK', onPress: closeModal },
           secondaryAction: {
             label: isGpsIssue ? 'Buka Pengaturan Lokasi' : 'Buka Pengaturan',
             onPress: isGpsIssue ? openLocationSettings : openAppSettings,
@@ -78,6 +94,7 @@ export default function EmergencyScreen() {
           variant: 'error',
           title: 'Gagal Mengirim',
           message: extractErrorMessage(error, 'Sinyal darurat gagal dikirim.'),
+          primaryAction: { label: 'OK', onPress: closeModal },
         });
       }
     } finally {
@@ -102,7 +119,7 @@ export default function EmergencyScreen() {
             label="Kirim Sinyal Darurat"
             variant="danger"
             loading={isSending}
-            onPress={handlePanicPress}
+            onPress={confirmPanicPress}
             style={styles.button}
           />
         </MotiView>
@@ -114,7 +131,7 @@ export default function EmergencyScreen() {
         title={modal.title}
         message={modal.message}
         onRequestClose={closeModal}
-        primaryAction={{ label: 'OK', onPress: closeModal }}
+        primaryAction={modal.primaryAction}
         secondaryAction={
           modal.secondaryAction
             ? {

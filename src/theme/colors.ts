@@ -19,5 +19,9 @@ export const colors = {
   gradientWeaponEnd: '#4F46E5',
   gradientHealthStart: '#10B981',
   gradientHealthEnd: '#0EA5E9',
+  gradientPersonnelStart: '#3B82F6',
+  gradientPersonnelEnd: '#2563EB',
+  gradientFamilyStart: '#F472B6',
+  gradientFamilyEnd: '#EC4899',
   overlay: 'rgba(15, 23, 42, 0.45)',
 } as const;

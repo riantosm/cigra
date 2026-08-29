@@ -11,15 +11,16 @@ import { screenEnterTransition } from '@/utils/motion';
 export interface MainLayoutProps extends PropsWithChildren {
   title: string;
   right?: ReactNode;
+  onBack?: () => void;
 }
 
 export default function MainLayout(props: MainLayoutProps) {
-  const { title, right, children } = props;
+  const { title, right, onBack, children } = props;
   const isFocused = useIsFocused();
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <NavBar title={title} right={right} />
+      <NavBar title={title} right={right} onBack={onBack} />
       <MotiView
         key={isFocused ? 'focused' : 'blurred'}
         from={{ opacity: 0, translateY: 14 }}
