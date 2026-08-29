@@ -17,6 +17,36 @@ dengan template berikut setiap kali menyelesaikan pekerjaan untuk hari itu:
 
 ---
 
+## 29 Agustus 2026
+
+**Dikerjakan:**
+- Tambah alur refresh access token otomatis kalau API balas 401, biar user gak ke-logout sendiri
+  pas token kedaluwarsa.
+- Redesign halaman Profile pakai data asli dari `/auth/me` (identitas, data personel, penugasan,
+  peran & akses), rapikan bottom tab bar, perbaiki splash screen, dan tingkatkan akurasi GPS
+  background tracking (prioritaskan GPS_PROVIDER, ambil fix paling akurat bukan cuma yang terakhir).
+- Adjust timeout & fallback `requestPosition` biar GPS cold-start (device jarang dipakai/baru boot)
+  gak gampang timeout, dan adjust build size APK.
+- Tambah fitur Katalog di Home: list & detail buat Personel, Persit (Keluarga), Kendaraan, Kategori
+  Senjata, dan Distribusi Senjata.
+- Tambah opsi login pakai kode OTP (selain password) dan fitur lupa password (kirim OTP ke email
+  lalu reset password).
+- Tambah alur paksa ganti password di login pertama (`must_change_password` dari `/auth/me`)
+  sebelum bisa masuk ke menu lain.
+- Pindahkan tombol Logout dari Profile ke halaman Pengaturan baru, sekalian tampilkan status izin
+  lokasi, GPS, dan notifikasi secara live plus tombol buka pengaturan kalau belum aktif.
+- Bikin proses Logout langsung keluar dari UI tanpa nunggu API selesai (API + cleanup tetap jalan
+  di background).
+- Tambah animasi "tekan mengecil" ke semua elemen yang bisa diklik di seluruh app (tombol, kartu,
+  teks link, dll) biar konsisten.
+- Tambah konfirmasi "tekan sekali lagi untuk keluar" di halaman Home & Login biar gak kepencet
+  keluar aplikasi gak sengaja.
+- Tampilkan versi aplikasi di halaman Login & Pengaturan.
+
+**Kendala / catatan:**
+- Alur refresh token susah ditest karena access token expired-nya lama — perlu dipercepat masa
+  berlakunya (khusus environment testing) biar skenario refresh/401 bisa dicoba tanpa nunggu lama.
+
 ## 28 Agustus 2026
 
 **Dikerjakan:**
