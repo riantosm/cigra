@@ -33,6 +33,12 @@ export interface LoginResult {
   user: AuthUser;
 }
 
+export interface RefreshTokenResult {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;

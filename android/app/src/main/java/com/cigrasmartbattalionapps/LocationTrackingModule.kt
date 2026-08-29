@@ -36,4 +36,9 @@ class LocationTrackingModule(reactContext: ReactApplicationContext) :
   fun syncAuthToken(token: String?) {
     TrackingPrefs.setAuthToken(reactApplicationContext, token)
   }
+
+  @ReactMethod
+  fun getStoredAuthToken(promise: Promise) {
+    promise.resolve(TrackingPrefs.getAuthToken(reactApplicationContext))
+  }
 }

@@ -112,7 +112,7 @@ class LocationForegroundService : Service() {
 
     val notification = NotificationCompat.Builder(this, CHANNEL_ID)
       .setContentTitle("Smart Battalion aktif")
-      .setContentText("Lokasi Anda sedang dibagikan ke komando")
+      .setContentText("Text didieu naon nyak?")
       .setSmallIcon(R.drawable.ic_notification)
       .setOngoing(true)
       .setContentIntent(contentIntent)
@@ -166,35 +166,90 @@ class LocationForegroundService : Service() {
     val token = TrackingPrefs.getAuthToken(this) ?: return
 
     try {
-      val body = JSONObject().apply {
-        put("latitude", location.latitude)
-        put("longitude", location.longitude)
-        if (location.hasAccuracy()) put("accuracy", location.accuracy.toDouble())
-        if (location.hasAltitude()) put("altitude", location.altitude)
-        if (location.hasBearing()) put("heading", location.bearing.toDouble())
-        if (location.hasSpeed()) put("speed", location.speed.toDouble())
-        put("source", "mobile")
+      val responseCode = performUpload(location, token)
+      if (responseCode != 401) return
+
+      // Access token kedaluwarsa — coba refresh sekali (skema JWT-refresh: kirim token lama yang
+      // mau di-refresh sebagai Bearer, tanpa body, sama seperti kontrak yang dipakai axiosInstance
+      // di sisi JS) supaya ping lokasi yang baru gagal ini tidak hilang begitu saja.
+      val newToken = refreshToken(token)
+      if (newToken == null) {
+        // Refresh ditolak backend (mis. token sudah tidak bisa dipulihkan) — tidak ada gunanya
+        // terus polling tiap 45 detik dengan token yang sama-sama invalid, dan notifikasi
+        // persisten yang menyesatkan sebaiknya hilang. Sesi akan resmi ke-logout dari sisi JS
+        // (dispatch logout()) begitu app dibuka lagi dan axiosInstance mengulang percobaan refresh
+        // yang sama lalu gagal juga.
+        TrackingPrefs.setAuthToken(this, null)
+        stopSelf()
+        return
       }
 
-      val url = URL(BuildConfig.API_BASE_URL + "/locations")
-      val connection = url.openConnection() as HttpURLConnection
-      connection.requestMethod = "POST"
-      connection.setRequestProperty("Content-Type", "application/json")
-      connection.setRequestProperty("Accept", "application/json")
-      connection.setRequestProperty("Authorization", "Bearer $token")
-      connection.doOutput = true
-      connection.connectTimeout = 15_000
-      connection.readTimeout = 15_000
-      connection.outputStream.use { it.write(body.toString().toByteArray()) }
-
-      val responseCode = connection.responseCode
-      if (responseCode !in 200..299) {
-        val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() }
-        Log.w(TAG, "Upload lokasi gagal, kode: $responseCode, body: $errorBody")
+      TrackingPrefs.setAuthToken(this, newToken)
+      val retryCode = performUpload(location, newToken)
+      if (retryCode !in 200..299) {
+        Log.w(TAG, "Upload lokasi gagal setelah refresh token, kode: $retryCode")
       }
-      connection.disconnect()
     } catch (error: Exception) {
       Log.w(TAG, "Upload lokasi error", error)
+    }
+  }
+
+  private fun performUpload(location: Location, token: String): Int {
+    val body = JSONObject().apply {
+      put("latitude", location.latitude)
+      put("longitude", location.longitude)
+      if (location.hasAccuracy()) put("accuracy", location.accuracy.toDouble())
+      if (location.hasAltitude()) put("altitude", location.altitude)
+      if (location.hasBearing()) put("heading", location.bearing.toDouble())
+      if (location.hasSpeed()) put("speed", location.speed.toDouble())
+      put("source", "mobile")
+    }
+
+    val url = URL(BuildConfig.API_BASE_URL + "/locations")
+    val connection = url.openConnection() as HttpURLConnection
+    connection.requestMethod = "POST"
+    connection.setRequestProperty("Content-Type", "application/json")
+    connection.setRequestProperty("Accept", "application/json")
+    connection.setRequestProperty("Authorization", "Bearer $token")
+    connection.doOutput = true
+    connection.connectTimeout = 15_000
+    connection.readTimeout = 15_000
+    connection.outputStream.use { it.write(body.toString().toByteArray()) }
+
+    val responseCode = connection.responseCode
+    if (responseCode !in 200..299) {
+      val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() }
+      Log.w(TAG, "Upload lokasi gagal, kode: $responseCode, body: $errorBody")
+    }
+    connection.disconnect()
+    return responseCode
+  }
+
+  private fun refreshToken(oldToken: String): String? {
+    return try {
+      val url = URL(BuildConfig.API_BASE_URL + "/auth/refresh")
+      val connection = url.openConnection() as HttpURLConnection
+      connection.requestMethod = "POST"
+      connection.setRequestProperty("Accept", "application/json")
+      connection.setRequestProperty("Authorization", "Bearer $oldToken")
+      connection.connectTimeout = 15_000
+      connection.readTimeout = 15_000
+
+      val responseCode = connection.responseCode
+      val stream = if (responseCode in 200..299) connection.inputStream else connection.errorStream
+      val responseBody = stream?.bufferedReader()?.use { it.readText() }
+      connection.disconnect()
+
+      val json = responseBody?.let { JSONObject(it) }
+      if (json != null && json.optBoolean("success", false)) {
+        json.optJSONObject("data")?.optString("access_token")?.takeIf { it.isNotEmpty() }
+      } else {
+        Log.w(TAG, "Refresh token ditolak backend, kode: $responseCode, body: $responseBody")
+        null
+      }
+    } catch (error: Exception) {
+      Log.w(TAG, "Refresh token error", error)
+      null
     }
   }
 

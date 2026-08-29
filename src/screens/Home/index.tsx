@@ -4,7 +4,8 @@ import { MotiView } from 'moti';
 
 import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { refreshUser } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
 import {
@@ -16,6 +17,7 @@ import {
 import type { LocationErrorReason } from '@/utils/location';
 
 export default function HomeScreen() {
+  const dispatch = useAppDispatch();
   const user = useAppSelector(state => state.auth.user);
   const [locationIssue, setLocationIssue] = useState<{ reason: LocationErrorReason; message: string } | null>(
     null,
@@ -34,7 +36,10 @@ export default function HomeScreen() {
 
   useEffect(() => {
     ensureLocationReady();
-  }, [ensureLocationReady]);
+    // Home tidak pernah manggil API lain — pastikan sesi tetap divalidasi/di-refresh di sini juga,
+    // bukan cuma menunggu layar lain yang kebetulan manggil API.
+    dispatch(refreshUser());
+  }, [dispatch, ensureLocationReady]);
 
   useEffect(() => {
     // Pengguna biasanya mengaktifkan izin/GPS lewat Settings lalu kembali ke app —
@@ -42,10 +47,11 @@ export default function HomeScreen() {
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'active') {
         ensureLocationReady();
+        dispatch(refreshUser());
       }
     });
     return () => subscription.remove();
-  }, [ensureLocationReady]);
+  }, [dispatch, ensureLocationReady]);
 
   const isGpsIssue = locationIssue?.reason === 'gps-disabled';
 
