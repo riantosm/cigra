@@ -68,9 +68,34 @@ export const login = createAsyncThunk<LoginThunkResult, LoginPayload, { rejectVa
   },
 );
 
-export const refreshUser = createAsyncThunk('auth/refreshUser', async () => {
-  return await getMeApi();
-});
+// RootNavigator, Home, dan Profile masing-masing dispatch refreshUser() independen sebagai
+// safety-net sendiri-sendiri (lihat komentar di masing-masing lokasi) — akibatnya beberapa
+// dispatch bisa terjadi hampir bersamaan (mis. tepat setelah login: RootNavigator's isLogin
+// effect + Home's mount effect keduanya fire). Single-flight + jendela throttle singkat di
+// sini menggabungkan dispatch-dispatch yang tumpang tindih itu jadi maksimal satu request
+// /auth/me sungguhan, tanpa perlu menghapus safety-net independen di tiap lokasi.
+const REFRESH_DEDUPE_WINDOW_MS = 2000;
+let inFlightRefresh: Promise<AuthUser> | null = null;
+let lastRefreshedAt = 0;
+
+export const refreshUser = createAsyncThunk(
+  'auth/refreshUser',
+  async () => {
+    if (!inFlightRefresh) {
+      inFlightRefresh = getMeApi().finally(() => {
+        inFlightRefresh = null;
+        lastRefreshedAt = Date.now();
+      });
+    }
+    return await inFlightRefresh;
+  },
+  {
+    condition: () => {
+      if (inFlightRefresh) return true;
+      return Date.now() - lastRefreshedAt >= REFRESH_DEDUPE_WINDOW_MS;
+    },
+  },
+);
 
 function minimalAuthUser(user: OtpVerifyResult['user'], requiresPasswordChange: boolean): AuthUser {
   return {
