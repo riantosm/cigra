@@ -5,6 +5,7 @@ import type { IconName } from '@/components/atoms/Icon';
 import CatalogListSection from '@/components/molecules/CatalogListSection';
 import InfoRow from '@/components/molecules/InfoRow';
 import SectionCard from '@/components/molecules/SectionCard';
+import VehicleVisitorLogHistory from '@/components/molecules/VehicleVisitorLogHistory';
 import type { FilterField, FilterOption } from '@/components/organisms/FilterSheet';
 import PersitTabs from '@/screens/CatalogDetail/PersitTabs';
 import PersonnelTabs from '@/screens/CatalogDetail/PersonnelTabs';
@@ -296,12 +297,12 @@ export const catalogResourceConfigs: Record<
           <InfoRow
             icon="id-card"
             label="Nomor Rangka"
-            value={orDash(d.chassis_number)}
+            value={orDash(d.frame_number)}
           />
           <InfoRow
             icon="calendar"
             label="Masa Berlaku STNK"
-            value={formatDateShort(d.stnk_valid_until)}
+            value={formatDateShort(d.stnk_expired_at)}
           />
           <InfoRow icon="handbook" label="Catatan" value={orDash(d.notes)} />
         </SectionCard>
@@ -317,6 +318,7 @@ export const catalogResourceConfigs: Record<
             value={orDash(d.owner?.service_number)}
           />
         </SectionCard>
+        <VehicleVisitorLogHistory entries={d.visitor_log_history ?? []} />
       </>
     ),
     hasPhoto: true,

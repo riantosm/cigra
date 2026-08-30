@@ -136,10 +136,21 @@ export interface VehicleListItem {
   tenant_id: number;
 }
 
-// Belum ada data kendaraan di tenant ini untuk diverifikasi ke API asli — field selain yang sudah
-// dikonfirmasi lewat list (brand_model, plate_number, category, ownership_type, condition_status,
-// photo, owner) didesain berdasar deskripsi user, render-nya pakai orDash jadi aman kalau field asli
-// sedikit beda namanya.
+// Satu baris "log pos" kendaraan di detail Kendaraan — catatan keluar-masuk pos jaga kendaraan tsb.
+// Bentuknya mirip `PersonnelVisitorLogEntry`, tapi berisi data pengemudi/penumpang, bukan data
+// kendaraan (karena kendaraan-nya sendiri yang jadi subjek). Bentuk dikonfirmasi dari respons asli
+// `GET /catalog/vehicles/{id}`.
+export interface VehicleVisitorLogEntry {
+  id: number;
+  purpose: string | null;
+  entered_at: string | null;
+  exited_at: string | null;
+  status: string | null;
+  driver_passenger_name: string | null;
+  driver_passenger_phone: string | null;
+}
+
+// Bentuk dikonfirmasi dari respons asli `GET /catalog/vehicles/{id}`.
 export interface VehicleDetail {
   id: number;
   brand_model: string;
@@ -148,13 +159,20 @@ export interface VehicleDetail {
   ownership_type: string | null;
   condition_status: string | null;
   engine_number?: string | null;
-  chassis_number?: string | null;
-  stnk_valid_until?: string | null;
+  frame_number?: string | null;
+  stnk_expired_at?: string | null;
   notes?: string | null;
   photo: string | null;
-  owner: { service_number: string; full_name: string } | null;
+  owner: {
+    id?: number;
+    service_number: string;
+    full_name: string;
+    rank?: string | null;
+  } | null;
   is_active: boolean;
   tenant_id: number;
+  // Log pos kendaraan terakhir (keluar-masuk pos jaga). Boleh kosong / tidak dikirim → empty state.
+  visitor_log_history?: VehicleVisitorLogEntry[];
 }
 
 // --- Weapon categories ---
