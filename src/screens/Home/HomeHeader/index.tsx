@@ -4,12 +4,20 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { logo } from '@/assets';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
+import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import type { AuthUser } from '@/types';
+import { isDisplayablePhoto } from '@/utils/avatar';
+
+// Notifikasi dummy bawaan yang berstatus belum dibaca (lihat screens/Notifications) — dijumlahkan
+// dengan pengumuman yang dikirim komandan untuk angka badge lonceng.
+const BASE_UNREAD_NOTIFICATIONS = 2;
 
 export interface HomeHeaderProps {
   user: AuthUser | null;
   onAvatarPress: () => void;
+  onBellPress?: () => void;
 }
 
 function greetingForHour(hour: number): string {
@@ -22,12 +30,15 @@ function greetingForHour(hour: number): string {
 // Header dashboard Home — dipakai oleh SEMUA role (CommanderHome & MemberHome) supaya identitas
 // visual di layar utama konsisten, bukan cuma khusus komandan.
 export default function HomeHeader(props: HomeHeaderProps) {
-  const { user, onAvatarPress } = props;
+  const { user, onAvatarPress, onBellPress } = props;
   const [photoFailed, setPhotoFailed] = useState(false);
+  const sentAnnouncementCount = useAppSelector(state => state.announcements.sent.length);
+  const unreadCount = BASE_UNREAD_NOTIFICATIONS + sentAnnouncementCount;
   const personnel = user?.personnel;
   const displayName = personnel ? [personnel.rank, personnel.full_name].filter(Boolean).join(' ') : (user?.name ?? '-');
   const unitLabel = personnel?.current_assignment?.unit ?? '-';
   const roleLabel = user?.roles?.[0] ? user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1) : 'Prajurit';
+  const photoPath = personnel?.photo;
 
   return (
     <View style={styles.header}>
@@ -48,18 +59,25 @@ export default function HomeHeader(props: HomeHeaderProps) {
         </View>
       </View>
       <View style={styles.headerRight}>
-        <View style={styles.bellButton}>
+        <PressableScale
+          onPress={onBellPress}
+          disabled={!onBellPress}
+          contentStyle={styles.bellButton}
+          accessibilityRole="button"
+          accessibilityLabel="Notifikasi">
           <Icon name="bell" size={20} color={colors.text} />
-          <View style={styles.bellBadge}>
-            <Text style={styles.bellBadgeLabel}>4</Text>
-          </View>
-        </View>
+          {unreadCount > 0 ? (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeLabel}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+            </View>
+          ) : null}
+        </PressableScale>
         <PressableScale onPress={onAvatarPress}>
-          {personnel?.photo && !photoFailed ? (
-            <Image
-              source={{ uri: personnel.photo }}
+          {isDisplayablePhoto(photoPath) && !photoFailed ? (
+            <SecureImage
+              path={photoPath}
               style={styles.avatarImage}
-              onError={() => setPhotoFailed(true)}
+              onLoadError={() => setPhotoFailed(true)}
             />
           ) : (
             <View style={styles.avatarFallback}>

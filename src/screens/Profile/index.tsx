@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 
 import Badge from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
 import Card from '@/components/molecules/Card';
 import InfoRow from '@/components/molecules/InfoRow';
+import LocationStatusBadge from '@/components/molecules/LocationStatusBadge';
 import SectionCard from '@/components/molecules/SectionCard';
 import StatusModal from '@/components/organisms/StatusModal';
 import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
@@ -17,24 +19,13 @@ import { getMyLocationApi, sendLocationApi } from '@/services/api/location.servi
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
-import type { LocationStatus, MyLocationResult } from '@/types';
+import type { MyLocationResult } from '@/types';
+import { isDisplayablePhoto } from '@/utils/avatar';
 import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, genderLabel, orDash } from '@/utils/format';
-import { contentEnterTransition, pressTransition } from '@/utils/motion';
+import { contentEnterTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
 
 export type ProfileScreenProps = RootStackScreenProps<typeof ROUTES.profile>;
-
-const statusLabel: Record<LocationStatus, string> = {
-  fresh: 'Aktif',
-  stale: 'Tertunda',
-  offline: 'Offline',
-};
-
-const statusColor: Record<LocationStatus, string> = {
-  fresh: colors.success,
-  stale: colors.warning,
-  offline: colors.danger,
-};
 
 interface StatusModalState {
   visible: boolean;
@@ -66,9 +57,9 @@ export default function ProfileScreen(props: ProfileScreenProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [modal, setModal] = useState<StatusModalState>(closedModalState);
   const [photoFailed, setPhotoFailed] = useState(false);
-  const [permissionsExpanded, setPermissionsExpanded] = useState(false);
   const coords = myLocation?.location ?? null;
   const personnel = user?.personnel;
+  const photoPath = personnel?.photo;
   const isActive = personnel ? personnel.status === 'active' : (user?.is_active ?? true);
 
   function closeModal() {
@@ -79,7 +70,6 @@ export default function ProfileScreen(props: ProfileScreenProps) {
     setIsLoadingLocation(true);
     try {
       const result = await getMyLocationApi();
-      console.log('getMyLocationApi', result);
       setMyLocation(result);
     } catch {
       setMyLocation(null);
@@ -143,7 +133,19 @@ export default function ProfileScreen(props: ProfileScreenProps) {
   }
 
   return (
-    <MainLayout title="Profile" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Profile"
+      onBack={() => navigation.goBack()}
+      right={
+        <PressableScale
+          onPress={() => navigation.navigate(ROUTES.settings)}
+          hitSlop={12}
+          contentStyle={styles.headerAction}
+          accessibilityRole="button"
+          accessibilityLabel="Pengaturan">
+          <Icon name="settings" size={22} color={colors.text} />
+        </PressableScale>
+      }>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
@@ -156,11 +158,11 @@ export default function ProfileScreen(props: ProfileScreenProps) {
           transition={contentEnterTransition}>
           <Card style={styles.card}>
             <View style={styles.identityRow}>
-              {personnel?.photo && !photoFailed ? (
-                <Image
-                  source={{ uri: personnel.photo }}
+              {isDisplayablePhoto(photoPath) && !photoFailed ? (
+                <SecureImage
+                  path={photoPath}
                   style={styles.avatarImage}
-                  onError={() => setPhotoFailed(true)}
+                  onLoadError={() => setPhotoFailed(true)}
                 />
               ) : (
                 <View style={styles.avatar}>
@@ -211,42 +213,16 @@ export default function ProfileScreen(props: ProfileScreenProps) {
             </SectionCard>
           ) : null}
 
-          {(user?.roles?.length || user?.permissions?.length) ? (
+          {user?.roles?.length ? (
             <SectionCard icon="shield-check" title="Peran & Akses">
-              {user?.roles?.length ? (
-                <View style={styles.accessBlock}>
-                  <Text style={styles.accessLabel}>Peran (Role)</Text>
-                  <View style={styles.chipRow}>
-                    {user.roles.map(role => (
-                      <Badge key={role} label={role} variant="primary" />
-                    ))}
-                  </View>
+              <View style={styles.accessBlock}>
+                <Text style={styles.accessLabel}>Peran (Role)</Text>
+                <View style={styles.chipRow}>
+                  {user.roles.map(role => (
+                    <Badge key={role} label={role} variant="primary" />
+                  ))}
                 </View>
-              ) : null}
-              {user?.permissions?.length ? (
-                <View style={styles.accessBlock}>
-                  <PressableScale
-                    contentStyle={styles.accordionHeader}
-                    hitSlop={8}
-                    onPress={() => setPermissionsExpanded(value => !value)}>
-                    <Text style={styles.accessLabel}>Izin Akses (Permissions) · {user.permissions.length}</Text>
-                    <MotiView animate={{ rotate: permissionsExpanded ? '180deg' : '0deg' }} transition={pressTransition}>
-                      <Icon name="chevron-down" size={16} color={colors.textMuted} />
-                    </MotiView>
-                  </PressableScale>
-                  {permissionsExpanded ? (
-                    <MotiView
-                      from={{ opacity: 0, translateY: -4 }}
-                      animate={{ opacity: 1, translateY: 0 }}
-                      transition={pressTransition}
-                      style={styles.chipRow}>
-                      {user.permissions.map(permission => (
-                        <Badge key={permission} label={permission} variant="primary" />
-                      ))}
-                    </MotiView>
-                  ) : null}
-                </View>
-              ) : null}
+              </View>
             </SectionCard>
           ) : null}
 
@@ -256,25 +232,22 @@ export default function ProfileScreen(props: ProfileScreenProps) {
                 <Icon name="map-pin" size={18} color={colors.primary} />
                 <Text style={styles.locationTitle}>Posisi Saya</Text>
               </View>
-              <View style={styles.locationHeaderActions}>
-                {myLocation ? (
-                  <View style={[styles.statusBadge, { backgroundColor: statusColor[myLocation.status] }]}>
-                    <Text style={styles.statusBadgeLabel}>{statusLabel[myLocation.status]}</Text>
-                  </View>
-                ) : null}
-                <PressableScale
-                  onPress={handleManualUpdate}
-                  disabled={isUpdatingLocation}
-                  hitSlop={8}
-                  contentStyle={styles.refreshButton}>
-                  {isUpdatingLocation ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <Text style={styles.refreshGlyph}>⟳</Text>
-                  )}
-                </PressableScale>
-              </View>
+              <PressableScale
+                onPress={handleManualUpdate}
+                disabled={isUpdatingLocation}
+                hitSlop={8}
+                contentStyle={styles.refreshButton}>
+                {isUpdatingLocation ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Text style={styles.refreshGlyph}>⟳</Text>
+                )}
+              </PressableScale>
             </View>
+
+            {myLocation ? (
+              <LocationStatusBadge status={myLocation.status} timestamp={coords?.captured_at} />
+            ) : null}
 
             {isLoadingLocation ? (
               <Text style={styles.locationMuted}>Memuat posisi...</Text>
@@ -313,6 +286,12 @@ export default function ProfileScreen(props: ProfileScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerAction: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -399,11 +378,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  locationHeaderActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   locationTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -415,16 +389,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  statusBadgeLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primaryForeground,
   },
   refreshButton: {
     height: 28,

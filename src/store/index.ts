@@ -12,17 +12,19 @@ import {
 } from 'redux-persist';
 
 import { apiSyncMiddleware } from '@/store/middleware/apiSyncMiddleware';
+import announcementReducer from '@/store/slices/announcementSlice';
 import authReducer from '@/store/slices/authSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  announcements: announcementReducer,
 });
 
 const persistedReducer = persistReducer(
   {
     key: 'root',
     storage: AsyncStorage,
-    whitelist: ['auth'],
+    whitelist: ['auth', 'announcements'],
   },
   rootReducer,
 );

@@ -5,6 +5,9 @@ import type { IconName } from '@/components/atoms/Icon';
 import CatalogListSection from '@/components/molecules/CatalogListSection';
 import InfoRow from '@/components/molecules/InfoRow';
 import SectionCard from '@/components/molecules/SectionCard';
+import type { FilterField, FilterOption } from '@/components/organisms/FilterSheet';
+import PersitTabs from '@/screens/CatalogDetail/PersitTabs';
+import PersonnelTabs from '@/screens/CatalogDetail/PersonnelTabs';
 import {
   getPersitDetailApi,
   getPersitListApi,
@@ -17,11 +20,12 @@ import {
   getWeaponCategoryDetailApi,
   getWeaponCategoriesListApi,
 } from '@/services/api/catalog.service';
-import type { CatalogListParams, CatalogListResult } from '@/services/api/catalog.service';
-import { colors } from '@/theme/colors';
 import type {
-  CatalogResourceKey,
-} from '@/navigation/types';
+  CatalogListParams,
+  CatalogListResult,
+} from '@/services/api/catalog.service';
+import { colors } from '@/theme/colors';
+import type { CatalogResourceKey } from '@/navigation/types';
 import type {
   PersitDetail,
   PersitListItem,
@@ -34,26 +38,28 @@ import type {
   WeaponCategoryDetail,
   WeaponCategoryListItem,
 } from '@/types';
-import { formatBirth, formatDateShort, formatDateTime, genderLabel, joinFields, orDash, titleCase } from '@/utils/format';
+import {
+  formatDateShort,
+  formatDateTime,
+  joinFields,
+  orDash,
+  titleCase,
+} from '@/utils/format';
+import { initialsAvatarUrl } from '@/utils/avatar';
 
 export interface CatalogListItem {
   id: string;
   title: string;
   subtitle: string;
+  avatarUrl?: string;
   badgeLabel?: string;
   badgeVariant?: BadgeVariant;
 }
 
-export interface CatalogFilterOption {
-  label: string;
-  value: string;
-}
-
-export interface CatalogFilterField {
-  key: string;
-  label: string;
-  options: CatalogFilterOption[];
-}
+// Alias ke tipe generik FilterSheet — dipertahankan supaya referensi `CatalogFilterField` di
+// tempat lain (mis. komentar di catalog.service.ts) tetap bermakna.
+export type CatalogFilterOption = FilterOption;
+export type CatalogFilterField = FilterField;
 
 export interface CatalogDetailHeader {
   photo?: string | null;
@@ -78,11 +84,30 @@ export interface CatalogResourceConfig<ListSource = any, Detail = any> {
   // dokumentasi `Query filter` masing-masing endpoint) — resource tanpa ini tidak menampilkan
   // ikon filter sama sekali di CatalogList.
   filterFields?: CatalogFilterField[];
-  fetchList: (params: CatalogListParams) => Promise<CatalogListResult<ListSource>>;
+  fetchList: (
+    params: CatalogListParams,
+  ) => Promise<CatalogListResult<ListSource>>;
   fetchDetail: (id: string) => Promise<Detail>;
   toListItem: (item: ListSource) => CatalogListItem;
   detailHeader: (detail: Detail) => CatalogDetailHeader;
-  renderDetail: (detail: Detail) => ReactNode;
+  // `header` (arg ke-2) cuma dipakai resource dengan `tabbedDetail: true` — di situ header card-nya
+  // di-render DI DALAM tab container (bukan di luar seperti resource lain) supaya bisa ikut collapse
+  // pas discroll (lihat CatalogDetail/index.tsx & PersonnelTabs). `onRefresh` (arg ke-3) juga cuma
+  // dipakai di situ — trigger pull-to-refresh punya PersonnelTabs sendiri buat refetch `detail`
+  // (data personel) bareng data ekstra yang PersonnelTabs kelola sendiri (senjata/lokasi).
+  // `initialTab` (arg ke-4) cuma dipakai resource ber-`tabbedDetail` — nama tab awal yang dibuka
+  // (mis. navigasi dari daftar Lokasi Personel / Emergency langsung ke tab "location").
+  renderDetail: (
+    detail: Detail,
+    header?: ReactNode,
+    onRefresh?: () => Promise<void>,
+    initialTab?: string,
+  ) => ReactNode;
+  // Personnel pakai top tab navigator dengan collapsing header (header card ikut scroll lalu
+  // tab bar menempel di bawah nav bar) yang butuh area ber-flex tetap, bukan ikut nge-scroll
+  // vertikal bareng header lewat ScrollView terpisah — resource lain masih pakai satu ScrollView
+  // vertikal biasa buat header+detail.
+  tabbedDetail?: boolean;
 }
 
 function statusBadgeVariant(status: string | null | undefined): BadgeVariant {
@@ -93,7 +118,10 @@ function statusBadgeLabel(status: string | null | undefined): string {
   return status === 'active' ? 'AKTIF' : orDash(status).toUpperCase();
 }
 
-export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceConfig> = {
+export const catalogResourceConfigs: Record<
+  CatalogResourceKey,
+  CatalogResourceConfig
+> = {
   personnel: {
     menuTitle: 'Personel',
     menuSubtitle: 'Data personel satuan',
@@ -136,11 +164,14 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
       id: p.service_number,
       title: p.full_name,
       subtitle: joinFields(p.rank, p.unit),
+      // Penanda "resource ini punya kolom avatar" — `isDisplayablePhoto` menyaring URL ui-avatars
+      // ini jadi tidak pernah benar-benar di-request; ListAvatar menampilkan fallback inisial.
+      avatarUrl: initialsAvatarUrl(p.full_name),
       badgeLabel: statusBadgeLabel(p.status),
       badgeVariant: statusBadgeVariant(p.status),
     }),
     detailHeader: (d: PersonnelDetail) => ({
-      photo: d.photo,
+      photo: d.photo ?? null,
       title: d.full_name,
       badgeLabel: statusBadgeLabel(d.status),
       badgeVariant: statusBadgeVariant(d.status),
@@ -149,46 +180,13 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
         { icon: 'phone', text: orDash(d.phone) },
       ],
     }),
-    renderDetail: (d: PersonnelDetail) => (
-      <>
-        <SectionCard icon="profile" title="Data Personel">
-          <InfoRow icon="rank" label="Pangkat" value={orDash(d.rank)} />
-          <InfoRow icon="profile" label="Jenis Kelamin" value={genderLabel(d.gender)} />
-          <InfoRow icon="cake" label="Tempat, Tanggal Lahir" value={formatBirth(d.birth_place, d.birth_date_formatted)} />
-          <InfoRow icon="blood-drop" label="Golongan Darah" value={orDash(d.blood_type)} />
-          <InfoRow icon="map-pin" label="Alamat" value={orDash(d.address)} />
-        </SectionCard>
-        <SectionCard icon="briefcase" title="Penugasan Saat Ini">
-          <InfoRow icon="briefcase" label="Jabatan" value={orDash(d.current_assignment?.position)} />
-          <InfoRow icon="building" label="Satuan" value={orDash(d.current_assignment?.unit)} />
-          <InfoRow icon="calendar" label="Sejak" value={formatDateShort(d.current_assignment?.start_date)} />
-        </SectionCard>
-        <CatalogListSection
-          icon="history"
-          title="Riwayat Penugasan"
-          items={d.assignment_history.map(h => ({
-            title: orDash(h.unit),
-            subtitle: joinFields(
-              h.position,
-              `${formatDateShort(h.start_date)} – ${h.end_date ? formatDateShort(h.end_date) : 'sekarang'}`,
-            ),
-          }))}
-        />
-        <CatalogListSection
-          icon="users"
-          title="Anggota Keluarga"
-          items={d.family_members.map(f => ({
-            title: f.full_name,
-            subtitle: joinFields(titleCase(f.family_relation), f.membership_number),
-          }))}
-        />
-        <SectionCard icon="heartbeat" title="Ringkasan Kesehatan">
-          <InfoRow icon="heartbeat" label="Total Pemeriksaan" value={String(d.health_summary.total_records)} />
-          <InfoRow icon="calendar" label="Terakhir Diperiksa" value={formatDateTime(d.health_summary.last_examined_at) ?? '-'} />
-          <InfoRow icon="shield-check" label="Hasil Terakhir" value={orDash(d.health_summary.last_result)} />
-        </SectionCard>
-      </>
-    ),
+    renderDetail: (
+      d: PersonnelDetail,
+      header?: ReactNode,
+      onRefresh?: () => Promise<void>,
+      initialTab?: string,
+    ) => <PersonnelTabs detail={d} header={header} onRefresh={onRefresh} initialTabName={initialTab} />,
+    tabbedDetail: true,
   },
 
   persit: {
@@ -209,7 +207,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
       badgeVariant: statusBadgeVariant(p.status),
     }),
     detailHeader: (d: PersitDetail) => ({
-      photo: d.photo,
+      photo: d.photo ?? null,
       title: d.full_name,
       badgeLabel: statusBadgeLabel(d.status),
       badgeVariant: statusBadgeVariant(d.status),
@@ -218,22 +216,13 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
         { icon: 'phone', text: orDash(d.phone) },
       ],
     }),
-    renderDetail: (d: PersitDetail) => (
-      <>
-        <SectionCard icon="profile" title="Data Pribadi">
-          <InfoRow icon="users" label="Hubungan Keluarga" value={orDash(titleCase(d.family_relation))} />
-          <InfoRow icon="cake" label="Tempat, Tanggal Lahir" value={formatBirth(d.birth_place, d.birth_date_formatted)} />
-          <InfoRow icon="blood-drop" label="Golongan Darah" value={orDash(d.blood_type)} />
-          <InfoRow icon="map-pin" label="Alamat" value={orDash(d.address)} />
-          <InfoRow icon="briefcase" label="Pekerjaan" value={orDash(d.occupation)} />
-        </SectionCard>
-        <SectionCard icon="shield-check" title="Data Suami/Istri">
-          <InfoRow icon="profile" label="Nama" value={orDash(d.spouse?.full_name)} />
-          <InfoRow icon="id-card" label="Nomor Dinas" value={orDash(d.spouse?.service_number)} />
-          <InfoRow icon="rank" label="Pangkat" value={orDash(d.spouse?.rank)} />
-        </SectionCard>
-      </>
-    ),
+    renderDetail: (
+      d: PersitDetail,
+      header?: ReactNode,
+      onRefresh?: () => Promise<void>,
+      initialTab?: string,
+    ) => <PersitTabs detail={d} header={header} onRefresh={onRefresh} initialTabName={initialTab} />,
+    tabbedDetail: true,
   },
 
   vehicles: {
@@ -254,7 +243,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
       badgeVariant: v.is_active ? 'success' : 'neutral',
     }),
     detailHeader: (d: VehicleDetail) => ({
-      photo: d.photo,
+      photo: d.photo ?? null,
       title: d.brand_model,
       badgeLabel: d.is_active ? 'AKTIF' : 'NONAKTIF',
       badgeVariant: d.is_active ? 'success' : 'neutral',
@@ -266,16 +255,44 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     renderDetail: (d: VehicleDetail) => (
       <>
         <SectionCard icon="car" title="Detail Kendaraan">
-          <InfoRow icon="shield-check" label="Kepemilikan" value={orDash(titleCase(d.ownership_type))} />
-          <InfoRow icon="car" label="Kondisi" value={orDash(titleCase(d.condition_status))} />
-          <InfoRow icon="id-card" label="Nomor Mesin" value={orDash(d.engine_number)} />
-          <InfoRow icon="id-card" label="Nomor Rangka" value={orDash(d.chassis_number)} />
-          <InfoRow icon="calendar" label="Masa Berlaku STNK" value={formatDateShort(d.stnk_valid_until)} />
+          <InfoRow
+            icon="shield-check"
+            label="Kepemilikan"
+            value={orDash(titleCase(d.ownership_type))}
+          />
+          <InfoRow
+            icon="car"
+            label="Kondisi"
+            value={orDash(titleCase(d.condition_status))}
+          />
+          <InfoRow
+            icon="id-card"
+            label="Nomor Mesin"
+            value={orDash(d.engine_number)}
+          />
+          <InfoRow
+            icon="id-card"
+            label="Nomor Rangka"
+            value={orDash(d.chassis_number)}
+          />
+          <InfoRow
+            icon="calendar"
+            label="Masa Berlaku STNK"
+            value={formatDateShort(d.stnk_valid_until)}
+          />
           <InfoRow icon="handbook" label="Catatan" value={orDash(d.notes)} />
         </SectionCard>
         <SectionCard icon="profile" title="Pemilik">
-          <InfoRow icon="profile" label="Nama" value={orDash(d.owner?.full_name)} />
-          <InfoRow icon="id-card" label="Nomor Dinas" value={orDash(d.owner?.service_number)} />
+          <InfoRow
+            icon="profile"
+            label="Nama"
+            value={orDash(d.owner?.full_name)}
+          />
+          <InfoRow
+            icon="id-card"
+            label="Nomor Dinas"
+            value={orDash(d.owner?.service_number)}
+          />
         </SectionCard>
       </>
     ),
@@ -310,16 +327,32 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     renderDetail: (d: WeaponCategoryDetail) => (
       <>
         <SectionCard icon="weapon" title="Detail Kategori">
-          <InfoRow icon="weapon" label="Tipe Senjata" value={orDash(d.weapon_type)} />
-          <InfoRow icon="shield-check" label="Kaliber" value={orDash(d.caliber)} />
-          <InfoRow icon="handbook" label="Deskripsi" value={orDash(d.description)} />
+          <InfoRow
+            icon="weapon"
+            label="Tipe Senjata"
+            value={orDash(d.weapon_type)}
+          />
+          <InfoRow
+            icon="shield-check"
+            label="Kaliber"
+            value={orDash(d.caliber)}
+          />
+          <InfoRow
+            icon="handbook"
+            label="Deskripsi"
+            value={orDash(d.description)}
+          />
         </SectionCard>
         <CatalogListSection
           icon="weapon"
           title="Daftar Senjata"
           items={d.weapons.map(w => ({
             title: w.weapon_number,
-            subtitle: joinFields(w.serial_number, titleCase(w.condition_status), titleCase(w.inventory_status)),
+            subtitle: joinFields(
+              w.serial_number,
+              titleCase(w.condition_status),
+              titleCase(w.inventory_status),
+            ),
           }))}
         />
       </>
@@ -355,19 +388,51 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     renderDetail: (d: WeaponAssignmentDetail) => (
       <>
         <SectionCard icon="weapon" title="Detail Senjata">
-          <InfoRow icon="weapon" label="Kategori" value={orDash(titleCase(d.weapon.category))} />
-          <InfoRow icon="shield-check" label="Kaliber" value={orDash(d.weapon.caliber)} />
-          <InfoRow icon="car" label="Kondisi" value={orDash(titleCase(d.weapon.condition_status))} />
-          <InfoRow icon="building" label="Status Inventaris" value={orDash(titleCase(d.weapon.inventory_status))} />
+          <InfoRow
+            icon="weapon"
+            label="Kategori"
+            value={orDash(titleCase(d.weapon.category))}
+          />
+          <InfoRow
+            icon="shield-check"
+            label="Kaliber"
+            value={orDash(d.weapon.caliber)}
+          />
+          <InfoRow
+            icon="car"
+            label="Kondisi"
+            value={orDash(titleCase(d.weapon.condition_status))}
+          />
+          <InfoRow
+            icon="building"
+            label="Status Inventaris"
+            value={orDash(titleCase(d.weapon.inventory_status))}
+          />
         </SectionCard>
         <SectionCard icon="calendar" title="Detail Penugasan">
-          <InfoRow icon="calendar" label="Ditugaskan" value={formatDateTime(d.assigned_at) ?? '-'} />
-          <InfoRow icon="calendar" label="Dikembalikan" value={d.returned_at ? (formatDateTime(d.returned_at) ?? '-') : '-'} />
+          <InfoRow
+            icon="calendar"
+            label="Ditugaskan"
+            value={formatDateTime(d.assigned_at) ?? '-'}
+          />
+          <InfoRow
+            icon="calendar"
+            label="Dikembalikan"
+            value={d.returned_at ? formatDateTime(d.returned_at) ?? '-' : '-'}
+          />
           <InfoRow icon="handbook" label="Catatan" value={orDash(d.notes)} />
         </SectionCard>
         <SectionCard icon="profile" title="Ditugaskan Kepada">
-          <InfoRow icon="profile" label="Nama" value={orDash(d.assigned_to?.full_name)} />
-          <InfoRow icon="id-card" label="Nomor Dinas" value={orDash(d.assigned_to?.service_number)} />
+          <InfoRow
+            icon="profile"
+            label="Nama"
+            value={orDash(d.assigned_to?.full_name)}
+          />
+          <InfoRow
+            icon="id-card"
+            label="Nomor Dinas"
+            value={orDash(d.assigned_to?.service_number)}
+          />
         </SectionCard>
       </>
     ),

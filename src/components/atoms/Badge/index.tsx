@@ -1,6 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
 
+import Icon from '@/components/atoms/Icon';
+import type { IconName } from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
 
 export type BadgeVariant = 'success' | 'primary' | 'neutral';
@@ -8,6 +10,9 @@ export type BadgeVariant = 'success' | 'primary' | 'neutral';
 export interface BadgeProps extends ViewProps {
   label: string;
   variant?: BadgeVariant;
+  // Kalau diisi, gantikan dot bawaan (dot cuma muncul di variant success) — dipakai buat pill
+  // status yang butuh ikon spesifik (mis. status lokasi personel).
+  icon?: IconName;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -24,12 +29,21 @@ const labelVariantColor: Record<BadgeVariant, string> = {
 };
 
 export default function Badge(props: BadgeProps) {
-  const { label, variant = 'neutral', style, ...rest } = props;
+  const { label, variant = 'neutral', icon, style, ...rest } = props;
 
   return (
-    <View style={[styles.container, containerVariantStyle[variant], style]} {...rest}>
-      {variant === 'success' ? <View style={[styles.dot, { backgroundColor: colors.success }]} /> : null}
-      <Text style={[styles.label, { color: labelVariantColor[variant] }]}>{label}</Text>
+    <View
+      style={[styles.container, containerVariantStyle[variant], style]}
+      {...rest}
+    >
+      {icon ? (
+        <Icon name={icon} size={13} color={labelVariantColor[variant]} />
+      ) : variant === 'success' ? (
+        <View style={[styles.dot, { backgroundColor: colors.success }]} />
+      ) : null}
+      <Text style={[styles.label, { color: labelVariantColor[variant] }]}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -52,5 +66,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '600',
+    textTransform: 'uppercase',
   },
 });

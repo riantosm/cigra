@@ -5,7 +5,9 @@ import type {
   LocationStatus,
   MyLocationResult,
   PaginationMeta,
+  PersonnelLocationDetail,
   PersonnelLocationOverviewItem,
+  PersonnelLocationPoint,
   SendLocationPayload,
 } from '@/types';
 
@@ -40,4 +42,32 @@ export async function getLocationsOverviewApi(params: LocationsOverviewParams = 
     filters: LocationsOverviewFilters;
   }>('/locations/overview', { params });
   return { items: data.data, meta: data.meta, filters: data.filters };
+}
+
+// {personnel} = NRP (service_number), sama seperti getPersonnelDetailApi di catalog.service.ts.
+export async function getPersonnelLocationDetailApi(serviceNumber: string): Promise<PersonnelLocationDetail> {
+  const { data } = await axiosInstance.get<ApiResponse<PersonnelLocationDetail>>(`/locations/${serviceNumber}`);
+  return data.data;
+}
+
+export interface PersonnelLocationHistoryParams {
+  page?: number;
+  from?: string;
+  to?: string;
+}
+
+export interface PersonnelLocationHistoryResult {
+  items: PersonnelLocationPoint[];
+  meta: PaginationMeta;
+}
+
+export async function getPersonnelLocationHistoryApi(
+  serviceNumber: string,
+  params: PersonnelLocationHistoryParams = {},
+): Promise<PersonnelLocationHistoryResult> {
+  const { data } = await axiosInstance.get<{ success: boolean; data: PersonnelLocationPoint[]; meta: PaginationMeta }>(
+    `/locations/${serviceNumber}/history`,
+    { params },
+  );
+  return { items: data.data, meta: data.meta };
 }

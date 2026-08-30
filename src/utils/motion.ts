@@ -10,3 +10,9 @@ export const pressTransition = timing(120);
 export const screenEnterTransition = timing(350);
 export const contentEnterTransition = timing(400);
 export const authEnterTransition = timing(450);
+export const tabSlideTransition = timing(220);
+
+// Radar-style outward ping — used for the Emergency screen's expanding rings. Several rings share
+// this with staggered `delay`s so a new one is always mid-pulse, giving a continuous radar look.
+export const radarRingTransition = (delay: number): MotiTransitionProp<any> =>
+  ({ type: 'timing', duration: 2400, loop: true, delay, repeatReverse: false }) as MotiTransitionProp<any>;

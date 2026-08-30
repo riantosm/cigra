@@ -1,19 +1,34 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import Badge from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import TextField from '@/components/atoms/TextField';
 import Card from '@/components/molecules/Card';
+import FilterSheet from '@/components/organisms/FilterSheet';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
-import FilterSheet from '@/screens/CatalogList/FilterSheet';
 import { colors } from '@/theme/colors';
+import { isDisplayablePhoto } from '@/utils/avatar';
 import type { CatalogListItem } from '@/utils/catalogResources';
 import { catalogResourceConfigs } from '@/utils/catalogResources';
 import { extractErrorMessage } from '@/utils/format';
+
+function ListAvatar({ item }: { item: CatalogListItem }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!isDisplayablePhoto(item.avatarUrl) || failed) {
+    return (
+      <View style={styles.avatarFallback}>
+        <Text style={styles.avatarFallbackLabel}>{item.title.charAt(0).toUpperCase()}</Text>
+      </View>
+    );
+  }
+
+  return <Image source={{ uri: item.avatarUrl }} style={styles.avatar} onError={() => setFailed(true)} />;
+}
 
 const SEARCH_DEBOUNCE_MS = 1000;
 
@@ -141,6 +156,7 @@ export default function CatalogListScreen(props: Props) {
                 scaleTo={0.98}
                 onPress={() => navigation.navigate(ROUTES.catalogDetail, { resource, id: item.id })}>
                 <Card style={styles.row}>
+                  {item.avatarUrl ? <ListAvatar item={item} /> : null}
                   <View style={styles.rowText}>
                     <Text style={styles.rowTitle}>{item.title}</Text>
                     <Text style={styles.rowSubtitle}>{item.subtitle}</Text>
@@ -232,6 +248,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  avatar: {
+    height: 44,
+    width: 44,
+    borderRadius: 22,
+    backgroundColor: colors.neutralSurface,
+  },
+  avatarFallback: {
+    height: 44,
+    width: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  avatarFallbackLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primaryForeground,
   },
   rowText: {
     flex: 1,

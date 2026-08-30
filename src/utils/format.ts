@@ -54,6 +54,35 @@ export function formatDateTime(date: string | null | undefined): string | null {
   return `${datePart}, ${timePart}`;
 }
 
+// Jarak waktu relatif dalam Bahasa Indonesia dengan granularitas detik → menit → jam → hari →
+// minggu → bulan → tahun ("5 detik lalu", "3 menit lalu", "2 hari lalu", "1 minggu lalu", ...).
+// Pakai floor supaya "5 detik lalu" muncul persis di detik ke-5, cocok untuk badge yang tick
+// tiap detik (lihat useSecondsTick + LocationStatusBadge).
+export function formatRelativeTime(date: string | null | undefined): string | null {
+  if (!date) return null;
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const diffSec = Math.floor((Date.now() - parsed.getTime()) / 1000);
+  if (diffSec < 1) return 'baru saja';
+  if (diffSec < 60) return `${diffSec} detik lalu`;
+
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} jam lalu`;
+
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay} hari lalu`;
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)} minggu lalu`;
+
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth} bulan lalu`;
+
+  return `${Math.floor(diffMonth / 12)} tahun lalu`;
+}
+
 export function extractErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
     const message = error.response?.data?.message;

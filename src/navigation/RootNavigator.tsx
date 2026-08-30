@@ -10,11 +10,17 @@ import { locationTracking } from '@/native/locationTracking';
 import CatalogDetailScreen from '@/screens/CatalogDetail';
 import CatalogListScreen from '@/screens/CatalogList';
 import ChangePasswordScreen from '@/screens/ChangePassword';
+import AlarmSatuanScreen from '@/screens/AlarmSatuan';
 import ComingSoonScreen from '@/screens/ComingSoon';
+import EmergencyListScreen from '@/screens/EmergencyList';
 import ForgotPasswordScreen from '@/screens/ForgotPassword';
 import LoginScreen from '@/screens/Login';
+import NotificationsScreen from '@/screens/Notifications';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
+import PersonnelTrackingScreen from '@/screens/PersonnelTracking';
 import ProfileScreen from '@/screens/Profile';
+import SendAnnouncementScreen from '@/screens/SendAnnouncement';
+import SettingsScreen from '@/screens/Settings';
 import { getAuthToken, setAuthToken } from '@/services/api/axiosInstance';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
@@ -97,8 +103,14 @@ export default function RootNavigator() {
       <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
       <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
       <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />
+      <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
       <Stack.Screen name={ROUTES.comingSoon} component={ComingSoonScreen} />
       <Stack.Screen name={ROUTES.personnelMap} component={PersonnelMapScreen} />
+      <Stack.Screen name={ROUTES.personnelTracking} component={PersonnelTrackingScreen} />
+      <Stack.Screen name={ROUTES.notifications} component={NotificationsScreen} />
+      <Stack.Screen name={ROUTES.emergencyList} component={EmergencyListScreen} />
+      <Stack.Screen name={ROUTES.sendAnnouncement} component={SendAnnouncementScreen} />
+      <Stack.Screen name={ROUTES.alarmSatuan} component={AlarmSatuanScreen} />
     </Stack.Navigator>
   );
 }

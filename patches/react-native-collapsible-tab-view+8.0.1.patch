@@ -1,0 +1,39 @@
+diff --git a/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js b/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js
+index 4c383f7..aed80d6 100644
+--- a/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js
++++ b/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js
+@@ -156,7 +156,7 @@ const Container = exports.Container = /*#__PURE__*/_react.default.memo(/*#__PURE
+     timeSinceFirstFrame
+   }) => {
+     syncCurrentTabScrollPosition();
+-    if (timeSinceFirstFrame > 1500) {
++    if (timeSinceFirstFrame > 200) {
+       (0, _reactNativeReanimated.runOnJS)(toggleSyncScrollFrame)(false);
+     }
+   }, false);
+diff --git a/node_modules/react-native-collapsible-tab-view/lib/module/Container.js b/node_modules/react-native-collapsible-tab-view/lib/module/Container.js
+index 50c3da7..d6c78ed 100644
+--- a/node_modules/react-native-collapsible-tab-view/lib/module/Container.js
++++ b/node_modules/react-native-collapsible-tab-view/lib/module/Container.js
+@@ -149,7 +149,7 @@ export const Container = /*#__PURE__*/React.memo(/*#__PURE__*/React.forwardRef((
+     timeSinceFirstFrame
+   }) => {
+     syncCurrentTabScrollPosition();
+-    if (timeSinceFirstFrame > 1500) {
++    if (timeSinceFirstFrame > 200) {
+       runOnJS(toggleSyncScrollFrame)(false);
+     }
+   }, false);
+diff --git a/node_modules/react-native-collapsible-tab-view/src/Container.tsx b/node_modules/react-native-collapsible-tab-view/src/Container.tsx
+index e782b90..dd860c7 100644
+--- a/node_modules/react-native-collapsible-tab-view/src/Container.tsx
++++ b/node_modules/react-native-collapsible-tab-view/src/Container.tsx
+@@ -230,7 +230,7 @@ export const Container = React.memo(
+         syncScrollFrame.setActive(toggle)
+       const syncScrollFrame = useFrameCallback(({ timeSinceFirstFrame }) => {
+         syncCurrentTabScrollPosition()
+-        if (timeSinceFirstFrame > 1500) {
++        if (timeSinceFirstFrame > 200) {
+           runOnJS(toggleSyncScrollFrame)(false)
+         }
+       }, false)

@@ -57,3 +57,20 @@ export interface LocationsOverviewFilters {
   status: LocationStatus | null;
   unit_id: number | null;
 }
+
+export interface PersonnelLocationProfile {
+  id: number;
+  service_number: string;
+  full_name: string;
+  rank: string | null;
+  unit: string | null;
+  tenant_id: number;
+}
+
+// GET /locations/{personnel} — profil + posisi terkini + status + 50 riwayat pergerakan terakhir.
+export interface PersonnelLocationDetail {
+  profile: PersonnelLocationProfile;
+  location: PersonnelLocationPoint | null;
+  status: LocationStatus;
+  history: PersonnelLocationPoint[];
+}

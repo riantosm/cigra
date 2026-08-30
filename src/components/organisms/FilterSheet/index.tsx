@@ -5,16 +5,28 @@ import Button from '@/components/atoms/Button';
 import PressableScale from '@/components/atoms/PressableScale';
 import BottomSheet from '@/components/organisms/BottomSheet';
 import { colors } from '@/theme/colors';
-import type { CatalogFilterField } from '@/utils/catalogResources';
+
+export interface FilterOption {
+  label: string;
+  value: string;
+}
+
+export interface FilterField {
+  key: string;
+  label: string;
+  options: FilterOption[];
+}
 
 export interface FilterSheetProps {
   visible: boolean;
-  fields: CatalogFilterField[];
+  fields: FilterField[];
   value: Record<string, string>;
   onApply: (value: Record<string, string>) => void;
   onRequestClose: () => void;
 }
 
+// Bottom sheet filter generik: satu grup chip pilih-satu per `field`, tombol Reset + Terapkan.
+// Dipakai CatalogList (filter status/gender/gol. darah) dan daftar Lokasi Personel (filter status).
 export default function FilterSheet(props: FilterSheetProps) {
   const { visible, fields, value, onApply, onRequestClose } = props;
   const [draft, setDraft] = useState(value);

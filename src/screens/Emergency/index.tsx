@@ -1,148 +1,74 @@
-import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
-import axios from 'axios';
 
-import Button from '@/components/atoms/Button';
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import StatusModal from '@/components/organisms/StatusModal';
-import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
-import HomeHeader from '@/screens/Home/HomeHeader';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
-import { ROUTES } from '@/navigation/paths';
-import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
-import { sendPanicButtonApi } from '@/services/api/panicButton.service';
-import { useAppSelector } from '@/store/hooks';
+import { usePanicButton } from '@/hooks/usePanicButton';
 import { colors } from '@/theme/colors';
-import { contentEnterTransition } from '@/utils/motion';
-import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
-import { displayLocalEmergencyAlert } from '@/utils/pushNotifications';
+import { triggerHapticFeedback } from '@/utils/haptics';
+import { contentEnterTransition, radarRingTransition } from '@/utils/motion';
 
-type EmergencyNavigationProp = CompositeNavigationProp<
-  MainTabScreenProps<'Emergency'>['navigation'],
-  NativeStackNavigationProp<RootStackParamList>
->;
+// Staggered so a new ring starts its outward ping while the previous one is still fading —
+// otherwise all three would pulse in lockstep instead of reading as a continuous radar sweep.
+// Hoisted to module scope (not built inline in JSX) so the objects keep a stable identity across
+// re-renders — e.g. isSending flipping while a signal is sending. A fresh `transition` object on
+// every render made moti treat the loop as a brand new animation and restart it from scratch,
+// which read as the rings suddenly jumping/resetting instead of pulsing continuously.
+const RING_FROM = { scale: 1, opacity: 0.5 };
+const RING_ANIMATE = { scale: 2.4, opacity: 0 };
+const RING_PULSES = [0, 800, 1600].map(delay => ({ delay, transition: radarRingTransition(delay) }));
 
-export interface EmergencyScreenProps {
-  navigation: EmergencyNavigationProp;
-}
-
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (axios.isAxiosError(error)) {
-    const message = error.response?.data?.message;
-    if (typeof message === 'string') return message;
-  }
-  return fallback;
-}
-
-interface StatusModalState {
-  visible: boolean;
-  variant: StatusModalVariant;
-  title: string;
-  message: string;
-  primaryAction: StatusModalAction;
-  secondaryAction?: StatusModalAction;
-}
-
-const initialModalState: StatusModalState = {
-  visible: false,
-  variant: 'success',
-  title: '',
-  message: '',
-  primaryAction: { label: 'OK', onPress: () => {} },
-  secondaryAction: undefined,
-};
-
-export default function EmergencyScreen(props: EmergencyScreenProps) {
-  const { navigation } = props;
-  const user = useAppSelector(state => state.auth.user);
-  const [isSending, setIsSending] = useState(false);
-  const [modal, setModal] = useState<StatusModalState>(initialModalState);
+// No header on this screen (unlike other tab screens) — it's meant to read as a single focused
+// action, matching the reference design. Reachable via the bottom tab's EmergencyTabButton, which
+// also has its own quick-submit shortcut (triple tap); this screen's button is the deliberate,
+// single-tap path since opening the screen is already an intentional step.
+export default function EmergencyScreen() {
+  const { isSending, modal, closeModal, sendPanicSignal } = usePanicButton();
   const bottomPadding = useTabScreenBottomPadding();
 
-  function closeModal() {
-    setModal(initialModalState);
-  }
-
-  function confirmPanicPress() {
-    setModal({
-      visible: true,
-      variant: 'error',
-      title: 'Kirim Sinyal Darurat?',
-      message: 'Lokasi Anda saat ini akan langsung dikirim ke komando sebagai sinyal darurat. Pastikan ini bukan percobaan.',
-      primaryAction: { label: 'Kirim', variant: 'danger', onPress: sendPanicSignal },
-      secondaryAction: { label: 'Batal', onPress: closeModal },
-    });
-  }
-
-  async function sendPanicSignal() {
-    closeModal();
+  function handlePress() {
     if (isSending) return;
-    setIsSending(true);
-    try {
-      const { latitude, longitude } = await getCurrentCoordinates();
-      const result = await sendPanicButtonApi({ latitude, longitude });
-      await displayLocalEmergencyAlert(String(result.id));
-      setModal({
-        visible: true,
-        variant: 'success',
-        title: 'Sinyal Terkirim',
-        message: 'Sinyal darurat berhasil dikirim beserta lokasi Anda.',
-        primaryAction: { label: 'OK', onPress: closeModal },
-      });
-    } catch (error) {
-      if (error instanceof LocationUnavailableError) {
-        const isGpsIssue = error.reason === 'gps-disabled';
-        setModal({
-          visible: true,
-          variant: 'error',
-          title: isGpsIssue ? 'Aktifkan Lokasi' : 'Izin Lokasi Diperlukan',
-          message: error.message,
-          primaryAction: { label: 'OK', onPress: closeModal },
-          secondaryAction: {
-            label: isGpsIssue ? 'Buka Pengaturan Lokasi' : 'Buka Pengaturan',
-            onPress: isGpsIssue ? openLocationSettings : openAppSettings,
-          },
-        });
-      } else {
-        setModal({
-          visible: true,
-          variant: 'error',
-          title: 'Gagal Mengirim',
-          message: extractErrorMessage(error, 'Sinyal darurat gagal dikirim.'),
-          primaryAction: { label: 'OK', onPress: closeModal },
-        });
-      }
-    } finally {
-      setIsSending(false);
-    }
+    triggerHapticFeedback();
+    sendPanicSignal();
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <HomeHeader user={user} onAvatarPress={() => navigation.navigate(ROUTES.profile)} />
+      <Text style={styles.title}>Kirim Sinyal</Text>
+
       <View style={[styles.content, { paddingBottom: bottomPadding }]}>
         <MotiView
           from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={contentEnterTransition}
-          style={styles.contentInner}>
-          <View style={styles.badge}>
+          style={styles.radarArea}>
+          {RING_PULSES.map(ring => (
+            <MotiView
+              key={ring.delay}
+              from={RING_FROM}
+              animate={RING_ANIMATE}
+              transition={ring.transition}
+              style={styles.ring}
+            />
+          ))}
+
+          <PressableScale
+            scaleTo={0.92}
+            accessibilityRole="button"
+            accessibilityLabel="Kirim Sinyal Darurat"
+            disabled={isSending}
+            onPress={handlePress}
+            contentStyle={styles.centerButton}>
             <Icon name="emergency" size={40} color={colors.dangerForeground} />
-          </View>
-          <Text style={styles.title}>Tombol Darurat</Text>
-          <Text style={styles.subtitle}>Tekan tombol merah di bawah untuk mengirim sinyal darurat</Text>
-          <Button
-            label="Kirim Sinyal Darurat"
-            variant="danger"
-            loading={isSending}
-            onPress={confirmPanicPress}
-            style={styles.button}
-          />
+          </PressableScale>
         </MotiView>
+
+        <Text style={styles.subtitle}>
+          Tekan tombol di tengah untuk <Text style={styles.subtitleEmphasis}>LANGSUNG</Text> mengirim sinyal
+        </Text>
       </View>
 
       <StatusModal
@@ -171,40 +97,55 @@ export default function EmergencyScreen(props: EmergencyScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: 12,
   },
   content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 32,
     paddingHorizontal: 32,
-    backgroundColor: colors.surface,
   },
-  contentInner: {
+  radarArea: {
+    height: 220,
+    width: 220,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
-  badge: {
-    height: 88,
-    width: 88,
-    borderRadius: 44,
+  ring: {
+    position: 'absolute',
+    height: 100,
+    width: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: colors.dangerMuted,
+  },
+  centerButton: {
+    height: 96,
+    width: 96,
+    borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.danger,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
+    shadowColor: colors.danger,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
   },
   subtitle: {
     fontSize: 14,
     color: colors.textMuted,
     textAlign: 'center',
   },
-  button: {
-    marginTop: 24,
-    width: '100%',
+  subtitleEmphasis: {
+    fontWeight: '700',
   },
 });

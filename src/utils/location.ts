@@ -120,6 +120,12 @@ export function openAppSettings(): void {
   Linking.openSettings();
 }
 
+// Buka satu titik koordinat di aplikasi peta (Google Maps web/app) — dipakai tombol "Buka di
+// Google Maps" di tab Lokasi personel/persit dan baris histori pergerakan.
+export function openCoordinatesInMaps(latitude: number, longitude: number): void {
+  Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
+}
+
 export function openLocationSettings(): void {
   if (Platform.OS === 'android') {
     Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS').catch(() => Linking.openSettings());

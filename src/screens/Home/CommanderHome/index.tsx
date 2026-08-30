@@ -7,11 +7,9 @@ import { MotiView } from 'moti';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import MenuCard from '@/components/molecules/MenuCard';
 import PersonnelMap from '@/components/organisms/PersonnelMap';
 import ActivityRow from '@/screens/Home/ActivityRow';
 import AnnouncementRow from '@/screens/Home/AnnouncementRow';
-import DistributionItem from '@/screens/Home/DistributionItem';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import QuickActionButton from '@/screens/Home/QuickActionButton';
 import type { QuickActionButtonProps } from '@/screens/Home/QuickActionButton';
@@ -19,10 +17,9 @@ import QuickActionSheet from '@/screens/Home/QuickActionSheet';
 import StatCard from '@/screens/Home/StatCard';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
-import type { CatalogResourceKey, MainTabScreenProps, RootStackParamList } from '@/navigation/types';
+import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { colors } from '@/theme/colors';
-import { catalogResourceConfigs } from '@/utils/catalogResources';
 import { contentEnterTransition } from '@/utils/motion';
 import type { AuthUser, PersonnelLocationOverviewItem } from '@/types';
 
@@ -38,31 +35,14 @@ export interface CommanderHomeProps {
   onRefresh: () => Promise<void>;
 }
 
-const catalogMenuOrder: CatalogResourceKey[] = [
-  'personnel',
-  'persit',
-  'vehicles',
-  'weapon-categories',
-  'weapon-assignments',
-];
-
-// Konten dashboard di bawah ini (statistik satuan, distribusi status, aktivitas, pengumuman) masih
-// contoh/placeholder mengikuti desain — belum ada API buat data unit-wide ini, jadi ganti dengan
-// data asli begitu endpoint-nya tersedia.
+// Konten dashboard di bawah ini (statistik satuan, aktivitas, pengumuman) masih contoh/placeholder
+// mengikuti desain — belum ada API buat data unit-wide ini, jadi ganti dengan data asli begitu
+// endpoint-nya tersedia.
 const situationStats = [
   { icon: 'users', label: 'Total Personel', value: '427', meta: '100%', percent: 100, color: colors.primary },
   { icon: 'shield-check', label: 'Di Markas', value: '381', meta: '89.2%', percent: 89.2, color: colors.success },
   { icon: 'map-pin', label: 'Di Luar Markas', value: '46', meta: '10.8%', percent: 10.8, color: colors.warning },
   { icon: 'alert-triangle', label: 'Absen', value: '5', meta: '1.2%', percent: 1.2, color: colors.danger },
-] as const;
-
-const statusDistribution = [
-  { icon: 'shield-check', label: 'Aktif', value: 376, percent: 88.1, color: colors.success },
-  { icon: 'send', label: 'Dinas Luar', value: 28, percent: 6.6, color: colors.primary },
-  { icon: 'calendar', label: 'Izin', value: 12, percent: 2.8, color: colors.warning },
-  { icon: 'heartbeat', label: 'Sakit', value: 6, percent: 1.4, color: colors.gradientWeaponStart },
-  { icon: 'sun', label: 'Cuti', value: 3, percent: 0.7, color: colors.gradientHealthStart },
-  { icon: 'profile', label: 'Tidak Aktif', value: 2, percent: 0.4, color: colors.textMuted },
 ] as const;
 
 const recentMovements = [
@@ -77,9 +57,8 @@ const announcements = [
   { icon: 'info', title: 'Perawatan Kendaraan', detail: 'Cek jadwal perawatan rutin', time: 'Kemarin 16:45 • Pasi Log', color: colors.primary },
 ] as const;
 
-// 9 quick action total (3 di antaranya dummy, ditandai di label) — semuanya tampil di grid Home
-// (2 baris x 5, termasuk kartu "Lainnya"); bottom sheet "Lainnya" tetap menampilkan daftar lengkap
-// yang sama untuk akses cepat tanpa scroll.
+// Jumlah quick action yang tampil langsung di grid Home (2 baris x 5, termasuk kartu "Lainnya" di
+// slot ke-10). Kartu "Lainnya" membuka bottom sheet berisi daftar lengkap semua quick action.
 const VISIBLE_QUICK_ACTION_COUNT = 9;
 
 export default function CommanderHome(props: CommanderHomeProps) {
@@ -93,7 +72,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
     try {
       // per_page besar — kartu pratinjau ini menampilkan semua personel yang punya lokasi sekaligus,
       // bukan list berpaginasi.
-      const result = await getLocationsOverviewApi({ per_page: 200 });
+      const result = await getLocationsOverviewApi({ per_page: 50 });
       setPersonnelLocations(result.items);
     } catch {
       // Best-effort: kartu pratinjau lokasi bukan alur kritis dashboard, biarkan kosong kalau gagal.
@@ -114,30 +93,55 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const bottomPadding = useTabScreenBottomPadding();
 
+  // Urutan tetap: 5 direktori katalog dulu, lalu aksi lain.
   const quickActions: QuickActionButtonProps[] = [
     {
-      icon: 'users',
-      label: 'Direktori Personel',
+      icon: 'profile',
+      label: 'Distribusi Personel',
       color: colors.primary,
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'personnel' }),
+    },
+    {
+      icon: 'users',
+      label: 'Keluarga (Persit)',
+      color: colors.gradientFamilyEnd,
+      onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'persit' }),
+    },
+    {
+      icon: 'car',
+      label: 'Kendaraan',
+      color: colors.gradientHealthStart,
+      onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'vehicles' }),
+    },
+    {
+      icon: 'weapon',
+      label: 'Kategori Senjata',
+      color: colors.gradientWeaponStart,
+      onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'weapon-categories' }),
+    },
+    {
+      icon: 'weapon',
+      label: 'Distribusi Senjata',
+      color: colors.gradientEntryStart,
+      onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'weapon-assignments' }),
     },
     {
       icon: 'map-pin',
       label: 'Peta Personel',
       color: colors.success,
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Peta Personel' }),
+      onPress: () => navigation.navigate(ROUTES.personnelTracking),
     },
     {
       icon: 'megaphone',
       label: 'Kirim Pengumuman',
       color: colors.warning,
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Kirim Pengumuman' }),
+      onPress: () => navigation.navigate(ROUTES.sendAnnouncement),
     },
     {
       icon: 'emergency',
       label: 'Alarm Satuan',
       color: colors.gradientWeaponStart,
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Alarm Satuan' }),
+      onPress: () => navigation.navigate(ROUTES.alarmSatuan),
     },
     {
       icon: 'handbook',
@@ -151,24 +155,6 @@ export default function CommanderHome(props: CommanderHomeProps) {
       color: colors.gradientHealthStart,
       onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Laporan Cepat' }),
     },
-    {
-      icon: 'clock',
-      label: 'Jadwal Piket',
-      color: colors.gradientWeaponStart,
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Jadwal Piket' }),
-    },
-    {
-      icon: 'calendar',
-      label: 'Cuti & Izin',
-      color: colors.warning,
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Cuti & Izin' }),
-    },
-    {
-      icon: 'bar-chart',
-      label: 'Statistik Unit',
-      color: colors.gradientHealthStart,
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Statistik Unit' }),
-    },
   ];
   const gridActions: QuickActionButtonProps[] = [
     ...quickActions.slice(0, VISIBLE_QUICK_ACTION_COUNT),
@@ -178,7 +164,11 @@ export default function CommanderHome(props: CommanderHomeProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <HomeHeader user={user} onAvatarPress={() => navigation.navigate(ROUTES.profile)} />
+      <HomeHeader
+        user={user}
+        onAvatarPress={() => navigation.navigate(ROUTES.profile)}
+        onBellPress={() => navigation.navigate(ROUTES.notifications)}
+      />
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
@@ -236,33 +226,20 @@ export default function CommanderHome(props: CommanderHomeProps) {
             ))}
           </View>
 
-          <View style={styles.alertBanner}>
-            <Icon name="alert-triangle" size={20} color={colors.danger} />
+          <PressableScale
+            scaleTo={0.98}
+            onPress={() => navigation.navigate(ROUTES.emergencyList)}
+            contentStyle={styles.alertBanner}>
+            <Icon name="emergency" size={20} color={colors.danger} />
             <View style={styles.alertTextGroup}>
-              <Text style={styles.alertTitle}>2 Alert Aktif</Text>
+              <Text style={styles.alertTitle}>1 Emergency Terakhir</Text>
               <Text style={styles.alertSubtitle}>Perhatian diperlukan</Text>
             </View>
-            <Text style={styles.sectionLinkDisabled}>Lihat Detail</Text>
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Distribusi Status Personel</Text>
-          </View>
-          <View style={styles.distributionCard}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.distributionRow}>
-              {statusDistribution.map((item, index) => (
-                <DistributionItem
-                  key={item.label}
-                  icon={item.icon}
-                  label={item.label}
-                  value={item.value}
-                  percent={item.percent}
-                  color={item.color}
-                  showDivider={index !== statusDistribution.length - 1}
-                />
-              ))}
-            </ScrollView>
-          </View>
+            <View style={styles.alertLink}>
+              <Text style={styles.alertLinkText}>Lihat Detail</Text>
+              <Icon name="chevron-right" size={16} color={colors.danger} />
+            </View>
+          </PressableScale>
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
@@ -312,27 +289,6 @@ export default function CommanderHome(props: CommanderHomeProps) {
           ) : (
             <PersonnelMap personnel={personnelLocations} interactive={false} style={styles.mapPreview} />
           )}
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Direktori Katalog</Text>
-          </View>
-          <View style={styles.catalogGrid}>
-            {catalogMenuOrder.map(resource => {
-              const config = catalogResourceConfigs[resource];
-              return (
-                <View key={resource} style={styles.catalogGridItem}>
-                  <MenuCard
-                    icon={config.icon}
-                    title={config.menuTitle}
-                    subtitle={config.menuSubtitle}
-                    gradientStart={config.gradientStart}
-                    gradientEnd={config.gradientEnd}
-                    onPress={() => navigation.navigate(ROUTES.catalogList, { resource })}
-                  />
-                </View>
-              );
-            })}
-          </View>
         </MotiView>
       </ScrollView>
 
@@ -439,6 +395,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
+  alertLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  alertLinkText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.danger,
+  },
   alertTitle: {
     fontSize: 14,
     fontWeight: '700',
@@ -447,16 +413,6 @@ const styles = StyleSheet.create({
   alertSubtitle: {
     fontSize: 12,
     color: colors.danger,
-  },
-  distributionCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    marginBottom: 24,
-  },
-  distributionRow: {
-    paddingVertical: 16,
   },
   activityCard: {
     gap: 2,
@@ -503,13 +459,5 @@ const styles = StyleSheet.create({
   mapPlaceholderText: {
     fontSize: 13,
     color: colors.textMuted,
-  },
-  catalogGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  catalogGridItem: {
-    width: '47%',
   },
 });

@@ -28,7 +28,11 @@ export default function RiwayatScreen(props: RiwayatScreenProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <HomeHeader user={user} onAvatarPress={() => navigation.navigate(ROUTES.profile)} />
+      <HomeHeader
+        user={user}
+        onAvatarPress={() => navigation.navigate(ROUTES.profile)}
+        onBellPress={() => navigation.navigate(ROUTES.notifications)}
+      />
       <View style={[styles.content, { paddingBottom: bottomPadding }]}>
         <MotiView
           from={{ opacity: 0, translateY: 16 }}

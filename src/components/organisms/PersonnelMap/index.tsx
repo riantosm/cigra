@@ -15,7 +15,68 @@ export interface PersonnelMapProps {
   interactive?: boolean;
   onSelectPersonnel?: (item: PersonnelLocationOverviewItem) => void;
   style?: StyleProp<ViewStyle>;
+  // 'dark' cuma dipakai kartu peta di tab Lokasi personel (bukan default global — app-nya
+  // sendiri light-only) supaya nge-blend dengan gaya "tactical map" di layar itu.
+  variant?: 'light' | 'dark';
 }
+
+// Skema dark map standar Google (POI/label tetap kebaca), disalin apa adanya — bukan dibuat
+// custom per warna, supaya kontras & keterbacaan sudah teruji.
+const DARK_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#1a1f2b' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1f2b' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8a97a8' }] },
+  {
+    featureType: 'administrative.locality',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#c9d2e0' }],
+  },
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#8a97a8' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#12331f' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#2a3345' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1a1f2b' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#8a97a8' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#3a4459' }],
+  },
+  {
+    featureType: 'transit',
+    elementType: 'geometry',
+    stylers: [{ color: '#2a3345' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#0d1420' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#4f6070' }],
+  },
+];
 
 // Jatuh ke pusat Indonesia dengan zoom luas kalau belum ada satu pun titik lokasi yang valid.
 const FALLBACK_REGION: Region = {
@@ -25,7 +86,9 @@ const FALLBACK_REGION: Region = {
   longitudeDelta: 40,
 };
 
-function computeRegion(points: { latitude: number; longitude: number }[]): Region {
+function computeRegion(
+  points: { latitude: number; longitude: number }[],
+): Region {
   if (points.length === 0) return FALLBACK_REGION;
 
   const latitudes = points.map(p => p.latitude);
@@ -48,10 +111,19 @@ function computeRegion(points: { latitude: number; longitude: number }[]): Regio
 }
 
 export default function PersonnelMap(props: PersonnelMapProps) {
-  const { personnel, interactive = true, onSelectPersonnel, style } = props;
+  const {
+    personnel,
+    interactive = true,
+    onSelectPersonnel,
+    style,
+    variant = 'light',
+  } = props;
   const located = personnel.filter(
-    (item): item is PersonnelLocationOverviewItem & { location: NonNullable<PersonnelLocationOverviewItem['location']> } =>
-      item.location !== null,
+    (
+      item,
+    ): item is PersonnelLocationOverviewItem & {
+      location: NonNullable<PersonnelLocationOverviewItem['location']>;
+    } => item.location !== null,
   );
 
   return (
@@ -59,21 +131,33 @@ export default function PersonnelMap(props: PersonnelMapProps) {
       <MapView
         provider={PROVIDER_GOOGLE}
         style={styles.map}
+        customMapStyle={variant === 'dark' ? DARK_MAP_STYLE : undefined}
         initialRegion={computeRegion(located.map(item => item.location))}
         scrollEnabled={interactive}
         zoomEnabled={interactive}
         rotateEnabled={interactive}
         pitchEnabled={interactive}
-        toolbarEnabled={interactive}>
+        toolbarEnabled={interactive}
+      >
         {located.map(item => (
           <Marker
             key={item.id}
-            coordinate={{ latitude: item.location.latitude, longitude: item.location.longitude }}>
+            coordinate={{
+              latitude: item.location.latitude,
+              longitude: item.location.longitude,
+            }}
+          >
             <Callout onPress={() => onSelectPersonnel?.(item)}>
               <View style={styles.callout}>
                 <Text style={styles.calloutName}>{item.full_name}</Text>
-                <Text style={styles.calloutMeta}>{joinFields(item.rank, item.unit)}</Text>
-                {onSelectPersonnel ? <Text style={styles.calloutAction}>Lihat detail personel</Text> : null}
+                <Text style={styles.calloutMeta}>
+                  {joinFields(item.rank, item.unit)}
+                </Text>
+                {onSelectPersonnel ? (
+                  <Text style={styles.calloutAction}>
+                    Lihat detail personel
+                  </Text>
+                ) : null}
               </View>
             </Callout>
           </Marker>
@@ -81,7 +165,10 @@ export default function PersonnelMap(props: PersonnelMapProps) {
       </MapView>
 
       {interactive && located.length === 0 ? (
-        <View style={[StyleSheet.absoluteFill, styles.emptyOverlay]} pointerEvents="none">
+        <View
+          style={[StyleSheet.absoluteFill, styles.emptyOverlay]}
+          pointerEvents="none"
+        >
           <Icon name="map-pin" size={28} color={colors.textMuted} />
           <Text style={styles.emptyText}>Belum ada data lokasi personel</Text>
         </View>

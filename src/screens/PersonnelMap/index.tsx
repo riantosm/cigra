@@ -15,7 +15,6 @@ type Props = RootStackScreenProps<'PersonnelMap'>;
 export default function PersonnelMapScreen(props: Props) {
   const { navigation } = props;
   const [personnel, setPersonnel] = useState<PersonnelLocationOverviewItem[]>([]);
-  console.log('personnel', personnel);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -25,7 +24,7 @@ export default function PersonnelMapScreen(props: Props) {
     try {
       // per_page besar — daftar ini dipakai buat nampilin semua marker di peta sekaligus, bukan
       // list berpaginasi, jadi tidak ada UI "muat lagi" untuk halaman selanjutnya.
-      const result = await getLocationsOverviewApi({ per_page: 200 });
+      const result = await getLocationsOverviewApi({ per_page: 50 });
       setPersonnel(result.items);
     } catch (error) {
       setErrorMessage(extractErrorMessage(error, 'Gagal memuat data lokasi personel.'));

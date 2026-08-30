@@ -10,8 +10,13 @@ export const colors = {
   dangerForeground: '#FFFFFF',
   success: '#16A34A',
   successSurface: '#DCFCE7',
+  // Hijau sangat pucat — untuk latar kartu bertema hijau (mis. Kartu Anggota), lebih lembut
+  // dari successSurface yang dipakai buat pill/badge.
+  successSurfaceSubtle: '#F0FDF7',
   warning: '#F59E0B',
+  warningSurface: '#FEF3C7',
   dangerSurface: '#FEE2E2',
+  dangerMuted: '#FCA5A5',
   primarySurface: '#DBEAFE',
   neutralSurface: '#F1F5F9',
   gradientEntryStart: '#F59E0B',
