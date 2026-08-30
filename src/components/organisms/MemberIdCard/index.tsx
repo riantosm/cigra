@@ -98,9 +98,9 @@ export default function MemberIdCard(props: MemberIdCardProps) {
         </View>
 
         <View style={styles.qrColumn}>
-          <View style={styles.qrFrame}>
+          <PressableScale onPress={onShowFullQr} style={styles.qrFrame}>
             <QrCode value={serviceNumber} size={104} />
-          </View>
+          </PressableScale>
           <PressableScale onPress={onShowFullQr} contentStyle={styles.qrButton}>
             <Icon name="search" size={13} color={colors.primary} />
             <Text style={styles.qrButtonText}>Tampilkan Penuh</Text>
