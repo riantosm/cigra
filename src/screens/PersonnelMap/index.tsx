@@ -15,6 +15,7 @@ type Props = RootStackScreenProps<'PersonnelMap'>;
 export default function PersonnelMapScreen(props: Props) {
   const { navigation } = props;
   const [personnel, setPersonnel] = useState<PersonnelLocationOverviewItem[]>([]);
+  console.log('personnel', personnel);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

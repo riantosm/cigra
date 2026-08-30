@@ -6,6 +6,7 @@ import type { Region } from 'react-native-maps';
 import Icon from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
 import type { PersonnelLocationOverviewItem } from '@/types';
+import { joinFields } from '@/utils/format';
 
 export interface PersonnelMapProps {
   personnel: PersonnelLocationOverviewItem[];
@@ -71,9 +72,7 @@ export default function PersonnelMap(props: PersonnelMapProps) {
             <Callout onPress={() => onSelectPersonnel?.(item)}>
               <View style={styles.callout}>
                 <Text style={styles.calloutName}>{item.full_name}</Text>
-                <Text style={styles.calloutMeta}>
-                  {item.rank ?? '-'} · {item.unit ?? '-'}
-                </Text>
+                <Text style={styles.calloutMeta}>{joinFields(item.rank, item.unit)}</Text>
                 {onSelectPersonnel ? <Text style={styles.calloutAction}>Lihat detail personel</Text> : null}
               </View>
             </Callout>

@@ -168,7 +168,10 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
           title="Riwayat Penugasan"
           items={d.assignment_history.map(h => ({
             title: orDash(h.unit),
-            subtitle: `${orDash(h.position)} · ${formatDateShort(h.start_date)} – ${h.end_date ? formatDateShort(h.end_date) : 'sekarang'}`,
+            subtitle: joinFields(
+              h.position,
+              `${formatDateShort(h.start_date)} – ${h.end_date ? formatDateShort(h.end_date) : 'sekarang'}`,
+            ),
           }))}
         />
         <CatalogListSection
@@ -176,7 +179,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
           title="Anggota Keluarga"
           items={d.family_members.map(f => ({
             title: f.full_name,
-            subtitle: `${orDash(titleCase(f.family_relation))} · ${f.membership_number}`,
+            subtitle: joinFields(titleCase(f.family_relation), f.membership_number),
           }))}
         />
         <SectionCard icon="heartbeat" title="Ringkasan Kesehatan">
@@ -201,7 +204,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     toListItem: (p: PersitListItem) => ({
       id: String(p.id),
       title: p.full_name,
-      subtitle: `${orDash(titleCase(p.family_relation))} · ${orDash(p.spouse?.full_name)}`,
+      subtitle: joinFields(titleCase(p.family_relation), p.spouse?.full_name),
       badgeLabel: statusBadgeLabel(p.status),
       badgeVariant: statusBadgeVariant(p.status),
     }),
@@ -246,7 +249,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     toListItem: (v: VehicleListItem) => ({
       id: String(v.id),
       title: v.brand_model,
-      subtitle: `${v.plate_number} · ${orDash(titleCase(v.category))}`,
+      subtitle: joinFields(v.plate_number, titleCase(v.category)),
       badgeLabel: orDash(titleCase(v.condition_status)),
       badgeVariant: v.is_active ? 'success' : 'neutral',
     }),
@@ -316,7 +319,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
           title="Daftar Senjata"
           items={d.weapons.map(w => ({
             title: w.weapon_number,
-            subtitle: `${w.serial_number} · ${orDash(titleCase(w.condition_status))} · ${orDash(titleCase(w.inventory_status))}`,
+            subtitle: joinFields(w.serial_number, titleCase(w.condition_status), titleCase(w.inventory_status)),
           }))}
         />
       </>
@@ -336,7 +339,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     toListItem: (a: WeaponAssignmentListItem) => ({
       id: String(a.id),
       title: a.weapon_number,
-      subtitle: `${orDash(titleCase(a.category))} · ${orDash(a.assigned_to?.full_name)}`,
+      subtitle: joinFields(titleCase(a.category), a.assigned_to?.full_name),
       badgeLabel: statusBadgeLabel(a.status),
       badgeVariant: statusBadgeVariant(a.status),
     }),
