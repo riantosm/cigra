@@ -1,34 +1,32 @@
-import { forwardRef, useEffect, useState } from 'react';
-import type { ComponentRef } from 'react';
-import { Image } from 'react-native';
-import type { ImageProps, ImageStyle, StyleProp } from 'react-native';
+import { useEffect, useState } from 'react';
+import FastImage from 'react-native-fast-image';
+import type { FastImageProps } from 'react-native-fast-image';
 
 import { getAuthToken } from '@/services/api/axiosInstance';
 import { useAppSelector } from '@/store/hooks';
 import { isDisplayablePhoto, isProtectedApiUrl, resolveSecureFileUrl } from '@/utils/avatar';
 
-export interface SecureImageProps extends Omit<ImageProps, 'source' | 'style'> {
+export interface SecureImageProps extends Omit<FastImageProps, 'source'> {
   // Nilai mentah field `photo` dari API (path relatif, URL absolut, atau null).
   path: string | null | undefined;
-  style?: StyleProp<ImageStyle>;
   // Dipanggil kalau gambar gagal dimuat — pemanggil biasa memakainya untuk switch ke avatar inisial.
   onLoadError?: () => void;
 }
 
-// Foto di balik `<API_BASE_URL>/secure-files/...` butuh header `Authorization: Bearer <token>`.
-// `<Image>` bawaan RN sudah mendukung `source.headers` di iOS maupun Android (Fresco
-// menghormatinya), jadi tidak perlu library gambar tambahan / rebuild native.
+// Foto di balik `<site>/api/secure-files/...` butuh header `Authorization: Bearer <token>`.
+// `<Image>` bawaan RN mendukung `source.headers` di atas kertas, tapi Fresco (Android) meng-cache
+// respons gambar berdasarkan URI saja dan mengabaikan header saat request pertama gagal/di-redirect —
+// hasilnya request kedua dengan header yang benar tetap mengembalikan hasil basi (gagal decode: "unknown
+// image format", karena body yang di-cache adalah halaman HTML redirect, bukan gambar). `react-native-fast-image`
+// punya cache sendiri yang menghormati header, jadi dipakai di sini menggantikan `<Image>` bawaan RN.
 //
 // Token diambil live dari AsyncStorage (`getAuthToken`), bukan `state.auth.token` — token di redux
 // hanya di-set saat login dan bisa basi setelah interceptor axios me-rotate token di background.
 // `state.auth.token` tetap dipakai sebagai nilai awal supaya render pertama tidak kosong.
 //
-// Header Authorization hanya ditempelkan untuk URL di bawah API kita (`isProtectedApiUrl`) — bukan
-// untuk URL absolut pihak ketiga.
-const SecureImage = forwardRef<ComponentRef<typeof Image>, SecureImageProps>(function SecureImageImpl(
-  props,
-  ref,
-) {
+// Header Authorization hanya ditempelkan untuk URL di bawah host API kita (`isProtectedApiUrl`) —
+// bukan untuk URL absolut pihak ketiga.
+export default function SecureImage(props: SecureImageProps) {
   const { path, style, onLoadError, onError, ...rest } = props;
   const persistedToken = useAppSelector(state => state.auth.token);
   const [token, setToken] = useState<string | null>(persistedToken);
@@ -53,17 +51,18 @@ const SecureImage = forwardRef<ComponentRef<typeof Image>, SecureImageProps>(fun
   const withAuth = Boolean(token) && isProtectedApiUrl(uri);
 
   return (
-    <Image
-      ref={ref}
+    <FastImage
       style={style}
-      source={withAuth ? { uri, headers: { Authorization: `Bearer ${token}` } } : { uri }}
-      onError={event => {
+      source={{
+        uri,
+        ...(withAuth ? { headers: { Authorization: `Bearer ${token}` } } : null),
+        priority: FastImage.priority.normal,
+      }}
+      onError={() => {
         onLoadError?.();
-        onError?.(event);
+        onError?.();
       }}
       {...rest}
     />
   );
-});
-
-export default SecureImage;
+}

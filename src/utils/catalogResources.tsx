@@ -45,13 +45,16 @@ import {
   orDash,
   titleCase,
 } from '@/utils/format';
-import { initialsAvatarUrl } from '@/utils/avatar';
 
 export interface CatalogListItem {
   id: string;
   title: string;
   subtitle: string;
-  avatarUrl?: string;
+  // Path foto mentah dari API (lihat `CatalogDetailHeader.photo`) — belum dikirim oleh endpoint
+  // *list* personnel/persit/vehicles (cuma endpoint detail-nya), jadi ini selalu kosong untuk
+  // sekarang dan `ListAvatar` (CatalogList) jatuh ke fallback inisial. Field tetap disediakan biar
+  // begitu API list-nya nambahin `photo`, tinggal di-map di sini tanpa ubah komponen.
+  photo?: string | null;
   badgeLabel?: string;
   badgeVariant?: BadgeVariant;
 }
@@ -108,6 +111,11 @@ export interface CatalogResourceConfig<ListSource = any, Detail = any> {
   // vertikal bareng header lewat ScrollView terpisah — resource lain masih pakai satu ScrollView
   // vertikal biasa buat header+detail.
   tabbedDetail?: boolean;
+  // Resource yang konsepnya punya foto (personnel/persit/vehicles) — CatalogList menampilkan
+  // avatar bundar (`ListAvatar`, pakai `SecureImage` yang sama dengan detail/profile) buat resource
+  // ini, fallback ke inisial kalau `CatalogListItem.photo` kosong. Resource tanpa konsep foto
+  // (kategori/distribusi senjata) tidak menampilkan avatar sama sekali di list.
+  hasPhoto?: boolean;
 }
 
 function statusBadgeVariant(status: string | null | undefined): BadgeVariant {
@@ -164,9 +172,6 @@ export const catalogResourceConfigs: Record<
       id: p.service_number,
       title: p.full_name,
       subtitle: joinFields(p.rank, p.unit),
-      // Penanda "resource ini punya kolom avatar" — `isDisplayablePhoto` menyaring URL ui-avatars
-      // ini jadi tidak pernah benar-benar di-request; ListAvatar menampilkan fallback inisial.
-      avatarUrl: initialsAvatarUrl(p.full_name),
       badgeLabel: statusBadgeLabel(p.status),
       badgeVariant: statusBadgeVariant(p.status),
     }),
@@ -187,6 +192,7 @@ export const catalogResourceConfigs: Record<
       initialTab?: string,
     ) => <PersonnelTabs detail={d} header={header} onRefresh={onRefresh} initialTabName={initialTab} />,
     tabbedDetail: true,
+    hasPhoto: true,
   },
 
   persit: {
@@ -223,6 +229,7 @@ export const catalogResourceConfigs: Record<
       initialTab?: string,
     ) => <PersitTabs detail={d} header={header} onRefresh={onRefresh} initialTabName={initialTab} />,
     tabbedDetail: true,
+    hasPhoto: true,
   },
 
   vehicles: {
@@ -296,6 +303,7 @@ export const catalogResourceConfigs: Record<
         </SectionCard>
       </>
     ),
+    hasPhoto: true,
   },
 
   'weapon-categories': {

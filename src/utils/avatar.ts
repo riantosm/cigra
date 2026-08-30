@@ -1,24 +1,28 @@
 import Config from 'react-native-config';
 
-// Foto personel/persit/kendaraan disajikan lewat endpoint terproteksi `<API_BASE_URL>/secure-files/<path>`
-// (butuh `Authorization: Bearer <token>` — lihat komponen `SecureImage`). Field `photo` dari API bisa
-// datang dalam beberapa bentuk: URL absolut, "/admin/secure-files/xxx", "secure-files/xxx", atau hanya
-// "xxx" — semuanya dinormalkan ke `<API_BASE_URL>/secure-files/<sisa>`.
+// Foto personel/persit/kendaraan disajikan lewat endpoint terproteksi
+// `<API_BASE_URL tanpa suffix /api>/api/secure-files/<path>` (butuh `Authorization: Bearer <token>`
+// — lihat komponen `SecureImage`). Field `photo` dari API bisa datang dalam beberapa bentuk: URL
+// absolut, "/api/secure-files/xxx", "secure-files/xxx", atau hanya "xxx" — semuanya dinormalkan ke
+// bentuk di atas. Contoh: path API `/api/secure-files/personnel/photos/abc.jpg` dengan
+// `API_BASE_URL=https://smart-battalion.sakaraguna.com/api` menjadi
+// `https://smart-battalion.sakaraguna.com/api/secure-files/personnel/photos/abc.jpg`.
 export function resolveSecureFileUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-  const apiBase = (Config.API_BASE_URL ?? '').replace(/\/+$/, ''); // sudah termasuk suffix /api
+  const siteBase = (Config.API_BASE_URL ?? '').replace(/\/+$/, '').replace(/\/api$/i, '');
   const trimmed = path.replace(/^\/+/, '');
   const markerIndex = trimmed.toLowerCase().indexOf('secure-files/');
   const relative = markerIndex >= 0 ? trimmed.slice(markerIndex + 'secure-files/'.length) : trimmed;
-  return `${apiBase}/secure-files/${relative}`;
+  return `${siteBase}/api/secure-files/${relative}`;
 }
 
-// Hanya URL di bawah API kita sendiri yang butuh header `Authorization` — jangan tempelkan token ke
-// host pihak ketiga.
+// Hanya URL di bawah host API kita sendiri yang butuh header `Authorization` — jangan tempelkan token
+// ke host pihak ketiga. Dibandingkan terhadap host tanpa suffix `/api`, karena `resolveSecureFileUrl`
+// sekarang membangun URL dari host tersebut (bukan dari base yang masih menyertakan `/api`).
 export function isProtectedApiUrl(uri: string): boolean {
-  const apiBase = (Config.API_BASE_URL ?? '').replace(/\/+$/, '');
-  return apiBase.length > 0 && uri.startsWith(apiBase);
+  const siteBase = (Config.API_BASE_URL ?? '').replace(/\/+$/, '').replace(/\/api$/i, '');
+  return siteBase.length > 0 && uri.startsWith(siteBase);
 }
 
 // Backend mengisi field `photo` dengan URL placeholder ui-avatars.com untuk personel yang belum
@@ -30,11 +34,4 @@ export function isProtectedApiUrl(uri: string): boolean {
 export function isDisplayablePhoto(path: string | null | undefined): boolean {
   if (!path || !path.trim()) return false;
   return !/\bui-avatars\.com\//i.test(path);
-}
-
-// Placeholder avatar berbasis inisial (ui-avatars.com). Dipakai list katalog sebagai penanda
-// "resource ini punya kolom avatar" — `isDisplayablePhoto` menyaringnya jadi tidak pernah benar-benar
-// di-request; komponen list menampilkan fallback inisial buatannya sendiri.
-export function initialsAvatarUrl(fullName: string): string {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3a7ca5&color=fff`;
 }

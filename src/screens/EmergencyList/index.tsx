@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
 import Card from '@/components/molecules/Card';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { colors } from '@/theme/colors';
+import { isDisplayablePhoto } from '@/utils/avatar';
 import { formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.emergencyList>;
@@ -120,7 +122,7 @@ const DUMMY_EMERGENCIES: EmergencyEvent[] = [
 
 function EmergencyAvatar({ event }: { event: EmergencyEvent }) {
   const [failed, setFailed] = useState(false);
-  if (!event.personnel.photo || failed) {
+  if (!isDisplayablePhoto(event.personnel.photo) || failed) {
     return (
       <View style={styles.avatarFallback}>
         <Text style={styles.avatarLabel}>{event.personnel.full_name.charAt(0).toUpperCase()}</Text>
@@ -128,7 +130,7 @@ function EmergencyAvatar({ event }: { event: EmergencyEvent }) {
     );
   }
   return (
-    <Image source={{ uri: event.personnel.photo }} style={styles.avatar} onError={() => setFailed(true)} />
+    <SecureImage path={event.personnel.photo} style={styles.avatar} onLoadError={() => setFailed(true)} />
   );
 }
 

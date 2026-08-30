@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import Badge from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
 import TextField from '@/components/atoms/TextField';
 import Card from '@/components/molecules/Card';
 import FilterSheet from '@/components/organisms/FilterSheet';
@@ -16,10 +17,12 @@ import type { CatalogListItem } from '@/utils/catalogResources';
 import { catalogResourceConfigs } from '@/utils/catalogResources';
 import { extractErrorMessage } from '@/utils/format';
 
+// Sama seperti avatar di detail/profile: `SecureImage` menangani resolve URL + header Authorization,
+// di sini cuma nambahin fallback inisial kalau `photo` kosong atau gagal dimuat.
 function ListAvatar({ item }: { item: CatalogListItem }) {
   const [failed, setFailed] = useState(false);
 
-  if (!isDisplayablePhoto(item.avatarUrl) || failed) {
+  if (!isDisplayablePhoto(item.photo) || failed) {
     return (
       <View style={styles.avatarFallback}>
         <Text style={styles.avatarFallbackLabel}>{item.title.charAt(0).toUpperCase()}</Text>
@@ -27,7 +30,7 @@ function ListAvatar({ item }: { item: CatalogListItem }) {
     );
   }
 
-  return <Image source={{ uri: item.avatarUrl }} style={styles.avatar} onError={() => setFailed(true)} />;
+  return <SecureImage path={item.photo} style={styles.avatar} onLoadError={() => setFailed(true)} />;
 }
 
 const SEARCH_DEBOUNCE_MS = 1000;
@@ -157,7 +160,7 @@ export default function CatalogListScreen(props: Props) {
                 scaleTo={0.98}
                 onPress={() => navigation.navigate(ROUTES.catalogDetail, { resource, id: item.id })}>
                 <Card style={styles.row}>
-                  {item.avatarUrl ? <ListAvatar item={item} /> : null}
+                  {config.hasPhoto ? <ListAvatar item={item} /> : null}
                   <View style={styles.rowText}>
                     <Text style={styles.rowTitle}>{item.title}</Text>
                     <Text style={styles.rowSubtitle}>{item.subtitle}</Text>
