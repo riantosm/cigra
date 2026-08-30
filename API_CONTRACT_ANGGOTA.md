@@ -22,7 +22,7 @@ jadi tidak perlu parameter `personnel`/`service_number` di path.
 | Tile "Lokasi Terakhir" & "Update Terakhir" (Status Saya) | `GET /locations/me` (sudah dipakai di Profile) |
 | Shortcut "Peta Personel"         | `GET /locations/overview` (sudah ada)                 |
 | Shortcut "Pengumuman" / "Lihat Semua" pengumuman | layar `Notifications` (lihat `API_CONTRACT.md` §3) |
-| "Aktivitas Terbaru → Lihat Semua" & shortcut "Riwayat Pergerakan" | tab `movement` di `CatalogDetail` personel diri sendiri (lihat `API_CONTRACT.md` §5) |
+| "Aktivitas Terbaru → Lihat Semua" & shortcut "Riwayat Pergerakan" | tab `visitor` ("Riwayat visitor") di `CatalogDetail` personel diri sendiri — diisi `visitor_log_history` dari `GET /catalog/personnel/{personnel}` (lihat `API_CONTRACT.md` §5) |
 
 ---
 
@@ -154,9 +154,9 @@ GET /me/assets
 
 ## 4. Aktivitas Terbaru (pergerakan saya)
 
-Mengisi bagian **"Aktivitas Terbaru"** di Home (3 entri teratas). Sama persis dengan
-`API_CONTRACT.md` §5 (`GET /catalog/personnel/{personnel}/movements`) tapi untuk diri sendiri dan
-**diflatten jadi 1 baris per lintasan** (masuk ATAU keluar), bukan pasangan exit/entry.
+Mengisi bagian **"Aktivitas Terbaru"** di Home (3 entri teratas) — **diflatten jadi 1 baris per
+lintasan** (masuk ATAU keluar). Serupa dengan `visitor_log_history` di `API_CONTRACT.md` §5, tapi
+untuk diri sendiri dan sebagai endpoint list tersendiri.
 
 ```
 GET /me/movements

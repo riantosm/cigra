@@ -2,12 +2,16 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
 import { colors } from '@/theme/colors';
 
 export interface CatalogListSectionItem {
   title: string;
   subtitle: string;
+  // Kalau diisi, baris jadi bisa ditekan (mis. anggota keluarga -> detail Persit) dan menampilkan
+  // chevron di kanan sebagai penanda.
+  onPress?: () => void;
 }
 
 export interface CatalogListSectionProps {
@@ -29,12 +33,34 @@ export default function CatalogListSection(props: CatalogListSectionProps) {
       {items.length === 0 ? (
         <Text style={styles.empty}>{emptyLabel}</Text>
       ) : (
-        items.map((item, index) => (
-          <View key={`${item.title}-${index}`} style={[styles.row, index === items.length - 1 && styles.lastRow]}>
-            <Text style={styles.rowTitle}>{item.title}</Text>
-            <Text style={styles.rowSubtitle}>{item.subtitle}</Text>
-          </View>
-        ))
+        items.map((item, index) => {
+          const isLast = index === items.length - 1;
+          const inner = (
+            <>
+              <View style={styles.rowText}>
+                <Text style={styles.rowTitle}>{item.title}</Text>
+                <Text style={styles.rowSubtitle}>{item.subtitle}</Text>
+              </View>
+              {item.onPress ? (
+                <Icon name="chevron-right" size={18} color={colors.textMuted} />
+              ) : null}
+            </>
+          );
+
+          return item.onPress ? (
+            <PressableScale
+              key={`${item.title}-${index}`}
+              onPress={item.onPress}
+              style={[styles.row, isLast && styles.lastRow]}
+              contentStyle={styles.rowInner}>
+              {inner}
+            </PressableScale>
+          ) : (
+            <View key={`${item.title}-${index}`} style={[styles.row, styles.rowInner, isLast && styles.lastRow]}>
+              {inner}
+            </View>
+          );
+        })
       )}
     </Card>
   );
@@ -67,6 +93,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  rowInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rowText: {
+    flex: 1,
     gap: 2,
   },
   lastRow: {

@@ -440,63 +440,48 @@ PATCH /panic-buttons/{id}
 
 ---
 
-## 5. Detail Personel — Tab "Riwayat Keluar Masuk"
+## 5. Detail Personel & Persit — field tambahan di `GET /catalog/personnel/{personnel}` dan `GET /catalog/persit/{id}`
 
-Saat ini tab ini memakai `MOVEMENT_DUMMY_ENTRIES` di
-`src/screens/CatalogDetail/PersonnelTabs`. `{personnel}` = **NRP / service_number** (sama seperti
-`GET /catalog/personnel/{personnel}` dan `GET /locations/{personnel}`).
+Header detail + tab "Riwayat visitor" (dan, khusus personel, "Peminjaman Senjata") di
+`src/screens/CatalogDetail/PersonnelTabs` & `PersitTabs` diisi langsung dari response detail (tidak ada
+endpoint terpisah). Field yang dipakai:
 
-```
-GET /catalog/personnel/{personnel}/movements
-```
-
-Query opsional: `page`, `per_page` (default 15), `from`, `to`.
-
-**Response `200`**
 ```json
 {
-  "success": true,
-  "data": [
+  "last_status_location": "inside",
+  "visitor_log_history": [
     {
-      "id": 3310,
-      "exit_at": "2026-08-28T13:00:00+07:00",
-      "entry_at": "2026-08-28T17:00:00+07:00",
-      "purpose": "Jaga Depan",
-      "destination": "Pos Depan",
-      "note": null,
-      "approved_by": { "id": 5, "name": "Pasi Ops" },
-      "recorded_by": { "id": 8, "name": "Piket Provost" }
-    },
-    {
-      "id": 3298,
-      "exit_at": "2026-08-27T08:00:00+07:00",
-      "entry_at": "2026-08-27T12:00:00+07:00",
-      "purpose": "Latihan Lapangan",
-      "destination": "Lapangan B",
-      "note": "Bersama Regu 2",
-      "approved_by": { "id": 5, "name": "Pasi Ops" },
-      "recorded_by": { "id": 8, "name": "Piket Provost" }
-    },
-    {
-      "id": 3271,
-      "exit_at": "2026-08-25T09:30:00+07:00",
-      "entry_at": null,
-      "purpose": "Izin Keluar Markas",
-      "destination": "Kota",
-      "note": "Belum kembali",
-      "approved_by": { "id": 5, "name": "Pasi Ops" },
-      "recorded_by": { "id": 8, "name": "Piket Provost" }
+      "id": 41,
+      "purpose": "Dinas rutin",
+      "entered_at": "2026-08-30T08:00:00+07:00",
+      "exited_at": null,
+      "status": "inside",
+      "vehicle_plate": "B 1234 ABC",
+      "vehicle_type": "Mobil"
     }
   ],
-  "meta": { "current_page": 1, "last_page": 4, "per_page": 15, "total": 52 }
+  "weapon_loan_history": [
+    {
+      "id": 12,
+      "weapon_number": "SS2-001",
+      "serial_number": "SN12345",
+      "purpose": "Penjagaan Mako",
+      "loaned_at": "2026-08-30T08:30:00+07:00",
+      "returned_at": null,
+      "status": "approved"
+    }
+  ]
 }
 ```
 
-- `entry_at` = `null` → masih di luar markas (belum absen masuk). Client menampilkan `-`.
+- `last_status_location`: `"inside"` → "Di dalam markas", `"outside"` → "Di luar markas" (nilai lain
+  di-title-case apa adanya). Ditampilkan sebagai baris meta di header detail.
+- `exited_at` / `returned_at` = `null` → client menampilkan `-`.
 - Client memformat tanggal sendiri (`formatDateTime`), tidak perlu field `*_formatted`.
-
-Opsional (unit-wide, kalau nanti dibutuhkan di layar Riwayat): `GET /movements?unit_id=&direction=`
-dengan item yang menyertakan objek `personnel` seperti pada `/activities/movements` (§2.2).
+- Array boleh kosong / tidak dikirim — client fallback ke empty state.
+- **`GET /catalog/persit/{id}`** mengirim `last_status_location` + `visitor_log_history` dengan bentuk
+  yang **sama persis** seperti di atas (tanpa `weapon_loan_history`). Untuk persit, ini merujuk pada
+  keluar-masuk markas si anggota keluarga sendiri (bukan pasangan prajuritnya).
 
 ---
 
@@ -542,10 +527,24 @@ GET /catalog/persit/{id}        # {id} = id numerik persit, BUKAN membership_num
     "photo": null,
     "status": "active",
     "tenant_id": 1,
-    "spouse": { "id": 12, "service_number": "3101050001", "full_name": "Anastasia Suartini", "rank": null }
+    "spouse": { "id": 12, "service_number": "3101050001", "full_name": "Anastasia Suartini", "rank": null },
+    "last_status_location": "inside",
+    "visitor_log_history": [
+      {
+        "id": 41,
+        "purpose": "Dinas rutin",
+        "entered_at": "2026-08-30T08:00:00+07:00",
+        "exited_at": null,
+        "status": "inside",
+        "vehicle_plate": "B 1234 ABC",
+        "vehicle_type": "Mobil"
+      }
+    ]
   }
 }
 ```
+
+`last_status_location` + `visitor_log_history`: lihat §5 (bentuk & aturan render sama dengan personel).
 
 ### 6.2 Tab "Lokasi" di detail Persit
 

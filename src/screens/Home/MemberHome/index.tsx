@@ -192,7 +192,7 @@ export default function MemberHome(props: MemberHomeProps) {
       navigation.navigate(ROUTES.catalogDetail, {
         resource: 'personnel',
         id: serviceNumber,
-        initialTab: 'movement',
+        initialTab: 'visitor',
       });
     } else {
       navigation.navigate(ROUTES.comingSoon, { title: 'Riwayat Pergerakan' });

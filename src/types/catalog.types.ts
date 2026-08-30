@@ -38,6 +38,28 @@ export interface PersonnelFamilyMember {
   phone: string | null;
 }
 
+// Satu baris "keluar-masuk markas" (tab "Riwayat visitor" di detail personel).
+export interface PersonnelVisitorLogEntry {
+  id: number;
+  purpose: string | null;
+  entered_at: string | null;
+  exited_at: string | null;
+  status: string | null;
+  vehicle_plate: string | null;
+  vehicle_type: string | null;
+}
+
+// Satu baris peminjaman senjata (tab "Peminjaman Senjata" di detail personel).
+export interface PersonnelWeaponLoanEntry {
+  id: number;
+  weapon_number: string | null;
+  serial_number: string | null;
+  purpose: string | null;
+  loaned_at: string | null;
+  returned_at: string | null;
+  status: string | null;
+}
+
 export interface PersonnelDetail {
   id: number;
   service_number: string;
@@ -59,6 +81,10 @@ export interface PersonnelDetail {
   family_members: PersonnelFamilyMember[];
   vehicles: unknown[];
   health_summary: { total_records: number; last_examined_at: string | null; last_result: string | null };
+  // Status keberadaan terakhir personel (mis. "inside" / "outside") — ditampilkan di header detail.
+  last_status_location: string | null;
+  visitor_log_history: PersonnelVisitorLogEntry[];
+  weapon_loan_history: PersonnelWeaponLoanEntry[];
 }
 
 // --- Persit (keluarga) ---
@@ -90,6 +116,9 @@ export interface PersitDetail {
   status: string;
   tenant_id: number;
   spouse: { id: number; service_number: string; full_name: string; rank: string | null } | null;
+  // Sama seperti pada PersonnelDetail — ditampilkan di header + tab "Riwayat visitor" detail Persit.
+  last_status_location: string | null;
+  visitor_log_history: PersonnelVisitorLogEntry[];
 }
 
 // --- Vehicles ---

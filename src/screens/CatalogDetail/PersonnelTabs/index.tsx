@@ -1,17 +1,21 @@
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import Icon from '@/components/atoms/Icon';
-import Card from '@/components/molecules/Card';
 import CatalogListSection from '@/components/molecules/CatalogListSection';
 import InfoRow from '@/components/molecules/InfoRow';
 import OpenMapsButton from '@/components/molecules/OpenMapsButton';
 import SectionCard from '@/components/molecules/SectionCard';
+import VisitorLogHistory from '@/components/molecules/VisitorLogHistory';
+import WeaponLoanHistory from '@/components/molecules/WeaponLoanHistory';
 import CollapsingTabsDetail from '@/components/organisms/CollapsingTabsDetail';
 import type { CollapsingTabDef } from '@/components/organisms/CollapsingTabsDetail';
 import LocationPanel from '@/components/organisms/LocationPanel';
 import { usePersonnelLocation } from '@/hooks/usePersonnelLocation';
+import { ROUTES } from '@/navigation/paths';
+import type { RootStackParamList } from '@/navigation/types';
 import { getWeaponAssignmentsListApi } from '@/services/api/catalog.service';
 import { colors } from '@/theme/colors';
 import type { PersonnelDetail, WeaponAssignmentListItem } from '@/types';
@@ -25,7 +29,7 @@ import {
   titleCase,
 } from '@/utils/format';
 
-type PersonnelTabName = 'info' | 'movement' | 'location';
+type PersonnelTabName = 'info' | 'visitor' | 'weapon-loan' | 'location';
 
 export interface PersonnelTabsProps {
   detail: PersonnelDetail;
@@ -36,7 +40,10 @@ export interface PersonnelTabsProps {
 }
 
 function toPersonnelTabName(name: string | undefined): PersonnelTabName {
-  return name === 'movement' || name === 'location' ? name : 'info';
+  // `movement` = nama lama tab "Riwayat Keluar Masuk" (kini "Riwayat visitor") — dipetakan supaya
+  // deep-link lama (mis. shortcut "Riwayat Pergerakan" di MemberHome) tetap membuka tab yang benar.
+  if (name === 'movement') return 'visitor';
+  return name === 'visitor' || name === 'weapon-loan' || name === 'location' ? name : 'info';
 }
 
 interface InfoTabProps {
@@ -47,6 +54,8 @@ interface InfoTabProps {
 
 function InfoTab(props: InfoTabProps) {
   const { detail, weapons, isLoadingWeapons } = props;
+  // CatalogDetail adalah screen root-stack biasa, jadi nav prop-nya sudah tahu semua route stack.
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <>
@@ -83,6 +92,8 @@ function InfoTab(props: InfoTabProps) {
         items={detail.family_members.map(f => ({
           title: f.full_name,
           subtitle: joinFields(titleCase(f.family_relation), f.membership_number),
+          onPress: () =>
+            navigation.push(ROUTES.catalogDetail, { resource: 'persit', id: String(f.id) }),
         }))}
       />
       <CatalogListSection
@@ -111,86 +122,6 @@ function InfoTab(props: InfoTabProps) {
           value={orDash(detail.health_summary.last_result)}
         />
       </SectionCard>
-    </>
-  );
-}
-
-// Dummy sementara — belum ada endpoint riwayat keluar-masuk di backend (lihat draf API
-// yang dikirim ke tim backend). Bentuk field di sini (exit_at/entry_at/purpose) sengaja
-// disamakan dengan draf itu supaya tinggal ganti sumber data begitu API-nya jadi.
-const MOVEMENT_DUMMY_ENTRIES = [
-  {
-    id: 1,
-    exit_at: '28/09/2022 - 13.00',
-    entry_at: '28/09/2022 - 17.00',
-    purpose: 'Jaga Depan',
-  },
-  {
-    id: 2,
-    exit_at: '27/09/2022 - 08.00',
-    entry_at: '27/09/2022 - 12.00',
-    purpose: 'Latihan Lapangan',
-  },
-  {
-    id: 3,
-    exit_at: '25/09/2022 - 09.30',
-    entry_at: '25/09/2022 - 11.00',
-    purpose: 'Izin Keluar Markas',
-  },
-];
-
-interface MovementTabProps {
-  detail: PersonnelDetail;
-}
-
-function MovementTab(props: MovementTabProps) {
-  const { detail } = props;
-
-  return (
-    <>
-      <View style={styles.movementHeaderBar}>
-        <Text style={styles.movementHeaderText}>Catatan Keluar Masuk</Text>
-      </View>
-      <View style={styles.movementList}>
-        {MOVEMENT_DUMMY_ENTRIES.map(entry => (
-          <Card key={entry.id} style={styles.movementCard}>
-            <View style={styles.movementRow}>
-              <View style={styles.movementIconCircle}>
-                <Icon name="clock" size={13} color={colors.primary} />
-              </View>
-              <Text style={styles.movementLabel}>Keluar</Text>
-              <Text style={styles.movementValue}>{`: ${entry.exit_at}`}</Text>
-            </View>
-            <View style={styles.movementRow}>
-              <View style={styles.movementIconCircle}>
-                <Icon name="clock" size={13} color={colors.primary} />
-              </View>
-              <Text style={styles.movementLabel}>Masuk</Text>
-              <Text style={styles.movementValue}>{`: ${entry.entry_at}`}</Text>
-            </View>
-            <View style={styles.movementRow}>
-              <View style={styles.movementIconCircle}>
-                <Icon name="crosshair" size={13} color={colors.primary} />
-              </View>
-              <Text style={styles.movementLabel}>Tujuan</Text>
-              <Text style={styles.movementValue}>{`: ${entry.purpose}`}</Text>
-            </View>
-
-            <View style={styles.movementDivider} />
-
-            <View style={styles.movementPersonRow}>
-              <View style={styles.movementPersonAvatar}>
-                <Icon name="profile" size={16} color={colors.primary} />
-              </View>
-              <View style={styles.movementPersonText}>
-                <Text style={styles.movementPersonName}>{detail.full_name}</Text>
-                <Text style={styles.movementPersonUsername}>{`@${detail.service_number}`}</Text>
-              </View>
-              <Icon name="chevron-right" size={18} color={colors.textMuted} />
-            </View>
-          </Card>
-        ))}
-      </View>
     </>
   );
 }
@@ -259,10 +190,16 @@ export default function PersonnelTabs(props: PersonnelTabsProps) {
       render: () => <InfoTab detail={detail} weapons={weapons} isLoadingWeapons={isLoadingWeapons} />,
     },
     {
-      name: 'movement',
+      name: 'visitor',
       icon: 'clock',
-      label: 'Riwayat Keluar Masuk',
-      render: () => <MovementTab detail={detail} />,
+      label: 'Riwayat visitor',
+      render: () => <VisitorLogHistory entries={detail.visitor_log_history ?? []} />,
+    },
+    {
+      name: 'weapon-loan',
+      icon: 'weapon',
+      label: 'Peminjaman Senjata',
+      render: () => <WeaponLoanHistory entries={detail.weapon_loan_history ?? []} />,
     },
     {
       name: 'location',
@@ -308,80 +245,5 @@ export default function PersonnelTabs(props: PersonnelTabsProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  movementHeaderBar: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 12,
-    backgroundColor: colors.text,
-  },
-  movementHeaderText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.primaryForeground,
-  },
-  movementList: {
-    gap: 12,
-  },
-  movementCard: {
-    gap: 2,
-  },
-  movementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  movementIconCircle: {
-    height: 24,
-    width: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySurface,
-  },
-  movementLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
-    minWidth: 52,
-  },
-  movementValue: {
-    flexShrink: 1,
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  movementDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 10,
-  },
-  movementPersonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  movementPersonAvatar: {
-    height: 32,
-    width: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySurface,
-  },
-  movementPersonText: {
-    flex: 1,
-    gap: 1,
-  },
-  movementPersonName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  movementPersonUsername: {
-    fontSize: 12,
-    color: colors.textMuted,
   },
 });

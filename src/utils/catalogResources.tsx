@@ -126,6 +126,16 @@ function statusBadgeLabel(status: string | null | undefined): string {
   return status === 'active' ? 'AKTIF' : orDash(status).toUpperCase();
 }
 
+// Label untuk `PersonnelDetail.last_status_location` (mis. "inside" / "outside") di header detail.
+function locationStatusLabel(status: string | null | undefined): string | null {
+  if (!status) return null;
+  const map: Record<string, string> = {
+    inside: 'Di dalam markas',
+    outside: 'Di luar markas',
+  };
+  return map[status] ?? titleCase(status);
+}
+
 export const catalogResourceConfigs: Record<
   CatalogResourceKey,
   CatalogResourceConfig
@@ -181,8 +191,11 @@ export const catalogResourceConfigs: Record<
       badgeLabel: statusBadgeLabel(d.status),
       badgeVariant: statusBadgeVariant(d.status),
       metaRows: [
-        { icon: 'id-card', text: d.service_number },
-        { icon: 'phone', text: orDash(d.phone) },
+        { icon: 'id-card' as const, text: d.service_number },
+        { icon: 'phone' as const, text: orDash(d.phone) },
+        ...(locationStatusLabel(d.last_status_location)
+          ? [{ icon: 'map-pin' as const, text: locationStatusLabel(d.last_status_location) as string }]
+          : []),
       ],
     }),
     renderDetail: (
@@ -218,8 +231,11 @@ export const catalogResourceConfigs: Record<
       badgeLabel: statusBadgeLabel(d.status),
       badgeVariant: statusBadgeVariant(d.status),
       metaRows: [
-        { icon: 'id-card', text: d.membership_number },
-        { icon: 'phone', text: orDash(d.phone) },
+        { icon: 'id-card' as const, text: d.membership_number },
+        { icon: 'phone' as const, text: orDash(d.phone) },
+        ...(locationStatusLabel(d.last_status_location)
+          ? [{ icon: 'map-pin' as const, text: locationStatusLabel(d.last_status_location) as string }]
+          : []),
       ],
     }),
     renderDetail: (

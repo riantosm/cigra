@@ -5,6 +5,7 @@ import { RefreshControl, StyleSheet, View } from 'react-native';
 import InfoRow from '@/components/molecules/InfoRow';
 import OpenMapsButton from '@/components/molecules/OpenMapsButton';
 import SectionCard from '@/components/molecules/SectionCard';
+import VisitorLogHistory from '@/components/molecules/VisitorLogHistory';
 import CollapsingTabsDetail from '@/components/organisms/CollapsingTabsDetail';
 import type { CollapsingTabDef } from '@/components/organisms/CollapsingTabsDetail';
 import LocationPanel from '@/components/organisms/LocationPanel';
@@ -13,7 +14,7 @@ import { colors } from '@/theme/colors';
 import type { PersitDetail } from '@/types';
 import { formatBirth, orDash, titleCase } from '@/utils/format';
 
-type PersitTabName = 'info' | 'location';
+type PersitTabName = 'info' | 'visitor' | 'location';
 
 export interface PersitTabsProps {
   detail: PersitDetail;
@@ -23,12 +24,13 @@ export interface PersitTabsProps {
 }
 
 function toPersitTabName(name: string | undefined): PersitTabName {
-  return name === 'location' ? 'location' : 'info';
+  return name === 'visitor' || name === 'location' ? name : 'info';
 }
 
-// Detail persit: tab "Informasi" (data pribadi + pasangan) dan "Lokasi" — sama seperti detail
-// Personel. Lokasi yang ditampilkan adalah lokasi pasangan prajurit-nya (`spouse.service_number`),
-// karena pelacakan posisi terikat ke NRP personel, bukan ke anggota keluarga.
+// Detail persit: tab "Informasi" (data pribadi + pasangan), "Riwayat visitor" (keluar-masuk markas,
+// format sama dengan detail Personel — `VisitorLogHistory`) dan "Lokasi". Lokasi yang ditampilkan
+// adalah lokasi pasangan prajurit-nya (`spouse.service_number`), karena pelacakan posisi terikat ke
+// NRP personel, bukan ke anggota keluarga.
 export default function PersitTabs(props: PersitTabsProps) {
   const { detail, header, onRefresh, initialTabName } = props;
   const initialTab = toPersitTabName(initialTabName);
@@ -85,6 +87,12 @@ export default function PersitTabs(props: PersitTabsProps) {
           </SectionCard>
         </>
       ),
+    },
+    {
+      name: 'visitor',
+      icon: 'clock',
+      label: 'Riwayat visitor',
+      render: () => <VisitorLogHistory entries={detail.visitor_log_history ?? []} />,
     },
     {
       name: 'location',
