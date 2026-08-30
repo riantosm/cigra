@@ -17,6 +17,9 @@ import type {
 export interface CatalogListParams {
   search?: string;
   page?: number;
+  // Filter tambahan per resource (mis. status/gender/blood_type buat personnel) — diteruskan
+  // apa adanya sebagai query param, lihat CatalogFilterField di utils/catalogResources.
+  [filterKey: string]: string | number | undefined;
 }
 
 export interface CatalogListResult<T> {

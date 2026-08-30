@@ -11,6 +11,26 @@ export function genderLabel(gender: string | null | undefined): string {
   return gender.charAt(0).toUpperCase() + gender.slice(1);
 }
 
+// Ubah value mentah dari API (mis. "orang_tua", "SIAP_PAKAI") jadi Title Case berspasi
+// ("Orang Tua", "Siap Pakai") — dipakai buat field enum-like (family_relation, condition_status,
+// inventory_status, category, ownership_type) yang tampil sebagai teks ke user.
+export function titleCase(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value
+    .replace(/_/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+// Gabungkan beberapa field opsional dengan " · ", tapi lewati field yang kosong sepenuhnya —
+// dipakai di subtitle list (mis. "Pangkat · Satuan") supaya field yang null tidak muncul sebagai
+// "-" dan pemisah "·" cuma tampil kalau kedua sisinya benar-benar ada isinya.
+export function joinFields(...values: (string | null | undefined)[]): string {
+  return values.filter((value): value is string => Boolean(value && value.trim().length > 0)).join(' · ');
+}
+
 export function formatBirth(place: string | null | undefined, dateFormatted: string | null | undefined): string {
   if (place && dateFormatted) return `${place}, ${dateFormatted}`;
   return orDash(place || dateFormatted);

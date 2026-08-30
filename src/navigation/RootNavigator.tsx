@@ -10,9 +10,11 @@ import { locationTracking } from '@/native/locationTracking';
 import CatalogDetailScreen from '@/screens/CatalogDetail';
 import CatalogListScreen from '@/screens/CatalogList';
 import ChangePasswordScreen from '@/screens/ChangePassword';
+import ComingSoonScreen from '@/screens/ComingSoon';
 import ForgotPasswordScreen from '@/screens/ForgotPassword';
 import LoginScreen from '@/screens/Login';
-import SettingsScreen from '@/screens/Settings';
+import PersonnelMapScreen from '@/screens/PersonnelMap';
+import ProfileScreen from '@/screens/Profile';
 import { getAuthToken, setAuthToken } from '@/services/api/axiosInstance';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
@@ -94,7 +96,9 @@ export default function RootNavigator() {
       </Stack.Screen>
       <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
       <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
-      <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
+      <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />
+      <Stack.Screen name={ROUTES.comingSoon} component={ComingSoonScreen} />
+      <Stack.Screen name={ROUTES.personnelMap} component={PersonnelMapScreen} />
     </Stack.Navigator>
   );
 }

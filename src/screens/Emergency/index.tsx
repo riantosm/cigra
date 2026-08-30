@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import axios from 'axios';
 
@@ -7,12 +10,25 @@ import Button from '@/components/atoms/Button';
 import Icon from '@/components/atoms/Icon';
 import StatusModal from '@/components/organisms/StatusModal';
 import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
-import MainLayout from '@/components/templates/MainLayout';
+import HomeHeader from '@/screens/Home/HomeHeader';
+import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
+import { ROUTES } from '@/navigation/paths';
+import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { sendPanicButtonApi } from '@/services/api/panicButton.service';
+import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
 import { displayLocalEmergencyAlert } from '@/utils/pushNotifications';
+
+type EmergencyNavigationProp = CompositeNavigationProp<
+  MainTabScreenProps<'Emergency'>['navigation'],
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
+export interface EmergencyScreenProps {
+  navigation: EmergencyNavigationProp;
+}
 
 function extractErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
@@ -40,9 +56,12 @@ const initialModalState: StatusModalState = {
   secondaryAction: undefined,
 };
 
-export default function EmergencyScreen() {
+export default function EmergencyScreen(props: EmergencyScreenProps) {
+  const { navigation } = props;
+  const user = useAppSelector(state => state.auth.user);
   const [isSending, setIsSending] = useState(false);
   const [modal, setModal] = useState<StatusModalState>(initialModalState);
+  const bottomPadding = useTabScreenBottomPadding();
 
   function closeModal() {
     setModal(initialModalState);
@@ -103,13 +122,14 @@ export default function EmergencyScreen() {
   }
 
   return (
-    <MainLayout title="Emergency">
-      <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <HomeHeader user={user} onAvatarPress={() => navigation.navigate(ROUTES.profile)} />
+      <View style={[styles.content, { paddingBottom: bottomPadding }]}>
         <MotiView
           from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={contentEnterTransition}
-          style={styles.content}>
+          style={styles.contentInner}>
           <View style={styles.badge}>
             <Icon name="emergency" size={40} color={colors.dangerForeground} />
           </View>
@@ -144,19 +164,23 @@ export default function EmergencyScreen() {
             : undefined
         }
       />
-    </MainLayout>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.surface,
+  },
+  content: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-    paddingBottom: 96,
+    backgroundColor: colors.surface,
   },
-  content: {
+  contentInner: {
     alignItems: 'center',
     gap: 8,
   },

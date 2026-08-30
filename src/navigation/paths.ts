@@ -11,4 +11,6 @@ export const ROUTES = {
   catalogList: 'CatalogList',
   catalogDetail: 'CatalogDetail',
   settings: 'Settings',
+  comingSoon: 'ComingSoon',
+  personnelMap: 'PersonnelMap',
 } as const;

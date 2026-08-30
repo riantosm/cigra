@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
-import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { logo } from '@/assets';
 import Button from '@/components/atoms/Button';
@@ -15,12 +15,15 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { clearAuthError, login, loginWithOtp } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
 import { extractErrorMessage } from '@/utils/format';
+import { getOtpResendCount, OTP_RESEND_DAILY_LIMIT, recordOtpResend } from '@/utils/otpResendLimiter';
 import { appVersion } from '@/utils/version';
 
 export type LoginScreenProps = RootStackScreenProps<typeof ROUTES.login>;
 
 type LoginMode = 'password' | 'otp';
 type OtpStep = 'request' | 'verify';
+
+const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
 export default function LoginScreen(props: LoginScreenProps) {
   const { navigation } = props;
@@ -39,7 +42,16 @@ export default function LoginScreen(props: LoginScreenProps) {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpInfo, setOtpInfo] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendCount, setResendCount] = useState(0);
   const otpRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const scrollViewRef = useRef<ComponentRef<typeof ScrollView>>(null);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown(seconds => seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   function switchMode(nextMode: LoginMode) {
     if (nextMode === mode) return;
@@ -49,6 +61,8 @@ export default function LoginScreen(props: LoginScreenProps) {
     setOtpCode('');
     setOtpError(null);
     setOtpInfo(null);
+    setResendCooldown(0);
+    setResendCount(0);
   }
 
   function handlePasswordSubmit() {
@@ -57,15 +71,23 @@ export default function LoginScreen(props: LoginScreenProps) {
     dispatch(login({ login: identifier, password }));
   }
 
-  async function handleRequestOtp() {
+  async function handleSendOtp(isResend: boolean) {
     if (!identifier || isSendingOtp) return;
+    if (isResend && (resendCooldown > 0 || resendCount >= OTP_RESEND_DAILY_LIMIT)) return;
     setOtpError(null);
     setIsSendingOtp(true);
     try {
       const message = await requestLoginOtpApi({ login: identifier });
       setOtpInfo(message);
       setOtpStep('verify');
+      setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS);
+      if (isResend) {
+        setResendCount(await recordOtpResend(identifier));
+      } else {
+        setResendCount(await getOtpResendCount(identifier));
+      }
       requestAnimationFrame(() => otpRef.current?.focus());
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 250);
     } catch (requestError) {
       setOtpError(extractErrorMessage(requestError, 'Gagal mengirim kode OTP.'));
     } finally {
@@ -78,7 +100,21 @@ export default function LoginScreen(props: LoginScreenProps) {
     setOtpCode('');
     setOtpInfo(null);
     setOtpError(null);
+    setResendCooldown(0);
+    setResendCount(0);
   }
+
+  const resendRemaining = Math.max(OTP_RESEND_DAILY_LIMIT - resendCount, 0);
+  const resendLimitReached = resendRemaining <= 0;
+  const resendDisabled = isSendingOtp || resendCooldown > 0 || resendLimitReached;
+  const resendQuota = `(${resendRemaining}/${OTP_RESEND_DAILY_LIMIT})`;
+  const resendLabel = resendLimitReached
+    ? `Batas harian tercapai ${resendQuota}`
+    : isSendingOtp
+      ? 'Mengirim...'
+      : resendCooldown > 0
+        ? `Kirim ulang (${resendCooldown}s)`
+        : `Kirim ulang kode ${resendQuota}`;
 
   function handleVerifyOtp() {
     if (!identifier || !otpCode || isLoading) return;
@@ -90,7 +126,7 @@ export default function LoginScreen(props: LoginScreenProps) {
   const otpErrorMessage = otpError ?? (mode === 'otp' ? error : null);
 
   return (
-    <AuthLayout>
+    <AuthLayout ref={scrollViewRef}>
       <View style={styles.logoBadge}>
         <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
       </View>
@@ -169,7 +205,7 @@ export default function LoginScreen(props: LoginScreenProps) {
             autoCorrect={false}
             editable={otpStep === 'request'}
             returnKeyType="done"
-            onSubmitEditing={handleRequestOtp}
+            onSubmitEditing={() => handleSendOtp(false)}
             value={identifier}
             onChangeText={setIdentifier}
           />
@@ -193,9 +229,13 @@ export default function LoginScreen(props: LoginScreenProps) {
                 <PressableScale onPress={handleChangeIdentifier} disabled={isSendingOtp}>
                   <Text style={styles.forgotLinkLabel}>Ganti akun</Text>
                 </PressableScale>
-                <PressableScale onPress={handleRequestOtp} disabled={isSendingOtp}>
-                  <Text style={styles.forgotLinkLabel}>
-                    {isSendingOtp ? 'Mengirim...' : 'Kirim ulang kode'}
+                <PressableScale onPress={() => handleSendOtp(true)} disabled={resendDisabled}>
+                  <Text
+                    style={[
+                      styles.forgotLinkLabel,
+                      resendDisabled && styles.forgotLinkLabelDisabled,
+                    ]}>
+                    {resendLabel}
                   </Text>
                 </PressableScale>
               </View>
@@ -216,7 +256,7 @@ export default function LoginScreen(props: LoginScreenProps) {
 
               <Button
                 label="Kirim Kode OTP"
-                onPress={handleRequestOtp}
+                onPress={() => handleSendOtp(false)}
                 loading={isSendingOtp}
                 disabled={!identifier}
                 style={styles.submit}
@@ -299,6 +339,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
+  },
+  forgotLinkLabelDisabled: {
+    color: colors.textMuted,
   },
   otpActions: {
     flexDirection: 'row',

@@ -1,36 +1,61 @@
 import { StyleSheet, Text, View } from 'react-native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
-import MainLayout from '@/components/templates/MainLayout';
+import HomeHeader from '@/screens/Home/HomeHeader';
+import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
+import { ROUTES } from '@/navigation/paths';
+import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
+import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
 
-export default function RiwayatScreen() {
+type RiwayatNavigationProp = CompositeNavigationProp<
+  MainTabScreenProps<'Riwayat'>['navigation'],
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
+export interface RiwayatScreenProps {
+  navigation: RiwayatNavigationProp;
+}
+
+export default function RiwayatScreen(props: RiwayatScreenProps) {
+  const { navigation } = props;
+  const user = useAppSelector(state => state.auth.user);
+  const bottomPadding = useTabScreenBottomPadding();
+
   return (
-    <MainLayout title="Riwayat">
-      <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <HomeHeader user={user} onAvatarPress={() => navigation.navigate(ROUTES.profile)} />
+      <View style={[styles.content, { paddingBottom: bottomPadding }]}>
         <MotiView
           from={{ opacity: 0, translateY: 16 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}
-          style={styles.content}>
+          style={styles.contentInner}>
           <Text style={styles.title}>Riwayat</Text>
           <Text style={styles.subtitle}>Belum ada konten riwayat saat ini</Text>
         </MotiView>
       </View>
-    </MainLayout>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.surface,
+  },
+  content: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingBottom: 96,
+    backgroundColor: colors.surface,
   },
-  content: {
+  contentInner: {
     alignItems: 'center',
     gap: 8,
   },

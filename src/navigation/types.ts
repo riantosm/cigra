@@ -17,7 +17,9 @@ export type RootStackParamList = {
   [ROUTES.main]: undefined;
   [ROUTES.catalogList]: { resource: CatalogResourceKey };
   [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string };
-  [ROUTES.settings]: undefined;
+  [ROUTES.profile]: undefined;
+  [ROUTES.comingSoon]: { title: string };
+  [ROUTES.personnelMap]: undefined;
 };
 
 export type MainTabParamList = {
@@ -25,7 +27,7 @@ export type MainTabParamList = {
   [ROUTES.riwayat]: undefined;
   [ROUTES.emergency]: undefined;
   [ROUTES.bukuSaku]: undefined;
-  [ROUTES.profile]: undefined;
+  [ROUTES.settings]: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =

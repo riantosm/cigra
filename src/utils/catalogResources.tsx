@@ -34,7 +34,7 @@ import type {
   WeaponCategoryDetail,
   WeaponCategoryListItem,
 } from '@/types';
-import { formatBirth, formatDateShort, formatDateTime, genderLabel, orDash } from '@/utils/format';
+import { formatBirth, formatDateShort, formatDateTime, genderLabel, joinFields, orDash, titleCase } from '@/utils/format';
 
 export interface CatalogListItem {
   id: string;
@@ -42,6 +42,17 @@ export interface CatalogListItem {
   subtitle: string;
   badgeLabel?: string;
   badgeVariant?: BadgeVariant;
+}
+
+export interface CatalogFilterOption {
+  label: string;
+  value: string;
+}
+
+export interface CatalogFilterField {
+  key: string;
+  label: string;
+  options: CatalogFilterOption[];
 }
 
 export interface CatalogDetailHeader {
@@ -63,6 +74,10 @@ export interface CatalogResourceConfig<ListSource = any, Detail = any> {
   gradientEnd: string;
   screenTitle: string;
   searchPlaceholder: string;
+  // Cuma diisi buat resource yang query filter-nya sudah dikonfirmasi jalan di API (lihat
+  // dokumentasi `Query filter` masing-masing endpoint) — resource tanpa ini tidak menampilkan
+  // ikon filter sama sekali di CatalogList.
+  filterFields?: CatalogFilterField[];
   fetchList: (params: CatalogListParams) => Promise<CatalogListResult<ListSource>>;
   fetchDetail: (id: string) => Promise<Detail>;
   toListItem: (item: ListSource) => CatalogListItem;
@@ -87,12 +102,40 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     gradientEnd: colors.gradientPersonnelEnd,
     screenTitle: 'Personel',
     searchPlaceholder: 'Cari nama atau NRP...',
+    filterFields: [
+      {
+        key: 'status',
+        label: 'Status',
+        options: [
+          { label: 'Aktif', value: 'active' },
+          { label: 'Nonaktif', value: 'inactive' },
+        ],
+      },
+      {
+        key: 'gender',
+        label: 'Jenis Kelamin',
+        options: [
+          { label: 'Laki-laki', value: 'male' },
+          { label: 'Perempuan', value: 'female' },
+        ],
+      },
+      {
+        key: 'blood_type',
+        label: 'Golongan Darah',
+        options: [
+          { label: 'A', value: 'A' },
+          { label: 'B', value: 'B' },
+          { label: 'AB', value: 'AB' },
+          { label: 'O', value: 'O' },
+        ],
+      },
+    ],
     fetchList: getPersonnelListApi,
     fetchDetail: getPersonnelDetailApi,
     toListItem: (p: PersonnelListItem) => ({
       id: p.service_number,
       title: p.full_name,
-      subtitle: `${orDash(p.rank)} · ${orDash(p.unit)}`,
+      subtitle: joinFields(p.rank, p.unit),
       badgeLabel: statusBadgeLabel(p.status),
       badgeVariant: statusBadgeVariant(p.status),
     }),
@@ -133,7 +176,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
           title="Anggota Keluarga"
           items={d.family_members.map(f => ({
             title: f.full_name,
-            subtitle: `${orDash(f.family_relation)} · ${f.membership_number}`,
+            subtitle: `${orDash(titleCase(f.family_relation))} · ${f.membership_number}`,
           }))}
         />
         <SectionCard icon="heartbeat" title="Ringkasan Kesehatan">
@@ -158,7 +201,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     toListItem: (p: PersitListItem) => ({
       id: String(p.id),
       title: p.full_name,
-      subtitle: `${orDash(p.family_relation)} · ${orDash(p.spouse?.full_name)}`,
+      subtitle: `${orDash(titleCase(p.family_relation))} · ${orDash(p.spouse?.full_name)}`,
       badgeLabel: statusBadgeLabel(p.status),
       badgeVariant: statusBadgeVariant(p.status),
     }),
@@ -175,7 +218,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     renderDetail: (d: PersitDetail) => (
       <>
         <SectionCard icon="profile" title="Data Pribadi">
-          <InfoRow icon="users" label="Hubungan Keluarga" value={orDash(d.family_relation)} />
+          <InfoRow icon="users" label="Hubungan Keluarga" value={orDash(titleCase(d.family_relation))} />
           <InfoRow icon="cake" label="Tempat, Tanggal Lahir" value={formatBirth(d.birth_place, d.birth_date_formatted)} />
           <InfoRow icon="blood-drop" label="Golongan Darah" value={orDash(d.blood_type)} />
           <InfoRow icon="map-pin" label="Alamat" value={orDash(d.address)} />
@@ -203,8 +246,8 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     toListItem: (v: VehicleListItem) => ({
       id: String(v.id),
       title: v.brand_model,
-      subtitle: `${v.plate_number} · ${orDash(v.category)}`,
-      badgeLabel: orDash(v.condition_status),
+      subtitle: `${v.plate_number} · ${orDash(titleCase(v.category))}`,
+      badgeLabel: orDash(titleCase(v.condition_status)),
       badgeVariant: v.is_active ? 'success' : 'neutral',
     }),
     detailHeader: (d: VehicleDetail) => ({
@@ -214,14 +257,14 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
       badgeVariant: d.is_active ? 'success' : 'neutral',
       metaRows: [
         { icon: 'id-card', text: d.plate_number },
-        { icon: 'shield-check', text: orDash(d.category) },
+        { icon: 'shield-check', text: orDash(titleCase(d.category)) },
       ],
     }),
     renderDetail: (d: VehicleDetail) => (
       <>
         <SectionCard icon="car" title="Detail Kendaraan">
-          <InfoRow icon="shield-check" label="Kepemilikan" value={orDash(d.ownership_type)} />
-          <InfoRow icon="car" label="Kondisi" value={orDash(d.condition_status)} />
+          <InfoRow icon="shield-check" label="Kepemilikan" value={orDash(titleCase(d.ownership_type))} />
+          <InfoRow icon="car" label="Kondisi" value={orDash(titleCase(d.condition_status))} />
           <InfoRow icon="id-card" label="Nomor Mesin" value={orDash(d.engine_number)} />
           <InfoRow icon="id-card" label="Nomor Rangka" value={orDash(d.chassis_number)} />
           <InfoRow icon="calendar" label="Masa Berlaku STNK" value={formatDateShort(d.stnk_valid_until)} />
@@ -273,7 +316,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
           title="Daftar Senjata"
           items={d.weapons.map(w => ({
             title: w.weapon_number,
-            subtitle: `${w.serial_number} · ${w.condition_status} · ${w.inventory_status}`,
+            subtitle: `${w.serial_number} · ${orDash(titleCase(w.condition_status))} · ${orDash(titleCase(w.inventory_status))}`,
           }))}
         />
       </>
@@ -293,7 +336,7 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     toListItem: (a: WeaponAssignmentListItem) => ({
       id: String(a.id),
       title: a.weapon_number,
-      subtitle: `${orDash(a.category)} · ${orDash(a.assigned_to?.full_name)}`,
+      subtitle: `${orDash(titleCase(a.category))} · ${orDash(a.assigned_to?.full_name)}`,
       badgeLabel: statusBadgeLabel(a.status),
       badgeVariant: statusBadgeVariant(a.status),
     }),
@@ -309,10 +352,10 @@ export const catalogResourceConfigs: Record<CatalogResourceKey, CatalogResourceC
     renderDetail: (d: WeaponAssignmentDetail) => (
       <>
         <SectionCard icon="weapon" title="Detail Senjata">
-          <InfoRow icon="weapon" label="Kategori" value={orDash(d.weapon.category)} />
+          <InfoRow icon="weapon" label="Kategori" value={orDash(titleCase(d.weapon.category))} />
           <InfoRow icon="shield-check" label="Kaliber" value={orDash(d.weapon.caliber)} />
-          <InfoRow icon="car" label="Kondisi" value={orDash(d.weapon.condition_status)} />
-          <InfoRow icon="building" label="Status Inventaris" value={orDash(d.weapon.inventory_status)} />
+          <InfoRow icon="car" label="Kondisi" value={orDash(titleCase(d.weapon.condition_status))} />
+          <InfoRow icon="building" label="Status Inventaris" value={orDash(titleCase(d.weapon.inventory_status))} />
         </SectionCard>
         <SectionCard icon="calendar" title="Detail Penugasan">
           <InfoRow icon="calendar" label="Ditugaskan" value={formatDateTime(d.assigned_at) ?? '-'} />

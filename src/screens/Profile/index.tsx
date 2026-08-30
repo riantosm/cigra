@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MotiView } from 'moti';
 
 import Badge from '@/components/atoms/Badge';
@@ -15,7 +12,7 @@ import StatusModal from '@/components/organisms/StatusModal';
 import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
-import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
+import type { RootStackScreenProps } from '@/navigation/types';
 import { getMyLocationApi, sendLocationApi } from '@/services/api/location.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
@@ -25,10 +22,7 @@ import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, gend
 import { contentEnterTransition, pressTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
 
-type ProfileNavigationProp = CompositeNavigationProp<
-  MainTabScreenProps<'Profile'>['navigation'],
-  NativeStackNavigationProp<RootStackParamList>
->;
+export type ProfileScreenProps = RootStackScreenProps<typeof ROUTES.profile>;
 
 const statusLabel: Record<LocationStatus, string> = {
   fresh: 'Aktif',
@@ -62,8 +56,8 @@ function closedModalState(): StatusModalState {
   };
 }
 
-export default function ProfileScreen() {
-  const navigation = useNavigation<ProfileNavigationProp>();
+export default function ProfileScreen(props: ProfileScreenProps) {
+  const { navigation } = props;
   const dispatch = useAppDispatch();
   const user = useAppSelector(state => state.auth.user);
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
@@ -149,18 +143,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <MainLayout
-      title="Profile"
-      right={
-        <PressableScale
-          onPress={() => navigation.navigate(ROUTES.settings)}
-          hitSlop={12}
-          contentStyle={styles.settingsButton}
-          accessibilityRole="button"
-          accessibilityLabel="Pengaturan">
-          <Icon name="settings" size={22} color={colors.text} />
-        </PressableScale>
-      }>
+    <MainLayout title="Profile" onBack={() => navigation.goBack()}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
@@ -469,12 +452,5 @@ const styles = StyleSheet.create({
   locationMuted: {
     fontSize: 13,
     color: colors.textMuted,
-  },
-  settingsButton: {
-    height: 44,
-    width: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: -10,
   },
 });

@@ -1,21 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MotiView } from 'moti';
 
-import MenuCard from '@/components/molecules/MenuCard';
 import StatusModal from '@/components/organisms/StatusModal';
-import MainLayout from '@/components/templates/MainLayout';
+import CommanderHome from '@/screens/Home/CommanderHome';
+import MemberHome from '@/screens/Home/MemberHome';
 import { useDoubleBackToExit } from '@/hooks/useDoubleBackToExit';
-import { ROUTES } from '@/navigation/paths';
-import type { CatalogResourceKey, MainTabScreenProps, RootStackParamList } from '@/navigation/types';
+import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
-import { colors } from '@/theme/colors';
-import { catalogResourceConfigs } from '@/utils/catalogResources';
-import { contentEnterTransition } from '@/utils/motion';
 import {
   LocationUnavailableError,
   getCurrentCoordinates,
@@ -29,13 +24,9 @@ type HomeNavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-const catalogMenuOrder: CatalogResourceKey[] = [
-  'personnel',
-  'persit',
-  'vehicles',
-  'weapon-categories',
-  'weapon-assignments',
-];
+// Dashboard "komandan" (CommanderHome) cuma buat role ini — role lain (mis. 'anggota') masih pakai
+// tampilan Home yang lebih sederhana (MemberHome) sampai desainnya sendiri dibuatkan nanti.
+const COMMANDER_ROLE = 'komandan';
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
@@ -45,6 +36,7 @@ export default function HomeScreen() {
   const [locationIssue, setLocationIssue] = useState<{ reason: LocationErrorReason; message: string } | null>(
     null,
   );
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const ensureLocationReady = useCallback(async () => {
     try {
@@ -78,42 +70,22 @@ export default function HomeScreen() {
     return () => subscription.remove();
   }, [dispatch, ensureLocationReady]);
 
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    await Promise.all([ensureLocationReady(), dispatch(refreshUser())]);
+    setIsRefreshing(false);
+  }
+
   const isGpsIssue = locationIssue?.reason === 'gps-disabled';
+  const isCommander = user?.roles?.includes(COMMANDER_ROLE) ?? false;
 
   return (
-    <MainLayout title="Home">
-      <ScrollView contentContainerStyle={styles.container}>
-        <MotiView
-          from={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={contentEnterTransition}
-          style={styles.content}>
-          <Text style={styles.title}>Welcome, {user?.name ?? 'User'} 👋</Text>
-          <Text style={styles.subtitle}>Selamat datang di Smart Battalion</Text>
-        </MotiView>
-
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={contentEnterTransition}
-          style={styles.grid}>
-          {catalogMenuOrder.map(resource => {
-            const config = catalogResourceConfigs[resource];
-            return (
-              <View key={resource} style={styles.gridItem}>
-                <MenuCard
-                  icon={config.icon}
-                  title={config.menuTitle}
-                  subtitle={config.menuSubtitle}
-                  gradientStart={config.gradientStart}
-                  gradientEnd={config.gradientEnd}
-                  onPress={() => navigation.navigate(ROUTES.catalogList, { resource })}
-                />
-              </View>
-            );
-          })}
-        </MotiView>
-      </ScrollView>
+    <>
+      {isCommander ? (
+        <CommanderHome user={user} navigation={navigation} isRefreshing={isRefreshing} onRefresh={handleRefresh} />
+      ) : (
+        <MemberHome user={user} navigation={navigation} isRefreshing={isRefreshing} onRefresh={handleRefresh} />
+      )}
 
       <StatusModal
         visible={locationIssue !== null}
@@ -128,36 +100,6 @@ export default function HomeScreen() {
         }
         secondaryAction={isGpsIssue ? undefined : { label: 'Buka Pengaturan', onPress: openAppSettings }}
       />
-    </MainLayout>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 96,
-  },
-  content: {
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textMuted,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  gridItem: {
-    width: '47%',
-  },
-});

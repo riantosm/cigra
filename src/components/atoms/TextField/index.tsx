@@ -4,6 +4,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import type { StyleProp, TextInputProps, ViewStyle } from 'react-native';
 
 import Icon from '@/components/atoms/Icon';
+import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
 
@@ -11,23 +12,33 @@ export interface TextFieldProps extends TextInputProps {
   label?: string;
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
+  leftIcon?: IconName;
+  onClear?: () => void;
 }
 
 const TextField = forwardRef<ComponentRef<typeof TextInput>, TextFieldProps>(
   function TextFieldImpl(props, ref) {
-    const { label, error, containerStyle, style, secureTextEntry, ...rest } = props;
+    const { label, error, containerStyle, style, secureTextEntry, leftIcon, onClear, value, ...rest } = props;
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const showClearButton = Boolean(onClear) && typeof value === 'string' && value.length > 0;
 
     return (
       <View style={[styles.container, containerStyle]}>
         {label ? <Text style={styles.label}>{label}</Text> : null}
         <View style={styles.inputWrapper}>
+          {leftIcon ? (
+            <View style={styles.leftIcon} pointerEvents="none">
+              <Icon name={leftIcon} size={18} color={colors.textMuted} />
+            </View>
+          ) : null}
           <TextInput
             ref={ref}
+            value={value}
             placeholderTextColor={colors.textMuted}
             style={[
               styles.input,
-              secureTextEntry ? styles.inputWithIcon : null,
+              leftIcon ? styles.inputWithLeftIcon : null,
+              secureTextEntry || showClearButton ? styles.inputWithIcon : null,
               error ? styles.inputError : null,
               style,
             ]}
@@ -42,6 +53,15 @@ const TextField = forwardRef<ComponentRef<typeof TextInput>, TextFieldProps>(
               accessibilityRole="button"
               accessibilityLabel={isPasswordVisible ? 'Sembunyikan password' : 'Tampilkan password'}>
               <Icon name={isPasswordVisible ? 'eye-off' : 'eye'} size={20} color={colors.textMuted} />
+            </PressableScale>
+          ) : showClearButton ? (
+            <PressableScale
+              onPress={onClear}
+              hitSlop={12}
+              style={styles.eyeButton}
+              accessibilityRole="button"
+              accessibilityLabel="Hapus teks">
+              <Icon name="close" size={18} color={colors.textMuted} />
             </PressableScale>
           ) : null}
         </View>
@@ -77,6 +97,14 @@ const styles = StyleSheet.create({
   },
   inputWithIcon: {
     paddingRight: 48,
+  },
+  inputWithLeftIcon: {
+    paddingLeft: 44,
+  },
+  leftIcon: {
+    position: 'absolute',
+    left: 14,
+    zIndex: 1,
   },
   inputError: {
     borderColor: colors.danger,

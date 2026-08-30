@@ -8,6 +8,12 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# react-native-firebase resolves Firebase via SPM by default, which conflicts with GoogleMaps
+# (needed by react-native-maps' Google subspec below) at static-linkage link time — duplicate
+# Firebase symbols from RNFBApp/RNFBMessaging each embedding their own SPM copy. Falls back to
+# Firebase's plain CocoaPods pods instead, which coexist fine with GoogleMaps' static XCFramework.
+$RNFirebaseDisableSPM = true
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
@@ -15,6 +21,11 @@ if linkage != nil
 end
 
 target 'CigraSmartbattalionApps' do
+  # Override autolinking's default 'Maps' subspec (Apple Maps only) supaya react-native-maps
+  # juga membawa Google Maps SDK — deklarasi manual di sini sebelum use_native_modules! bikin
+  # autolinking pakai pod ini apa adanya, bukan nambah pod 'react-native-maps' default lagi.
+  pod 'react-native-maps', :subspecs => ['Google'], :path => '../node_modules/react-native-maps'
+
   config = use_native_modules!
 
   use_react_native!(

@@ -2,16 +2,20 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import Badge from '@/components/atoms/Badge';
+import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import TextField from '@/components/atoms/TextField';
 import Card from '@/components/molecules/Card';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
+import FilterSheet from '@/screens/CatalogList/FilterSheet';
 import { colors } from '@/theme/colors';
 import type { CatalogListItem } from '@/utils/catalogResources';
 import { catalogResourceConfigs } from '@/utils/catalogResources';
 import { extractErrorMessage } from '@/utils/format';
+
+const SEARCH_DEBOUNCE_MS = 1000;
 
 type Props = RootStackScreenProps<'CatalogList'>;
 
@@ -22,6 +26,8 @@ export default function CatalogListScreen(props: Props) {
 
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [isFilterSheetVisible, setIsFilterSheetVisible] = useState(false);
   const [items, setItems] = useState<CatalogListItem[]>([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
@@ -30,6 +36,8 @@ export default function CatalogListScreen(props: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const activeFilterCount = Object.keys(filters).length;
+
   const loadPage = useCallback(
     async (targetPage: number, mode: 'initial' | 'refresh' | 'more') => {
       if (mode === 'initial') setIsLoading(true);
@@ -37,7 +45,7 @@ export default function CatalogListScreen(props: Props) {
       if (mode === 'more') setIsLoadingMore(true);
       setErrorMessage(null);
       try {
-        const result = await config.fetchList({ search: search || undefined, page: targetPage });
+        const result = await config.fetchList({ search: search || undefined, page: targetPage, ...filters });
         const mapped = result.items.map(config.toListItem);
         setItems(previous => (mode === 'more' ? [...previous, ...mapped] : mapped));
         setPage(result.meta.current_page);
@@ -51,16 +59,27 @@ export default function CatalogListScreen(props: Props) {
         setIsLoadingMore(false);
       }
     },
-    [config, search],
+    [config, search, filters],
   );
 
   useEffect(() => {
     loadPage(1, 'initial');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, filters]);
 
-  function handleSearchSubmit() {
-    setSearch(searchInput.trim());
+  useEffect(() => {
+    const trimmed = searchInput.trim();
+    if (trimmed === search) return;
+    // Tampilkan loading dari saat mulai mengetik (bukan cuma pas request beneran jalan)
+    // supaya user langsung dapat feedback, bukan menunggu 1 detik tanpa indikasi apa pun.
+    setIsLoading(true);
+    const timer = setTimeout(() => setSearch(trimmed), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput, search]);
+
+  function handleClearSearch() {
+    setSearchInput('');
+    setSearch('');
   }
 
   function handleRefresh() {
@@ -76,14 +95,32 @@ export default function CatalogListScreen(props: Props) {
   return (
     <MainLayout title={config.screenTitle} onBack={() => navigation.goBack()}>
       <View style={styles.container}>
-        <TextField
-          value={searchInput}
-          onChangeText={setSearchInput}
-          onSubmitEditing={handleSearchSubmit}
-          placeholder={config.searchPlaceholder}
-          returnKeyType="search"
-          containerStyle={styles.search}
-        />
+        <View style={styles.searchRow}>
+          <TextField
+            value={searchInput}
+            onChangeText={setSearchInput}
+            onSubmitEditing={() => setSearch(searchInput.trim())}
+            placeholder={config.searchPlaceholder}
+            returnKeyType="search"
+            leftIcon="search"
+            onClear={handleClearSearch}
+            containerStyle={styles.searchField}
+          />
+          {config.filterFields?.length ? (
+            <PressableScale
+              onPress={() => setIsFilterSheetVisible(true)}
+              contentStyle={[styles.filterButton, activeFilterCount > 0 && styles.filterButtonActive]}
+              accessibilityRole="button"
+              accessibilityLabel="Filter">
+              <Icon name="filter" size={20} color={activeFilterCount > 0 ? colors.primary : colors.textMuted} />
+              {activeFilterCount > 0 ? (
+                <View style={styles.filterBadge}>
+                  <Text style={styles.filterBadgeLabel}>{activeFilterCount}</Text>
+                </View>
+              ) : null}
+            </PressableScale>
+          ) : null}
+        </View>
 
         {isLoading ? (
           <ActivityIndicator style={styles.centerState} color={colors.primary} />
@@ -115,6 +152,16 @@ export default function CatalogListScreen(props: Props) {
           />
         )}
       </View>
+
+      {config.filterFields?.length ? (
+        <FilterSheet
+          visible={isFilterSheetVisible}
+          fields={config.filterFields}
+          value={filters}
+          onApply={setFilters}
+          onRequestClose={() => setIsFilterSheetVisible(false)}
+        />
+      ) : null}
     </MainLayout>
   );
 }
@@ -122,18 +169,57 @@ export default function CatalogListScreen(props: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
     paddingTop: 20,
   },
-  search: {
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 24,
     marginBottom: 16,
   },
+  searchField: {
+    flex: 1,
+  },
+  filterButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterButtonActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySurface,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  filterBadgeLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primaryForeground,
+  },
   listContent: {
+    paddingHorizontal: 24,
     paddingBottom: 96,
     gap: 12,
   },
   centerState: {
     marginTop: 32,
+    paddingHorizontal: 24,
     textAlign: 'center',
     fontSize: 14,
     color: colors.textMuted,

@@ -5,12 +5,13 @@ import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import EmergencyTabButton from '@/components/organisms/EmergencyTabButton';
 import { ROUTES } from '@/navigation/paths';
+import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
 import type { MainTabParamList } from '@/navigation/types';
 import BukuSakuScreen from '@/screens/BukuSaku';
 import EmergencyScreen from '@/screens/Emergency';
 import HomeScreen from '@/screens/Home';
-import ProfileScreen from '@/screens/Profile';
 import RiwayatScreen from '@/screens/Riwayat';
+import SettingsScreen from '@/screens/Settings';
 import { colors } from '@/theme/colors';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -19,7 +20,7 @@ const iconByRoute: Partial<Record<keyof MainTabParamList, IconName>> = {
   [ROUTES.home]: 'home',
   [ROUTES.riwayat]: 'history',
   [ROUTES.bukuSaku]: 'handbook',
-  [ROUTES.profile]: 'profile',
+  [ROUTES.settings]: 'settings',
 };
 
 export default function MainTabNavigator() {
@@ -45,7 +46,7 @@ export default function MainTabNavigator() {
           left: 0,
           right: 0,
           bottom: 0,
-          height: 64 + insets.bottom,
+          height: TAB_BAR_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
@@ -70,7 +71,7 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen name={ROUTES.bukuSaku} component={BukuSakuScreen} options={{ title: 'Buku Saku' }} />
-      <Tab.Screen name={ROUTES.profile} component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Tab.Screen name={ROUTES.settings} component={SettingsScreen} options={{ title: 'Pengaturan' }} />
     </Tab.Navigator>
   );
 }

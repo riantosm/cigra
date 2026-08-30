@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
 import Button from '@/components/atoms/Button';
@@ -7,10 +10,11 @@ import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import Card from '@/components/molecules/Card';
 import StatusModal from '@/components/organisms/StatusModal';
-import MainLayout from '@/components/templates/MainLayout';
+import HomeHeader from '@/screens/Home/HomeHeader';
+import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
-import type { RootStackScreenProps } from '@/navigation/types';
-import { useAppDispatch } from '@/store/hooks';
+import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout, logoutLocal } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
@@ -18,7 +22,14 @@ import { isGpsEnabled, isLocationPermissionGranted, openAppSettings, openLocatio
 import { isNotificationPermissionGranted } from '@/utils/pushNotifications';
 import { appVersion } from '@/utils/version';
 
-export type SettingsScreenProps = RootStackScreenProps<typeof ROUTES.settings>;
+type SettingsNavigationProp = CompositeNavigationProp<
+  MainTabScreenProps<'Settings'>['navigation'],
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
+export interface SettingsScreenProps {
+  navigation: SettingsNavigationProp;
+}
 
 interface PermissionRowState {
   icon: IconName;
@@ -31,11 +42,13 @@ interface PermissionRowState {
 export default function SettingsScreen(props: SettingsScreenProps) {
   const { navigation } = props;
   const dispatch = useAppDispatch();
+  const user = useAppSelector(state => state.auth.user);
   const [locationGranted, setLocationGranted] = useState<boolean | null>(null);
   const [gpsEnabled, setGpsEnabled] = useState<boolean | null>(null);
   const [notificationGranted, setNotificationGranted] = useState<boolean | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLogoutConfirmVisible, setIsLogoutConfirmVisible] = useState(false);
+  const bottomPadding = useTabScreenBottomPadding();
 
   const checkPermissions = useCallback(async () => {
     const [location, gps, notification] = await Promise.all([
@@ -101,9 +114,10 @@ export default function SettingsScreen(props: SettingsScreenProps) {
   ];
 
   return (
-    <MainLayout title="Pengaturan" onBack={() => navigation.goBack()}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <HomeHeader user={user} onAvatarPress={() => navigation.navigate(ROUTES.profile)} />
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }>
@@ -161,15 +175,19 @@ export default function SettingsScreen(props: SettingsScreenProps) {
         primaryAction={{ label: 'Logout', variant: 'danger', onPress: performLogout }}
         secondaryAction={{ label: 'Batal', onPress: () => setIsLogoutConfirmVisible(false) }}
       />
-    </MainLayout>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.surface,
+  },
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 48,
+    backgroundColor: colors.surface,
   },
   sectionTitle: {
     fontSize: 13,

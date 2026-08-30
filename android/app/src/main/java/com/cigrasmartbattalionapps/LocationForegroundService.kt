@@ -117,8 +117,8 @@ class LocationForegroundService : Service() {
     )
 
     val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-      .setContentTitle("Smart Battalion aktif")
-      .setContentText("Text didieu naon nyak?")
+      .setContentTitle("CIGRA APPS ACTIVE")
+      .setContentText("Status siaga darurat aktif.")
       .setSmallIcon(R.drawable.ic_notification)
       .setOngoing(true)
       .setContentIntent(contentIntent)
