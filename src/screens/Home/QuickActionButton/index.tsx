@@ -22,7 +22,7 @@ export default function QuickActionButton(props: QuickActionButtonProps) {
 
   return (
     <PressableScale onPress={onPress} style={style} contentStyle={styles.card}>
-      <Icon name={icon} size={20} color={color} />
+      <Icon name={icon} size={28} color={color} />
       <Text style={styles.label} numberOfLines={2}>
         {label}
       </Text>
