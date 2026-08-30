@@ -189,6 +189,24 @@ export interface WeaponCategoryListItem {
   total_weapons: number;
 }
 
+// Info pemegang senjata terkini (`holder_info` di tiap entry senjata pada detail kategori).
+// - `holder_type: 'personnel'` → dipegang perorangan; `service_number`/`full_name`/`rank`/`unit` terisi.
+// - `holder_type: 'other'`     → dipegang satuan/gudang; hanya `name` yang terisi.
+// - `null`                     → tidak sedang dipegang siapa pun (available di pool).
+export interface WeaponCategoryWeaponHolder {
+  // 'assignment' (penugasan) — bisa bertambah nilai lain (mis. 'loan') di masa depan; render apa adanya.
+  type: string;
+  holder_type: 'personnel' | 'other' | (string & {});
+  id: number;
+  service_number?: string | null;
+  full_name?: string | null;
+  rank?: string | null;
+  unit?: string | null;
+  // Khusus `holder_type: 'other'` (nama satuan / gudang).
+  name?: string | null;
+  assigned_at?: string | null;
+}
+
 export interface WeaponCategoryWeaponEntry {
   id: number;
   weapon_number: string;
@@ -200,10 +218,14 @@ export interface WeaponCategoryWeaponEntry {
   acquisition_date: string | null;
   current_unit: string | null;
   is_active: boolean;
+  holder_info: WeaponCategoryWeaponHolder | null;
 }
 
 export interface WeaponCategoryDetail extends WeaponCategoryListItem {
   weapons: WeaponCategoryWeaponEntry[];
+  // Meta paginasi untuk array `weapons` (50/halaman). Dikirim di root response sebagai `meta` dan
+  // dilampirkan ke sini oleh `getWeaponCategoryDetailApi`.
+  weapons_meta?: PaginationMeta;
 }
 
 // --- Weapon assignments ---

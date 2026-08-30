@@ -2,10 +2,10 @@ import type { ReactNode } from 'react';
 
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import type { IconName } from '@/components/atoms/Icon';
-import CatalogListSection from '@/components/molecules/CatalogListSection';
 import InfoRow from '@/components/molecules/InfoRow';
 import SectionCard from '@/components/molecules/SectionCard';
 import VehicleVisitorLogHistory from '@/components/molecules/VehicleVisitorLogHistory';
+import WeaponCategoryWeaponsPanel from '@/components/organisms/WeaponCategoryWeaponsPanel';
 import type { FilterField, FilterOption } from '@/components/organisms/FilterSheet';
 import PersitTabs from '@/screens/CatalogDetail/PersitTabs';
 import PersonnelTabs from '@/screens/CatalogDetail/PersonnelTabs';
@@ -347,7 +347,12 @@ export const catalogResourceConfigs: Record<
       badgeVariant: d.is_active ? 'success' : 'neutral',
       metaRows: [
         { icon: 'id-card', text: d.code },
-        { icon: 'shield-check', text: `${d.total_weapons} unit` },
+        {
+          icon: 'shield-check',
+          // Detail baru mengembalikan jumlah lewat `weapons_meta.total` (paginasi 50/hal); `total_weapons`
+          // tetap dipakai sebagai fallback kalau endpoint masih mengirimnya di root.
+          text: `${d.weapons_meta?.total ?? d.total_weapons ?? 0} unit`,
+        },
       ],
     }),
     renderDetail: (d: WeaponCategoryDetail) => (
@@ -369,17 +374,10 @@ export const catalogResourceConfigs: Record<
             value={orDash(d.description)}
           />
         </SectionCard>
-        <CatalogListSection
-          icon="weapon"
-          title="Daftar Senjata"
-          items={d.weapons.map(w => ({
-            title: w.weapon_number,
-            subtitle: joinFields(
-              w.serial_number,
-              titleCase(w.condition_status),
-              titleCase(w.inventory_status),
-            ),
-          }))}
+        <WeaponCategoryWeaponsPanel
+          categoryId={String(d.id)}
+          initialWeapons={d.weapons}
+          initialMeta={d.weapons_meta}
         />
       </>
     ),

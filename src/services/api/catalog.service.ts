@@ -66,8 +66,26 @@ export function getWeaponCategoriesListApi(params: CatalogListParams) {
   return fetchCatalogList<WeaponCategoryListItem>('/catalog/weapon-categories', params);
 }
 
-export function getWeaponCategoryDetailApi(id: string) {
-  return fetchCatalogDetail<WeaponCategoryDetail>(`/catalog/weapon-categories/${id}`);
+export interface WeaponCategoryDetailParams {
+  // Filter array `weapons` di response berdasarkan nomor/seri senjata (server-side).
+  search?: string;
+  // Halaman array `weapons` (50 per halaman).
+  page?: number;
+}
+
+// Detail kategori senjata. Array `weapons`-nya terpaginasi (50/halaman) & bisa di-`search` —
+// meta paginasi dari root response `meta` dilampirkan sebagai `weapons_meta`. Dipanggil tanpa
+// argumen kedua oleh CatalogDetail (halaman pertama), dengan params oleh WeaponCategoryWeaponsPanel.
+export async function getWeaponCategoryDetailApi(
+  id: string,
+  params: WeaponCategoryDetailParams = {},
+): Promise<WeaponCategoryDetail> {
+  const { data } = await axiosInstance.get<{
+    success: boolean;
+    data: WeaponCategoryDetail;
+    meta?: PaginationMeta;
+  }>(`/catalog/weapon-categories/${id}`, { params });
+  return { ...data.data, weapons_meta: data.meta };
 }
 
 export function getWeaponAssignmentsListApi(params: CatalogListParams) {
