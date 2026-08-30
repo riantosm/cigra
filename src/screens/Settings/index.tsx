@@ -54,8 +54,11 @@ export default function SettingsScreen(props: SettingsScreenProps) {
 
   async function handleRefresh() {
     setIsRefreshing(true);
-    await checkPermissions();
-    setIsRefreshing(false);
+    try {
+      await checkPermissions();
+    } finally {
+      setIsRefreshing(false);
+    }
   }
 
   useEffect(() => {

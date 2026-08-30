@@ -31,7 +31,6 @@ export type CommanderHomeNavigationProp = CompositeNavigationProp<
 export interface CommanderHomeProps {
   user: AuthUser | null;
   navigation: CommanderHomeNavigationProp;
-  isRefreshing: boolean;
   onRefresh: () => Promise<void>;
 }
 
@@ -62,8 +61,9 @@ const announcements = [
 const VISIBLE_QUICK_ACTION_COUNT = 9;
 
 export default function CommanderHome(props: CommanderHomeProps) {
-  const { user, navigation, isRefreshing, onRefresh } = props;
+  const { user, navigation, onRefresh } = props;
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isQuickActionSheetVisible, setIsQuickActionSheetVisible] = useState(false);
   const [personnelLocations, setPersonnelLocations] = useState<PersonnelLocationOverviewItem[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
@@ -86,8 +86,13 @@ export default function CommanderHome(props: CommanderHomeProps) {
   }, [loadPersonnelLocations]);
 
   async function handleRefresh() {
-    await Promise.all([onRefresh(), loadPersonnelLocations()]);
-    setLastSyncedAt(new Date());
+    setIsRefreshing(true);
+    try {
+      await Promise.all([onRefresh(), loadPersonnelLocations()]);
+      setLastSyncedAt(new Date());
+    } finally {
+      setIsRefreshing(false);
+    }
   }
 
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -176,7 +181,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }>
         <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }} transition={contentEnterTransition}>
-          <View style={styles.syncRow}>
+          <PressableScale scaleTo={0.98} onPress={handleRefresh} contentStyle={styles.syncRow}>
             <View style={styles.syncLeft}>
               <View style={styles.syncDot} />
               <Text style={styles.syncLabel}>Sistem terhubung</Text>
@@ -187,7 +192,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
                 Terakhir sinkron: {syncedLabel}
               </Text>
             </View>
-          </View>
+          </PressableScale>
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Quick Action</Text>

@@ -120,6 +120,7 @@ export default function CatalogListScreen(props: Props) {
             leftIcon="search"
             onClear={handleClearSearch}
             containerStyle={styles.searchField}
+            style={styles.searchInput}
           />
           {config.filterFields?.length ? (
             <PressableScale
@@ -196,6 +197,9 @@ const styles = StyleSheet.create({
   },
   searchField: {
     flex: 1,
+  },
+  searchInput: {
+    height: 52,
   },
   filterButton: {
     width: 52,

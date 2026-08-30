@@ -36,7 +36,6 @@ export default function HomeScreen() {
   const [locationIssue, setLocationIssue] = useState<{ reason: LocationErrorReason; message: string } | null>(
     null,
   );
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const ensureLocationReady = useCallback(async () => {
     try {
@@ -70,11 +69,15 @@ export default function HomeScreen() {
     return () => subscription.remove();
   }, [dispatch, ensureLocationReady]);
 
-  async function handleRefresh() {
-    setIsRefreshing(true);
-    await Promise.all([ensureLocationReady(), dispatch(refreshUser())]);
-    setIsRefreshing(false);
-  }
+  // Cek GPS/izin lokasi bisa butuh puluhan detik (lihat komentar timeout di utils/location.ts),
+  // jauh lebih lama dari API sesi sendiri — jangan diikutsertakan di sini supaya pull-to-refresh
+  // di Home tidak "menggantung" menunggu GPS padahal API yang sebenarnya sudah selesai. Modal
+  // status lokasi tetap ter-update lewat state `locationIssue` begitu pengecekan ini selesai,
+  // cuma tidak ikut ditunggu oleh spinner refresh.
+  const refreshSession = useCallback(async () => {
+    ensureLocationReady();
+    await dispatch(refreshUser());
+  }, [dispatch, ensureLocationReady]);
 
   const isGpsIssue = locationIssue?.reason === 'gps-disabled';
   const isCommander = user?.roles?.includes(COMMANDER_ROLE) ?? false;
@@ -82,9 +85,9 @@ export default function HomeScreen() {
   return (
     <>
       {isCommander ? (
-        <CommanderHome user={user} navigation={navigation} isRefreshing={isRefreshing} onRefresh={handleRefresh} />
+        <CommanderHome user={user} navigation={navigation} onRefresh={refreshSession} />
       ) : (
-        <MemberHome user={user} navigation={navigation} isRefreshing={isRefreshing} onRefresh={handleRefresh} />
+        <MemberHome user={user} navigation={navigation} onRefresh={refreshSession} />
       )}
 
       <StatusModal

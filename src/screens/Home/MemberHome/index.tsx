@@ -32,7 +32,6 @@ export type MemberHomeNavigationProp = CompositeNavigationProp<
 export interface MemberHomeProps {
   user: AuthUser | null;
   navigation: MemberHomeNavigationProp;
-  isRefreshing: boolean;
   onRefresh: () => Promise<void>;
 }
 
@@ -115,11 +114,12 @@ function clockLabel(iso: string | null | undefined): string {
 }
 
 export default function MemberHome(props: MemberHomeProps) {
-  const { user, navigation, isRefreshing, onRefresh } = props;
+  const { user, navigation, onRefresh } = props;
   const bottomPadding = useTabScreenBottomPadding();
   const [isQrModalVisible, setIsQrModalVisible] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadMyLocation = useCallback(async () => {
     try {
@@ -134,8 +134,14 @@ export default function MemberHome(props: MemberHomeProps) {
   }, [loadMyLocation]);
 
   async function handleRefresh() {
-    await Promise.all([onRefresh(), loadMyLocation()]);
-    setLastSyncedAt(new Date());
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([onRefresh(), loadMyLocation()]);
+      setLastSyncedAt(new Date());
+    } finally {
+      setIsRefreshing(false);
+    }
   }
 
   const personnel = user?.personnel;
@@ -243,10 +249,7 @@ export default function MemberHome(props: MemberHomeProps) {
           from={{ opacity: 0, translateY: 12 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}>
-          <PressableScale
-            scaleTo={0.98}
-            onPress={() => navigation.navigate(ROUTES.settings)}
-            contentStyle={styles.syncRow}>
+          <PressableScale scaleTo={0.98} onPress={handleRefresh} contentStyle={styles.syncRow}>
             <View style={styles.syncLeft}>
               <View style={styles.syncDot} />
               <Text style={styles.syncLabel}>Sistem terhubung</Text>
@@ -256,7 +259,6 @@ export default function MemberHome(props: MemberHomeProps) {
               <Text style={styles.syncLabel} numberOfLines={1}>
                 Terakhir sinkron: {syncedLabel}
               </Text>
-              <Icon name="chevron-right" size={14} color={colors.textMuted} />
             </View>
           </PressableScale>
 

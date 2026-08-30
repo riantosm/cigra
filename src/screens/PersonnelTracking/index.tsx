@@ -127,6 +127,7 @@ export default function PersonnelTrackingScreen(props: Props) {
             leftIcon="search"
             onClear={() => setSearchInput('')}
             containerStyle={styles.searchField}
+            style={styles.searchInput}
           />
           <PressableScale
             onPress={() => setIsFilterSheetVisible(true)}
@@ -227,6 +228,9 @@ const styles = StyleSheet.create({
   },
   searchField: {
     flex: 1,
+  },
+  searchInput: {
+    height: 52,
   },
   filterButton: {
     width: 52,
