@@ -19,4 +19,10 @@ export const ROUTES = {
   emergencyList: 'EmergencyList',
   sendAnnouncement: 'SendAnnouncement',
   alarmSatuan: 'AlarmSatuan',
+  healthDashboard: 'HealthDashboard',
+  healthPersonnelSearch: 'HealthPersonnelSearch',
+  healthPersonnelProfile: 'HealthPersonnelProfile',
+  healthRecordInput: 'HealthRecordInput',
+  healthRecordDetail: 'HealthRecordDetail',
+  healthMyHistory: 'HealthMyHistory',
 } as const;

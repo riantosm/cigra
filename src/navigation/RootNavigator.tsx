@@ -14,6 +14,12 @@ import AlarmSatuanScreen from '@/screens/AlarmSatuan';
 import ComingSoonScreen from '@/screens/ComingSoon';
 import EmergencyListScreen from '@/screens/EmergencyList';
 import ForgotPasswordScreen from '@/screens/ForgotPassword';
+import HealthDashboardScreen from '@/screens/HealthDashboard';
+import HealthMyHistoryScreen from '@/screens/HealthMyHistory';
+import HealthPersonnelProfileScreen from '@/screens/HealthPersonnelProfile';
+import HealthPersonnelSearchScreen from '@/screens/HealthPersonnelSearch';
+import HealthRecordDetailScreen from '@/screens/HealthRecordDetail';
+import HealthRecordInputScreen from '@/screens/HealthRecordInput';
 import LoginScreen from '@/screens/Login';
 import NotificationsScreen from '@/screens/Notifications';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
@@ -111,6 +117,12 @@ export default function RootNavigator() {
       <Stack.Screen name={ROUTES.emergencyList} component={EmergencyListScreen} />
       <Stack.Screen name={ROUTES.sendAnnouncement} component={SendAnnouncementScreen} />
       <Stack.Screen name={ROUTES.alarmSatuan} component={AlarmSatuanScreen} />
+      <Stack.Screen name={ROUTES.healthDashboard} component={HealthDashboardScreen} />
+      <Stack.Screen name={ROUTES.healthPersonnelSearch} component={HealthPersonnelSearchScreen} />
+      <Stack.Screen name={ROUTES.healthPersonnelProfile} component={HealthPersonnelProfileScreen} />
+      <Stack.Screen name={ROUTES.healthRecordInput} component={HealthRecordInputScreen} />
+      <Stack.Screen name={ROUTES.healthRecordDetail} component={HealthRecordDetailScreen} />
+      <Stack.Screen name={ROUTES.healthMyHistory} component={HealthMyHistoryScreen} />
     </Stack.Navigator>
   );
 }

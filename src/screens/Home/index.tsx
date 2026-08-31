@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import StatusModal from '@/components/organisms/StatusModal';
 import CommanderHome from '@/screens/Home/CommanderHome';
+import HealthOfficerHome from '@/screens/Home/HealthOfficerHome';
 import MemberHome from '@/screens/Home/MemberHome';
 import { useDoubleBackToExit } from '@/hooks/useDoubleBackToExit';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
@@ -24,9 +25,10 @@ type HomeNavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-// Dashboard "komandan" (CommanderHome) cuma buat role ini — role lain (mis. 'anggota') masih pakai
-// tampilan Home yang lebih sederhana (MemberHome) sampai desainnya sendiri dibuatkan nanti.
+// Home dipilih berdasar role: komandan → CommanderHome (dashboard satuan), petugas_kesehatan →
+// HealthOfficerHome (ringkasan + aksi cepat kesehatan), sisanya (anggota/prajurit) → MemberHome.
 const COMMANDER_ROLE = 'komandan';
+const HEALTH_OFFICER_ROLE = 'petugas_kesehatan';
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
@@ -80,12 +82,16 @@ export default function HomeScreen() {
   }, [dispatch, ensureLocationReady]);
 
   const isGpsIssue = locationIssue?.reason === 'gps-disabled';
-  const isCommander = user?.roles?.includes(COMMANDER_ROLE) ?? false;
+  const roles = user?.roles ?? [];
+  const isCommander = roles.includes(COMMANDER_ROLE);
+  const isHealthOfficer = roles.includes(HEALTH_OFFICER_ROLE);
 
   return (
     <>
       {isCommander ? (
         <CommanderHome user={user} navigation={navigation} onRefresh={refreshSession} />
+      ) : isHealthOfficer ? (
+        <HealthOfficerHome user={user} navigation={navigation} onRefresh={refreshSession} />
       ) : (
         <MemberHome user={user} navigation={navigation} onRefresh={refreshSession} />
       )}

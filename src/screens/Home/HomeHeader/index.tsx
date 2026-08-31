@@ -9,6 +9,7 @@ import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import type { AuthUser } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
+import { titleCase } from '@/utils/format';
 
 // Notifikasi dummy bawaan yang berstatus belum dibaca (lihat screens/Notifications) — dijumlahkan
 // dengan pengumuman yang dikirim komandan untuk angka badge lonceng.
@@ -37,7 +38,7 @@ export default function HomeHeader(props: HomeHeaderProps) {
   const personnel = user?.personnel;
   const displayName = personnel ? [personnel.rank, personnel.full_name].filter(Boolean).join(' ') : (user?.name ?? '-');
   const unitLabel = personnel?.current_assignment?.unit ?? '-';
-  const roleLabel = user?.roles?.[0] ? user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1) : 'Prajurit';
+  const roleLabel = titleCase(user?.roles?.[0]) ?? 'Prajurit';
   const photoPath = personnel?.photo;
 
   return (
