@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
   },
   labelGroup: {
     flexDirection: 'row',

@@ -5,7 +5,7 @@ import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
 
-export type BadgeVariant = 'success' | 'primary' | 'neutral';
+export type BadgeVariant = 'success' | 'primary' | 'neutral' | 'warning' | 'danger';
 
 export interface BadgeProps extends ViewProps {
   label: string;
@@ -20,12 +20,22 @@ const containerVariantStyle: Record<BadgeVariant, ViewStyle> = {
   success: { backgroundColor: colors.successSurface },
   primary: { backgroundColor: colors.primarySurface },
   neutral: { backgroundColor: colors.neutralSurface },
+  warning: { backgroundColor: colors.warningSurface },
+  danger: { backgroundColor: colors.dangerSurface },
 };
 
 const labelVariantColor: Record<BadgeVariant, string> = {
   success: colors.success,
   primary: colors.primary,
   neutral: colors.textMuted,
+  warning: colors.warningText,
+  danger: colors.danger,
+};
+
+const dotVariantColor: Partial<Record<BadgeVariant, string>> = {
+  success: colors.success,
+  warning: colors.warning,
+  danger: colors.danger,
 };
 
 export default function Badge(props: BadgeProps) {
@@ -38,8 +48,8 @@ export default function Badge(props: BadgeProps) {
     >
       {icon ? (
         <Icon name={icon} size={13} color={labelVariantColor[variant]} />
-      ) : variant === 'success' ? (
-        <View style={[styles.dot, { backgroundColor: colors.success }]} />
+      ) : dotVariantColor[variant] ? (
+        <View style={[styles.dot, { backgroundColor: dotVariantColor[variant] }]} />
       ) : null}
       <Text style={[styles.label, { color: labelVariantColor[variant] }]}>
         {label}

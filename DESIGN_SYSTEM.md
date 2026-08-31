@@ -57,8 +57,56 @@ Gradien identitas modul (dipakai di kartu katalog):
 ### 1b. Token "canvas theme" (evolusi visual — target tampilan baru)
 
 Tampilan yang dipakai di canvas desain (lebih lembut, ada gradient & shadow biru). **Saat
-mengimplementasikan ini ke kode, tambahkan sebagai token baru** di `src/theme/colors.ts`
-(mis. `pageGradientStart/Mid/End`, `borderSoft`, `chipSurface`, `heading`, `placeholder`).
+mengimplementasikan ini ke kode, tambahkan sebagai token baru** di `src/theme/colors.ts`.
+Sudah dipakai penuh di **layar Autentikasi** (Login, Login-OTP, Lupa Password, Ganti Password) —
+lihat komponen `AuthBackground` / `AuthLayout` / `GradientButton` / `AuthField` / `AuthToggle` —
+**dan seluruh grup layar Komandan** (CommanderHome, CatalogList, CatalogDetail, PersonnelTracking,
+PersonnelMap, SendAnnouncement, AlarmSatuan, EmergencyList) plus ketiga Home dan tab bar bawah,
+**dan seluruh grup "Semua Peran"** (Emergency, Notifications, Profile, Settings, ComingSoon —
+semua `MainLayout variant="canvas"` + `subtitle`; `StatusModal` sudah §5.15).
+Infrastruktur bersama:
+
+- `atoms/ScreenBackground` — gradient backdrop + blob pojok untuk layar non-Auth (versi ringan
+  `AuthBackground`, tanpa gunung/watermark).
+- `templates/MainLayout` prop `variant="canvas"` + `subtitle` — header besar `22/800` tanpa
+  nav-bar/border, tombol back kotak putih `40×40`. `variant` default `'plain'` (layar lama tak
+  berubah).
+- `molecules/SearchFilterBar` — baris "search + tombol filter" canvas (§5.9), dipakai CatalogList
+  & PersonnelTracking.
+- `atoms/GradientAvatar` — avatar bundar gradient + inisial + status-dot (§5.8), react-native-svg.
+- `theme/shadows.ts` — preset shadow siap-pakai (lihat §1c).
+
+Juga dipakai di **layar Anggota** (tab Riwayat, HealthMyHistory, HealthRecordDetail, BukuSaku,
+Lainnya) — tab Riwayat/BukuSaku/Lainnya pakai `atoms/ScreenBackground` + `HomeHeader`,
+HealthMyHistory & HealthRecordDetail pakai `MainLayout variant="canvas"`; state kosong "belum ada
+konten" lewat `molecules/EmptyState`
+(icon-chip `chipSurface` 64 + judul `20/700` + pesan `15` muted).
+
+Dan **seluruh grup layar Petugas Kesehatan** (HealthDashboard, HealthPersonnelSearch,
+HealthPersonnelProfile, HealthRecordInput — semua `MainLayout variant="canvas"` + `subtitle`).
+Pola bersama di grup ini: `molecules/PersonAvatar` (fallback inisial kini `atoms/GradientAvatar`
+biru, bukan lagi kotak `primarySurface`), `molecules/SearchFilterBar` (tanpa tombol filter,
+prop `autoFocus`) untuk baris pencarian, kartu list `borderSoft` + `cardShadow`, CTA utama
+`atoms/GradientButton`. Form (`HealthRecordInput`): field pilih pakai icon-chip `chipSurface` 32,
+`molecules/DateTimeField` kini bergaya canvas (`borderSoft` + radius 14 + `smallButtonShadow`),
+`TextField` di-override ke radius 14 / `borderSoft`, footer tombol di-pin pakai `floatingSurface`
++ `tabBarShadow` (tanpa border atas).
+
+Token yang **sudah ada** di `src/theme/colors.ts`: `heading` `#1E293B` · `placeholder` `#94A3B8` ·
+`borderSoft` `#E7EDF9` · `chipSurface` `#EEF3FD` · `pageGradientStart` `#EFF1FA` /
+`pageGradientMid` `#E7ECF8` / `pageGradientEnd` `#E2EAF6` · `gradientPrimaryStart` `#3B82F6` /
+`gradientPrimaryEnd` `#2563EB` · `authMountainBack/Mid/Front` `#CBD8EE`/`#B6C7E6`/`#9FB5DC` (siluet
+gunung Login) · `decorBlobStrong/Soft` `rgba(255,255,255,0.5/0.35)` (blob pojok) ·
+`pillTrackSurface/Border` `rgba(255,255,255,0.55/0.8)` (track toggle pill di atas gradient) ·
+`pageBlobStrong/Soft` `rgba(255,255,255,0.45/0.32)` (blob `ScreenBackground`) · `headerSurface`
+`rgba(255,255,255,0.72)` (Home header) · `floatingSurface` `rgba(255,255,255,0.94)` (kartu di
+atas peta) · `warningText` `#B45309` · `dangerText` `#B91C1C` · `alertBannerStart/End/Border`
+`#FEECEC`/`#FDE0E0`/`#FBD5D5` (banner emergency CommanderHome) · `mapCanvasStart/End`
+`#E8F0E6`/`#E3EDF7` · `gradientInactiveStart/End` `#A78BFA`/`#8B5CF6` (avatar nonaktif) ·
+`gradientDangerStart`/`gradientWarnStart`/`gradientSuccessStart` `#F87171`/`#FBBF6B`/`#4ADE80`
+(avatar ber-tint status) · `haloPrimary`/`haloDanger` `rgba(37,99,235,0.10)`/`rgba(220,38,38,0.10)`
+(cincin "halo" di belakang badge ikon StatusModal §5.15) · `notifUnreadSurface`/`notifUnreadBorder`
+`#EEF4FF`/`#BFD3FB` (baris notifikasi belum dibaca).
 
 | Nama | Nilai | Pakai |
 |---|---|---|
@@ -73,6 +121,10 @@ mengimplementasikan ini ke kode, tambahkan sebagai token baru** di `src/theme/co
 | `warningText` | `#B45309` | teks di atas `warningSurface` (kontras cukup) |
 
 ### 1c. Bayangan (shadow)
+
+Preset RN siap-pakai di **`src/theme/shadows.ts`** — import dari sana, jangan tulis prop shadow
+inline: `cardShadow`, `cardShadowRaised`, `ctaPrimaryShadow`, `ctaDangerShadow`,
+`smallButtonShadow`, `tabBarShadow`.
 
 | Nama | Nilai CSS (canvas) | RN kira-kira |
 |---|---|---|
@@ -182,14 +234,23 @@ Kiri: ikon `18` `primary` + label `14` `textMuted`. Kanan: value `14/600` `headi
 Tombol kecil (mis. "Muat lebih banyak"): pill/rounded `12`, latar `chipSurface`, ikon + teks
 `primary` `13/600`.
 
+Komponen: `atoms/GradientButton` (Primary/Danger), `atoms/Button` (Secondary/plain).
+`molecules/OpenMapsButton` ("Buka di Google Maps") = **Secondary pill** — latar putih (gradasi
+tipis ke `chipSurface`), border `borderSoft`, shadow kecil, ikon `map-pin` + teks `primary`
+`14/600` di **tengah**, pill `999`, tinggi `48`; prop `floating` = absolut di bawah layar.
+
 ### 5.7 Badge / status pill
 
 Pill `999`, `padding 4px 10px`, teks `11–12/600–700` UPPERCASE.
 `success` → latar `#DCFCE7` teks `#16A34A` + titik `6px` hijau.
 `primary` → latar `#EEF3FD` / `#DBEAFE` teks `#2563EB`.
 `neutral` → latar `#EEF3FD` / `#F1F5F9` teks `#64748B` + titik abu.
-`warning` → latar `#FEF3C7` teks `#B45309`.
-`danger` → latar `#FEE2E2` teks `#DC2626`.
+`warning` → latar `#FEF3C7` teks `#B45309` + titik amber.
+`danger` → latar `#FEE2E2` teks `#DC2626` + titik merah.
+
+Komponen: `atoms/Badge` (`variant` = `success | primary | neutral | warning | danger`, prop
+`icon` untuk ganti titik dengan ikon). `molecules/LocationStatusBadge` khusus status lokasi
+(punya "(Nx lalu)" yang ter-tick tiap detik).
 
 ### 5.8 Baris list (list row)
 
@@ -201,8 +262,10 @@ Kartu (5.3) dengan `padding 16`, gap antar kartu `12–14`. Isi:
   border putih `2.5px`, hijau `#16A34A` (aktif) / abu `#94A3B8` (nonaktif).
 - Nama `16/700` `heading`.
 - Meta: baris `flex-wrap`, tiap segmen = ikon `13` `textMuted` + teks `13` `textMuted`, dipisah
-  "•" warna `dividerOnGradient`.
-- Chevron `18` `#94A3B8`.
+  "•" warna `dividerOnGradient`. Segmen tanpa teks di-drop (tidak ada "•" nyangkut). Di kode,
+  `CatalogListItem.metaSegments` (`{ icon, text }[]`) diisi per-resource di `catalogResources.tsx`.
+- `badge` & `chevron` rata **tengah vertikal** (`alignSelf: 'center'` — Badge default-nya
+  `flex-start`). Chevron `18` `#94A3B8` (`placeholder`).
 
 ### 5.9 Field input
 
@@ -236,11 +299,26 @@ antar-tab tidak boleh hilang) — jadi semua styling lewat prop-nya:
   `borderRadius: 999`, `width: 40` (bukan selebar tab), `backgroundColor: primary`. MaterialTabBar
   memusatkan indikator lebar-tetap di bawah tab aktif.
 - Warna: `activeColor = primary`, `inactiveColor = #94A3B8`.
+- **Latar di belakang header card**: `CollapsingTabsDetail` meng-override `headerContainerStyle`
+  library-nya (bawaannya `backgroundColor: 'white'` + shadow hitam) jadi `pageGradientStart` +
+  shadow mati — supaya area di belakang card menyatu dengan latar gradient layar, bukan kotak
+  putih. Tab bar tetap punya latar putih + shadow biru sendiri.
+
+**Tab "Lokasi"** (artboard "Catalog Detail - Lokasi", `organisms/LocationPanel`): badge status
+`LocationStatusBadge emphasis` (pill besar UPPERCASE) berdiri sendiri di atas · peta `180` (radius
+`16`, `borderSoft`, shadow default) · `OpenMapsButton` · grid 2 kolom kartu "Koordinat" / "Akurasi"
+(`14` radius, `borderSoft`) · pill-bar gelap `heading` "Riwayat Pergerakan" · kartu list baris =
+titik (`primary` utk terbaru, `placeholder` sisanya) + waktu `13/600` + koordinat/akurasi `12`
+muted · tombol "Muat lebih banyak" pill tint `primary` (`bg #2563EB14`, border `#2563EB29`).
 
 ### 5.12 Strip "Sistem terhubung"
 
-Kartu (5.3) `padding 12`, `space-between`. Kiri: titik hijau `8px` (halo `0 0 0 3px rgba(22,163,74,0.18)`)
-+ "Sistem terhubung" `12` muted. Kanan: ikon `refresh` `13` `primary` + "Terakhir sinkron: HH:MM".
+Kartu (5.3) `padding 12`, radius `16`, shadow "kartu (default)", `space-between`. Kiri: titik hijau `8px`
+(halo `0 0 0 3px rgba(22,163,74,0.18)`) + "Sistem terhubung" `12` muted. Kanan: ikon `refresh` `13`
+`primary` + "Terakhir sinkron: HH:MM". Menekan strip = trigger refresh yang sama dengan pull-to-refresh.
+
+Komponen: `molecules/SyncStrip` (`syncedLabel` + `onPress`) — dipakai identik di ketiga Home
+(Commander / Member / HealthOfficer). Jangan salin markup-nya inline.
 
 ### 5.13 StatCard
 
@@ -257,9 +335,11 @@ saja untuk layar biasa.
 
 ### 5.15 StatusModal — popup konfirmasi / hasil
 
-Komponen: `src/components/organisms/StatusModal`. Dipakai untuk **semua** feedback aksi
-(sukses/gagal) dan konfirmasi destruktif — bukan `Alert.alert`. Satu varian dipakai per konteks;
-begitu redesign satu, yang lain ikut.
+Komponen: `src/components/organisms/StatusModal` (sudah sesuai spek ini di kode). Dipakai untuk
+**semua** feedback aksi (sukses/gagal) dan konfirmasi destruktif — bukan `Alert.alert`. Satu
+varian dipakai per konteks; begitu redesign satu, yang lain ikut. Badge ikon = SVG rect gradient
++ `View` halo (`haloPrimary`/`haloDanger`); tombol primary = `atoms/GradientButton` (`height`
+prop, default 56 → 52 di sini), tombol sekunder = pill putih inline.
 
 - **Backdrop:** `overlay` (`rgba(15,23,42,0.45)`), center, `padding 0 32px`.
 - **Kartu:** `surface` putih, radius `24`, `padding 28px 24px`, `align-items: center`, `gap 10`,

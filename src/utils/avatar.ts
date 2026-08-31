@@ -25,13 +25,14 @@ export function isProtectedApiUrl(uri: string): boolean {
   return siteBase.length > 0 && uri.startsWith(siteBase);
 }
 
-// Backend mengisi field `photo` dengan URL placeholder ui-avatars.com untuk personel yang belum
-// punya foto asli. Layanan itu sering kena rate-limit (list personel = puluhan request sekaligus)
-// dan saat itu membalas **SVG** ~560 byte, bukan PNG — `<Image>` RN (Fresco) tidak bisa men-decode
-// SVG sehingga gambar gagal ("unknown image format"). Perlakukan URL ui-avatars sebagai "tidak ada
-// foto" supaya komponen langsung memakai fallback inisialnya sendiri (offline, konsisten, tanpa
-// request yang gampang gagal). Foto asli tetap dimuat normal.
+// Backend mengisi field `photo` dengan avatar placeholder untuk personel yang belum punya foto
+// asli — dulu berupa URL `ui-avatars.com`, sekarang berupa data-URI **SVG** inline
+// (`data:image/svg+xml;base64,...` berisi 1 huruf inisial). Dua-duanya tidak bisa di-decode
+// `<Image>` RN (Fresco menolak SVG) — perlakukan sebagai "tidak ada foto" supaya komponen memakai
+// fallback inisial / GradientAvatar-nya sendiri (offline, konsisten). Foto asli (path
+// `/api/secure-files/...` atau URL gambar raster) tetap dimuat normal.
 export function isDisplayablePhoto(path: string | null | undefined): boolean {
   if (!path || !path.trim()) return false;
+  if (/^data:image\/svg\+xml/i.test(path)) return false;
   return !/\bui-avatars\.com\//i.test(path);
 }

@@ -10,6 +10,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 
 import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import PersonAvatar from '@/components/molecules/PersonAvatar';
 import StatusModal from '@/components/organisms/StatusModal';
@@ -18,6 +19,7 @@ import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { getHealthRecordDetailApi } from '@/services/api/health.service';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { HealthRecordDetail } from '@/types';
 import { extractErrorMessage, formatDateTime, joinFields, orDash } from '@/utils/format';
 import { downloadHealthAttachment } from '@/utils/healthAttachment';
@@ -109,7 +111,11 @@ export default function HealthRecordDetailScreen(props: Props) {
   const person = detail?.personnel ?? null;
 
   return (
-    <MainLayout title="Detail Pemeriksaan" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Detail Pemeriksaan"
+      subtitle="Hasil pemeriksaan kesehatan"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
@@ -176,7 +182,7 @@ export default function HealthRecordDetailScreen(props: Props) {
           </View>
 
           {detail.can_edit && !readOnly ? (
-            <Button
+            <GradientButton
               label="Ubah Pemeriksaan"
               onPress={() =>
                 navigation.navigate(ROUTES.healthRecordInput, {
@@ -222,40 +228,43 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     marginBottom: 16,
+    ...cardShadow,
   },
   personBody: { flex: 1, gap: 2 },
-  personName: { fontSize: 15, fontWeight: '700', color: colors.text },
+  personName: { fontSize: 15, fontWeight: '700', color: colors.heading },
   personMeta: { fontSize: 12, color: colors.textMuted },
   card: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     paddingHorizontal: 16,
+    ...cardShadow,
   },
   row: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
     gap: 3,
   },
   rowLast: { borderBottomWidth: 0 },
   rowLabel: { fontSize: 12, color: colors.textMuted },
-  rowValue: { fontSize: 14, color: colors.text, fontWeight: '500' },
+  rowValue: { fontSize: 14, color: colors.heading, fontWeight: '500' },
   attachmentCard: {
     marginTop: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     padding: 16,
     gap: 12,
+    ...cardShadow,
   },
   attachmentHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  attachmentTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
+  attachmentTitle: { fontSize: 14, fontWeight: '700', color: colors.heading },
   attachmentEmpty: { fontSize: 13, color: colors.textMuted },
   editButton: { marginTop: 24 },
   error: { fontSize: 13, color: colors.danger, textAlign: 'center' },

@@ -10,6 +10,7 @@ import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { getMyHealthHistoryApi } from '@/services/api/health.service';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { HealthMyHistory, HealthRecordSummary } from '@/types';
 import { extractErrorMessage, joinFields } from '@/utils/format';
 
@@ -67,7 +68,11 @@ export default function HealthMyHistoryScreen(props: Props) {
   }
 
   return (
-    <MainLayout title="Riwayat Kesehatan" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Riwayat Kesehatan"
+      subtitle="Riwayat pemeriksaan kesehatan Anda"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
@@ -161,12 +166,13 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     marginBottom: 16,
+    ...cardShadow,
   },
   headerBody: { flex: 1, gap: 2 },
-  name: { fontSize: 15, fontWeight: '700', color: colors.text },
+  name: { fontSize: 15, fontWeight: '700', color: colors.heading },
   meta: { fontSize: 12, color: colors.textMuted },
   list: { gap: 10 },
   emptyText: { fontSize: 13, color: colors.textMuted, paddingVertical: 8 },
@@ -179,7 +185,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
   },
   loadMoreText: { fontSize: 13, fontWeight: '600', color: colors.primary },

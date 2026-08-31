@@ -1,8 +1,9 @@
 import { Modal, StyleSheet, Text, View } from 'react-native';
-import type { ViewStyle } from 'react-native';
 import { MotiView } from 'moti';
+import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
-import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
+import PressableScale from '@/components/atoms/PressableScale';
 import type { ButtonVariant } from '@/components/atoms/Button';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
@@ -25,23 +26,37 @@ export interface StatusModalProps {
   onRequestClose: () => void;
 }
 
-const badgeVariantStyle: Record<StatusModalVariant, ViewStyle> = {
-  success: { backgroundColor: colors.primary },
-  error: { backgroundColor: colors.danger },
+const accentByVariant: Record<StatusModalVariant, string> = {
+  success: colors.primary,
+  error: colors.danger,
 };
 
-const glyphColorByVariant: Record<StatusModalVariant, string> = {
-  success: colors.primaryForeground,
-  error: colors.dangerForeground,
+const haloByVariant: Record<StatusModalVariant, string> = {
+  success: colors.haloPrimary,
+  error: colors.haloDanger,
 };
 
-const glyphByVariant: Record<StatusModalVariant, string> = {
-  success: '✓',
-  error: '!',
+const gradientStops: Record<StatusModalVariant, [string, string]> = {
+  success: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
+  error: [colors.dangerMuted, colors.danger],
 };
 
+// Icon badge glyph — inlined (not the shared Icon atom) so the stroke weight matches
+// DESIGN_SYSTEM §5.15: success check `2.4`, error alert-triangle `2`.
+const glyphByVariant: Record<StatusModalVariant, { d: string; strokeWidth: number }> = {
+  success: { d: 'M5 13l4 4L19 7', strokeWidth: 2.4 },
+  error: { d: 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z M12 9v4M12 17h.01', strokeWidth: 2 },
+};
+
+// Popup konfirmasi / hasil aksi (DESIGN_SYSTEM §5.15) — dipakai untuk SEMUA feedback aksi
+// (sukses/gagal) & konfirmasi destruktif, bukan `Alert.alert`. Artboard: "Emergency Popup"
+// (success, 1 tombol) & "Settings Popup" (error, 2 tombol).
 export default function StatusModal(props: StatusModalProps) {
   const { visible, variant, title, message, primaryAction, secondaryAction, onRequestClose } = props;
+  const accent = accentByVariant[variant];
+  const [from, to] = gradientStops[variant];
+  const glyph = glyphByVariant[variant];
+  const primaryTone = primaryAction.variant === 'danger' || variant === 'error' ? 'danger' : 'primary';
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onRequestClose}>
@@ -51,25 +66,47 @@ export default function StatusModal(props: StatusModalProps) {
           animate={{ opacity: 1, scale: 1 }}
           transition={contentEnterTransition}
           style={styles.card}>
-          <View style={[styles.badge, badgeVariantStyle[variant]]}>
-            <Text style={[styles.glyph, { color: glyphColorByVariant[variant] }]}>
-              {glyphByVariant[variant]}
-            </Text>
+          <View style={[styles.halo, { backgroundColor: haloByVariant[variant] }]}>
+            <View style={[styles.badge, { shadowColor: accent, backgroundColor: to }]}>
+              <Svg style={StyleSheet.absoluteFill}>
+                <Defs>
+                  <LinearGradient id={`statusModal-${variant}`} x1="0" y1="0" x2="1" y2="1">
+                    <Stop offset="0" stopColor={from} />
+                    <Stop offset="1" stopColor={to} />
+                  </LinearGradient>
+                </Defs>
+                <Rect width="100%" height="100%" rx={32} ry={32} fill={`url(#statusModal-${variant})`} />
+              </Svg>
+              <Svg width={30} height={30} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d={glyph.d}
+                  stroke={colors.primaryForeground}
+                  strokeWidth={glyph.strokeWidth}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </View>
           </View>
+
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
+
           <View style={styles.actions}>
             {secondaryAction ? (
-              <Button
-                label={secondaryAction.label}
-                variant={secondaryAction.variant ?? 'secondary'}
+              <PressableScale
                 onPress={secondaryAction.onPress}
                 style={styles.actionButton}
-              />
+                contentStyle={styles.secondaryButton}
+                accessibilityRole="button"
+                accessibilityLabel={secondaryAction.label}>
+                <Text style={styles.secondaryLabel}>{secondaryAction.label}</Text>
+              </PressableScale>
             ) : null}
-            <Button
+            <GradientButton
               label={primaryAction.label}
-              variant={primaryAction.variant ?? (variant === 'error' ? 'danger' : 'primary')}
+              tone={primaryTone}
+              height={52}
               onPress={primaryAction.onPress}
               style={styles.actionButton}
             />
@@ -91,11 +128,24 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: 24,
     paddingVertical: 28,
     paddingHorizontal: 24,
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+    shadowColor: colors.text,
+    shadowOpacity: 0.35,
+    shadowRadius: 40,
+    shadowOffset: { width: 0, height: 30 },
+    elevation: 16,
+  },
+  halo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
   },
   badge: {
     height: 64,
@@ -103,22 +153,22 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-  },
-  glyph: {
-    fontSize: 28,
-    fontWeight: '700',
+    shadowOpacity: 0.28,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
     color: colors.textMuted,
     textAlign: 'center',
+    lineHeight: 20,
   },
   actions: {
     flexDirection: 'row',
@@ -128,5 +178,19 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  secondaryButton: {
+    height: 52,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  secondaryLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.heading,
   },
 });

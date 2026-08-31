@@ -7,6 +7,7 @@ import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
 import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
+import { cardShadow, smallButtonShadow } from '@/theme/shadows';
 import type { AuthUser } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
 import { titleCase } from '@/utils/format';
@@ -99,9 +100,8 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.headerSurface,
+    ...cardShadow,
   },
   headerLeft: {
     flex: 1,
@@ -112,12 +112,12 @@ const styles = StyleSheet.create({
   badge: {
     height: 44,
     width: 44,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 6,
+    backgroundColor: colors.surface,
+    padding: 7,
+    ...smallButtonShadow,
   },
   badgeImage: {
     width: '100%',
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   unit: {
     fontSize: 12,
@@ -148,10 +148,10 @@ const styles = StyleSheet.create({
   bellButton: {
     height: 40,
     width: 40,
-    borderRadius: 20,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neutralSurface,
+    backgroundColor: colors.chipSurface,
   },
   bellBadge: {
     position: 'absolute',
@@ -182,6 +182,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
+    ...smallButtonShadow,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.28,
   },
   avatarFallbackLabel: {
     fontSize: 16,

@@ -48,7 +48,9 @@ export type IconName =
   | 'trash'
   | 'flag'
   | 'layers'
-  | 'globe';
+  | 'globe'
+  | 'lock'
+  | 'check';
 
 export interface IconProps {
   name: IconName;
@@ -124,6 +126,8 @@ const pathByName: Record<IconName, string> = {
   layers: 'M12 3 3 8l9 5 9-5-9-5ZM3 13l9 5 9-5M3 17.5l9 5 9-5',
   globe:
     'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20',
+  lock: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z',
+  check: 'M5 13l4 4L19 7',
 };
 
 export default function Icon(props: IconProps) {

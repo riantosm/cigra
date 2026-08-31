@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 
 export interface StatCardProps {
   icon: IconName;
@@ -16,16 +17,20 @@ export interface StatCardProps {
   percent?: number;
 }
 
+// Kartu statistik canvas (DESIGN_SYSTEM.md §5.13): baris [ikon + label] di atas, lalu angka
+// besar, persen kecil, progress bar tipis.
 export default function StatCard(props: StatCardProps) {
   const { icon, label, value, meta, color, metaColor, percent } = props;
 
   return (
     <View style={styles.card}>
-      <Icon name={icon} size={16} color={color} />
+      <View style={styles.labelRow}>
+        <Icon name={icon} size={16} color={color} />
+        <Text style={styles.label} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
       <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label} numberOfLines={2}>
-        {label}
-      </Text>
       <Text style={[styles.meta, metaColor ? { color: metaColor } : null]}>{meta}</Text>
       {percent !== undefined ? (
         <View style={styles.track}>
@@ -41,20 +46,28 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
     paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 14,
+    paddingHorizontal: 10,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   label: {
-    fontSize: 11,
-    color: colors.textMuted,
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
   },
   value: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   meta: {
     fontSize: 11,
@@ -64,7 +77,7 @@ const styles = StyleSheet.create({
   track: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.neutralSurface,
+    backgroundColor: colors.chipSurface,
     overflow: 'hidden',
   },
   fill: {

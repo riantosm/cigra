@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import TextField from '@/components/atoms/TextField';
@@ -19,6 +19,7 @@ import {
   updateHealthRecordApi,
 } from '@/services/api/health.service';
 import { colors } from '@/theme/colors';
+import { smallButtonShadow, tabBarShadow } from '@/theme/shadows';
 import type { HealthCheckType } from '@/types';
 import { extractErrorMessage } from '@/utils/format';
 
@@ -158,7 +159,11 @@ export default function HealthRecordInputScreen(props: Props) {
   }
 
   return (
-    <MainLayout title={isEdit ? 'Ubah Pemeriksaan' : 'Input Pemeriksaan'} onBack={() => navigation.goBack()}>
+    <MainLayout
+      title={isEdit ? 'Ubah Pemeriksaan' : 'Input Pemeriksaan'}
+      subtitle="Catat hasil pemeriksaan kesehatan"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
@@ -185,10 +190,13 @@ export default function HealthRecordInputScreen(props: Props) {
             scaleTo={0.98}
             onPress={() => setIsTypeSheetVisible(true)}
             contentStyle={styles.select}>
+            <View style={styles.selectChip}>
+              <Icon name="clipboard-check" size={16} color={colors.textMuted} />
+            </View>
             <Text style={[styles.selectText, !selectedType && styles.selectPlaceholder]} numberOfLines={1}>
               {selectedType?.name ?? 'Pilih jenis pemeriksaan'}
             </Text>
-            <Icon name="chevron-down" size={18} color={colors.textMuted} />
+            <Icon name="chevron-down" size={18} color={colors.placeholder} />
           </PressableScale>
 
           <View style={styles.dateTimeRow}>
@@ -217,6 +225,7 @@ export default function HealthRecordInputScreen(props: Props) {
             placeholder="mis. Sehat / Tekanan darah 120/80"
             value={result}
             onChangeText={setResult}
+            style={styles.canvasInput}
             containerStyle={styles.field}
           />
 
@@ -227,7 +236,7 @@ export default function HealthRecordInputScreen(props: Props) {
             onChangeText={setNotes}
             multiline
             numberOfLines={3}
-            style={styles.notesInput}
+            style={[styles.canvasInput, styles.notesInput]}
             containerStyle={styles.field}
           />
 
@@ -240,7 +249,7 @@ export default function HealthRecordInputScreen(props: Props) {
 
           <View style={styles.footer}>
             {formError ? <Text style={styles.error}>{formError}</Text> : null}
-            <Button
+            <GradientButton
               label={isEdit ? 'Simpan Perubahan' : 'Catat Pemeriksaan'}
               onPress={handleSubmit}
               loading={isSubmitting}
@@ -301,9 +310,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 20,
     gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.floatingSurface,
+    ...tabBarShadow,
   },
   personChip: {
     flexDirection: 'row',
@@ -313,7 +321,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: colors.primarySurface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.chipSurface,
     marginBottom: 20,
   },
   personChipText: { fontSize: 12, fontWeight: '600', color: colors.primary, flexShrink: 1 },
@@ -321,17 +331,34 @@ const styles = StyleSheet.create({
   select: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    borderRadius: 12,
+    gap: 10,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    ...smallButtonShadow,
   },
-  selectText: { fontSize: 16, color: colors.text, flex: 1 },
-  selectPlaceholder: { color: colors.textMuted },
+  selectChip: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.chipSurface,
+  },
+  selectText: { fontSize: 15, color: colors.heading, flex: 1 },
+  selectPlaceholder: { color: colors.placeholder },
+  canvasInput: {
+    borderRadius: 14,
+    borderColor: colors.borderSoft,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: colors.heading,
+    ...smallButtonShadow,
+  },
   dateTimeRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
   dateField: { flex: 2 },
   timeField: { flex: 1 },
@@ -340,7 +367,7 @@ const styles = StyleSheet.create({
   notesInput: { minHeight: 80, textAlignVertical: 'top' },
   editHint: { fontSize: 12, color: colors.textMuted, marginTop: 16 },
   error: { fontSize: 13, color: colors.danger },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 16 },
+  sheetTitle: { fontSize: 16, fontWeight: '700', color: colors.heading, marginBottom: 16 },
   sheetList: { gap: 8 },
   sheetItem: {
     flexDirection: 'row',
@@ -350,12 +377,12 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
   },
   sheetItemActive: { borderColor: colors.primary, backgroundColor: colors.primarySurface },
   sheetItemBody: { flex: 1, gap: 2 },
-  sheetItemName: { fontSize: 14, fontWeight: '600', color: colors.text },
+  sheetItemName: { fontSize: 14, fontWeight: '600', color: colors.heading },
   sheetItemDesc: { fontSize: 12, color: colors.textMuted },
   sheetEmpty: { fontSize: 13, color: colors.textMuted, paddingVertical: 8 },
 });

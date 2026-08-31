@@ -42,7 +42,11 @@ export default function HealthDashboardScreen(props: Props) {
   const recent = dashboard?.recent ?? [];
 
   return (
-    <MainLayout title="Dashboard Kesehatan" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Dashboard Kesehatan"
+      subtitle="Ringkasan pemeriksaan satuan"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -105,7 +109,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
     marginBottom: 12,
   },
   list: {

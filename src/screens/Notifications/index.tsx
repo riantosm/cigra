@@ -42,9 +42,9 @@ const typeColor: Record<NotificationType, string> = {
 
 const typeSurface: Record<NotificationType, string> = {
   emergency: colors.dangerSurface,
-  announcement: colors.neutralSurface,
+  announcement: colors.chipSurface,
   info: colors.primarySurface,
-  system: colors.neutralSurface,
+  system: colors.chipSurface,
 };
 
 // Dummy sementara — belum ada endpoint `GET /notifications` (lihat API_CONTRACT.md). Bentuk field
@@ -116,7 +116,11 @@ export default function NotificationsScreen(props: Props) {
   }, [sentAnnouncements]);
 
   return (
-    <MainLayout title="Notifikasi" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Notifikasi"
+      subtitle="Pemberitahuan & pengumuman"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <FlatList
         data={notifications}
         keyExtractor={item => item.id}
@@ -169,13 +173,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rowUnread: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySurface,
+    borderColor: colors.notifUnreadBorder,
+    backgroundColor: colors.notifUnreadSurface,
   },
   iconCircle: {
     height: 40,
     width: 40,
-    borderRadius: 20,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -186,7 +190,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   body: {
     fontSize: 13,

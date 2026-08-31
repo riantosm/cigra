@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
@@ -62,6 +63,15 @@ export default function EmergencyScreen() {
             disabled={isSending}
             onPress={handlePress}
             contentStyle={styles.centerButton}>
+            <Svg style={StyleSheet.absoluteFill}>
+              <Defs>
+                <LinearGradient id="emergencySend" x1="0" y1="0" x2="1" y2="1">
+                  <Stop offset="0" stopColor={colors.gradientDangerStart} />
+                  <Stop offset="1" stopColor={colors.danger} />
+                </LinearGradient>
+              </Defs>
+              <Rect width="100%" height="100%" rx={48} ry={48} fill="url(#emergencySend)" />
+            </Svg>
             <Icon name="emergency" size={40} color={colors.dangerForeground} />
           </PressableScale>
         </MotiView>
@@ -102,7 +112,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
     textAlign: 'center',
     marginTop: 12,
   },
@@ -147,5 +157,6 @@ const styles = StyleSheet.create({
   },
   subtitleEmphasis: {
     fontWeight: '700',
+    color: colors.heading,
   },
 });

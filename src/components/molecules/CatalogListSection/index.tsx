@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   row: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
   },
   rowInner: {
     flexDirection: 'row',

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
+import Badge from '@/components/atoms/Badge';
+import type { BadgeVariant } from '@/components/atoms/Badge';
+import GradientAvatar from '@/components/atoms/GradientAvatar';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
@@ -39,16 +42,16 @@ const statusLabel: Record<EmergencyStatus, string> = {
   resolved: 'Selesai',
 };
 
-const statusColor: Record<EmergencyStatus, string> = {
-  active: colors.danger,
-  acknowledged: colors.warning,
-  resolved: colors.success,
+const statusBadgeVariant: Record<EmergencyStatus, BadgeVariant> = {
+  active: 'danger',
+  acknowledged: 'warning',
+  resolved: 'success',
 };
 
-const statusSurface: Record<EmergencyStatus, string> = {
-  active: colors.dangerSurface,
-  acknowledged: colors.neutralSurface,
-  resolved: colors.successSurface,
+const statusAvatarGradient: Record<EmergencyStatus, [string, string]> = {
+  active: [colors.gradientDangerStart, colors.danger],
+  acknowledged: [colors.gradientWarnStart, colors.warning],
+  resolved: [colors.gradientSuccessStart, colors.success],
 };
 
 // Dummy sementara — belum ada endpoint `GET /panic-buttons` (list). Lihat API_CONTRACT.md; bentuk
@@ -122,11 +125,15 @@ const DUMMY_EMERGENCIES: EmergencyEvent[] = [
 
 function EmergencyAvatar({ event }: { event: EmergencyEvent }) {
   const [failed, setFailed] = useState(false);
+  const [start, end] = statusAvatarGradient[event.status];
   if (!isDisplayablePhoto(event.personnel.photo) || failed) {
     return (
-      <View style={styles.avatarFallback}>
-        <Text style={styles.avatarLabel}>{event.personnel.full_name.charAt(0).toUpperCase()}</Text>
-      </View>
+      <GradientAvatar
+        label={event.personnel.full_name.charAt(0).toUpperCase()}
+        gradientStart={start}
+        gradientEnd={end}
+        size={44}
+      />
     );
   }
   return (
@@ -138,11 +145,16 @@ export default function EmergencyListScreen(props: Props) {
   const { navigation } = props;
 
   return (
-    <MainLayout title="Sinyal Darurat" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Sinyal Darurat"
+      subtitle="Riwayat tombol darurat personel"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <FlatList
         data={DUMMY_EMERGENCIES}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={<Text style={styles.empty}>Belum ada sinyal darurat.</Text>}
         renderItem={({ item }) => (
           <PressableScale
@@ -165,11 +177,7 @@ export default function EmergencyListScreen(props: Props) {
                     {joinFields(item.personnel.rank, item.personnel.unit)}
                   </Text>
                 </View>
-                <View style={[styles.statusPill, { backgroundColor: statusSurface[item.status] }]}>
-                  <Text style={[styles.statusText, { color: statusColor[item.status] }]}>
-                    {statusLabel[item.status]}
-                  </Text>
-                </View>
+                <Badge label={statusLabel[item.status]} variant={statusBadgeVariant[item.status]} />
               </View>
 
               <View style={styles.detailRow}>
@@ -200,7 +208,7 @@ export default function EmergencyListScreen(props: Props) {
 const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 96,
     gap: 12,
   },
@@ -224,19 +232,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: colors.neutralSurface,
   },
-  avatarFallback: {
-    height: 44,
-    width: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.danger,
-  },
-  avatarLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.dangerForeground,
-  },
   identity: {
     flex: 1,
     gap: 2,
@@ -244,21 +239,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   meta: {
     fontSize: 12,
     color: colors.textMuted,
-  },
-  statusPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
   },
   detailRow: {
     flexDirection: 'row',

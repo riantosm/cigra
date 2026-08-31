@@ -130,6 +130,13 @@ export default function CollapsingTabsDetail(props: CollapsingTabsDetailProps) {
           onTabChange={handleTabChange}
           renderHeader={renderHeader}
           renderTabBar={renderTabBar}
+          // Library-nya kasih `topContainer` (bungkus header collapsing + tab bar) `backgroundColor:
+          // 'white'` + shadow hitam bawaan. Di canvas theme, area di belakang header card harus ikut
+          // latar gradient. Header duduk di puncak area scroll, jadi `pageGradientStart` (warna
+          // teratas gradient) menyatu mulus — sekaligus mencegah konten yang di-scroll ke atas
+          // "tembus" di celah padding sekitar card (yang terjadi kalau dibikin transparan).
+          // Shadow hitam bawaan dimatikan; tab bar tetap punya shadow biru sendiri via `styles.tabBar`.
+          headerContainerStyle={styles.headerContainer}
           // Mount isi tiap tab baru saat pertama dikunjungi (bukan semuanya sekaligus). Penting
           // buat tab "Lokasi" yang isinya Google MapView — sebuah surface GL yang, kalau ikut
           // ter-mount sejak awal, terus di-composite tiap frame dan bikin scroll di tab lain
@@ -154,6 +161,11 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  headerContainer: {
+    backgroundColor: colors.pageGradientStart,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   headerMeasure: {
     position: 'absolute',
     top: 0,
@@ -164,13 +176,18 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    elevation: 0,
-    shadowOpacity: 0,
+    borderBottomColor: colors.borderSoft,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   tabIndicator: {
     backgroundColor: colors.primary,
-    height: 2,
+    height: 3,
+    width: 40,
+    borderRadius: 999,
   },
   tabItem: {
     height: 64,

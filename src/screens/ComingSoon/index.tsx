@@ -17,7 +17,11 @@ export default function ComingSoonScreen(props: ComingSoonScreenProps) {
   const { title } = route.params;
 
   return (
-    <MainLayout title={title} onBack={() => navigation.goBack()}>
+    <MainLayout
+      title={title}
+      subtitle="Fitur segera hadir"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <View style={styles.container}>
         <MotiView
           from={{ opacity: 0, translateY: 16 }}
@@ -58,11 +62,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: '700',
+    color: colors.heading,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textMuted,
+    textAlign: 'center',
   },
 });

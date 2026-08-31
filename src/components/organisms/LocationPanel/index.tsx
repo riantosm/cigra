@@ -3,11 +3,11 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import Card from '@/components/molecules/Card';
 import LocationStatusBadge from '@/components/molecules/LocationStatusBadge';
 import OpenMapsButton from '@/components/molecules/OpenMapsButton';
 import PersonnelMap from '@/components/organisms/PersonnelMap';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { PersonnelLocationDetail } from '@/types';
 import { formatDateTime } from '@/utils/format';
 import { openCoordinatesInMaps } from '@/utils/location';
@@ -70,21 +70,15 @@ export default function LocationPanel(props: LocationPanelProps) {
   const hasMoreHistory = visibleHistoryCount < recentHistory.length;
   const status = locationDetail?.status ?? 'offline';
 
+  const currentLocation = locationDetail?.location ?? null;
+
   return (
     <View style={styles.section}>
-      <Card style={styles.statusRow}>
-        <LocationStatusBadge status={status} timestamp={locationDetail?.location?.captured_at} />
-        {locationDetail?.location ? (
-          <View style={styles.updatedBlock}>
-            <Text style={styles.updatedLabel}>Diperbarui terakhir</Text>
-            <Text style={styles.updatedValue}>
-              {formatDateTime(locationDetail.location.captured_at) ?? '-'}
-            </Text>
-          </View>
-        ) : null}
-      </Card>
+      <View style={styles.statusRow}>
+        <LocationStatusBadge status={status} timestamp={currentLocation?.captured_at} emphasis />
+      </View>
 
-      {locationDetail?.location ? (
+      {currentLocation ? (
         <>
           <PersonnelMap
             personnel={[
@@ -95,18 +89,33 @@ export default function LocationPanel(props: LocationPanelProps) {
                 rank: person.rank,
                 unit: person.unit,
                 tenant_id: person.tenantId,
-                status: locationDetail.status,
-                location: locationDetail.location,
-                last_seen: locationDetail.location.captured_at,
+                status: locationDetail?.status ?? 'offline',
+                location: currentLocation,
+                last_seen: currentLocation.captured_at,
               },
             ]}
             interactive={false}
             style={styles.map}
           />
           <OpenMapsButton
-            latitude={locationDetail.location.latitude}
-            longitude={locationDetail.location.longitude}
+            latitude={currentLocation.latitude}
+            longitude={currentLocation.longitude}
           />
+
+          <View style={styles.metaGrid}>
+            <View style={styles.metaCard}>
+              <Text style={styles.metaLabel}>Koordinat</Text>
+              <Text style={styles.metaValue}>
+                {`${currentLocation.latitude.toFixed(5)}, ${currentLocation.longitude.toFixed(5)}`}
+              </Text>
+            </View>
+            <View style={styles.metaCard}>
+              <Text style={styles.metaLabel}>Akurasi</Text>
+              <Text style={styles.metaValue}>
+                {currentLocation.accuracy != null ? `± ${Math.round(currentLocation.accuracy)} m` : '-'}
+              </Text>
+            </View>
+          </View>
         </>
       ) : (
         <View style={styles.empty}>
@@ -115,59 +124,48 @@ export default function LocationPanel(props: LocationPanelProps) {
         </View>
       )}
 
-      <Card style={styles.historyCard}>
-        <View style={styles.historyHeader}>
-          <Icon name="history" size={18} color={colors.primary} />
-          <Text
-            style={styles.historyTitle}
-          >{`Histori Pergerakan (${RECENT_HISTORY_COUNT} Terakhir)`}</Text>
-        </View>
+      <View style={styles.pillBar}>
+        <Text style={styles.pillBarText}>Riwayat Pergerakan</Text>
+      </View>
+      <View style={styles.historyCard}>
         {recentHistory.length === 0 ? (
           <Text style={styles.historyEmpty}>Belum ada riwayat pergerakan.</Text>
         ) : (
           visibleHistory.map((point, index) => (
             <PressableScale
               key={`${point.captured_at}-${index}`}
-              onPress={() =>
-                openCoordinatesInMaps(point.latitude, point.longitude)
-              }
+              onPress={() => openCoordinatesInMaps(point.latitude, point.longitude)}
               contentStyle={[
                 styles.historyRow,
-                index === visibleHistory.length - 1 &&
-                  !hasMoreHistory &&
-                  styles.historyRowLast,
-              ]}
-            >
-              <View style={styles.historyIconCircle}>
-                <Icon name="clock" size={14} color={colors.primary} />
-              </View>
+                index === visibleHistory.length - 1 && styles.historyRowLast,
+              ]}>
+              <View
+                style={[
+                  styles.historyDot,
+                  index === 0 ? styles.historyDotActive : styles.historyDotMuted,
+                ]}
+              />
               <View style={styles.historyRowText}>
                 <Text style={styles.historyRowTitle}>
                   {formatDateTime(point.captured_at) ?? '-'}
                 </Text>
                 <Text style={styles.historyRowSubtitle}>
-                  {`${point.latitude.toFixed(5)}, ${point.longitude.toFixed(
-                    5,
-                  )}`}
-                  {point.accuracy != null
-                    ? `  ·  ±${Math.round(point.accuracy)} m`
-                    : ''}
+                  {`${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`}
+                  {point.accuracy != null ? `  ·  ± ${Math.round(point.accuracy)} m` : ''}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={16} color={colors.textMuted} />
             </PressableScale>
           ))
         )}
-        {hasMoreHistory ? (
-          <PressableScale
-            onPress={() => setVisibleHistoryCount(recentHistory.length)}
-            contentStyle={styles.loadMoreButton}
-          >
-            <Icon name="chevron-down" size={16} color={colors.primary} />
-            <Text style={styles.loadMoreLabel}>Muat lebih banyak</Text>
-          </PressableScale>
-        ) : null}
-      </Card>
+      </View>
+      {hasMoreHistory ? (
+        <PressableScale
+          onPress={() => setVisibleHistoryCount(recentHistory.length)}
+          contentStyle={styles.loadMoreButton}>
+          <Text style={styles.loadMoreLabel}>Muat lebih banyak</Text>
+          <Icon name="chevron-down" size={15} color={colors.primary} />
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
@@ -178,33 +176,18 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 16,
-    gap: 12,
   },
   statusRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  updatedBlock: {
-    alignItems: 'flex-end',
-    gap: 2,
-  },
-  updatedLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
-  },
-  updatedValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.text,
+    marginBottom: 12,
   },
   map: {
-    height: 220,
+    height: 180,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
+    ...cardShadow,
   },
   empty: {
     alignItems: 'center',
@@ -213,79 +196,114 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.neutralSurface,
   },
   emptyText: {
     fontSize: 13,
     color: colors.textMuted,
   },
-  historyCard: {
-    gap: 4,
-  },
-  historyHeader: {
+  metaGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: 10,
+    marginTop: 14,
   },
-  historyTitle: {
+  metaCard: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    ...cardShadow,
+  },
+  metaLabel: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  metaValue: {
+    marginTop: 3,
     fontSize: 13,
+    fontWeight: '600',
+    color: colors.heading,
+  },
+  pillBar: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+    backgroundColor: colors.heading,
+  },
+  pillBarText: {
+    fontSize: 15,
     fontWeight: '700',
-    color: colors.primary,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+    color: colors.primaryForeground,
+  },
+  historyCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    ...cardShadow,
   },
   historyEmpty: {
     fontSize: 13,
     color: colors.textMuted,
-    paddingVertical: 4,
+    paddingVertical: 12,
   },
   historyRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
   },
   historyRowLast: {
     borderBottomWidth: 0,
   },
-  historyIconCircle: {
-    height: 28,
-    width: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySurface,
+  historyDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 5,
+  },
+  historyDotActive: {
+    backgroundColor: colors.primary,
+  },
+  historyDotMuted: {
+    backgroundColor: colors.placeholder,
   },
   historyRowText: {
     flex: 1,
     gap: 2,
   },
   historyRowTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: colors.text,
+    color: colors.heading,
   },
   historyRowSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textMuted,
   },
   loadMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
     marginTop: 12,
     paddingVertical: 12,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: `${colors.primary}29`,
+    backgroundColor: `${colors.primary}14`,
   },
   loadMoreLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.primary,
   },

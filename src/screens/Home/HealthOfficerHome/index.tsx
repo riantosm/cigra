@@ -6,9 +6,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
-import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import ScreenBackground from '@/components/atoms/ScreenBackground';
 import HealthRecordCard from '@/components/molecules/HealthRecordCard';
+import SyncStrip from '@/components/molecules/SyncStrip';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import QuickActionButton from '@/screens/Home/QuickActionButton';
 import StatCard from '@/screens/Home/StatCard';
@@ -108,6 +109,7 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScreenBackground />
       <HomeHeader
         user={user}
         onAvatarPress={() => navigation.navigate(ROUTES.profile)}
@@ -123,18 +125,7 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
           from={{ opacity: 0, translateY: 12 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}>
-          <PressableScale scaleTo={0.98} onPress={handleRefresh} contentStyle={styles.syncRow}>
-            <View style={styles.syncLeft}>
-              <View style={styles.syncDot} />
-              <Text style={styles.syncLabel}>Sistem terhubung</Text>
-            </View>
-            <View style={styles.syncRight}>
-              <Icon name="refresh" size={13} color={colors.primary} />
-              <Text style={styles.syncLabel} numberOfLines={1}>
-                Terakhir sinkron: {syncedLabel}
-              </Text>
-            </View>
-          </PressableScale>
+          <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
 
           <Text style={styles.greeting}>Halo, {displayName}</Text>
           <Text style={styles.greetingSub}>Petugas Kesehatan Satuan</Text>
@@ -151,6 +142,7 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
                 color={action.color}
                 onPress={action.onPress}
                 style={styles.quickActionCell}
+                compact
               />
             ))}
           </View>
@@ -207,31 +199,19 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.pageGradientStart,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    backgroundColor: colors.surface,
   },
-  syncRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    marginBottom: 20,
+  syncStrip: { marginBottom: 20 },
+  greeting: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    color: colors.heading,
   },
-  syncLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  syncRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  syncDot: { height: 8, width: 8, borderRadius: 4, backgroundColor: colors.success },
-  syncLabel: { fontSize: 12, color: colors.textMuted },
-  greeting: { fontSize: 20, fontWeight: '700', color: colors.text },
   greetingSub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   sectionHeader: {
     flexDirection: 'row',
@@ -240,7 +220,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.heading },
   sectionLink: { fontSize: 13, fontWeight: '600', color: colors.primary },
   quickActionRow: { flexDirection: 'row', gap: 10 },
   quickActionCell: { flex: 1 },

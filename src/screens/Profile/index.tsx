@@ -3,6 +3,7 @@ import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Tex
 import { MotiView } from 'moti';
 
 import Badge from '@/components/atoms/Badge';
+import GradientAvatar from '@/components/atoms/GradientAvatar';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
@@ -19,6 +20,7 @@ import { getMyLocationApi, sendLocationApi } from '@/services/api/location.servi
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
+import { smallButtonShadow } from '@/theme/shadows';
 import type { MyLocationResult } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
 import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, genderLabel, orDash } from '@/utils/format';
@@ -135,6 +137,8 @@ export default function ProfileScreen(props: ProfileScreenProps) {
   return (
     <MainLayout
       title="Profile"
+      subtitle="Data akun & identitas"
+      variant="canvas"
       onBack={() => navigation.goBack()}
       right={
         <PressableScale
@@ -143,7 +147,7 @@ export default function ProfileScreen(props: ProfileScreenProps) {
           contentStyle={styles.headerAction}
           accessibilityRole="button"
           accessibilityLabel="Pengaturan">
-          <Icon name="settings" size={22} color={colors.text} />
+          <Icon name="settings" size={20} color={colors.primary} />
         </PressableScale>
       }>
       <ScrollView
@@ -165,9 +169,12 @@ export default function ProfileScreen(props: ProfileScreenProps) {
                   onLoadError={() => setPhotoFailed(true)}
                 />
               ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarLabel}>{(user?.name ?? 'U').charAt(0).toUpperCase()}</Text>
-                </View>
+                <GradientAvatar
+                  label={(user?.name ?? 'U').charAt(0).toUpperCase()}
+                  gradientStart={colors.gradientPrimaryStart}
+                  gradientEnd={colors.gradientPrimaryEnd}
+                  size={72}
+                />
               )}
               <View style={styles.identity}>
                 <Text style={styles.name}>{user?.name ?? '-'}</Text>
@@ -240,7 +247,7 @@ export default function ProfileScreen(props: ProfileScreenProps) {
                 {isUpdatingLocation ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
-                  <Text style={styles.refreshGlyph}>⟳</Text>
+                  <Icon name="refresh" size={15} color={colors.primary} />
                 )}
               </PressableScale>
             </View>
@@ -290,8 +297,11 @@ const styles = StyleSheet.create({
   headerAction: {
     width: 40,
     height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    ...smallButtonShadow,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -306,24 +316,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 16,
   },
-  avatar: {
-    height: 72,
-    width: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
   avatarImage: {
     height: 72,
     width: 72,
     borderRadius: 36,
     backgroundColor: colors.neutralSurface,
-  },
-  avatarLabel: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.primaryForeground,
   },
   identity: {
     flex: 1,
@@ -333,7 +330,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   identityMeta: {
     marginTop: 4,
@@ -352,7 +349,7 @@ const styles = StyleSheet.create({
   accessBlock: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
     gap: 8,
   },
   accessLabel: {
@@ -391,17 +388,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   refreshButton: {
-    height: 28,
-    width: 28,
-    borderRadius: 14,
+    height: 30,
+    width: 30,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  refreshGlyph: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.primary,
+    backgroundColor: colors.chipSurface,
   },
   coordinates: {
     fontSize: 16,

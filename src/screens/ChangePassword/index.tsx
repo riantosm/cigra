@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import PressableScale from '@/components/atoms/PressableScale';
-import TextField from '@/components/atoms/TextField';
+import AuthField from '@/components/molecules/AuthField';
 import AuthLayout from '@/components/templates/AuthLayout';
 import { useDoubleBackToExit } from '@/hooks/useDoubleBackToExit';
 import { ROUTES } from '@/navigation/paths';
@@ -72,7 +72,7 @@ export default function ChangePasswordScreen(props: ChangePasswordScreenProps) {
     : Boolean(currentPassword && password && passwordConfirmation);
 
   return (
-    <AuthLayout>
+    <AuthLayout centered>
       <View style={styles.header}>
         <Text style={styles.title}>Ganti Password</Text>
         <Text style={styles.subtitle}>
@@ -82,8 +82,9 @@ export default function ChangePasswordScreen(props: ChangePasswordScreenProps) {
 
       <View style={styles.form}>
         {usesResetToken ? null : (
-          <TextField
+          <AuthField
             label="Password Saat Ini"
+            leftIcon="lock"
             placeholder="Masukkan password saat ini"
             secureTextEntry
             autoCapitalize="none"
@@ -92,8 +93,9 @@ export default function ChangePasswordScreen(props: ChangePasswordScreenProps) {
             onChangeText={setCurrentPassword}
           />
         )}
-        <TextField
+        <AuthField
           label="Password Baru"
+          leftIcon="lock"
           placeholder="Masukkan password baru"
           secureTextEntry
           autoCapitalize="none"
@@ -101,8 +103,9 @@ export default function ChangePasswordScreen(props: ChangePasswordScreenProps) {
           value={password}
           onChangeText={setPassword}
         />
-        <TextField
+        <AuthField
           label="Konfirmasi Password Baru"
+          leftIcon="lock"
           placeholder="Ulangi password baru"
           secureTextEntry
           autoCapitalize="none"
@@ -114,7 +117,7 @@ export default function ChangePasswordScreen(props: ChangePasswordScreenProps) {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Button
+        <GradientButton
           label="Simpan Password Baru"
           onPress={handleSubmit}
           loading={isSubmitting}
@@ -123,7 +126,7 @@ export default function ChangePasswordScreen(props: ChangePasswordScreenProps) {
         />
 
         <PressableScale style={styles.logoutLink} onPress={handleLogout} disabled={isSubmitting}>
-          <Text style={styles.logoutLinkLabel}>Logout</Text>
+          <Text style={styles.logoutLabel}>Logout</Text>
         </PressableScale>
       </View>
     </AuthLayout>
@@ -137,18 +140,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
-    color: colors.text,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    color: colors.heading,
   },
   subtitle: {
     fontSize: 15,
+    lineHeight: 21,
     color: colors.textMuted,
   },
   form: {
     gap: 16,
   },
   error: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.danger,
   },
   submit: {
@@ -158,7 +163,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 8,
   },
-  logoutLinkLabel: {
+  logoutLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.textMuted,

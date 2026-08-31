@@ -4,6 +4,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
+import ScreenBackground from '@/components/atoms/ScreenBackground';
+import EmptyState from '@/components/molecules/EmptyState';
 import MenuCard from '@/components/molecules/MenuCard';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
@@ -48,6 +50,7 @@ export default function RiwayatScreen(props: RiwayatScreenProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScreenBackground />
       <HomeHeader
         user={user}
         onAvatarPress={() => navigation.navigate(ROUTES.profile)}
@@ -59,10 +62,12 @@ export default function RiwayatScreen(props: RiwayatScreenProps) {
           <MotiView
             from={{ opacity: 0, translateY: 16 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={contentEnterTransition}
-            style={styles.emptyInner}>
-            <Text style={styles.title}>Riwayat</Text>
-            <Text style={styles.subtitle}>Belum ada konten riwayat saat ini</Text>
+            transition={contentEnterTransition}>
+            <EmptyState
+              icon="history"
+              title="Riwayat"
+              message="Belum ada konten riwayat saat ini"
+            />
           </MotiView>
         </View>
       ) : (
@@ -97,18 +102,18 @@ export default function RiwayatScreen(props: RiwayatScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.pageGradientStart,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
-    backgroundColor: colors.surface,
   },
   heading: {
     fontSize: 22,
-    fontWeight: '700',
-    color: colors.text,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    color: colors.heading,
   },
   subheading: {
     fontSize: 13,
@@ -131,19 +136,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    backgroundColor: colors.surface,
-  },
-  emptyInner: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textMuted,
   },
 });

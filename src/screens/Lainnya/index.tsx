@@ -1,9 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
+import ScreenBackground from '@/components/atoms/ScreenBackground';
+import EmptyState from '@/components/molecules/EmptyState';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
@@ -28,6 +30,7 @@ export default function LainnyaScreen(props: LainnyaScreenProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScreenBackground />
       <HomeHeader
         user={user}
         onAvatarPress={() => navigation.navigate(ROUTES.profile)}
@@ -37,10 +40,12 @@ export default function LainnyaScreen(props: LainnyaScreenProps) {
         <MotiView
           from={{ opacity: 0, translateY: 16 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={contentEnterTransition}
-          style={styles.contentInner}>
-          <Text style={styles.title}>Lainnya</Text>
-          <Text style={styles.subtitle}>Belum ada konten lainnya saat ini</Text>
+          transition={contentEnterTransition}>
+          <EmptyState
+            icon="grid"
+            title="Lainnya"
+            message="Belum ada konten lainnya saat ini"
+          />
         </MotiView>
       </View>
     </SafeAreaView>
@@ -50,26 +55,12 @@ export default function LainnyaScreen(props: LainnyaScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.pageGradientStart,
   },
   content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    backgroundColor: colors.surface,
-  },
-  contentInner: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textMuted,
   },
 });

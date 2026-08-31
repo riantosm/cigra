@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import Badge from '@/components/atoms/Badge';
 import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import HealthRecordCard from '@/components/molecules/HealthRecordCard';
@@ -16,6 +17,7 @@ import {
   getHealthPersonnelRecordsApi,
 } from '@/services/api/health.service';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { HealthPersonnelProfile, HealthRecordSummary } from '@/types';
 import { extractErrorMessage, formatDateTime, joinFields, orDash } from '@/utils/format';
 
@@ -96,7 +98,11 @@ export default function HealthPersonnelProfileScreen(props: Props) {
   const lastRecord = summary?.last_record ?? null;
 
   return (
-    <MainLayout title="Profil Kesehatan" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Profil Kesehatan"
+      subtitle="Riwayat & catat pemeriksaan anggota"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
@@ -150,7 +156,7 @@ export default function HealthPersonnelProfileScreen(props: Props) {
             </View>
           </View>
 
-          <Button
+          <GradientButton
             label="Catat Pemeriksaan"
             onPress={() =>
               navigation.navigate(ROUTES.healthRecordInput, {
@@ -204,11 +210,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
   },
   headerBody: { flex: 1, gap: 3 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.text },
+  name: { fontSize: 16, fontWeight: '700', color: colors.heading },
   meta: { fontSize: 12, color: colors.textMuted },
   statusBadge: { marginTop: 6 },
   summaryRow: {
@@ -218,15 +225,16 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
   },
   summaryCell: { flex: 1, alignItems: 'center', gap: 2 },
-  summaryDivider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.border },
-  summaryValue: { fontSize: 16, fontWeight: '700', color: colors.text },
+  summaryDivider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.borderSoft },
+  summaryValue: { fontSize: 16, fontWeight: '700', color: colors.heading },
   summaryLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
   recordButton: { marginTop: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginTop: 24, marginBottom: 12 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.heading, marginTop: 24, marginBottom: 12 },
   list: { gap: 10 },
   emptyText: { fontSize: 13, color: colors.textMuted, paddingVertical: 8 },
   loadMore: {
@@ -237,7 +245,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
   },
   loadMoreText: { fontSize: 13, fontWeight: '600', color: colors.primary },

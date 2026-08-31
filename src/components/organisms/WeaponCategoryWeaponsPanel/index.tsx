@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.borderSoft,
   },
   holderText: {
     flex: 1,

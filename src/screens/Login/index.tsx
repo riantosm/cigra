@@ -3,9 +3,10 @@ import type { ComponentRef } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { logo } from '@/assets';
-import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import PressableScale from '@/components/atoms/PressableScale';
-import TextField from '@/components/atoms/TextField';
+import AuthField from '@/components/molecules/AuthField';
+import AuthToggle from '@/components/molecules/AuthToggle';
 import AuthLayout from '@/components/templates/AuthLayout';
 import { useDoubleBackToExit } from '@/hooks/useDoubleBackToExit';
 import { ROUTES } from '@/navigation/paths';
@@ -24,6 +25,11 @@ type LoginMode = 'password' | 'otp';
 type OtpStep = 'request' | 'verify';
 
 const OTP_RESEND_COOLDOWN_SECONDS = 60;
+
+const MODE_OPTIONS: { value: LoginMode; label: string; icon: 'lock' | 'shield-check' }[] = [
+  { value: 'password', label: 'Password', icon: 'lock' },
+  { value: 'otp', label: 'Kode OTP', icon: 'shield-check' },
+];
 
 export default function LoginScreen(props: LoginScreenProps) {
   const { navigation } = props;
@@ -53,16 +59,19 @@ export default function LoginScreen(props: LoginScreenProps) {
     return () => clearTimeout(timer);
   }, [resendCooldown]);
 
+  // Preload today's device-wide resend count so the "(N/3)" quota + disabled state are correct
+  // immediately, even before the first "kirim ulang".
+  useEffect(() => {
+    getOtpResendCount().then(setResendCount);
+  }, []);
+
   function switchMode(nextMode: LoginMode) {
     if (nextMode === mode) return;
     setMode(nextMode);
     dispatch(clearAuthError());
-    setOtpStep('request');
-    setOtpCode('');
     setOtpError(null);
-    setOtpInfo(null);
-    setResendCooldown(0);
-    setResendCount(0);
+    // OTP progress (step / code / sent-info / cooldown) is intentionally kept when toggling tabs —
+    // switching to Password and back must not throw away an already-requested code.
   }
 
   function handlePasswordSubmit() {
@@ -82,9 +91,9 @@ export default function LoginScreen(props: LoginScreenProps) {
       setOtpStep('verify');
       setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS);
       if (isResend) {
-        setResendCount(await recordOtpResend(identifier));
+        setResendCount(await recordOtpResend());
       } else {
-        setResendCount(await getOtpResendCount(identifier));
+        setResendCount(await getOtpResendCount());
       }
       requestAnimationFrame(() => otpRef.current?.focus());
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 250);
@@ -101,7 +110,8 @@ export default function LoginScreen(props: LoginScreenProps) {
     setOtpInfo(null);
     setOtpError(null);
     setResendCooldown(0);
-    setResendCount(0);
+    // Daily resend cap is device-wide, so it survives an account switch — re-read, don't zero it.
+    getOtpResendCount().then(setResendCount);
   }
 
   const resendRemaining = Math.max(OTP_RESEND_DAILY_LIMIT - resendCount, 0);
@@ -126,39 +136,27 @@ export default function LoginScreen(props: LoginScreenProps) {
   const otpErrorMessage = otpError ?? (mode === 'otp' ? error : null);
 
   return (
-    <AuthLayout ref={scrollViewRef}>
-      <View style={styles.logoBadge}>
-        <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
+    <AuthLayout
+      ref={scrollViewRef}
+      showMountains
+      footer={<Text style={styles.version}>v{appVersion}</Text>}>
+      <View style={styles.brand}>
+        <View style={styles.logoBadge}>
+          <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
+        </View>
+        <Text style={styles.title}>Selamat Datang!</Text>
+        <Text style={styles.subtitle}>
+          Masuk untuk melanjutkan ke <Text style={styles.subtitleAccent}>Smart Battalion</Text>
+        </Text>
       </View>
 
-      <View style={styles.header}>
-        <Text style={styles.title}>Selamat Datang</Text>
-        <Text style={styles.subtitle}>Masuk untuk melanjutkan ke Smart Battalion</Text>
-      </View>
-
-      <View style={styles.modeSwitch}>
-        <PressableScale
-          style={styles.modeTabWrapper}
-          contentStyle={[styles.modeTab, mode === 'password' && styles.modeTabActive]}
-          onPress={() => switchMode('password')}>
-          <Text style={[styles.modeTabLabel, mode === 'password' && styles.modeTabLabelActive]}>
-            Password
-          </Text>
-        </PressableScale>
-        <PressableScale
-          style={styles.modeTabWrapper}
-          contentStyle={[styles.modeTab, mode === 'otp' && styles.modeTabActive]}
-          onPress={() => switchMode('otp')}>
-          <Text style={[styles.modeTabLabel, mode === 'otp' && styles.modeTabLabelActive]}>
-            Kode OTP
-          </Text>
-        </PressableScale>
-      </View>
+      <AuthToggle options={MODE_OPTIONS} value={mode} onChange={switchMode} />
 
       {mode === 'password' ? (
         <View style={styles.form}>
-          <TextField
+          <AuthField
             label="Email, Username, atau NRP"
+            leftIcon="mail"
             placeholder="Masukkan email, username, atau NRP"
             autoCapitalize="none"
             autoCorrect={false}
@@ -168,9 +166,10 @@ export default function LoginScreen(props: LoginScreenProps) {
             value={identifier}
             onChangeText={setIdentifier}
           />
-          <TextField
+          <AuthField
             ref={passwordRef}
             label="Password"
+            leftIcon="lock"
             placeholder="Masukkan password"
             secureTextEntry
             autoCapitalize="none"
@@ -183,12 +182,12 @@ export default function LoginScreen(props: LoginScreenProps) {
           <PressableScale
             style={styles.forgotLink}
             onPress={() => navigation.navigate(ROUTES.forgotPassword)}>
-            <Text style={styles.forgotLinkLabel}>Lupa password?</Text>
+            <Text style={styles.link}>Lupa password?</Text>
           </PressableScale>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Button
+          <GradientButton
             label="Masuk"
             onPress={handlePasswordSubmit}
             loading={isLoading}
@@ -198,8 +197,9 @@ export default function LoginScreen(props: LoginScreenProps) {
         </View>
       ) : (
         <View style={styles.form}>
-          <TextField
+          <AuthField
             label="Email, Username, atau NRP"
+            leftIcon="mail"
             placeholder="Masukkan email, username, atau NRP"
             autoCapitalize="none"
             autoCorrect={false}
@@ -213,13 +213,15 @@ export default function LoginScreen(props: LoginScreenProps) {
           {otpStep === 'verify' ? (
             <>
               {otpInfo ? <Text style={styles.info}>{otpInfo}</Text> : null}
-              <TextField
+              <AuthField
                 ref={otpRef}
                 label="Kode OTP"
-                placeholder="Masukkan 6 digit kode OTP"
+                leftIcon="lock"
+                placeholder="______"
                 keyboardType="number-pad"
                 maxLength={6}
                 returnKeyType="done"
+                inputStyle={styles.otpInput}
                 onSubmitEditing={handleVerifyOtp}
                 value={otpCode}
                 onChangeText={setOtpCode}
@@ -227,14 +229,10 @@ export default function LoginScreen(props: LoginScreenProps) {
 
               <View style={styles.otpActions}>
                 <PressableScale onPress={handleChangeIdentifier} disabled={isSendingOtp}>
-                  <Text style={styles.forgotLinkLabel}>Ganti akun</Text>
+                  <Text style={styles.link}>Ganti akun</Text>
                 </PressableScale>
                 <PressableScale onPress={() => handleSendOtp(true)} disabled={resendDisabled}>
-                  <Text
-                    style={[
-                      styles.forgotLinkLabel,
-                      resendDisabled && styles.forgotLinkLabelDisabled,
-                    ]}>
+                  <Text style={[styles.link, resendDisabled && styles.linkDisabled]}>
                     {resendLabel}
                   </Text>
                 </PressableScale>
@@ -242,7 +240,7 @@ export default function LoginScreen(props: LoginScreenProps) {
 
               {otpErrorMessage ? <Text style={styles.error}>{otpErrorMessage}</Text> : null}
 
-              <Button
+              <GradientButton
                 label="Verifikasi & Masuk"
                 onPress={handleVerifyOtp}
                 loading={isLoading}
@@ -254,7 +252,7 @@ export default function LoginScreen(props: LoginScreenProps) {
             <>
               {otpError ? <Text style={styles.error}>{otpError}</Text> : null}
 
-              <Button
+              <GradientButton
                 label="Kirim Kode OTP"
                 onPress={() => handleSendOtp(false)}
                 loading={isSendingOtp}
@@ -265,103 +263,90 @@ export default function LoginScreen(props: LoginScreenProps) {
           )}
         </View>
       )}
-
-      <Text style={styles.version}>v{appVersion}</Text>
     </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  brand: {
+    alignItems: 'center',
+    marginBottom: 26,
+  },
   logoBadge: {
-    alignSelf: 'center',
-    width: 96,
-    height: 96,
+    width: 92,
+    height: 92,
     borderRadius: 28,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    marginBottom: 24,
+    padding: 14,
+    marginBottom: 20,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 6,
   },
   logoImage: {
     width: '100%',
     height: '100%',
   },
-  header: {
-    marginBottom: 24,
-    gap: 8,
-  },
   title: {
     fontSize: 30,
-    fontWeight: '700',
-    color: colors.text,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    color: colors.heading,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: colors.textMuted,
-  },
-  modeSwitch: {
-    flexDirection: 'row',
-    backgroundColor: colors.neutralSurface,
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 24,
-  },
-  modeTabWrapper: {
-    flex: 1,
-  },
-  modeTab: {
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  modeTabActive: {
-    backgroundColor: colors.surface,
-  },
-  modeTabLabel: {
     fontSize: 14,
-    fontWeight: '600',
     color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 6,
   },
-  modeTabLabelActive: {
+  subtitleAccent: {
     color: colors.primary,
+    fontWeight: '600',
   },
   form: {
-    gap: 16,
+    gap: 18,
+    marginTop: 24,
   },
   forgotLink: {
     alignSelf: 'flex-end',
-    marginTop: -8,
+    marginTop: -6,
   },
-  forgotLinkLabel: {
-    fontSize: 14,
+  link: {
+    fontSize: 13,
     fontWeight: '600',
     color: colors.primary,
   },
-  forgotLinkLabelDisabled: {
-    color: colors.textMuted,
+  linkDisabled: {
+    color: colors.placeholder,
   },
   otpActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  otpInput: {
+    fontSize: 18,
+    letterSpacing: 8,
+    color: colors.heading,
   },
   info: {
     fontSize: 13,
     color: colors.success,
   },
   error: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.danger,
   },
   submit: {
-    marginTop: 8,
+    marginTop: 2,
   },
   version: {
-    marginTop: 24,
-    alignSelf: 'center',
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.primaryForeground,
   },
 });

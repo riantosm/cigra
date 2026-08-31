@@ -73,6 +73,11 @@ const styles = StyleSheet.create({
   },
   itemActive: {
     backgroundColor: colors.surface,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   dot: {
     height: 7,

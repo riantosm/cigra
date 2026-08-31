@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     height: 44,
     width: 44,
-    borderRadius: 22,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     lineHeight: 13,
     height: 26,
     fontWeight: '600',
-    color: colors.text,
+    color: colors.heading,
     textAlign: 'center',
   },
 });

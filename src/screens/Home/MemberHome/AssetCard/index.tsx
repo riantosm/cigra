@@ -7,6 +7,7 @@ import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 
 export interface AssetCardProps {
   icon: IconName;
@@ -35,12 +36,15 @@ export default function AssetCard(props: AssetCardProps) {
             {category}
           </Text>
         </View>
-        <View style={styles.countPill}>
-          <Text style={styles.countText}>{count}</Text>
+        <View style={styles.headerRight}>
+          <View style={styles.countPill}>
+            <Text style={styles.countText}>{count}</Text>
+          </View>
+          <Icon name="chevron-right" size={14} color={colors.placeholder} />
         </View>
       </View>
 
-      <Text style={styles.name} numberOfLines={2}>
+      <Text style={styles.name} numberOfLines={1}>
         {name}
       </Text>
 
@@ -65,8 +69,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
   },
   header: {
     flexDirection: 'row',
@@ -79,6 +84,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   category: {
     flex: 1,

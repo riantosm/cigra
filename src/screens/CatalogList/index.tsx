@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import Badge from '@/components/atoms/Badge';
+import GradientAvatar from '@/components/atoms/GradientAvatar';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
-import TextField from '@/components/atoms/TextField';
 import Card from '@/components/molecules/Card';
+import SearchFilterBar from '@/components/molecules/SearchFilterBar';
 import FilterSheet from '@/components/organisms/FilterSheet';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
@@ -17,16 +18,24 @@ import type { CatalogListItem } from '@/utils/catalogResources';
 import { catalogResourceConfigs } from '@/utils/catalogResources';
 import { extractErrorMessage } from '@/utils/format';
 
-// Sama seperti avatar di detail/profile: `SecureImage` menangani resolve URL + header Authorization,
-// di sini cuma nambahin fallback inisial kalau `photo` kosong atau gagal dimuat.
+// Personel yang "aktif" pakai avatar gradient biru + titik hijau; sisanya ungu + titik abu
+// (DESIGN_SYSTEM.md §5.8). Diturunkan dari badge status yang sudah dihitung per-resource.
+function isActiveItem(item: CatalogListItem): boolean {
+  return item.badgeVariant === 'success' || item.badgeVariant === 'primary';
+}
+
 function ListAvatar({ item }: { item: CatalogListItem }) {
   const [failed, setFailed] = useState(false);
+  const active = isActiveItem(item);
 
   if (!isDisplayablePhoto(item.photo) || failed) {
     return (
-      <View style={styles.avatarFallback}>
-        <Text style={styles.avatarFallbackLabel}>{item.title.charAt(0).toUpperCase()}</Text>
-      </View>
+      <GradientAvatar
+        label={item.title.charAt(0).toUpperCase()}
+        gradientStart={active ? colors.gradientPrimaryStart : colors.gradientInactiveStart}
+        gradientEnd={active ? colors.gradientPrimaryEnd : colors.gradientInactiveEnd}
+        dotColor={active ? colors.success : colors.placeholder}
+      />
     );
   }
 
@@ -111,35 +120,22 @@ export default function CatalogListScreen(props: Props) {
   }
 
   return (
-    <MainLayout title={config.screenTitle} onBack={() => navigation.goBack()}>
+    <MainLayout
+      title={config.screenTitle}
+      subtitle={config.menuSubtitle}
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <View style={styles.container}>
-        <View style={styles.searchRow}>
-          <TextField
-            value={searchInput}
-            onChangeText={setSearchInput}
-            onSubmitEditing={() => setSearch(searchInput.trim())}
-            placeholder={config.searchPlaceholder}
-            returnKeyType="search"
-            leftIcon="search"
-            onClear={handleClearSearch}
-            containerStyle={styles.searchField}
-            style={styles.searchInput}
-          />
-          {config.filterFields?.length ? (
-            <PressableScale
-              onPress={() => setIsFilterSheetVisible(true)}
-              contentStyle={[styles.filterButton, activeFilterCount > 0 && styles.filterButtonActive]}
-              accessibilityRole="button"
-              accessibilityLabel="Filter">
-              <Icon name="filter" size={20} color={activeFilterCount > 0 ? colors.primary : colors.textMuted} />
-              {activeFilterCount > 0 ? (
-                <View style={styles.filterBadge}>
-                  <Text style={styles.filterBadgeLabel}>{activeFilterCount}</Text>
-                </View>
-              ) : null}
-            </PressableScale>
-          ) : null}
-        </View>
+        <SearchFilterBar
+          value={searchInput}
+          onChangeText={setSearchInput}
+          onSubmitEditing={() => setSearch(searchInput.trim())}
+          placeholder={config.searchPlaceholder}
+          onClear={handleClearSearch}
+          onFilterPress={config.filterFields?.length ? () => setIsFilterSheetVisible(true) : undefined}
+          activeFilterCount={activeFilterCount}
+          style={styles.searchRow}
+        />
 
         {isLoading ? (
           <ActivityIndicator style={styles.centerState} color={colors.primary} />
@@ -150,6 +146,7 @@ export default function CatalogListScreen(props: Props) {
             data={items}
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
             initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={9}
@@ -159,20 +156,51 @@ export default function CatalogListScreen(props: Props) {
             onEndReached={handleEndReached}
             ListEmptyComponent={<Text style={styles.centerState}>Belum ada data.</Text>}
             ListFooterComponent={isLoadingMore ? <ActivityIndicator style={styles.footerLoading} color={colors.primary} /> : undefined}
-            renderItem={({ item }) => (
-              <PressableScale
-                scaleTo={0.98}
-                onPress={() => navigation.navigate(ROUTES.catalogDetail, { resource, id: item.id })}>
-                <Card style={styles.row}>
-                  {config.hasPhoto ? <ListAvatar item={item} /> : null}
-                  <View style={styles.rowText}>
-                    <Text style={styles.rowTitle}>{item.title}</Text>
-                    <Text style={styles.rowSubtitle}>{item.subtitle}</Text>
-                  </View>
-                  {item.badgeLabel ? <Badge label={item.badgeLabel} variant={item.badgeVariant ?? 'neutral'} /> : null}
-                </Card>
-              </PressableScale>
-            )}
+            renderItem={({ item }) => {
+              const segments =
+                item.metaSegments ??
+                item.subtitle
+                  .split(' · ')
+                  .filter(Boolean)
+                  .map(text => ({ icon: undefined, text }));
+              return (
+                <PressableScale
+                  scaleTo={0.98}
+                  onPress={() => navigation.navigate(ROUTES.catalogDetail, { resource, id: item.id })}>
+                  <Card style={styles.row}>
+                    {config.hasPhoto ? <ListAvatar item={item} /> : null}
+                    <View style={styles.rowText}>
+                      <Text style={styles.rowTitle} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      {segments.length ? (
+                        <View style={styles.metaRow}>
+                          {segments.map((segment, index) => (
+                            <View key={segment.text + index} style={styles.metaSegment}>
+                              {index > 0 ? <Text style={styles.metaDivider}>•</Text> : null}
+                              {segment.icon ? (
+                                <Icon name={segment.icon} size={13} color={colors.textMuted} />
+                              ) : null}
+                              <Text style={styles.metaText} numberOfLines={1}>
+                                {segment.text}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      ) : null}
+                    </View>
+                    {item.badgeLabel ? (
+                      <Badge
+                        label={item.badgeLabel}
+                        variant={item.badgeVariant ?? 'neutral'}
+                        style={styles.rowBadge}
+                      />
+                    ) : null}
+                    <Icon name="chevron-right" size={18} color={colors.placeholder} />
+                  </Card>
+                </PressableScale>
+              );
+            }}
           />
         )}
       </View>
@@ -193,56 +221,16 @@ export default function CatalogListScreen(props: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
+    paddingTop: 4,
   },
   searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
     paddingHorizontal: 24,
-    marginBottom: 16,
-  },
-  searchField: {
-    flex: 1,
-  },
-  searchInput: {
-    height: 52,
-  },
-  filterButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterButtonActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySurface,
-  },
-  filterBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    paddingHorizontal: 4,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  filterBadgeLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primaryForeground,
+    marginBottom: 14,
   },
   listContent: {
     paddingHorizontal: 24,
     paddingBottom: 96,
-    gap: 12,
+    gap: 14,
   },
   centerState: {
     marginTop: 32,
@@ -257,39 +245,47 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    gap: 14,
   },
   avatar: {
-    height: 44,
-    width: 44,
-    borderRadius: 22,
+    height: 52,
+    width: 52,
+    borderRadius: 26,
     backgroundColor: colors.neutralSurface,
-  },
-  avatarFallback: {
-    height: 44,
-    width: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  avatarFallbackLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primaryForeground,
   },
   rowText: {
     flex: 1,
-    gap: 2,
+    gap: 5,
   },
   rowTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.heading,
   },
-  rowSubtitle: {
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metaSegment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaDivider: {
+    fontSize: 13,
+    color: colors.dividerOnGradient,
+    marginHorizontal: 2,
+  },
+  metaText: {
+    flexShrink: 1,
     fontSize: 13,
     color: colors.textMuted,
+  },
+  // Badge default-nya `alignSelf: 'flex-start'` (konteks kolom) — di baris ini parent-nya row jadi
+  // itu bikin nempel ke atas; paksa ke tengah vertikal.
+  rowBadge: {
+    alignSelf: 'center',
   },
 });

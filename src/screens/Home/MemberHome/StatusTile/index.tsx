@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 
 export interface StatusTileProps {
   icon: IconName;
@@ -40,18 +41,19 @@ const styles = StyleSheet.create({
     width: 132,
     gap: 3,
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
   },
   iconWrap: {
-    height: 28,
-    width: 28,
-    borderRadius: 8,
+    height: 30,
+    width: 30,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   label: {
     fontSize: 11,
@@ -60,7 +62,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   sub: {
     fontSize: 11,

@@ -3,13 +3,14 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-nativ
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import TextField from '@/components/atoms/TextField';
 import PersonAvatar from '@/components/molecules/PersonAvatar';
+import SearchFilterBar from '@/components/molecules/SearchFilterBar';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { searchHealthPersonnelApi } from '@/services/api/health.service';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { HealthPersonnelSearchItem } from '@/types';
 import { extractErrorMessage, joinFields } from '@/utils/format';
 
@@ -79,19 +80,22 @@ export default function HealthPersonnelSearchScreen(props: Props) {
 
   return (
     <MainLayout
-      title={mode === 'input' ? 'Pilih Anggota' : 'Cari Anggota'}
+      title="Cari Anggota"
+      subtitle={
+        mode === 'input'
+          ? 'Pilih personel untuk mencatat pemeriksaan'
+          : 'Cari personel berdasarkan nama atau NRP'
+      }
+      variant="canvas"
       onBack={() => navigation.goBack()}>
       <View style={styles.container}>
-        <TextField
-          leftIcon="search"
-          placeholder="Nama atau NRP (min. 2 karakter)"
+        <SearchFilterBar
           value={query}
           onChangeText={setQuery}
           onClear={() => setQuery('')}
+          placeholder="Nama atau NRP (min. 2 karakter)"
           autoFocus
-          autoCapitalize="none"
-          autoCorrect={false}
-          containerStyle={styles.search}
+          style={styles.search}
         />
 
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
@@ -112,7 +116,7 @@ export default function HealthPersonnelSearchScreen(props: Props) {
                   {joinFields(item.service_number, item.unit) || item.service_number}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={18} color={colors.textMuted} />
+              <Icon name="chevron-right" size={18} color={colors.placeholder} />
             </PressableScale>
           )}
           ListEmptyComponent={
@@ -137,10 +141,11 @@ export default function HealthPersonnelSearchScreen(props: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   search: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   listContent: {
     paddingBottom: 48,
@@ -150,11 +155,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 12,
+    padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
   },
   rowBody: {
     flex: 1,
@@ -163,7 +169,7 @@ const styles = StyleSheet.create({
   rowName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   rowMeta: {
     fontSize: 12,

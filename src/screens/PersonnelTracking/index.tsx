@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
+import GradientAvatar from '@/components/atoms/GradientAvatar';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import TextField from '@/components/atoms/TextField';
 import Card from '@/components/molecules/Card';
 import LocationStatusBadge, { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
+import SearchFilterBar from '@/components/molecules/SearchFilterBar';
 import FilterSheet from '@/components/organisms/FilterSheet';
 import type { FilterField } from '@/components/organisms/FilterSheet';
 import MainLayout from '@/components/templates/MainLayout';
@@ -15,6 +16,12 @@ import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { colors } from '@/theme/colors';
 import type { LocationStatus, PersonnelLocationOverviewItem } from '@/types';
 import { extractErrorMessage, joinFields } from '@/utils/format';
+
+const statusAvatarGradient: Record<LocationStatus, [string, string]> = {
+  fresh: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
+  stale: [colors.gradientWarnStart, colors.warning],
+  offline: [colors.gradientInactiveStart, colors.gradientInactiveEnd],
+};
 
 type Props = RootStackScreenProps<typeof ROUTES.personnelTracking>;
 
@@ -116,32 +123,21 @@ export default function PersonnelTrackingScreen(props: Props) {
   }
 
   return (
-    <MainLayout title="Lokasi Personel" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Lokasi Personel"
+      subtitle="Lacak posisi seluruh personel"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <View style={styles.container}>
-        <View style={styles.searchRow}>
-          <TextField
-            value={searchInput}
-            onChangeText={setSearchInput}
-            placeholder="Cari nama, NRP, atau satuan..."
-            returnKeyType="search"
-            leftIcon="search"
-            onClear={() => setSearchInput('')}
-            containerStyle={styles.searchField}
-            style={styles.searchInput}
-          />
-          <PressableScale
-            onPress={() => setIsFilterSheetVisible(true)}
-            contentStyle={[styles.filterButton, activeFilterCount > 0 && styles.filterButtonActive]}
-            accessibilityRole="button"
-            accessibilityLabel="Filter">
-            <Icon name="filter" size={20} color={activeFilterCount > 0 ? colors.primary : colors.textMuted} />
-            {activeFilterCount > 0 ? (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeLabel}>{activeFilterCount}</Text>
-              </View>
-            ) : null}
-          </PressableScale>
-        </View>
+        <SearchFilterBar
+          value={searchInput}
+          onChangeText={setSearchInput}
+          placeholder="Cari nama, NRP, atau satuan..."
+          onClear={() => setSearchInput('')}
+          onFilterPress={() => setIsFilterSheetVisible(true)}
+          activeFilterCount={activeFilterCount}
+          style={styles.searchRow}
+        />
 
         {isLoading ? (
           <ActivityIndicator style={styles.centerState} color={colors.primary} />
@@ -170,9 +166,12 @@ export default function PersonnelTrackingScreen(props: Props) {
               <PressableScale scaleTo={0.98} onPress={() => openDetail(item)}>
                 <Card style={styles.row}>
                   <View style={styles.rowTop}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarLabel}>{item.full_name.charAt(0).toUpperCase()}</Text>
-                    </View>
+                    <GradientAvatar
+                      label={item.full_name.charAt(0).toUpperCase()}
+                      gradientStart={statusAvatarGradient[item.status][0]}
+                      gradientEnd={statusAvatarGradient[item.status][1]}
+                      size={44}
+                    />
                     <View style={styles.rowIdentity}>
                       <Text style={styles.name} numberOfLines={1}>
                         {item.full_name}
@@ -221,51 +220,11 @@ export default function PersonnelTrackingScreen(props: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
+    paddingTop: 4,
   },
   searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
     paddingHorizontal: 24,
-    marginBottom: 8,
-  },
-  searchField: {
-    flex: 1,
-  },
-  searchInput: {
-    height: 52,
-  },
-  filterButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterButtonActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySurface,
-  },
-  filterBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    paddingHorizontal: 4,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  filterBadgeLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primaryForeground,
+    marginBottom: 12,
   },
   listContent: {
     paddingHorizontal: 24,
@@ -273,7 +232,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   countLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textMuted,
     marginBottom: 4,
   },
@@ -292,19 +251,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  avatar: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  avatarLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.primaryForeground,
-  },
   rowIdentity: {
     flex: 1,
     gap: 2,
@@ -312,7 +258,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   meta: {
     fontSize: 12,

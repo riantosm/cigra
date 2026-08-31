@@ -17,6 +17,9 @@ export interface PersonnelListItem {
   gender: string | null;
   blood_type: string | null;
   phone: string | null;
+  // Path/URL foto mentah (lihat `resolveSecureFileUrl`). Backend mengirim data-URI SVG placeholder
+  // untuk personel tanpa foto asli — `isDisplayablePhoto` menyaringnya.
+  photo: string | null;
   status: string;
   is_active: boolean | null;
   tenant_id: number;

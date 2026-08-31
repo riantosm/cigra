@@ -5,8 +5,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
-import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import ScreenBackground from '@/components/atoms/ScreenBackground';
+import SyncStrip from '@/components/molecules/SyncStrip';
 import MemberIdCard from '@/components/organisms/MemberIdCard';
 import QrIdentityModal from '@/components/organisms/QrIdentityModal';
 import AssetCard from '@/screens/Home/MemberHome/AssetCard';
@@ -20,6 +21,7 @@ import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getMyLocationApi } from '@/services/api/location.service';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { AuthUser, MyLocationResult } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
@@ -234,6 +236,7 @@ export default function MemberHome(props: MemberHomeProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScreenBackground />
       <HomeHeader
         user={user}
         onAvatarPress={() => navigation.navigate(ROUTES.profile)}
@@ -249,18 +252,7 @@ export default function MemberHome(props: MemberHomeProps) {
           from={{ opacity: 0, translateY: 12 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}>
-          <PressableScale scaleTo={0.98} onPress={handleRefresh} contentStyle={styles.syncRow}>
-            <View style={styles.syncLeft}>
-              <View style={styles.syncDot} />
-              <Text style={styles.syncLabel}>Sistem terhubung</Text>
-            </View>
-            <View style={styles.syncRight}>
-              <Icon name="refresh" size={13} color={colors.primary} />
-              <Text style={styles.syncLabel} numberOfLines={1}>
-                Terakhir sinkron: {syncedLabel}
-              </Text>
-            </View>
-          </PressableScale>
+          <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
 
           <MemberIdCard
             photoPath={personnel?.photo}
@@ -291,13 +283,18 @@ export default function MemberHome(props: MemberHomeProps) {
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aset Saya</Text>
-            <PressableScale onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}>
-              <Text style={styles.sectionLink}>Lihat Semua</Text>
-            </PressableScale>
           </View>
           <View style={styles.assetRow}>
-            <AssetCard icon="weapon" {...DUMMY_ASSETS.weapon} />
-            <AssetCard icon="car" {...DUMMY_ASSETS.vehicle} />
+            <AssetCard
+              icon="weapon"
+              {...DUMMY_ASSETS.weapon}
+              onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
+            />
+            <AssetCard
+              icon="car"
+              {...DUMMY_ASSETS.vehicle}
+              onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
+            />
           </View>
 
           <View style={styles.sectionHeader}>
@@ -307,14 +304,17 @@ export default function MemberHome(props: MemberHomeProps) {
             </PressableScale>
           </View>
           <View style={styles.listCard}>
-            {DUMMY_MOVEMENTS.map(item => (
-              <TimelineRow
+            {DUMMY_MOVEMENTS.map((item, index) => (
+              <View
                 key={item.id}
-                direction={item.direction}
-                title={item.title}
-                detail={item.detail}
-                time={item.time}
-              />
+                style={index < DUMMY_MOVEMENTS.length - 1 ? styles.listRowDivider : undefined}>
+                <TimelineRow
+                  direction={item.direction}
+                  title={item.title}
+                  detail={item.detail}
+                  time={item.time}
+                />
+              </View>
             ))}
           </View>
 
@@ -325,16 +325,19 @@ export default function MemberHome(props: MemberHomeProps) {
             </PressableScale>
           </View>
           <View style={styles.listCard}>
-            {DUMMY_NOTICES.map(item => (
-              <NoticeRow
+            {DUMMY_NOTICES.map((item, index) => (
+              <View
                 key={item.id}
-                type={item.type}
-                title={item.title}
-                detail={item.detail}
-                sender={item.sender}
-                time={item.time}
-                unread={item.unread}
-              />
+                style={index < DUMMY_NOTICES.length - 1 ? styles.listRowDivider : undefined}>
+                <NoticeRow
+                  type={item.type}
+                  title={item.title}
+                  detail={item.detail}
+                  sender={item.sender}
+                  time={item.time}
+                  unread={item.unread}
+                />
+              </View>
             ))}
           </View>
 
@@ -370,45 +373,14 @@ export default function MemberHome(props: MemberHomeProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.pageGradientStart,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    backgroundColor: colors.surface,
   },
-  syncRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+  syncStrip: {
     marginBottom: 16,
-  },
-  syncLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  syncRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  syncDot: {
-    height: 8,
-    width: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
-  },
-  syncLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -420,7 +392,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   sectionLink: {
     fontSize: 13,
@@ -437,11 +409,15 @@ const styles = StyleSheet.create({
   },
   listCard: {
     paddingHorizontal: 14,
-    paddingVertical: 4,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
+  },
+  listRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSoft,
   },
   shortcutRow: {
     flexDirection: 'row',

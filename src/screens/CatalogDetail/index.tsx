@@ -7,9 +7,10 @@ import {
   View,
 } from 'react-native';
 import { MotiView } from 'moti';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Badge from '@/components/atoms/Badge';
+import GradientAvatar from '@/components/atoms/GradientAvatar';
 import Icon from '@/components/atoms/Icon';
 import SecureImage from '@/components/atoms/SecureImage';
 import Card from '@/components/molecules/Card';
@@ -17,6 +18,7 @@ import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { colors } from '@/theme/colors';
+import { cardShadowRaised } from '@/theme/shadows';
 import { isDisplayablePhoto } from '@/utils/avatar';
 import { catalogResourceConfigs } from '@/utils/catalogResources';
 import { extractErrorMessage } from '@/utils/format';
@@ -66,25 +68,14 @@ export default function CatalogDetailScreen(props: Props) {
 
   const headerCard = header ? (
     <Card style={styles.headerCard}>
-      <Svg
-        style={StyleSheet.absoluteFill}
-        viewBox="0 0 320 170"
-        preserveAspectRatio="none"
-      >
+      <Svg style={StyleSheet.absoluteFill}>
         <Defs>
-          <LinearGradient id="headerWave" x1="1" y1="0" x2="0.2" y2="1">
-            <Stop
-              offset="0"
-              stopColor={config.gradientEnd}
-              stopOpacity={0.16}
-            />
-            <Stop offset="1" stopColor={config.gradientStart} stopOpacity={0} />
+          <LinearGradient id="headerGlow" x1="1" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={config.gradientEnd} stopOpacity={0.14} />
+            <Stop offset="0.62" stopColor={config.gradientEnd} stopOpacity={0} />
           </LinearGradient>
         </Defs>
-        <Path
-          d="M320 0 L320 170 L110 170 C190 130 250 70 300 0 Z"
-          fill="url(#headerWave)"
-        />
+        <Rect width="100%" height="100%" fill="url(#headerGlow)" />
       </Svg>
       <View style={styles.headerRow}>
         {isDisplayablePhoto(header.photo) && !photoFailed ? (
@@ -94,11 +85,13 @@ export default function CatalogDetailScreen(props: Props) {
             onLoadError={() => setPhotoFailed(true)}
           />
         ) : (
-          <View style={styles.avatar}>
-            <Text style={styles.avatarLabel}>
-              {header.title.charAt(0).toUpperCase()}
-            </Text>
-          </View>
+          <GradientAvatar
+            label={header.title.charAt(0).toUpperCase()}
+            gradientStart={config.gradientStart}
+            gradientEnd={config.gradientEnd}
+            size={88}
+            style={styles.headerAvatar}
+          />
         )}
         <View style={styles.headerText}>
           <Text style={styles.title}>{header.title}</Text>
@@ -119,7 +112,11 @@ export default function CatalogDetailScreen(props: Props) {
   ) : null;
 
   return (
-    <MainLayout title={config.screenTitle} onBack={() => navigation.goBack()}>
+    <MainLayout
+      title={config.screenTitle}
+      subtitle={`Detail ${config.screenTitle.toLowerCase()}`}
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       {isLoading ? (
         <ActivityIndicator style={styles.centerState} color={colors.primary} />
       ) : detail && headerCard ? (
@@ -179,7 +176,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 96,
   },
   tabbedContent: {
@@ -192,25 +189,18 @@ const styles = StyleSheet.create({
   },
   tabbedHeaderWrap: {
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 16,
   },
   headerCard: {
     overflow: 'hidden',
     paddingVertical: 24,
+    ...cardShadowRaised,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 16,
-  },
-  avatar: {
-    height: 88,
-    width: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
   },
   avatarImage: {
     height: 88,
@@ -218,10 +208,12 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     backgroundColor: colors.neutralSurface,
   },
-  avatarLabel: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: colors.primaryForeground,
+  headerAvatar: {
+    shadowColor: colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
   headerText: {
     flex: 1,
@@ -231,7 +223,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   metaRows: {
     marginTop: 4,
@@ -246,6 +238,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 14,
     fontWeight: '500',
-    color: colors.text,
+    color: colors.heading,
   },
 });

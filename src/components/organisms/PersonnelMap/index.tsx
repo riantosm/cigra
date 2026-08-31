@@ -4,6 +4,7 @@ import MapView, { Callout, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 
 import Icon from '@/components/atoms/Icon';
+import { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
 import { colors } from '@/theme/colors';
 import type { PersonnelLocationOverviewItem } from '@/types';
 import { joinFields } from '@/utils/format';
@@ -91,6 +92,7 @@ export default function PersonnelMap(props: PersonnelMapProps) {
               latitude: item.location.latitude,
               longitude: item.location.longitude,
             }}
+            pinColor={locationStatusMeta[item.status].color}
           >
             <Callout onPress={() => onSelectPersonnel?.(item)}>
               <View style={styles.callout}>

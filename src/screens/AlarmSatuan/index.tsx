@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 
+import Badge from '@/components/atoms/Badge';
+import type { BadgeVariant } from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
 import Card from '@/components/molecules/Card';
 import MainLayout from '@/components/templates/MainLayout';
@@ -19,23 +21,19 @@ import { contentEnterTransition } from '@/utils/motion';
 
 type Props = RootStackScreenProps<typeof ROUTES.alarmSatuan>;
 
-const broadcastMeta: Record<string, { label: string; color: string; surface: string }> = {
-  sent: { label: 'Terkirim', color: colors.success, surface: colors.successSurface },
-  pending: { label: 'Menunggu', color: colors.warning, surface: colors.warningSurface },
-  failed: { label: 'Gagal', color: colors.danger, surface: colors.dangerSurface },
+const broadcastMeta: Record<string, { label: string; variant: BadgeVariant }> = {
+  sent: { label: 'Terkirim', variant: 'success' },
+  pending: { label: 'Menunggu', variant: 'warning' },
+  failed: { label: 'Gagal', variant: 'danger' },
 };
 
 function broadcastInfo(status: StellingBroadcastStatus) {
-  return broadcastMeta[status] ?? { label: status, color: colors.textMuted, surface: colors.neutralSurface };
+  return broadcastMeta[status] ?? { label: status, variant: 'neutral' as BadgeVariant };
 }
 
 function BroadcastPill({ status }: { status: StellingBroadcastStatus }) {
   const info = broadcastInfo(status);
-  return (
-    <View style={[styles.pill, { backgroundColor: info.surface }]}>
-      <Text style={[styles.pillLabel, { color: info.color }]}>{info.label}</Text>
-    </View>
-  );
+  return <Badge label={info.label} variant={info.variant} />;
 }
 
 export default function AlarmSatuanScreen(props: Props) {
@@ -76,7 +74,11 @@ export default function AlarmSatuanScreen(props: Props) {
   const currentColor = codes.find(code => code.code === current?.code)?.color ?? colors.danger;
 
   return (
-    <MainLayout title="Alarm Satuan" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Alarm Satuan"
+      subtitle="Monitor status stelling & alarm"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       {isLoading ? (
         <ActivityIndicator style={styles.centerState} color={colors.primary} />
       ) : errorMessage ? (
@@ -166,7 +168,7 @@ export default function AlarmSatuanScreen(props: Props) {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 96,
   },
   centerState: {
@@ -177,19 +179,22 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
-    color: colors.primary,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+    color: colors.heading,
     marginBottom: 12,
   },
   sectionSpacing: {
-    marginTop: 28,
+    marginTop: 24,
   },
   currentCard: {
     gap: 10,
-    borderWidth: 2,
+    borderWidth: 1.5,
+    shadowColor: colors.danger,
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   currentTop: {
     flexDirection: 'row',
@@ -203,13 +208,12 @@ const styles = StyleSheet.create({
   },
   currentCode: {
     flex: 1,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   currentCondition: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
     color: colors.text,
   },
   currentMetaRow: {
@@ -249,7 +253,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
   },
   codeDot: {
     height: 12,
@@ -282,7 +286,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
   },
   historyText: {
     flex: 1,
@@ -302,15 +306,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textMuted,
     marginTop: 2,
-  },
-  pill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  pillLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
   },
 });

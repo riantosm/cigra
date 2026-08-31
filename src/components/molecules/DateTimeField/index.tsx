@@ -7,6 +7,7 @@ import type { DateTimePickerEvent } from '@react-native-community/datetimepicker
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { smallButtonShadow } from '@/theme/shadows';
 
 export interface DateTimeFieldProps {
   label: string;
@@ -77,16 +78,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    ...smallButtonShadow,
   },
   value: {
-    fontSize: 16,
-    color: colors.text,
+    fontSize: 15,
+    color: colors.heading,
     flex: 1,
   },
 });

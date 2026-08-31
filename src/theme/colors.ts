@@ -19,6 +19,55 @@ export const colors = {
   dangerMuted: '#FCA5A5',
   primarySurface: '#DBEAFE',
   neutralSurface: '#F1F5F9',
+  // --- "Canvas theme" tokens (DESIGN_SYSTEM.md §1b) — gradient bg, soft borders, blue-tinted shadow.
+  // Rolled out on the Auth screens first; reuse these as more screens adopt the canvas look.
+  heading: '#1E293B',
+  placeholder: '#94A3B8',
+  borderSoft: '#E7EDF9',
+  chipSurface: '#EEF3FD',
+  // Pemisah "•" / garis tipis di atas latar gradient (DESIGN_SYSTEM §1b).
+  dividerOnGradient: '#CBD5E1',
+  pageGradientStart: '#EFF1FA',
+  pageGradientMid: '#E7ECF8',
+  pageGradientEnd: '#E2EAF6',
+  gradientPrimaryStart: '#3B82F6',
+  gradientPrimaryEnd: '#2563EB',
+  // Login-only decorative mountain silhouette (back → front).
+  authMountainBack: '#CBD8EE',
+  authMountainMid: '#B6C7E6',
+  authMountainFront: '#9FB5DC',
+  // Large translucent "blob" circles in the page corners.
+  decorBlobStrong: 'rgba(255, 255, 255, 0.5)',
+  decorBlobSoft: 'rgba(255, 255, 255, 0.35)',
+  // Frosted track behind a segmented pill toggle sitting on the gradient backdrop.
+  pillTrackSurface: 'rgba(255, 255, 255, 0.55)',
+  pillTrackBorder: 'rgba(255, 255, 255, 0.8)',
+  // Near-opaque white for overlay cards floating on a map (PersonnelMap legend) & the Home header.
+  floatingSurface: 'rgba(255, 255, 255, 0.94)',
+  headerSurface: 'rgba(255, 255, 255, 0.72)',
+  // Large translucent "blob" circles for non-Auth canvas screens (slightly softer than the
+  // Auth-only decorBlob* pair). Used by atoms/ScreenBackground.
+  pageBlobStrong: 'rgba(255, 255, 255, 0.45)',
+  pageBlobSoft: 'rgba(255, 255, 255, 0.32)',
+  // Readable text on top of warningSurface (badge "Stale" / "Menunggu" / "Ditangani" / "Rusak Ringan").
+  warningText: '#B45309',
+  // Emphatic red heading on danger surfaces (Emergency banner title, alarm code card).
+  dangerText: '#B91C1C',
+  // "1 Emergency Terakhir" banner on CommanderHome — a soft red gradient wash, not the flat dangerSurface.
+  alertBannerStart: '#FEECEC',
+  alertBannerEnd: '#FDE0E0',
+  alertBannerBorder: '#FBD5D5',
+  // Muted map-canvas wash behind the loading placeholder for the personnel map preview.
+  mapCanvasStart: '#E8F0E6',
+  mapCanvasEnd: '#E3EDF7',
+  // Nonactive personnel avatar gradient (list rows, DESIGN_SYSTEM §5.8).
+  gradientInactiveStart: '#A78BFA',
+  gradientInactiveEnd: '#8B5CF6',
+  // Status-tinted avatar gradients (EmergencyList, PersonnelTracking) — paired with the matching
+  // `danger` / `warning` / `success` end colour.
+  gradientDangerStart: '#F87171',
+  gradientWarnStart: '#FBBF6B',
+  gradientSuccessStart: '#4ADE80',
   gradientEntryStart: '#F59E0B',
   gradientEntryEnd: '#EF4444',
   gradientWeaponStart: '#8B5CF6',
@@ -30,4 +79,11 @@ export const colors = {
   gradientFamilyStart: '#F472B6',
   gradientFamilyEnd: '#EC4899',
   overlay: 'rgba(15, 23, 42, 0.45)',
+  // StatusModal (DESIGN_SYSTEM §5.15) — translucent accent ring ("halo") behind the 64px icon badge.
+  haloPrimary: 'rgba(37, 99, 235, 0.10)',
+  haloDanger: 'rgba(220, 38, 38, 0.10)',
+  // Unread notification row (DESIGN_SYSTEM §5 list row / Notifications artboard) — a lighter
+  // blue wash + border than `primarySurface`, which is reserved for chips/badges.
+  notifUnreadSurface: '#EEF4FF',
+  notifUnreadBorder: '#BFD3FB',
 } as const;

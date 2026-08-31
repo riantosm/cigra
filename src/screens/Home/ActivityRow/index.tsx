@@ -15,66 +15,59 @@ const directionColor: Record<ActivityRowProps['direction'], string> = {
   out: colors.warning,
 };
 
+// Satu baris "Aktivitas Terbaru" di CommanderHome — struktur identik dengan MemberHome/TimelineRow
+// (DESIGN_SYSTEM.md §5.16): icon-chip ber-tint arah, judul 1 baris, detail 2 baris, waktu di kanan.
 export default function ActivityRow(props: ActivityRowProps) {
   const { name, detail, time, direction } = props;
+  const color = directionColor[direction];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarLabel}>{name.charAt(0).toUpperCase()}</Text>
+    <View style={styles.row}>
+      <View style={[styles.iconWrap, { backgroundColor: `${color}1F` }]}>
+        <Icon name="entry-exit" size={15} color={color} />
       </View>
       <View style={styles.textGroup}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={styles.title} numberOfLines={1}>
           {name}
         </Text>
-        <Text style={styles.detail} numberOfLines={1}>
+        <Text style={styles.detail} numberOfLines={2}>
           {detail}
         </Text>
       </View>
-      <View style={styles.timeGroup}>
-        <Text style={styles.time}>{time}</Text>
-        <Icon name="entry-exit" size={14} color={directionColor[direction]} />
-      </View>
+      <Text style={styles.time} numberOfLines={1}>
+        {time}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
-  avatar: {
-    height: 36,
-    width: 36,
-    borderRadius: 18,
+  iconWrap: {
+    height: 32,
+    width: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neutralSurface,
-  },
-  avatarLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textMuted,
   },
   textGroup: {
     flex: 1,
-    gap: 2,
+    minWidth: 0,
+    gap: 4,
   },
-  name: {
+  title: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.text,
+    color: colors.heading,
   },
   detail: {
     fontSize: 12,
     color: colors.textMuted,
-  },
-  timeGroup: {
-    alignItems: 'flex-end',
-    gap: 4,
   },
   time: {
     fontSize: 12,

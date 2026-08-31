@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 
-import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
@@ -93,7 +93,11 @@ export default function SendAnnouncementScreen(props: Props) {
   }
 
   return (
-    <MainLayout title="Kirim Pengumuman" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Kirim Pengumuman"
+      subtitle="Buat & kirim pengumuman ke personel"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerStyle={styles.content}
@@ -160,7 +164,7 @@ export default function SendAnnouncementScreen(props: Props) {
               </View>
             </Card>
 
-            <Button
+            <GradientButton
               label="Kirim Pengumuman"
               onPress={handleSubmit}
               disabled={!canSubmit}
@@ -268,7 +272,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 96,
   },
   formCard: {
@@ -334,7 +338,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 999,
-    backgroundColor: colors.neutralSurface,
+    backgroundColor: colors.chipSurface,
     alignItems: 'center',
   },
   historyCountText: {

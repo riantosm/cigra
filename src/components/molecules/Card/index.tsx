@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
 
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 
 export interface CardProps extends ViewProps {
   style?: StyleProp<ViewStyle>;
@@ -21,8 +22,9 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     padding: 16,
+    ...cardShadow,
   },
 });

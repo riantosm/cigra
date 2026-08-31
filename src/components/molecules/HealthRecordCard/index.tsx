@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { HealthRecordSummary } from '@/types';
 import { formatDateTime } from '@/utils/format';
 
@@ -55,13 +56,14 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
   },
   iconCircle: {
     height: 40,
     width: 40,
-    borderRadius: 20,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.successSurfaceSubtle,
@@ -73,7 +75,7 @@ const styles = StyleSheet.create({
   type: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   meta: {
     fontSize: 12,
@@ -86,7 +88,7 @@ const styles = StyleSheet.create({
   resultLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.text,
+    color: colors.heading,
   },
   resultValue: {
     flex: 1,

@@ -2,7 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const OTP_RESEND_DAILY_LIMIT = 3;
 
-const OTP_RESEND_STORAGE_PREFIX = 'otp_resend_count_';
+// Device-wide (not per-account) daily cap on "kirim ulang OTP". AsyncStorage is local to the install,
+// so this key alone enforces "max 3x per device per day" regardless of which identifier is used.
+const OTP_RESEND_STORAGE_KEY = 'otp_resend_count';
 
 interface OtpResendState {
   date: string;
@@ -13,12 +15,8 @@ function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function storageKey(identifier: string): string {
-  return `${OTP_RESEND_STORAGE_PREFIX}${identifier.trim().toLowerCase()}`;
-}
-
-export async function getOtpResendCount(identifier: string): Promise<number> {
-  const raw = await AsyncStorage.getItem(storageKey(identifier));
+export async function getOtpResendCount(): Promise<number> {
+  const raw = await AsyncStorage.getItem(OTP_RESEND_STORAGE_KEY);
   if (!raw) return 0;
   try {
     const state: OtpResendState = JSON.parse(raw);
@@ -28,9 +26,9 @@ export async function getOtpResendCount(identifier: string): Promise<number> {
   }
 }
 
-export async function recordOtpResend(identifier: string): Promise<number> {
-  const next = (await getOtpResendCount(identifier)) + 1;
+export async function recordOtpResend(): Promise<number> {
+  const next = (await getOtpResendCount()) + 1;
   const state: OtpResendState = { date: todayKey(), count: next };
-  await AsyncStorage.setItem(storageKey(identifier), JSON.stringify(state));
+  await AsyncStorage.setItem(OTP_RESEND_STORAGE_KEY, JSON.stringify(state));
   return next;
 }

@@ -47,10 +47,18 @@ import {
   titleCase,
 } from '@/utils/format';
 
+export interface CatalogListItemMetaSegment {
+  icon: IconName;
+  text: string;
+}
+
 export interface CatalogListItem {
   id: string;
   title: string;
+  // Ringkasan datar (dipertahankan untuk fallback / referensi). `CatalogList` menampilkan
+  // `metaSegments` (ikon + teks per segmen) kalau ada.
   subtitle: string;
+  metaSegments?: CatalogListItemMetaSegment[];
   // Path foto mentah dari API (lihat `CatalogDetailHeader.photo`) — belum dikirim oleh endpoint
   // *list* personnel/persit/vehicles (cuma endpoint detail-nya), jadi ini selalu kosong untuk
   // sekarang dan `ListAvatar` (CatalogList) jatuh ke fallback inisial. Field tetap disediakan biar
@@ -127,6 +135,16 @@ function statusBadgeLabel(status: string | null | undefined): string {
   return status === 'active' ? 'AKTIF' : orDash(status).toUpperCase();
 }
 
+// Bangun daftar segmen meta (ikon + teks) untuk baris CatalogList — segmen dengan teks kosong
+// di-drop supaya tidak muncul "•" nyangkut.
+function metaSegments(
+  ...pairs: [IconName, string | null | undefined][]
+): CatalogListItemMetaSegment[] {
+  return pairs
+    .filter((pair): pair is [IconName, string] => Boolean(pair[1] && pair[1].trim()))
+    .map(([icon, text]) => ({ icon, text }));
+}
+
 // Label untuk `PersonnelDetail.last_status_location` (mis. "inside" / "outside") di header detail.
 function locationStatusLabel(status: string | null | undefined): string | null {
   if (!status) return null;
@@ -183,6 +201,8 @@ export const catalogResourceConfigs: Record<
       id: p.service_number,
       title: p.full_name,
       subtitle: joinFields(p.rank, p.unit),
+      metaSegments: metaSegments(['rank', p.rank], ['building', p.unit]),
+      photo: p.photo ?? null,
       badgeLabel: statusBadgeLabel(p.status),
       badgeVariant: statusBadgeVariant(p.status),
     }),
@@ -223,6 +243,10 @@ export const catalogResourceConfigs: Record<
       id: String(p.id),
       title: p.full_name,
       subtitle: joinFields(titleCase(p.family_relation), p.spouse?.full_name),
+      metaSegments: metaSegments(
+        ['users', titleCase(p.family_relation)],
+        ['profile', p.spouse?.full_name],
+      ),
       badgeLabel: statusBadgeLabel(p.status),
       badgeVariant: statusBadgeVariant(p.status),
     }),
@@ -263,6 +287,7 @@ export const catalogResourceConfigs: Record<
       id: String(v.id),
       title: v.brand_model,
       subtitle: joinFields(v.plate_number, titleCase(v.category)),
+      metaSegments: metaSegments(['id-card', v.plate_number], ['car', titleCase(v.category)]),
       badgeLabel: orDash(titleCase(v.condition_status)),
       badgeVariant: v.is_active ? 'success' : 'neutral',
     }),
@@ -338,6 +363,7 @@ export const catalogResourceConfigs: Record<
       id: String(c.id),
       title: c.name,
       subtitle: `${c.code} · ${c.weapon_type}`,
+      metaSegments: metaSegments(['id-card', c.code], ['weapon', c.weapon_type]),
       badgeLabel: `${c.total_weapons} unit`,
       badgeVariant: c.is_active ? 'primary' : 'neutral',
     }),
@@ -397,6 +423,10 @@ export const catalogResourceConfigs: Record<
       id: String(a.id),
       title: a.weapon_number,
       subtitle: joinFields(titleCase(a.category), a.assigned_to?.full_name),
+      metaSegments: metaSegments(
+        ['weapon', titleCase(a.category)],
+        ['profile', a.assigned_to?.full_name],
+      ),
       badgeLabel: statusBadgeLabel(a.status),
       badgeVariant: statusBadgeVariant(a.status),
     }),

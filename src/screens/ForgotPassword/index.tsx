@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import TextField from '@/components/atoms/TextField';
+import AuthField from '@/components/molecules/AuthField';
 import StatusModal from '@/components/organisms/StatusModal';
 import AuthLayout from '@/components/templates/AuthLayout';
 import { ROUTES } from '@/navigation/paths';
@@ -90,7 +90,7 @@ export default function ForgotPasswordScreen(props: ForgotPasswordScreenProps) {
         contentStyle={styles.backButton}
         accessibilityRole="button"
         accessibilityLabel="Kembali">
-        <Icon name="arrow-left" size={22} color={colors.text} />
+        <Icon name="arrow-left" size={22} color={colors.heading} />
       </PressableScale>
 
       <View style={styles.header}>
@@ -104,8 +104,9 @@ export default function ForgotPasswordScreen(props: ForgotPasswordScreenProps) {
 
       {step === 'request' ? (
         <View style={styles.form}>
-          <TextField
+          <AuthField
             label="Email, Username, atau NRP"
+            leftIcon="mail"
             placeholder="Masukkan email, username, atau NRP"
             autoCapitalize="none"
             autoCorrect={false}
@@ -117,7 +118,7 @@ export default function ForgotPasswordScreen(props: ForgotPasswordScreenProps) {
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Button
+          <GradientButton
             label="Kirim Kode OTP"
             onPress={handleRequestOtp}
             loading={isSubmitting}
@@ -129,17 +130,20 @@ export default function ForgotPasswordScreen(props: ForgotPasswordScreenProps) {
         <View style={styles.form}>
           {infoMessage ? <Text style={styles.info}>{infoMessage}</Text> : null}
 
-          <TextField
+          <AuthField
             label="Kode OTP"
-            placeholder="Masukkan 6 digit kode OTP"
+            leftIcon="lock"
+            placeholder="______"
             keyboardType="number-pad"
             maxLength={6}
             returnKeyType="next"
+            inputStyle={styles.otpInput}
             value={otp}
             onChangeText={setOtp}
           />
-          <TextField
+          <AuthField
             label="Password Baru"
+            leftIcon="lock"
             placeholder="Masukkan password baru"
             secureTextEntry
             autoCapitalize="none"
@@ -147,8 +151,9 @@ export default function ForgotPasswordScreen(props: ForgotPasswordScreenProps) {
             value={password}
             onChangeText={setPassword}
           />
-          <TextField
+          <AuthField
             label="Konfirmasi Password Baru"
+            leftIcon="lock"
             placeholder="Ulangi password baru"
             secureTextEntry
             autoCapitalize="none"
@@ -158,13 +163,16 @@ export default function ForgotPasswordScreen(props: ForgotPasswordScreenProps) {
             onChangeText={setPasswordConfirmation}
           />
 
-          <PressableScale onPress={handleChangeIdentifier} disabled={isSubmitting} style={styles.resendLink}>
-            <Text style={styles.resendLinkLabel}>Ganti akun / kirim ulang kode</Text>
+          <PressableScale
+            onPress={handleChangeIdentifier}
+            disabled={isSubmitting}
+            style={styles.resendLink}>
+            <Text style={styles.link}>Ganti akun / kirim ulang kode</Text>
           </PressableScale>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Button
+          <GradientButton
             label="Reset Password"
             onPress={handleResetPassword}
             loading={isSubmitting}
@@ -188,12 +196,18 @@ export default function ForgotPasswordScreen(props: ForgotPasswordScreenProps) {
 
 const styles = StyleSheet.create({
   backButton: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: -12,
-    marginBottom: 12,
+    marginBottom: 20,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   header: {
     marginBottom: 24,
@@ -201,11 +215,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
-    color: colors.text,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    color: colors.heading,
   },
   subtitle: {
     fontSize: 15,
+    lineHeight: 21,
     color: colors.textMuted,
   },
   form: {
@@ -214,20 +230,25 @@ const styles = StyleSheet.create({
   resendLink: {
     alignSelf: 'flex-start',
   },
-  resendLinkLabel: {
+  link: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
+  },
+  otpInput: {
+    fontSize: 18,
+    letterSpacing: 8,
+    color: colors.heading,
   },
   info: {
     fontSize: 13,
     color: colors.success,
   },
   error: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.danger,
   },
   submit: {
-    marginTop: 8,
+    marginTop: 4,
   },
 });

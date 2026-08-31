@@ -1,10 +1,12 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { smallButtonShadow } from '@/theme/shadows';
 import { openCoordinatesInMaps } from '@/utils/location';
 
 export interface OpenMapsButtonProps {
@@ -16,57 +18,67 @@ export interface OpenMapsButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// CTA "Buka di Google Maps" — pill full-rounded, latar putih dengan gradasi tipis, isi (ikon +
+// teks `primary`) di tengah (artboard "Catalog Detail - Lokasi").
 export default function OpenMapsButton(props: OpenMapsButtonProps) {
   const { latitude, longitude, floating = false, style } = props;
   const insets = useSafeAreaInsets();
 
   return (
     <PressableScale
+      scaleTo={0.97}
       onPress={() => openCoordinatesInMaps(latitude, longitude)}
-      style={[floating ? [styles.floating, { bottom: insets.bottom + 16 }] : styles.inline, style]}
+      style={[
+        styles.shadow,
+        floating ? [styles.floating, { bottom: insets.bottom + 16 }] : styles.inline,
+        style,
+      ]}
       contentStyle={styles.button}
       accessibilityRole="button"
       accessibilityLabel="Buka di Google Maps">
-      <View style={styles.left}>
-        <Icon name="send" size={17} color={colors.primaryForeground} />
-        <Text style={styles.label}>Buka di Google Maps</Text>
-      </View>
-      <Icon name="chevron-right" size={18} color={colors.primaryForeground} />
+      <Svg style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id="openMapsGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={colors.surface} />
+            <Stop offset="1" stopColor={colors.chipSurface} />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#openMapsGrad)" />
+      </Svg>
+      <Icon name="map-pin" size={17} color={colors.primary} />
+      <Text style={styles.label}>Buka di Google Maps</Text>
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
+  shadow: {
+    borderRadius: 999,
+    backgroundColor: colors.surface,
+    ...smallButtonShadow,
+  },
   inline: {
-    marginTop: 4,
+    marginTop: 12,
   },
   floating: {
     position: 'absolute',
     left: 24,
     right: 24,
-    shadowColor: '#000000',
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    backgroundColor: colors.primary,
-  },
-  left: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    overflow: 'hidden',
   },
   label: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.primaryForeground,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });

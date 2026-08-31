@@ -7,6 +7,7 @@ import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
 import QrCode from '@/components/molecules/QrCode';
 import { colors } from '@/theme/colors';
+import { smallButtonShadow } from '@/theme/shadows';
 import { isDisplayablePhoto } from '@/utils/avatar';
 import { orDash } from '@/utils/format';
 
@@ -124,14 +125,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.successSurfaceSubtle,
     overflow: 'hidden',
     paddingTop: 16,
-  },
-  accent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    backgroundColor: colors.success,
+    // Bayangan ber-tint hijau (warna aksen kartu) — DESIGN_SYSTEM §1c mengizinkan warna aksen komponen.
+    shadowColor: colors.gradientHealthStart,
+    shadowOpacity: 0.1,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -202,7 +201,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   nrp: {
     fontSize: 12,
@@ -223,7 +222,7 @@ const styles = StyleSheet.create({
   fieldValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.text,
+    color: colors.heading,
   },
   statusRow: {
     marginTop: 2,
@@ -235,10 +234,12 @@ const styles = StyleSheet.create({
   },
   qrFrame: {
     padding: 8,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...smallButtonShadow,
+    shadowOpacity: 0.08,
   },
   qrButton: {
     flexDirection: 'row',

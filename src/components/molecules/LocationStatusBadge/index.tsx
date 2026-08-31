@@ -19,11 +19,14 @@ export interface LocationStatusBadgeProps {
   // Waktu fix terakhir (location.captured_at / last_seen). Untuk fresh/stale ditampilkan sebagai
   // "(x detik lalu)" yang ter-update tiap detik. Diabaikan untuk offline.
   timestamp?: string | null;
+  // Versi lebih besar & tebal (UPPERCASE + letter-spacing) — dipakai sebagai penanda status utama
+  // di tab Lokasi detail personel.
+  emphasis?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
 export default function LocationStatusBadge(props: LocationStatusBadgeProps) {
-  const { status, timestamp, style } = props;
+  const { status, timestamp, emphasis = false, style } = props;
   // Re-render tiap detik supaya "(x detik lalu)" hidup — hanya kalau memang ada waktu relatif yang
   // ditampilkan (status non-offline + timestamp valid). Badge "offline" tidak ikut ter-tick.
   const showsRelative = status !== 'offline' && !!timestamp;
@@ -34,9 +37,19 @@ export default function LocationStatusBadge(props: LocationStatusBadgeProps) {
   const label = relative ? `${meta.label} (${relative})` : meta.label;
 
   return (
-    <View style={[styles.pill, { backgroundColor: meta.surface }, style]}>
-      <View style={[styles.dot, { backgroundColor: meta.color }]} />
-      <Text style={[styles.label, { color: meta.color }]} numberOfLines={1}>
+    <View
+      style={[
+        styles.pill,
+        emphasis && styles.pillEmphasis,
+        { backgroundColor: meta.surface },
+        style,
+      ]}>
+      <View
+        style={[styles.dot, emphasis && styles.dotEmphasis, { backgroundColor: meta.color }]}
+      />
+      <Text
+        style={[styles.label, emphasis && styles.labelEmphasis, { color: meta.color }]}
+        numberOfLines={1}>
         {label}
       </Text>
     </View>
@@ -53,13 +66,28 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 999,
   },
+  pillEmphasis: {
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
   dot: {
     height: 6,
     width: 6,
     borderRadius: 3,
   },
+  dotEmphasis: {
+    height: 7,
+    width: 7,
+    borderRadius: 4,
+  },
   label: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  labelEmphasis: {
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
 });

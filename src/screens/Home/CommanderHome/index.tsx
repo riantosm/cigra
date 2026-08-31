@@ -7,6 +7,8 @@ import { MotiView } from 'moti';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import ScreenBackground from '@/components/atoms/ScreenBackground';
+import SyncStrip from '@/components/molecules/SyncStrip';
 import PersonnelMap from '@/components/organisms/PersonnelMap';
 import ActivityRow from '@/screens/Home/ActivityRow';
 import AnnouncementRow from '@/screens/Home/AnnouncementRow';
@@ -20,6 +22,7 @@ import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import { contentEnterTransition } from '@/utils/motion';
 import type { AuthUser, PersonnelLocationOverviewItem } from '@/types';
 
@@ -36,7 +39,7 @@ export interface CommanderHomeProps {
 
 // Konten dashboard di bawah ini (statistik satuan, aktivitas, pengumuman) masih contoh/placeholder
 // mengikuti desain — belum ada API buat data unit-wide ini, jadi ganti dengan data asli begitu
-// endpoint-nya tersedia.
+// endpoint-nya tersedia (lihat API_CONTRACT.md).
 const situationStats = [
   { icon: 'users', label: 'Total Personel', value: '427', meta: '100%', percent: 100, color: colors.primary },
   { icon: 'shield-check', label: 'Di Markas', value: '381', meta: '89.2%', percent: 89.2, color: colors.success },
@@ -51,14 +54,14 @@ const recentMovements = [
 ] as const;
 
 const announcements = [
-  { icon: 'alert-triangle', title: 'ALARM: KADAL', detail: 'Kontigensi', time: '09:30 • Komandan', color: colors.danger },
-  { icon: 'megaphone', title: 'Pengumuman Apel Pagi', detail: 'Besok 06:00 di Lapangan', time: '08:15 • Pasi Ops', color: colors.warning },
-  { icon: 'info', title: 'Perawatan Kendaraan', detail: 'Cek jadwal perawatan rutin', time: 'Kemarin 16:45 • Pasi Log', color: colors.primary },
+  { icon: 'alert-triangle', title: 'ALARM: KADAL', detail: 'Kontigensi', sender: 'Komandan', time: '09:30', color: colors.danger, unread: true },
+  { icon: 'megaphone', title: 'Pengumuman Apel Pagi', detail: 'Besok 06:00 di Lapangan Utama', sender: 'Pasi Ops', time: '08:15', color: colors.warning, unread: false },
+  { icon: 'info', title: 'Perawatan Kendaraan', detail: 'Cek jadwal perawatan rutin', sender: 'Pasi Log', time: 'Kemarin 16:45', color: colors.primary, unread: false },
 ] as const;
 
-// Jumlah quick action yang tampil langsung di grid Home (2 baris x 5, termasuk kartu "Lainnya" di
-// slot ke-10). Kartu "Lainnya" membuka bottom sheet berisi daftar lengkap semua quick action.
-const VISIBLE_QUICK_ACTION_COUNT = 9;
+// Jumlah quick action yang tampil langsung di grid Home (2 baris x 4, termasuk kartu "Lainnya" di
+// slot ke-8). Sisanya (Alarm Satuan, Buku Saku, Laporan Cepat) ada di bottom sheet "Lainnya".
+const VISIBLE_QUICK_ACTION_COUNT = 7;
 
 export default function CommanderHome(props: CommanderHomeProps) {
   const { user, navigation, onRefresh } = props;
@@ -98,7 +101,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const bottomPadding = useTabScreenBottomPadding();
 
-  // Urutan tetap: 5 direktori katalog dulu, lalu aksi lain.
+  // Urutan tetap: 4 direktori katalog dulu, lalu aksi lain.
   const quickActions: QuickActionButtonProps[] = [
     {
       icon: 'profile',
@@ -165,10 +168,11 @@ export default function CommanderHome(props: CommanderHomeProps) {
     ...quickActions.slice(0, VISIBLE_QUICK_ACTION_COUNT),
     { icon: 'grid', label: 'Lainnya', color: colors.primary, onPress: () => setIsQuickActionSheetVisible(true) },
   ];
-  const quickActionRows = [gridActions.slice(0, 5), gridActions.slice(5, 10)];
+  const quickActionRows = [gridActions.slice(0, 4), gridActions.slice(4, 8)];
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScreenBackground />
       <HomeHeader
         user={user}
         onAvatarPress={() => navigation.navigate(ROUTES.profile)}
@@ -177,22 +181,12 @@ export default function CommanderHome(props: CommanderHomeProps) {
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }>
         <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }} transition={contentEnterTransition}>
-          <PressableScale scaleTo={0.98} onPress={handleRefresh} contentStyle={styles.syncRow}>
-            <View style={styles.syncLeft}>
-              <View style={styles.syncDot} />
-              <Text style={styles.syncLabel}>Sistem terhubung</Text>
-            </View>
-            <View style={styles.syncRight}>
-              <Icon name="refresh" size={13} color={colors.primary} />
-              <Text style={styles.syncLabel} numberOfLines={1}>
-                Terakhir sinkron: {syncedLabel}
-              </Text>
-            </View>
-          </PressableScale>
+          <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Quick Action</Text>
@@ -218,16 +212,20 @@ export default function CommanderHome(props: CommanderHomeProps) {
             <Text style={styles.sectionTitle}>Ringkasan Situasi</Text>
           </View>
           <View style={styles.statGrid}>
-            {situationStats.map(stat => (
-              <StatCard
-                key={stat.label}
-                icon={stat.icon}
-                label={stat.label}
-                value={stat.value}
-                meta={stat.meta}
-                color={stat.color}
-                percent={stat.percent}
-              />
+            {[situationStats.slice(0, 2), situationStats.slice(2, 4)].map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.statRow}>
+                {row.map(stat => (
+                  <StatCard
+                    key={stat.label}
+                    icon={stat.icon}
+                    label={stat.label}
+                    value={stat.value}
+                    meta={stat.meta}
+                    color={stat.color}
+                    percent={stat.percent}
+                  />
+                ))}
+              </View>
             ))}
           </View>
 
@@ -235,14 +233,16 @@ export default function CommanderHome(props: CommanderHomeProps) {
             scaleTo={0.98}
             onPress={() => navigation.navigate(ROUTES.emergencyList)}
             contentStyle={styles.alertBanner}>
-            <Icon name="emergency" size={20} color={colors.danger} />
+            <View style={styles.alertIconChip}>
+              <Icon name="emergency" size={20} color={colors.danger} />
+            </View>
             <View style={styles.alertTextGroup}>
               <Text style={styles.alertTitle}>1 Emergency Terakhir</Text>
               <Text style={styles.alertSubtitle}>Perhatian diperlukan</Text>
             </View>
             <View style={styles.alertLink}>
               <Text style={styles.alertLinkText}>Lihat Detail</Text>
-              <Icon name="chevron-right" size={16} color={colors.danger} />
+              <Icon name="chevron-right" size={16} color={colors.dangerText} />
             </View>
           </PressableScale>
 
@@ -250,34 +250,43 @@ export default function CommanderHome(props: CommanderHomeProps) {
             <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
             <Text style={styles.sectionLinkDisabled}>Lihat Semua</Text>
           </View>
-
-          <View style={styles.activityCard}>
-            <Text style={styles.activityCardTitle}>Pergerakan Terakhir</Text>
-            {recentMovements.map(movement => (
-              <ActivityRow
+          <View style={styles.listCard}>
+            {recentMovements.map((movement, index) => (
+              <View
                 key={movement.name}
-                name={movement.name}
-                detail={movement.detail}
-                time={movement.time}
-                direction={movement.direction}
-              />
+                style={index < recentMovements.length - 1 ? styles.listRowDivider : undefined}>
+                <ActivityRow
+                  name={movement.name}
+                  detail={movement.detail}
+                  time={movement.time}
+                  direction={movement.direction}
+                />
+              </View>
             ))}
-            <Text style={styles.activityCardLinkDisabled}>Lihat semua pergerakan</Text>
           </View>
 
-          <View style={styles.activityCard}>
-            <Text style={styles.activityCardTitle}>Pengumuman & Alert</Text>
-            {announcements.map(item => (
-              <AnnouncementRow
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Pengumuman Terbaru</Text>
+            <PressableScale onPress={() => navigation.navigate(ROUTES.notifications)}>
+              <Text style={styles.sectionLink}>Lihat Semua</Text>
+            </PressableScale>
+          </View>
+          <View style={styles.listCard}>
+            {announcements.map((item, index) => (
+              <View
                 key={item.title}
-                icon={item.icon}
-                title={item.title}
-                detail={item.detail}
-                time={item.time}
-                color={item.color}
-              />
+                style={index < announcements.length - 1 ? styles.listRowDivider : undefined}>
+                <AnnouncementRow
+                  icon={item.icon}
+                  title={item.title}
+                  detail={item.detail}
+                  sender={item.sender}
+                  time={item.time}
+                  color={item.color}
+                  unread={item.unread}
+                />
+              </View>
             ))}
-            <Text style={styles.activityCardLinkDisabled}>Lihat semua pengumuman</Text>
           </View>
 
           <View style={styles.sectionHeader}>
@@ -309,45 +318,14 @@ export default function CommanderHome(props: CommanderHomeProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.pageGradientStart,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    backgroundColor: colors.surface,
   },
-  syncRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+  syncStrip: {
     marginBottom: 20,
-  },
-  syncLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  syncRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  syncDot: {
-    height: 8,
-    width: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
-  },
-  syncLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -358,7 +336,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.heading,
   },
   sectionLinkDisabled: {
     fontSize: 13,
@@ -383,18 +361,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statGrid: {
-    flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginBottom: 20,
+  },
+  statRow: {
+    flexDirection: 'row',
+    gap: 10,
   },
   alertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     padding: 14,
-    borderRadius: 14,
-    backgroundColor: colors.dangerSurface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.alertBannerBorder,
+    backgroundColor: colors.alertBannerStart,
     marginBottom: 24,
+    shadowColor: colors.danger,
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  },
+  alertIconChip: {
+    height: 38,
+    width: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
   },
   alertTextGroup: {
     flex: 1,
@@ -408,46 +404,36 @@ const styles = StyleSheet.create({
   alertLinkText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.danger,
+    color: colors.dangerText,
   },
   alertTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.danger,
+    color: colors.dangerText,
   },
   alertSubtitle: {
     fontSize: 12,
     color: colors.danger,
   },
-  activityCard: {
-    gap: 2,
-    padding: 16,
+  listCard: {
+    paddingHorizontal: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
-    marginBottom: 16,
+    marginBottom: 24,
+    ...cardShadow,
   },
-  activityCardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  activityCardLinkDisabled: {
-    marginTop: 8,
-    textAlign: 'center',
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
-    opacity: 0.6,
+  listRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSoft,
   },
   mapPreview: {
     height: 160,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     marginBottom: 24,
   },
   mapPlaceholder: {
@@ -457,8 +443,8 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.neutralSurface,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.mapCanvasStart,
     marginBottom: 24,
   },
   mapPlaceholderText: {

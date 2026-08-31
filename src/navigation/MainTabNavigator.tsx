@@ -4,11 +4,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MotiView } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import Icon from '@/components/atoms/Icon';
-import type { IconName } from '@/components/atoms/Icon';
-import EmergencyTabButton from '@/components/organisms/EmergencyTabButton';
 import { ROUTES } from '@/navigation/paths';
 import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
+import CustomTabBar from '@/navigation/CustomTabBar';
 import type { MainTabParamList } from '@/navigation/types';
 import BukuSakuScreen from '@/screens/BukuSaku';
 import EmergencyScreen from '@/screens/Emergency';
@@ -20,17 +18,10 @@ import { pressTransition } from '@/utils/motion';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const iconByRoute: Partial<Record<keyof MainTabParamList, IconName>> = {
-  [ROUTES.home]: 'home',
-  [ROUTES.riwayat]: 'history',
-  [ROUTES.bukuSaku]: 'handbook',
-  [ROUTES.lainnya]: 'grid',
-};
-
 export default function MainTabNavigator() {
   const insets = useSafeAreaInsets();
-  // Owned here, not inside EmergencyTabButton: that button renders inside a `flex: 1` tab-bar
-  // item roughly 1/5 of the screen wide, and an absolutely positioned view with no explicit width
+  // Owned here, not inside EmergencyTabButton: that button lives inside a `flex: 1` tab-bar slot
+  // roughly 1/5 of the screen wide, and an absolutely positioned view with no explicit width
   // nested in there gets its width clamped to that narrow slot on Android instead of sizing to
   // its own text. Rendering the toast as a sibling of <Tab.Navigator> gives it the full screen
   // width to size against. (An earlier attempt used a Modal for the same reason, but Android
@@ -41,48 +32,13 @@ export default function MainTabNavigator() {
   return (
     <View style={styles.root}>
       <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarShowLabel: true,
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-          tabBarItemStyle: { paddingTop: 8 },
-          // react-navigation's documented tabBarIcon render-prop pattern — not a component defined during render.
-          // eslint-disable-next-line react/no-unstable-nested-components
-          tabBarIcon: ({ color, size }) => {
-            const name = iconByRoute[route.name];
-            return name ? <Icon name={name} color={color} size={size} /> : null;
-          },
-          tabBarStyle: {
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: TAB_BAR_HEIGHT + insets.bottom,
-            paddingBottom: insets.bottom,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            borderTopWidth: 0,
-            backgroundColor: colors.surface,
-            shadowColor: '#000000',
-            shadowOpacity: 0.1,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: -4 },
-            elevation: 8,
-          },
-        })}>
+        screenOptions={{ headerShown: false }}
+        // react-navigation's documented `tabBar` render-prop — not a component defined during render.
+        // eslint-disable-next-line react/no-unstable-nested-components
+        tabBar={props => <CustomTabBar {...props} onEmergencyToastChange={setToastMessage} />}>
         <Tab.Screen name={ROUTES.home} component={HomeScreen} options={{ title: 'Home' }} />
         <Tab.Screen name={ROUTES.riwayat} component={RiwayatScreen} options={{ title: 'Riwayat' }} />
-        <Tab.Screen
-          name={ROUTES.emergency}
-          component={EmergencyScreen}
-          options={{
-            title: 'Emergency',
-            // eslint-disable-next-line react/no-unstable-nested-components
-            tabBarButton: buttonProps => <EmergencyTabButton {...buttonProps} onToastChange={setToastMessage} />,
-          }}
-        />
+        <Tab.Screen name={ROUTES.emergency} component={EmergencyScreen} options={{ title: 'Emergency' }} />
         <Tab.Screen name={ROUTES.bukuSaku} component={BukuSakuScreen} options={{ title: 'Buku Saku' }} />
         <Tab.Screen name={ROUTES.lainnya} component={LainnyaScreen} options={{ title: 'Lainnya' }} />
       </Tab.Navigator>

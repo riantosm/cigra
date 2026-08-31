@@ -3,6 +3,7 @@ import { AppState, RefreshControl, ScrollView, StyleSheet, Text, View } from 're
 import { MotiView } from 'moti';
 
 import Button from '@/components/atoms/Button';
+import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import Card from '@/components/molecules/Card';
@@ -104,7 +105,11 @@ export default function SettingsScreen(props: SettingsScreenProps) {
   ];
 
   return (
-    <MainLayout title="Pengaturan" onBack={() => navigation.goBack()}>
+    <MainLayout
+      title="Pengaturan"
+      subtitle="Izin aplikasi & akun"
+      variant="canvas"
+      onBack={() => navigation.goBack()}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -144,9 +149,9 @@ export default function SettingsScreen(props: SettingsScreenProps) {
             ))}
           </Card>
 
-          <Button
+          <GradientButton
             label="Logout"
-            variant="danger"
+            tone="danger"
             style={styles.logout}
             onPress={() => setIsLogoutConfirmVisible(true)}
           />
@@ -188,7 +193,7 @@ const styles = StyleSheet.create({
   row: {
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSoft,
   },
   rowLast: {
     borderBottomWidth: 0,
@@ -201,16 +206,16 @@ const styles = StyleSheet.create({
   rowIcon: {
     height: 36,
     width: 36,
-    borderRadius: 18,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySurface,
+    backgroundColor: colors.chipSurface,
   },
   rowTitle: {
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
+    color: colors.heading,
   },
   rowDescription: {
     // Sejajar dengan judul (lebar ikon 36 + gap 12).
