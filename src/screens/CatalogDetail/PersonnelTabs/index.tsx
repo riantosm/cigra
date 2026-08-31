@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -52,7 +52,7 @@ interface InfoTabProps {
   isLoadingWeapons: boolean;
 }
 
-function InfoTab(props: InfoTabProps) {
+const InfoTab = memo(function InfoTabInner(props: InfoTabProps) {
   const { detail, weapons, isLoadingWeapons } = props;
   // CatalogDetail adalah screen root-stack biasa, jadi nav prop-nya sudah tahu semua route stack.
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -124,7 +124,7 @@ function InfoTab(props: InfoTabProps) {
       </SectionCard>
     </>
   );
-}
+});
 
 export default function PersonnelTabs(props: PersonnelTabsProps) {
   const { detail, header, onRefresh, initialTabName } = props;
@@ -137,6 +137,7 @@ export default function PersonnelTabs(props: PersonnelTabsProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { locationDetail, isLoading: isLoadingLocation, reload: reloadLocation } = usePersonnelLocation(
     detail.service_number,
+    { pollingEnabled: activeTabName === 'location' },
   );
 
   const loadWeapons = useCallback(async () => {
@@ -182,45 +183,50 @@ export default function PersonnelTabs(props: PersonnelTabsProps) {
     setActiveTabName(toPersonnelTabName(name));
   }, []);
 
-  const tabs: CollapsingTabDef[] = [
-    {
-      name: 'info',
-      icon: 'profile',
-      label: 'Informasi',
-      render: () => <InfoTab detail={detail} weapons={weapons} isLoadingWeapons={isLoadingWeapons} />,
-    },
-    {
-      name: 'visitor',
-      icon: 'clock',
-      label: 'Riwayat visitor',
-      render: () => <VisitorLogHistory entries={detail.visitor_log_history ?? []} />,
-    },
-    {
-      name: 'weapon-loan',
-      icon: 'weapon',
-      label: 'Peminjaman Senjata',
-      render: () => <WeaponLoanHistory entries={detail.weapon_loan_history ?? []} />,
-    },
-    {
-      name: 'location',
-      icon: 'map-pin',
-      label: 'Lokasi',
-      render: () => (
-        <LocationPanel
-          locationDetail={locationDetail}
-          isLoading={isLoadingLocation}
-          person={{
-            id: detail.id,
-            serviceNumber: detail.service_number,
-            fullName: detail.full_name,
-            rank: detail.rank,
-            unit: detail.current_assignment?.unit ?? null,
-            tenantId: detail.tenant_id,
-          }}
-        />
-      ),
-    },
-  ];
+  // Di-memo supaya poll lokasi 60 detik (atau re-render lain dari parent) tidak membangun ulang
+  // array tab + closure `render`-nya, yang bikin library mengukur ulang & isi tab ter-render ulang.
+  const tabs: CollapsingTabDef[] = useMemo(
+    () => [
+      {
+        name: 'info',
+        icon: 'profile',
+        label: 'Informasi',
+        render: () => <InfoTab detail={detail} weapons={weapons} isLoadingWeapons={isLoadingWeapons} />,
+      },
+      {
+        name: 'visitor',
+        icon: 'clock',
+        label: 'Riwayat visitor',
+        render: () => <VisitorLogHistory entries={detail.visitor_log_history ?? []} />,
+      },
+      {
+        name: 'weapon-loan',
+        icon: 'weapon',
+        label: 'Peminjaman Senjata',
+        render: () => <WeaponLoanHistory entries={detail.weapon_loan_history ?? []} />,
+      },
+      {
+        name: 'location',
+        icon: 'map-pin',
+        label: 'Lokasi',
+        render: () => (
+          <LocationPanel
+            locationDetail={locationDetail}
+            isLoading={isLoadingLocation}
+            person={{
+              id: detail.id,
+              serviceNumber: detail.service_number,
+              fullName: detail.full_name,
+              rank: detail.rank,
+              unit: detail.current_assignment?.unit ?? null,
+              tenantId: detail.tenant_id,
+            }}
+          />
+        ),
+      },
+    ],
+    [detail, weapons, isLoadingWeapons, locationDetail, isLoadingLocation],
+  );
 
   return (
     <View style={styles.root}>

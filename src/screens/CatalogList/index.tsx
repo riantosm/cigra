@@ -150,6 +150,10 @@ export default function CatalogListScreen(props: Props) {
             data={items}
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={9}
+            removeClippedSubviews
             refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
             onEndReachedThreshold={0.4}
             onEndReached={handleEndReached}

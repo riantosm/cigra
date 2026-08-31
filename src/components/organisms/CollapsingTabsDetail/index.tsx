@@ -129,7 +129,14 @@ export default function CollapsingTabsDetail(props: CollapsingTabsDetailProps) {
           headerHeight={headerHeight}
           onTabChange={handleTabChange}
           renderHeader={renderHeader}
-          renderTabBar={renderTabBar}>
+          renderTabBar={renderTabBar}
+          // Mount isi tiap tab baru saat pertama dikunjungi (bukan semuanya sekaligus). Penting
+          // buat tab "Lokasi" yang isinya Google MapView — sebuah surface GL yang, kalau ikut
+          // ter-mount sejak awal, terus di-composite tiap frame dan bikin scroll di tab lain
+          // (Informasi/Riwayat) patah-patah. `cancelLazyFadeIn` melewati bungkus Animated.View +
+          // fade-in per tab (tidak perlu di sini) sehingga mount-nya sinkron & lebih ringan.
+          lazy
+          cancelLazyFadeIn>
           {tabs.map(tab => (
             <Tabs.Tab key={tab.name} name={tab.name} label={labelRenderers[tab.name]}>
               <Tabs.ScrollView contentContainerStyle={styles.tabScrollContent} refreshControl={refreshControl}>

@@ -22,10 +22,14 @@ function stopIntervalIfIdle(): void {
 
 // Memaksa komponen re-render tiap 1 detik. Nilai kembaliannya (counter) biasanya tidak dipakai —
 // cukup dipanggil agar komponen ikut ter-render ulang dan menghitung ulang waktu relatifnya.
-export function useSecondsTick(): number {
+// `enabled=false` melepas langganan sepenuhnya (tidak ada re-render) — dipakai mis. badge status
+// "offline" yang tidak menampilkan waktu relatif, jadi tidak perlu ikut ter-tick tiap detik
+// (penting di daftar panjang: puluhan badge yang tak perlu update = jank saat scroll).
+export function useSecondsTick(enabled = true): number {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     const listener = () => setTick(current => (current + 1) % 1_000_000);
     listeners.add(listener);
     startIntervalIfNeeded();
@@ -33,7 +37,7 @@ export function useSecondsTick(): number {
       listeners.delete(listener);
       stopIntervalIfIdle();
     };
-  }, []);
+  }, [enabled]);
 
   return tick;
 }

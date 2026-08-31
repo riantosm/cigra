@@ -24,11 +24,13 @@ export interface LocationStatusBadgeProps {
 
 export default function LocationStatusBadge(props: LocationStatusBadgeProps) {
   const { status, timestamp, style } = props;
-  // Re-render tiap detik supaya "(x detik lalu)" hidup.
-  useSecondsTick();
+  // Re-render tiap detik supaya "(x detik lalu)" hidup — hanya kalau memang ada waktu relatif yang
+  // ditampilkan (status non-offline + timestamp valid). Badge "offline" tidak ikut ter-tick.
+  const showsRelative = status !== 'offline' && !!timestamp;
+  useSecondsTick(showsRelative);
 
   const meta = locationStatusMeta[status];
-  const relative = status === 'offline' ? null : formatRelativeTime(timestamp);
+  const relative = showsRelative ? formatRelativeTime(timestamp) : null;
   const label = relative ? `${meta.label} (${relative})` : meta.label;
 
   return (

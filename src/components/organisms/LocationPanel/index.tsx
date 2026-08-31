@@ -36,8 +36,8 @@ export interface LocationPanelProps {
   unavailableLabel?: string;
 }
 
-// Tab "Lokasi" bersama untuk detail Personel & Persit — status siaran, peta dark, tombol buka di
-// Google Maps, dan histori pergerakan (50 terakhir) dengan "muat lebih banyak".
+// Tab "Lokasi" bersama untuk detail Personel & Persit — status siaran, peta (light/normal), tombol
+// buka di Google Maps, dan histori pergerakan (50 terakhir) dengan "muat lebih banyak".
 export default function LocationPanel(props: LocationPanelProps) {
   const { locationDetail, isLoading, person, unavailableLabel } = props;
   const [visibleHistoryCount, setVisibleHistoryCount] =
@@ -101,7 +101,6 @@ export default function LocationPanel(props: LocationPanelProps) {
               },
             ]}
             interactive={false}
-            variant="dark"
             style={styles.map}
           />
           <OpenMapsButton

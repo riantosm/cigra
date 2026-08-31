@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import MapView, { Callout, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
@@ -15,68 +15,12 @@ export interface PersonnelMapProps {
   interactive?: boolean;
   onSelectPersonnel?: (item: PersonnelLocationOverviewItem) => void;
   style?: StyleProp<ViewStyle>;
-  // 'dark' cuma dipakai kartu peta di tab Lokasi personel (bukan default global — app-nya
-  // sendiri light-only) supaya nge-blend dengan gaya "tactical map" di layar itu.
-  variant?: 'light' | 'dark';
+  // Android lite mode: render peta sebagai bitmap statis, bukan surface GL interaktif. Jauh lebih
+  // ringan saat peta ini nempel di dalam ScrollView (mis. kartu pratinjau di CommanderHome) —
+  // surface GL yang ikut di-composite tiap frame bikin scroll patah-patah. Hanya untuk preview
+  // non-interaktif; di iOS prop-nya diabaikan.
+  lite?: boolean;
 }
-
-// Skema dark map standar Google (POI/label tetap kebaca), disalin apa adanya — bukan dibuat
-// custom per warna, supaya kontras & keterbacaan sudah teruji.
-const DARK_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#1a1f2b' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1f2b' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8a97a8' }] },
-  {
-    featureType: 'administrative.locality',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#c9d2e0' }],
-  },
-  {
-    featureType: 'poi',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#8a97a8' }],
-  },
-  {
-    featureType: 'poi.park',
-    elementType: 'geometry',
-    stylers: [{ color: '#12331f' }],
-  },
-  {
-    featureType: 'road',
-    elementType: 'geometry',
-    stylers: [{ color: '#2a3345' }],
-  },
-  {
-    featureType: 'road',
-    elementType: 'geometry.stroke',
-    stylers: [{ color: '#1a1f2b' }],
-  },
-  {
-    featureType: 'road',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#8a97a8' }],
-  },
-  {
-    featureType: 'road.highway',
-    elementType: 'geometry',
-    stylers: [{ color: '#3a4459' }],
-  },
-  {
-    featureType: 'transit',
-    elementType: 'geometry',
-    stylers: [{ color: '#2a3345' }],
-  },
-  {
-    featureType: 'water',
-    elementType: 'geometry',
-    stylers: [{ color: '#0d1420' }],
-  },
-  {
-    featureType: 'water',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#4f6070' }],
-  },
-];
 
 // Jatuh ke pusat Indonesia dengan zoom luas kalau belum ada satu pun titik lokasi yang valid.
 const FALLBACK_REGION: Region = {
@@ -116,8 +60,9 @@ export default function PersonnelMap(props: PersonnelMapProps) {
     interactive = true,
     onSelectPersonnel,
     style,
-    variant = 'light',
+    lite = false,
   } = props;
+  const liteMode = lite && Platform.OS === 'android';
   const located = personnel.filter(
     (
       item,
@@ -131,7 +76,7 @@ export default function PersonnelMap(props: PersonnelMapProps) {
       <MapView
         provider={PROVIDER_GOOGLE}
         style={styles.map}
-        customMapStyle={variant === 'dark' ? DARK_MAP_STYLE : undefined}
+        liteMode={liteMode}
         initialRegion={computeRegion(located.map(item => item.location))}
         scrollEnabled={interactive}
         zoomEnabled={interactive}

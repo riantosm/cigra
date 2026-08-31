@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
 import InfoRow from '@/components/molecules/InfoRow';
@@ -39,6 +39,7 @@ export default function PersitTabs(props: PersitTabsProps) {
   const spouseServiceNumber = detail.spouse?.service_number ?? null;
   const { locationDetail, isLoading: isLoadingLocation, reload: reloadLocation } = usePersonnelLocation(
     spouseServiceNumber,
+    { pollingEnabled: activeTabName === 'location' },
   );
 
   const handleRefresh = useCallback(async () => {
@@ -50,15 +51,17 @@ export default function PersitTabs(props: PersitTabsProps) {
     }
   }, [onRefresh, reloadLocation]);
 
-  const refreshControl = (
-    <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+  const refreshControl = useMemo(
+    () => <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />,
+    [isRefreshing, handleRefresh],
   );
 
   const handleTabChange = useCallback((name: string) => {
     setActiveTabName(toPersitTabName(name));
   }, []);
 
-  const tabs: CollapsingTabDef[] = [
+  const tabs: CollapsingTabDef[] = useMemo(
+    () => [
     {
       name: 'info',
       icon: 'profile',
@@ -116,7 +119,9 @@ export default function PersitTabs(props: PersitTabsProps) {
         />
       ),
     },
-  ];
+    ],
+    [detail, locationDetail, isLoadingLocation, spouseServiceNumber],
+  );
 
   return (
     <View style={styles.root}>

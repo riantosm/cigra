@@ -152,6 +152,10 @@ export default function PersonnelTrackingScreen(props: Props) {
             data={visibleItems}
             keyExtractor={item => String(item.id)}
             contentContainerStyle={styles.listContent}
+            initialNumToRender={8}
+            maxToRenderPerBatch={8}
+            windowSize={9}
+            removeClippedSubviews
             refreshControl={
               <RefreshControl refreshing={isRefreshing} onRefresh={() => load('refresh')} tintColor={colors.primary} />
             }

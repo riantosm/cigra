@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   row: {
-    gap: 10,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -216,7 +215,9 @@ const styles = StyleSheet.create({
   rowDescription: {
     // Sejajar dengan judul (lebar ikon 36 + gap 12).
     marginLeft: 48,
+    marginTop: 3,
     fontSize: 12,
+    lineHeight: 16,
     color: colors.textMuted,
   },
   statusBadge: {
@@ -238,6 +239,7 @@ const styles = StyleSheet.create({
   },
   rowAction: {
     alignSelf: 'flex-start',
+    marginTop: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },

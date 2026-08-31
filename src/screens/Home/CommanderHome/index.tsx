@@ -292,7 +292,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
               <Text style={styles.mapPlaceholderText}>Memuat lokasi personel...</Text>
             </View>
           ) : (
-            <PersonnelMap personnel={personnelLocations} interactive={false} style={styles.mapPreview} />
+            <PersonnelMap personnel={personnelLocations} interactive={false} lite style={styles.mapPreview} />
           )}
         </MotiView>
       </ScrollView>
