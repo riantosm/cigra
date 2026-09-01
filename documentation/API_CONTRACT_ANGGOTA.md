@@ -2,8 +2,9 @@
 
 Draf kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Semua surface di
 layar ini **masih memakai data dummy** kecuali yang disebut "sudah nyata" di bawah. Bentuk envelope,
-pagination, waktu, dan enum **mengikuti `API_CONTRACT.md`** (§1 Konvensi Umum) — jangan diulang di
-sini, cukup rujuk ke sana.
+pagination (`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah
+**seragam dengan API yang sudah berjalan** (`/auth/*`, `/locations/*`, `/catalog/*`) —
+sama seperti `API_CONTRACT.md`, tidak diulang di sini.
 
 > Status: **usulan frontend**. Nama field/endpoint boleh disesuaikan tim backend selama bentuk
 > envelope & pagination tetap konsisten dengan endpoint yang sudah berjalan.
@@ -22,7 +23,7 @@ jadi tidak perlu parameter `personnel`/`service_number` di path.
 | Tile "Lokasi Terakhir" & "Update Terakhir" (Status Saya) | `GET /locations/me` (sudah dipakai di Profile) |
 | Shortcut "Peta Personel"         | `GET /locations/overview` (sudah ada)                 |
 | Shortcut "Pengumuman" / "Lihat Semua" pengumuman | layar `Notifications` (lihat `API_CONTRACT.md` §3) |
-| "Aktivitas Terbaru → Lihat Semua" & shortcut "Riwayat Pergerakan" | tab `visitor` ("Riwayat visitor") di `CatalogDetail` personel diri sendiri — diisi `visitor_log_history` dari `GET /catalog/personnel/{personnel}` (lihat `API_CONTRACT.md` §5) |
+| "Aktivitas Terbaru → Lihat Semua" & shortcut "Riwayat Pergerakan" | tab `visitor` ("Riwayat visitor") di `CatalogDetail` personel diri sendiri — diisi `visitor_log_history` dari `GET /catalog/personnel/{personnel}` |
 
 ---
 
@@ -155,14 +156,18 @@ GET /me/assets
 ## 4. Aktivitas Terbaru (pergerakan saya)
 
 Mengisi bagian **"Aktivitas Terbaru"** di Home (3 entri teratas) — **diflatten jadi 1 baris per
-lintasan** (masuk ATAU keluar). Serupa dengan `visitor_log_history` di `API_CONTRACT.md` §5, tapi
-untuk diri sendiri dan sebagai endpoint list tersendiri.
+lintasan** (masuk ATAU keluar). Serupa dengan `visitor_log_history` pada `GET /catalog/personnel/{personnel}`,
+tapi untuk diri sendiri dan sebagai endpoint list tersendiri.
 
 ```
 GET /me/movements
 ```
 
-Query opsional: `page`, `per_page` (default 10).
+**Query** (opsional)
+
+| Parameter | Keterangan |
+|-----------|------------|
+| `page`, `per_page` | pagination — default `per_page` 10 |
 
 **Response `200`**
 ```json

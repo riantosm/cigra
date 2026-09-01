@@ -1,0 +1,1369 @@
+<title>API Contract — Smart Battalion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root {
+    --ground: #F6F8FC;
+    --surface: #FFFFFF;
+    --surface-2: #FBFCFE;
+    --ink: #131A26;
+    --ink-soft: #3D4A5C;
+    --muted: #62718A;
+    --line: #E3E9F3;
+    --line-soft: #EDF1F8;
+    --accent: #2563EB;
+    --accent-ink: #1D4ED8;
+    --accent-wash: #EAF0FE;
+
+    --draft-fg: #9A5B12;
+    --draft-bg: #FBEFD9;
+    --draft-line: #F0DCB8;
+
+    --soon-fg: #4A5A72;
+    --soon-bg: #EEF1F7;
+
+    --code-bg: #F0F3FA;
+    --code-line: #E1E7F2;
+    --code-ink: #35404F;
+    --tok-key: #1D4ED8;
+    --tok-str: #0C7A4E;
+    --tok-num: #B4530A;
+    --tok-kw: #8B33C8;
+    --tok-punc: #7A879B;
+
+    --shadow: 0 1px 2px rgba(19, 26, 38, .04), 0 6px 20px rgba(19, 26, 38, .05);
+  }
+
+  /* Default = terang. Gelap hanya lewat toggle (data-theme="dark"), tidak ikut OS. */
+  :root[data-theme="dark"] {
+    --ground: #0C111B;
+    --surface: #141B28;
+    --surface-2: #111825;
+    --ink: #E6EBF4;
+    --ink-soft: #B7C1D2;
+    --muted: #8593A9;
+    --line: #26303F;
+    --line-soft: #1E2733;
+    --accent: #5C9BFF;
+    --accent-ink: #8FB8FF;
+    --accent-wash: #17233A;
+
+    --draft-fg: #E7B267;
+    --draft-bg: #33260F;
+    --draft-line: #4A3818;
+
+    --soon-fg: #A9B5C8;
+    --soon-bg: #1E2733;
+
+    --code-bg: #0E1522;
+    --code-line: #232E3D;
+    --code-ink: #AEBACD;
+    --tok-key: #7FB0FF;
+    --tok-str: #62D3A0;
+    --tok-num: #E3A462;
+    --tok-kw: #CB9BF3;
+    --tok-punc: #6B7A90;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 26px rgba(0, 0, 0, .32);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, pre, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px clamp(16px, 4vw, 40px);
+    background: color-mix(in srgb, var(--ground) 88%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .wordmark { display: flex; flex-direction: column; line-height: 1.25; }
+  .wordmark b { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+  .wordmark span {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+    color: var(--draft-fg); background: var(--draft-bg); border: 1px solid var(--draft-line);
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+  .spacer { flex: 1; }
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft);
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+  /* ---------- shell ---------- */
+  .shell {
+    display: grid; grid-template-columns: 256px minmax(0, 1fr);
+    gap: clamp(24px, 5vw, 60px);
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 40px) 120px;
+  }
+
+  /* ---------- table of contents ---------- */
+  .toc {
+    position: sticky; top: 76px; align-self: start;
+    max-height: calc(100vh - 100px); overflow-y: auto;
+    padding: 28px 0;
+  }
+  .toc-title {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    margin: 0 0 16px;
+  }
+  .toc-group { margin-bottom: 18px; }
+  .toc-group-head {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 8px; padding: 5px 10px; border-radius: 7px;
+    font-size: 12.5px; font-weight: 600; color: var(--ink);
+  }
+  a.toc-group-head:hover { background: var(--surface); text-decoration: none; }
+  a.toc-group-head.active { background: var(--accent-wash); color: var(--accent-ink); }
+  .toc-group-head .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); flex: none; }
+  .toc-group.upcoming .toc-group-head { color: var(--muted); }
+  .toc-group.upcoming .dot { background: var(--line); }
+  .soon {
+    font-family: "IBM Plex Mono", monospace; font-size: 9px; font-weight: 600;
+    letter-spacing: 0.07em; text-transform: uppercase; color: var(--soon-fg);
+    background: var(--soon-bg); padding: 2px 6px; border-radius: 999px;
+  }
+  .toc-note { margin: 4px 0 0 10px; font-size: 11.5px; color: var(--muted); max-width: 22ch; }
+  .toc ol {
+    list-style: none; margin: 0; padding: 0 0 0 10px;
+    display: flex; flex-direction: column; gap: 1px;
+    border-left: 1px solid var(--line);
+  }
+  .toc li a {
+    display: grid; grid-template-columns: auto 1fr; gap: 8px;
+    padding: 6px 10px; border-radius: 7px; margin-left: -1px;
+    color: var(--ink-soft); font-size: 13px; line-height: 1.35;
+    border-left: 2px solid transparent;
+  }
+  .toc li a .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); padding-top: 1px; }
+  .toc li.lvl-3 a { padding-left: 20px; font-size: 12.5px; color: var(--muted); }
+  .toc li a:hover { background: var(--surface); text-decoration: none; }
+  .toc li a.active { background: var(--accent-wash); color: var(--accent-ink); border-left-color: var(--accent); }
+  .toc li a.active .n { color: var(--accent-ink); }
+
+  /* ---------- main ---------- */
+  main { min-width: 0; padding-top: 30px; }
+
+  .intro { margin: 0 0 8px; }
+  .intro .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px;
+  }
+  .intro h1 {
+    font-size: clamp(1.7rem, 4vw, 2.15rem); font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.14; text-wrap: balance; margin: 0 0 12px;
+  }
+  .intro p { color: var(--ink-soft); max-width: 66ch; margin: 0 0 10px; }
+
+  .mod-divider { height: 1px; background: var(--line); margin: 80px 0 0; }
+  .mod-title { scroll-margin-top: 72px; margin: 26px 0 4px; }
+  .mod-title .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px;
+  }
+  .mod-title h1 {
+    font-size: clamp(1.55rem, 3.4vw, 1.95rem); font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.15; text-wrap: balance; margin: 0;
+  }
+
+  main p { color: var(--ink-soft); max-width: 72ch; margin: 14px 0; }
+
+  .hd { scroll-margin-top: 84px; letter-spacing: -0.01em; text-wrap: balance; color: var(--ink); }
+  .hd-2 {
+    font-size: 1.3rem; font-weight: 600; margin: 54px 0 16px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--line);
+  }
+  .hd-3 { font-size: 1.06rem; font-weight: 600; margin: 34px 0 12px; }
+  .hd-4 { font-size: 0.95rem; font-weight: 600; margin: 26px 0 10px; color: var(--ink-soft); }
+  .hd code { font-size: 0.8em; font-weight: 500; }
+  .hd-2 + p, .hd-3 + p, .hd-4 + p, .mod-title + p { margin-top: 0; }
+
+  code {
+    font-size: 0.86em; padding: 1.5px 5px; border-radius: 5px;
+    background: var(--code-bg); border: 1px solid var(--code-line); color: var(--code-ink);
+    overflow-wrap: anywhere;
+  }
+
+  .md-list { margin: 14px 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; max-width: 72ch; }
+  .md-list li { color: var(--ink-soft); }
+  .md-list li::marker { color: var(--muted); }
+  .md-list .md-list { margin: 8px 0 0; gap: 6px; }
+  .md-list strong { color: var(--ink); font-weight: 600; }
+
+  blockquote {
+    margin: 24px 0; padding: 14px 18px; border-radius: 12px;
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    box-shadow: var(--shadow); max-width: 74ch;
+  }
+  blockquote p { margin: 0 0 8px; color: var(--ink-soft); font-size: 14px; }
+  blockquote p:last-child { margin-bottom: 0; }
+  blockquote strong { color: var(--ink); }
+
+  .code-wrap {
+    margin: 14px 0; border-radius: 12px; border: 1px solid var(--code-line);
+    background: var(--code-bg); overflow-x: auto; max-width: 100%;
+  }
+  pre { margin: 0; padding: 16px 18px; font-size: 12.8px; line-height: 1.7; color: var(--code-ink); tab-size: 2; }
+  pre code { background: none; border: none; padding: 0; font-size: inherit; color: inherit; }
+  .tok-key { color: var(--tok-key); }
+  .tok-str { color: var(--tok-str); }
+  .tok-num { color: var(--tok-num); }
+  .tok-kw  { color: var(--tok-kw); font-weight: 500; }
+  .tok-punc { color: var(--tok-punc); }
+
+  .table-wrap {
+    margin: 16px 0; border-radius: 12px; border: 1px solid var(--line);
+    overflow-x: auto; box-shadow: var(--shadow);
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  thead th {
+    text-align: left; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted);
+    background: var(--surface-2); padding: 11px 16px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody td { padding: 12px 16px; border-bottom: 1px solid var(--line-soft); color: var(--ink-soft); vertical-align: top; }
+  tbody tr { background: var(--surface); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { color: var(--ink); font-weight: 500; }
+  td code, th code { font-size: 0.82em; white-space: nowrap; }
+
+  hr { border: none; border-top: 1px solid var(--line); margin: 40px 0; }
+
+  footer {
+    max-width: 1200px; margin: 0 auto;
+    padding: 32px clamp(16px, 4vw, 40px) 64px;
+    border-top: 1px solid var(--line); color: var(--muted);
+    font-size: 12.5px; font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 940px) {
+    .shell { grid-template-columns: 1fr; }
+    .toc { position: static; max-height: none; overflow: visible; padding: 20px 0 4px; }
+    .toc-group { margin-bottom: 14px; }
+    .toc ol { border-left: none; padding-left: 0; flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    .toc li a { border-left: none; border: 1px solid var(--line); margin-left: 0; }
+    .toc li.lvl-3 a { padding-left: 10px; }
+    .toc li a.active { border-color: var(--accent); }
+    .toc-note { display: none; }
+    main { padding-top: 8px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<header class="topbar">
+  <span class="wordmark">
+    <b>API Contract</b>
+    <span>Smart Battalion</span>
+  </span>
+  <span class="pill">Draf</span>
+  <span class="spacer"></span>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti tema">
+    <span id="themeLabel">Gelap</span>
+  </button>
+</header>
+
+<div class="shell">
+  <aside class="toc" id="toc" aria-label="Daftar isi">
+    <p class="toc-title">Daftar Isi</p>
+    <!-- diisi oleh script -->
+  </aside>
+
+  <main id="main">
+    <div class="intro">
+      <p class="eyebrow">Dokumentasi · Draf usulan frontend</p>
+      <h1>API Contract — Smart Battalion</h1>
+      <p>
+        Kumpulan draf kontrak API untuk surface yang masih memakai data dummy di aplikasi. Semua
+        bentuk envelope, pagination, format waktu, dan enum seragam dengan endpoint yang sudah
+        berjalan (<code>/auth/*</code>, <code>/locations/*</code>, <code>/catalog/*</code>,
+        <code>/panic-buttons</code>).
+      </p>
+      <p>
+        Halaman ini dirender otomatis dari <code>documentation/API_CONTRACT.md</code> dan
+        <code>documentation/API_CONTRACT_ANGGOTA.md</code> — sumber kebenaran tetap kedua berkas
+        markdown itu.
+      </p>
+    </div>
+    <!-- modul diisi oleh script -->
+  </main>
+</div>
+
+<footer id="footer">API Contract — Smart Battalion · draf usulan frontend</footer>
+
+<script type="text/markdown" id="src-umum"># API Contract — Smart Battalion (Draf)
+
+Draf kontrak API untuk endpoint yang **belum ada** dan saat ini masih memakai data dummy di aplikasi.
+Semua bentuk di bawah dibuat **seragam dengan API yang sudah berjalan** (`/auth/*`, `/locations/*`,
+`/catalog/*`, `/panic-buttons`) — envelope sukses/gagal, pagination (`?page=&per_page=`), waktu
+ISO-8601 dengan offset, dan enum `snake_case` mentah (label dirapikan di client). Begitu backend
+menyediakan endpoint ini, tinggal ganti sumber data di layar terkait (dummy-nya sudah dibentuk sama
+persis).
+
+> Status: **usulan frontend**. Nama field/endpoint boleh disesuaikan tim backend selama bentuk
+> envelope & pagination tetap konsisten.
+
+---
+
+## 1. Cek Versi Aplikasi (Force / Suggest Update)
+
+App memeriksa apakah build yang terpasang sudah usang dibanding versi terbaru yang dirilis backend.
+Dipakai saat app start (dan opsional saat `AppState` kembali `active`). Kalau versi terpasang **di bawah**
+`min_supported_version` → update **wajib** (blocking modal, tidak bisa ditutup); kalau di bawah
+`latest_version` tapi masih ≥ `min_supported_version` → update **disarankan** (modal bisa di-skip).
+
+### 1.1 Endpoint
+
+```
+GET /app-version?platform=android&version=0.2&build=2
+```
+
+**Publik** — tidak butuh `Authorization` (dicek sebelum/juga di layar login). `Accept: application/json` tetap dikirim.
+
+**Query**
+
+| Parameter | Wajib | Contoh | Keterangan |
+|-----------|-------|--------|------------|
+| `platform` | ya | `android` \| `ios` | dari `Platform.OS` |
+| `version` | ya | `0.2` | `versionName` (Android) / `CFBundleShortVersionString` (iOS) — dari `react-native-device-info` `getVersion()` |
+| `build` | tidak | `2` | `versionCode` / `CFBundleVersion` — `getBuildNumber()`; dipakai backend kalau `version` sama tapi build beda |
+
+### 1.2 Response `200`
+
+```json
+{
+  "success": true,
+  "data": {
+    "platform": "android",
+    "latest_version": "0.3",
+    "latest_build": 3,
+    "min_supported_version": "0.2",
+    "update_available": true,
+    "update_required": false,
+    "download_url": "https://cdn.smartbattalion.example/apk/SmartBattalion-v0.3(3)-release.apk",
+    "store_url": null,
+    "release_notes": "- Perbaikan sinkronisasi lokasi\n- Tambah riwayat peminjaman senjata",
+    "released_at": "2026-09-15T10:00:00+07:00"
+  }
+}
+```
+
+| field | tipe | keterangan |
+|-------|------|------------|
+| `latest_version` | string | versi rilis terbaru (format sama dengan `versionName`, mis. `"0.3"`) |
+| `latest_build` | number \| null | build number terbaru (opsional) |
+| `min_supported_version` | string | versi minimum yang masih boleh dipakai; di bawah ini → `update_required: true` |
+| `update_available` | boolean | `true` kalau `version` terpasang < `latest_version` |
+| `update_required` | boolean | `true` kalau `version` terpasang < `min_supported_version` — app **wajib** update |
+| `download_url` | string \| null | link **langsung** ke APK terbaru (Android sideload). `null` kalau distribusi lewat store |
+| `store_url` | string \| null | link Play Store / App Store (dipakai kalau ada, diutamakan di iOS) |
+| `release_notes` | string \| null | catatan rilis untuk ditampilkan di modal (plain text / markdown ringan) |
+| `released_at` | string \| null | ISO-8601 |
+
+> **Perbandingan versi** dilakukan di client dengan semantic-version compare (`0.2` < `0.3` < `0.10`),
+> bukan string compare. Kalau `version` tidak dikenal / lebih baru dari `latest_version`, backend cukup
+> balas `update_available: false`.
+
+### 1.3 Perilaku app
+
+- `update_required: true` → `StatusModal` non-dismissable (tanpa aksi sekunder, `onRequestClose` no-op —
+  pola sama seperti gate lokasi di `Home`), satu tombol "Update Sekarang" yang membuka `download_url`
+  (atau `store_url`) via `Linking.openURL`.
+- `update_available: true` & `update_required: false` → `StatusModal` biasa dengan aksi "Update" +
+  "Nanti"; "Nanti" menyimpan `latest_version` yang di-skip di AsyncStorage supaya tidak muncul lagi
+  untuk versi itu sampai ada rilis lebih baru.
+- Request gagal (network / non-2xx) → **diabaikan diam-diam**, app jalan normal (jangan blokir user
+  hanya karena cek versi gagal).
+
+---
+
+## 2. Home Komandan
+
+### 2.1 Ringkasan Situasi + Distribusi Status
+
+Mengisi bagian **"Ringkasan Situasi"** (4 kartu: Total Personel, Di Markas, Di Luar Markas, Absen)
+dan **"Distribusi Status Personel"** bila nanti diaktifkan lagi.
+
+```
+GET /dashboard/situation
+```
+
+**Query** (opsional)
+
+| Parameter | Keterangan |
+|-----------|------------|
+| `unit_id` | filter per unit |
+| `date` | default: hari ini |
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "as_of": "2026-08-30T15:07:00+07:00",
+    "total_personnel": 427,
+    "summary": [
+      { "key": "at_base",   "label": "Di Markas",     "count": 381, "percent": 89.2 },
+      { "key": "off_base",  "label": "Di Luar Markas", "count": 46,  "percent": 10.8 },
+      { "key": "absent",    "label": "Absen",          "count": 5,   "percent": 1.2 }
+    ],
+    "status_distribution": [
+      { "key": "active",    "label": "Aktif",      "count": 376, "percent": 88.1 },
+      { "key": "field_duty","label": "Dinas Luar", "count": 28,  "percent": 6.6 },
+      { "key": "permit",    "label": "Izin",       "count": 12,  "percent": 2.8 },
+      { "key": "sick",      "label": "Sakit",      "count": 6,   "percent": 1.4 },
+      { "key": "leave",     "label": "Cuti",       "count": 3,   "percent": 0.7 },
+      { "key": "inactive",  "label": "Tidak Aktif","count": 2,   "percent": 0.4 }
+    ],
+    "active_alerts": 1
+  }
+}
+```
+
+### 2.2 Aktivitas Terbaru (Pergerakan)
+
+Bagian **"Aktivitas Terbaru → Pergerakan Terakhir"**.
+
+```
+GET /activities/movements
+```
+
+**Query** (opsional)
+
+| Parameter | Keterangan |
+|-----------|------------|
+| `unit_id` | filter per unit |
+| `page`, `per_page` | pagination — default `per_page` 10 |
+| `direction` | `in` \| `out` |
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 91,
+      "direction": "out",
+      "personnel": { "service_number": "3101050010", "full_name": "Serka Andi Pratama", "rank": "SERKA" },
+      "location_label": "Pos Utama",
+      "purpose": "Dinas",
+      "note": "Keluar Markas",
+      "occurred_at": "2026-08-30T14:32:00+07:00"
+    },
+    {
+      "id": 90,
+      "direction": "in",
+      "personnel": { "service_number": "3101050011", "full_name": "Praka Rizky Maulana", "rank": "PRAKA" },
+      "location_label": "Pos Utama",
+      "purpose": null,
+      "note": "Masuk Markas",
+      "occurred_at": "2026-08-30T13:58:00+07:00"
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 5, "per_page": 10, "total": 47 }
+}
+```
+
+### 2.3 Pengumuman & Alert (list)
+
+Bagian **"Aktivitas Terbaru → Pengumuman & Alert"**.
+
+```
+GET /announcements
+```
+
+**Query** (opsional)
+
+| Parameter | Keterangan |
+|-----------|------------|
+| `page`, `per_page` | pagination — default `per_page` 10 |
+| `type` | `alert` \| `announcement` \| `info` |
+| `since` | ISO-8601 — hanya yang terbit setelah waktu ini |
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 12,
+      "type": "alert",
+      "title": "ALARM: KADAL",
+      "body": "Kontigensi. Seluruh personel siaga di titik kumpul.",
+      "severity": "high",
+      "created_by": { "id": 1, "name": "Komandan Batalyon" },
+      "published_at": "2026-08-30T09:30:00+07:00"
+    },
+    {
+      "id": 11,
+      "type": "announcement",
+      "title": "Apel Pagi",
+      "body": "Besok 06:00 di Lapangan Utama.",
+      "severity": "normal",
+      "created_by": { "id": 4, "name": "Pasi Ops" },
+      "published_at": "2026-08-30T08:15:00+07:00"
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 3, "per_page": 10, "total": 24 }
+}
+```
+
+### 2.4 Kirim Pengumuman (Quick Action) — layar `SendAnnouncement`
+
+Layar form sudah dibangun. Sementara ini **draf lokal**: pengumuman yang dikirim disimpan di
+`redux` (dipersist) dan langsung dimunculkan di daftar Notifikasi (§3) di perangkat pengirim.
+Begitu endpoint ada, `POST /announcements` menggantikan `announcementCreated` dan `GET
+/announcements/mine` mengisi seksi "Riwayat Terkirim".
+
+**Field form → payload**
+
+| Form (label UI)  | field payload  | nilai |
+|------------------|----------------|-------|
+| Judul            | `title`        | string, ≤ 80 |
+| Isi Pengumuman   | `body`         | string, ≤ 1000 |
+| Tipe             | `type`         | `announcement` \| `alert` \| `info` |
+| Kirim ke         | `target.scope` | `all` \| `unit` \| `role` |
+
+Form tidak lagi punya input prioritas — client selalu mengirim `severity: "normal"` (backend boleh
+menurunkan dari `type`, mis. `alert` → `high`).
+
+```
+POST /announcements
+```
+
+**Body**
+```json
+{
+  "type": "announcement",
+  "title": "Apel Pagi",
+  "body": "Besok 06:00 di Lapangan Utama.",
+  "severity": "normal",
+  "target": { "scope": "unit", "unit_ids": [3], "role": null }
+}
+```
+
+**Response `201`**
+```json
+{
+  "success": true,
+  "message": "Pengumuman terkirim ke 128 personel.",
+  "data": {
+    "id": 13,
+    "type": "announcement",
+    "title": "Apel Pagi",
+    "body": "Besok 06:00 di Lapangan Utama.",
+    "severity": "normal",
+    "scope_label": "Kompi Senapan A",
+    "recipients_count": 128,
+    "created_by": { "id": 1, "name": "Komandan Batalyon" },
+    "created_at": "2026-08-30T15:20:00+07:00"
+  }
+}
+```
+
+**Riwayat terkirim (untuk seksi "Riwayat Terkirim" di layar)**
+```
+GET /announcements/mine        # pengumuman yang dibuat user login
+DELETE /announcements/{id}      # tarik/hapus pengumuman
+```
+`GET /announcements/mine` — array item dengan bentuk = `data` pada response `POST` di atas,
+`meta` pagination standar.
+
+---
+
+## 3. Notifikasi (ikon lonceng di header)
+
+### 3.1 List Notifikasi
+
+```
+GET /notifications
+```
+
+**Query** (opsional)
+
+| Parameter | Keterangan |
+|-----------|------------|
+| `page`, `per_page` | pagination — default `per_page` 20 |
+| `only_unread` | `true` \| `false` |
+| `type` | `emergency` \| `announcement` \| `info` \| `system` |
+
+`meta.unread_total` = jumlah belum dibaca (dipakai badge di ikon lonceng).
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 501,
+      "type": "emergency",
+      "title": "Sinyal Darurat Baru",
+      "body": "Praka Rizky Maulana menekan tombol darurat di Pos Timur.",
+      "read": false,
+      "created_at": "2026-08-30T15:03:00+07:00",
+      "action": { "type": "emergency", "id": 88 }
+    },
+    {
+      "id": 500,
+      "type": "announcement",
+      "title": "Apel Pagi",
+      "body": "Apel pagi besok pukul 06.00 di Lapangan Utama.",
+      "read": false,
+      "created_at": "2026-08-30T14:10:00+07:00",
+      "action": { "type": "announcement", "id": 11 }
+    },
+    {
+      "id": 499,
+      "type": "info",
+      "title": "Perawatan Kendaraan",
+      "body": "Jadwal perawatan rutin kendaraan dinas telah diperbarui.",
+      "read": true,
+      "created_at": "2026-08-30T09:00:00+07:00",
+      "action": null
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 4, "per_page": 20, "total": 68, "unread_total": 4 }
+}
+```
+
+- `action` (opsional): tujuan navigasi saat item ditekan. `type` mengikuti resource yang sudah ada
+  (`emergency`, `announcement`, `personnel`, dst) + `id`.
+
+### 3.2 Tandai Dibaca
+
+```
+POST /notifications/{id}/read
+POST /notifications/read-all
+```
+
+**Response `200`**
+```json
+{ "success": true, "message": "Notifikasi ditandai dibaca.", "data": { "unread_total": 3 } }
+```
+
+---
+
+## 4. Sinyal Darurat / Emergency (list & detail)
+
+Melengkapi `POST /panic-buttons` yang sudah ada. Bentuk `personnel` & `location` mengikuti pola
+`/locations/overview`.
+
+### 4.1 List
+
+```
+GET /panic-buttons
+```
+
+**Query** (opsional)
+
+| Parameter | Keterangan |
+|-----------|------------|
+| `page`, `per_page` | pagination — default `per_page` 20 |
+| `status` | `active` \| `acknowledged` \| `resolved` |
+| `unit_id` | filter per unit |
+| `from`, `to` | rentang waktu (ISO-8601) |
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 88,
+      "status": "active",
+      "personnel": {
+        "service_number": "3101050004",
+        "full_name": "Praka Rizky Maulana",
+        "rank": "PRATU",
+        "unit": "Kompi Senapan A",
+        "photo": "https://ui-avatars.com/api/?name=Praka+Rizky+Maulana&background=3a7ca5&color=fff"
+      },
+      "latitude": -6.15472,
+      "longitude": 106.85201,
+      "accuracy": 12.5,
+      "address": "Pos Timur, Markas Batalyon",
+      "description": "Tombol darurat ditekan.",
+      "created_at": "2026-08-30T15:03:00+07:00",
+      "acknowledged_at": null,
+      "resolved_at": null,
+      "handled_by": null
+    },
+    {
+      "id": 87,
+      "status": "resolved",
+      "personnel": {
+        "service_number": "3101050002",
+        "full_name": "Anggota Satuan",
+        "rank": "PRATU",
+        "unit": "Kompi Senapan A",
+        "photo": null
+      },
+      "latitude": -6.15444,
+      "longitude": 106.853,
+      "accuracy": 11.0,
+      "address": "Kompi Senapan A",
+      "description": "Sinyal darurat.",
+      "created_at": "2026-08-30T12:00:00+07:00",
+      "acknowledged_at": "2026-08-30T12:02:00+07:00",
+      "resolved_at": "2026-08-30T12:40:00+07:00",
+      "handled_by": { "id": 1, "name": "Komandan Batalyon" }
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 2, "per_page": 20, "total": 23 },
+  "filters": { "status": null, "unit_id": null }
+}
+```
+
+### 4.2 Detail
+
+```
+GET /panic-buttons/{id}
+```
+
+**Response `200`** — sama seperti satu item list, ditambah `history` pergerakan singkat & `timeline`:
+```json
+{
+  "success": true,
+  "data": {
+    "id": 88,
+    "status": "active",
+    "personnel": { "service_number": "3101050004", "full_name": "Praka Rizky Maulana", "rank": "PRATU", "unit": "Kompi Senapan A", "photo": null },
+    "latitude": -6.15472, "longitude": 106.85201, "accuracy": 12.5,
+    "address": "Pos Timur, Markas Batalyon",
+    "description": "Tombol darurat ditekan.",
+    "created_at": "2026-08-30T15:03:00+07:00",
+    "acknowledged_at": null, "resolved_at": null, "handled_by": null,
+    "timeline": [
+      { "event": "created", "actor": null, "at": "2026-08-30T15:03:00+07:00" }
+    ]
+  }
+}
+```
+
+### 4.3 Update Status
+
+```
+PATCH /panic-buttons/{id}
+```
+
+**Body**: `{ "status": "acknowledged" }` atau `{ "status": "resolved", "note": "Sudah ditangani tim Pos Timur." }`
+
+**Response `200`**: object detail terbaru (bentuk sama seperti 4.2).
+
+---
+
+## 5. Layar Lain yang Masih Dummy
+
+| Layar / Menu           | Status        | Usulan endpoint |
+|------------------------|---------------|-----------------|
+| Buku Saku              | kosong        | `GET /handbook` → list kategori + `GET /handbook/{slug}` (isi markdown/HTML) |
+| Laporan Cepat (QA)     | ComingSoon    | `POST /quick-reports` (body: `type`, `title`, `body`, `attachments[]`, `location`) + `GET /quick-reports` |
+| Jadwal Piket (QA)      | ComingSoon    | `GET /duty-roster?week=` |
+| Cuti & Izin (QA)       | ComingSoon    | `GET /leaves?status=` + `POST /leaves` |
+| Statistik Unit (QA)    | ComingSoon    | `GET /dashboard/stats?range=` |
+| Riwayat (tab)          | kosong        | agregat dari `/activities/movements`, `/leaves`, `/quick-reports` milik user login |
+| Lainnya (tab)          | kosong        | menu statis di client (tidak perlu API) |
+
+### 5.1 Buku Saku (contoh)
+
+```
+GET /handbook
+```
+```json
+{
+  "success": true,
+  "data": [
+    { "slug": "protap-jaga", "title": "Protap Jaga", "icon": "shield-check", "updated_at": "2026-07-01T09:00:00+07:00" },
+    { "slug": "kontak-darurat", "title": "Kontak Darurat", "icon": "phone", "updated_at": "2026-06-15T09:00:00+07:00" }
+  ]
+}
+```
+
+```
+GET /handbook/{slug}
+```
+```json
+{
+  "success": true,
+  "data": {
+    "slug": "protap-jaga",
+    "title": "Protap Jaga",
+    "content_format": "markdown",
+    "content": "## Protap Jaga\n\n1. ...",
+    "updated_at": "2026-07-01T09:00:00+07:00"
+  }
+}
+```
+
+### 5.2 Laporan Cepat (contoh)
+
+```
+POST /quick-reports
+```
+```json
+{
+  "type": "kejadian",
+  "title": "Pohon tumbang di gerbang timur",
+  "body": "Akses terhalang, perlu bantuan.",
+  "location": { "latitude": -6.1547, "longitude": 106.852, "accuracy": 10.0 },
+  "attachments": []
+}
+```
+**Response `201`**
+```json
+{
+  "success": true,
+  "message": "Laporan terkirim.",
+  "data": {
+    "id": 71,
+    "type": "kejadian",
+    "title": "Pohon tumbang di gerbang timur",
+    "status": "submitted",
+    "reported_by": { "id": 22, "name": "Serka Andi Pratama" },
+    "created_at": "2026-08-30T15:40:00+07:00"
+  }
+}
+```
+</script>
+<script type="text/markdown" id="src-anggota"># API Contract — Home Anggota (Draf)
+
+Draf kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Semua surface di
+layar ini **masih memakai data dummy** kecuali yang disebut "sudah nyata" di bawah. Bentuk envelope,
+pagination (`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah
+**seragam dengan API yang sudah berjalan** (`/auth/*`, `/locations/*`, `/catalog/*`) —
+sama seperti `API_CONTRACT.md`, tidak diulang di sini.
+
+> Status: **usulan frontend**. Nama field/endpoint boleh disesuaikan tim backend selama bentuk
+> envelope & pagination tetap konsisten dengan endpoint yang sudah berjalan.
+
+Semua endpoint di bawah berskup **user yang login** (diambil dari `Authorization: Bearer <token>`),
+jadi tidak perlu parameter `personnel`/`service_number` di path.
+
+---
+
+## 0. Yang sudah nyata (tidak perlu endpoint baru)
+
+| Bagian layar                     | Sumber data sekarang                                   |
+|----------------------------------|-------------------------------------------------------|
+| Header + Kartu Anggota (identitas)| `GET /auth/me` → `user.personnel` (sudah dipakai)     |
+| QR Code di Kartu Anggota         | **payload = NRP** (`personnel.service_number`) apa adanya — tidak perlu API |
+| Tile "Lokasi Terakhir" & "Update Terakhir" (Status Saya) | `GET /locations/me` (sudah dipakai di Profile) |
+| Shortcut "Peta Personel"         | `GET /locations/overview` (sudah ada)                 |
+| Shortcut "Pengumuman" / "Lihat Semua" pengumuman | layar `Notifications` (lihat `API_CONTRACT.md` §3) |
+| "Aktivitas Terbaru → Lihat Semua" & shortcut "Riwayat Pergerakan" | tab `visitor` ("Riwayat visitor") di `CatalogDetail` personel diri sendiri — diisi `visitor_log_history` dari `GET /catalog/personnel/{personnel}` |
+
+---
+
+## 1. Kartu Anggota — status verifikasi identitas
+
+Mengisi badge **"Terverifikasi"** di pojok kanan atas Kartu Anggota dan (opsional) membatasi masa
+berlaku QR.
+
+
+```
+GET /me/id-card
+```
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "service_number": "31980412345678",
+    "verification_status": "verified",
+    "verified_at": "2026-08-01T09:00:00+07:00",
+    "qr_payload": "31980412345678",
+    "qr_expires_at": null
+  }
+}
+```
+
+- `verification_status`: `verified` | `pending` | `unverified` (client fallback netral untuk nilai lain).
+- `qr_payload`: string yang di-encode ke QR. **Default = NRP.** Field ini disediakan supaya backend
+  bisa mengganti ke token bertanda-tangan nanti tanpa ubah client.
+- `qr_expires_at`: `null` = tidak kedaluwarsa. Kalau diisi, client bisa menampilkan hitung mundur /
+  auto-refresh (belum diimplementasikan).
+
+---
+
+## 2. Status Saya
+
+Mengisi 4 tile di bagian **"Status Saya"**: Status Saat Ini, Tugas / Dinas, Lokasi Terakhir,
+Update Terakhir. (Lokasi Terakhir + Update Terakhir sudah bisa diisi dari `GET /locations/me` —
+endpoint ini melengkapi 2 tile sisanya + memberi label lokasi yang lebih manusiawi.)
+
+```
+GET /me/status
+```
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "as_of": "2026-08-30T09:41:00+07:00",
+    "presence": {
+      "key": "at_base",
+      "label": "Di Markas",
+      "since": "2026-08-30T08:14:00+07:00"
+    },
+    "duty": {
+      "key": "internal_duty",
+      "label": "Dinas Dalam",
+      "period_label": "Hari ini",
+      "starts_at": "2026-08-30T07:00:00+07:00",
+      "ends_at": "2026-08-30T19:00:00+07:00"
+    },
+    "location": {
+      "label": "Markas",
+      "accuracy_label": "Akurasi tinggi",
+      "status": "fresh",
+      "captured_at": "2026-08-30T09:39:00+07:00"
+    }
+  }
+}
+```
+
+- `presence.key`: `at_base` | `off_base` | `on_leave` | `absent` (fallback netral untuk nilai lain).
+- `duty.key`: `internal_duty` | `field_duty` | `guard` | `standby` | `off` | dst — dikirim mentah,
+  label dari `duty.label`.
+- `location.label`: hasil reverse-geocode / nama pos di sisi backend (client tidak reverse-geocode).
+- `location.accuracy_label`: string siap tampil (mis. "Akurasi tinggi" / "Akurasi sedang"). Kalau
+  tidak ada, client turunkan sendiri dari `accuracy` di `GET /locations/me`.
+
+---
+
+## 3. Aset Saya
+
+Mengisi bagian **"Aset Saya"** (kartu Senjata Dinas + Kendaraan). Data ini sebetulnya sudah ada di
+katalog (`/catalog/weapon-assignments`, `/catalog/vehicles`) tapi terfilter ke pemiliknya — endpoint
+ini ringkasan "milik saya" supaya client tidak perlu menarik seluruh daftar lalu memfilter.
+
+```
+GET /me/assets
+```
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "weapons": [
+      {
+        "id": 21,
+        "weapon_number": "SB-0231",
+        "serial_number": "PINDAD-21B0231",
+        "category": "SS2-V1",
+        "condition_status": "good",
+        "condition_label": "Baik",
+        "assigned_at": "2025-01-10T00:00:00+07:00"
+      }
+    ],
+    "vehicles": [
+      {
+        "id": 8,
+        "brand_model": "Toyota Hilux Double Cabin",
+        "plate_number": "D 1234 AB",
+        "stnk_valid_until": "2026-11-12",
+        "stnk_status": "active",
+        "stnk_status_label": "STNK Aktif"
+      }
+    ]
+  }
+}
+```
+
+- Array kosong → client menampilkan empty-state ("Belum ada senjata dinas" / "Belum ada kendaraan").
+- `condition_status` / `stnk_status`: enum mentah; `*_label` opsional (client punya fallback
+  `titleCase()`).
+- `stnk_status`: `active` | `expiring_soon` | `expired`.
+
+---
+
+## 4. Aktivitas Terbaru (pergerakan saya)
+
+Mengisi bagian **"Aktivitas Terbaru"** di Home (3 entri teratas) — **diflatten jadi 1 baris per
+lintasan** (masuk ATAU keluar). Serupa dengan `visitor_log_history` pada `GET /catalog/personnel/{personnel}`,
+tapi untuk diri sendiri dan sebagai endpoint list tersendiri.
+
+```
+GET /me/movements
+```
+
+**Query** (opsional)
+
+| Parameter | Keterangan |
+|-----------|------------|
+| `page`, `per_page` | pagination — default `per_page` 10 |
+
+**Response `200`**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 5501,
+      "direction": "in",
+      "occurred_at": "2026-08-30T08:14:00+07:00",
+      "location_label": "Pos Utama",
+      "purpose": null,
+      "note": "Masuk Markas"
+    },
+    {
+      "id": 5498,
+      "direction": "out",
+      "occurred_at": "2026-08-30T07:05:00+07:00",
+      "location_label": null,
+      "purpose": "Dinas",
+      "note": "Keluar Markas"
+    },
+    {
+      "id": 5477,
+      "direction": "in",
+      "occurred_at": "2026-08-29T17:42:00+07:00",
+      "location_label": "Pos Utama",
+      "purpose": null,
+      "note": "Masuk Markas"
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 6, "per_page": 10, "total": 58 }
+}
+```
+
+- `direction`: `in` (masuk markas) | `out` (keluar markas).
+- Client menampilkan `note` sebagai judul, `location_label` / `purpose` sebagai detail, dan
+  `occurred_at` diformat relatif / jam.
+
+---
+
+## 5. Pengumuman Terbaru
+
+Mengisi bagian **"Pengumuman Terbaru"** di Home (3 entri teratas) — **subset dari
+`API_CONTRACT.md` §2.3 (`GET /announcements`)**, difilter ke pengumuman yang menyasar user login.
+Tidak butuh endpoint baru; cukup panggil `GET /announcements?per_page=3`. Field yang dipakai layar:
+
+| Field (dari §2.3) | Dipakai untuk        |
+|-------------------|----------------------|
+| `title`           | judul baris          |
+| `body`            | detail (1 baris)     |
+| `created_by.name` | label pengirim ("Pasi Ops") |
+| `published_at`    | jam / tanggal relatif |
+| `type`            | ikon + warna aksen (`alert` merah, `announcement` biru, `info` abu) |
+
+Sampai `GET /announcements` tersedia, layar memakai `DUMMY_NOTICES` yang bentuknya sudah disamakan
+dengan tabel di atas.
+
+---
+
+## 6. Shortcut "Kontak Darurat" (Akses Cepat)
+
+Saat ini `ComingSoon`. Usulan:
+
+```
+GET /emergency-contacts
+```
+```json
+{
+  "success": true,
+  "data": [
+    { "id": 1, "label": "Piket Batalyon", "phone": "62211234567", "category": "command" },
+    { "id": 2, "label": "Kesehatan / Poliklinik", "phone": "62211234568", "category": "medical" },
+    { "id": 3, "label": "Provos", "phone": "62211234569", "category": "security" }
+  ]
+}
+```
+Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
+</script>
+
+<script>
+  // ---------- theme toggle (default terang) ----------
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var label = document.getElementById('themeLabel');
+    var KEY = 'sb-contract-theme';
+    function apply(t) {
+      if (t === 'dark') root.setAttribute('data-theme', 'dark');
+      else root.removeAttribute('data-theme');
+      label.textContent = t === 'dark' ? 'Terang' : 'Gelap';
+    }
+    function current() { return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+    try { apply(localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light'); } catch (e) { apply('light'); }
+    btn.addEventListener('click', function () {
+      var next = current() === 'dark' ? 'light' : 'dark';
+      apply(next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+    });
+  })();
+
+  // ---------- markdown renderer ----------
+  (function () {
+    var MODULES = [
+      { id: 'umum',    srcId: 'src-umum',    group: 'Umum & Komandan', eyebrow: 'Modul 01 — Umum & Komandan' },
+      { id: 'anggota', srcId: 'src-anggota', group: 'Home Anggota',    eyebrow: 'Modul 02 — Home Anggota' }
+    ];
+
+    function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function escAttr(s) { return escHtml(s).replace(/"/g, '&quot;'); }
+    function slugify(s) {
+      return s.toLowerCase().replace(/[`*_]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+    function splitNum(t) {
+      var m = t.match(/^(\d+(?:\.\d+)*)\.?\s+([\s\S]*)$/);
+      return m ? { n: m[1], label: m[2] } : { n: '', label: t };
+    }
+
+    function inlineMd(s) {
+      var codes = [];
+      s = s.replace(/`([^`]+)`/g, function (m, c) { codes.push(c); return '\u0000' + (codes.length - 1) + '\u0000'; });
+      s = escHtml(s);
+      s = s.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, t, u) { return '<a href="' + escAttr(u) + '">' + t + '</a>'; });
+      s = s.replace(/\u0000(\d+)\u0000/g, function (m, i) { return '<code>' + escHtml(codes[+i]) + '</code>'; });
+      return s;
+    }
+
+    var JSON_RE = /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}\[\],])/g;
+    function highlightJson(raw) {
+      return escHtml(raw).replace(JSON_RE, function (m, str, colon, kw, num, punc) {
+        if (str) {
+          if (colon) return '<span class="tok-key">' + str + '</span><span class="tok-punc">' + colon + '</span>';
+          return '<span class="tok-str">' + str + '</span>';
+        }
+        if (kw) return '<span class="tok-kw">' + kw + '</span>';
+        if (num) return '<span class="tok-num">' + num + '</span>';
+        if (punc) return '<span class="tok-punc">' + punc + '</span>';
+        return m;
+      });
+    }
+
+    function dedent(arr) {
+      var min = Infinity;
+      arr.forEach(function (l) { if (l.trim()) { var k = l.match(/^(\s*)/)[1].length; if (k < min) min = k; } });
+      if (!isFinite(min) || min === 0) return arr;
+      return arr.map(function (l) { return l.slice(min); });
+    }
+
+    function renderCode(lines, lang) {
+      var raw = dedent(lines).join('\n');
+      var t = raw.trim();
+      var body = (lang === 'json' || (!lang && (t.charAt(0) === '{' || t.charAt(0) === '[')))
+        ? highlightJson(raw) : escHtml(raw);
+      return '<div class="code-wrap"><pre><code>' + body + '</code></pre></div>';
+    }
+
+    function isTableSep(line) {
+      return /^\s*\|?[\s:]*-{2,}[\s:|-]*\|?\s*$/.test(line) && line.indexOf('-') >= 0;
+    }
+    function tableCells(line) {
+      var l = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+      return l.replace(/\\\|/g, '\u0001').split('|').map(function (c) { return c.replace(/\u0001/g, '|').trim(); });
+    }
+    function renderTable(rows) {
+      var head = tableCells(rows[0]);
+      var body = rows.slice(2).map(tableCells);
+      var h = '<div class="table-wrap"><table><thead><tr>' +
+        head.map(function (c) { return '<th>' + inlineMd(c) + '</th>'; }).join('') + '</tr></thead><tbody>';
+      h += body.map(function (r) {
+        return '<tr>' + r.map(function (c) { return '<td>' + inlineMd(c) + '</td>'; }).join('') + '</tr>';
+      }).join('');
+      return h + '</tbody></table></div>';
+    }
+
+    var ITEM_RE = /^(\s*)([-*]|\d+\.)\s+([\s\S]*)$/;
+    function renderList(buf) {
+      var base = Infinity;
+      buf.forEach(function (l) { var m = l.match(ITEM_RE); if (m) base = Math.min(base, m[1].length); });
+      if (!isFinite(base)) base = 0;
+      var ordered = false, items = [], cur = null;
+      buf.forEach(function (l) {
+        var m = l.match(ITEM_RE);
+        if (m && m[1].length <= base + 1) {
+          if (cur) items.push(cur);
+          if (/\d+\./.test(m[2])) ordered = true;
+          cur = { text: m[3], sub: [] };
+        } else if (cur) {
+          if (m && m[1].length > base + 1) cur.sub.push(l.slice(base + 2));
+          else if (l.trim()) cur.text += ' ' + l.trim();
+        }
+      });
+      if (cur) items.push(cur);
+      var tag = ordered ? 'ol' : 'ul';
+      return '<' + tag + ' class="md-list">' + items.map(function (it) {
+        var inner = inlineMd(it.text.trim());
+        if (it.sub.length) inner += renderList(it.sub);
+        return '<li>' + inner + '</li>';
+      }).join('') + '</' + tag + '>';
+    }
+
+    function render(md, docId) {
+      md = md.replace(/\r\n?/g, '\n');
+      var lines = md.split('\n');
+      var out = [], toc = [], i = 0, n = lines.length;
+
+      while (i < n) {
+        var line = lines[i], trimmed = line.trim();
+        if (!trimmed) { i++; continue; }
+
+        var fm = trimmed.match(/^```(.*)$/);
+        if (fm) {
+          var lang = fm[1].trim().toLowerCase(), buf = [];
+          i++;
+          while (i < n && lines[i].trim() !== '```') { buf.push(lines[i]); i++; }
+          i++;
+          out.push(renderCode(buf, lang));
+          continue;
+        }
+
+        if (/^-{3,}$/.test(trimmed)) { i++; continue; }
+
+        var hm = trimmed.match(/^(#{1,6})\s+(.*)$/);
+        if (hm) {
+          var lvl = hm[1].length, txt = hm[2].replace(/\s+#*\s*$/, '');
+          if (lvl === 1) {
+            out.push('<header class="mod-title" id="mod-' + docId + '"><p class="eyebrow">' +
+              escHtml(MOD_EYEBROW[docId] || '') + '</p><h1>' + inlineMd(txt) + '</h1></header>');
+          } else {
+            var id = docId + '-' + slugify(txt);
+            if (lvl === 2 || lvl === 3) toc.push({ level: lvl, text: txt.replace(/`/g, ''), id: id });
+            out.push('<h' + lvl + ' id="' + id + '" class="hd hd-' + lvl + '">' + inlineMd(txt) + '</h' + lvl + '>');
+          }
+          i++;
+          continue;
+        }
+
+        if (/^>\s?/.test(line)) {
+          var qbuf = [];
+          while (i < n && /^>\s?/.test(lines[i])) { qbuf.push(lines[i].replace(/^>\s?/, '')); i++; }
+          out.push('<blockquote>' + qbuf.join('\n').split(/\n\s*\n/).map(function (p) {
+            return '<p>' + inlineMd(p.replace(/\n/g, ' ').trim()) + '</p>';
+          }).join('') + '</blockquote>');
+          continue;
+        }
+
+        if (line.indexOf('|') >= 0 && i + 1 < n && isTableSep(lines[i + 1])) {
+          var tbuf = [line, lines[i + 1]];
+          i += 2;
+          while (i < n && lines[i].indexOf('|') >= 0 && lines[i].trim()) { tbuf.push(lines[i]); i++; }
+          out.push(renderTable(tbuf));
+          continue;
+        }
+
+        if (ITEM_RE.test(line)) {
+          var lbuf = [];
+          while (i < n) {
+            var L = lines[i];
+            // a table nested under a list item ends the list; the main loop renders it top-level
+            if (L.indexOf('|') >= 0 && i + 1 < n && isTableSep(lines[i + 1])) break;
+            if (ITEM_RE.test(L)) { lbuf.push(L); i++; continue; }
+            if (L.trim() && /^\s{2,}/.test(L) && !/^\s*```/.test(L)) { lbuf.push(L); i++; continue; }
+            if (!L.trim() && i + 1 < n && /^\s{2,}\S/.test(lines[i + 1])) { i++; continue; }
+            break;
+          }
+          out.push(renderList(lbuf));
+          continue;
+        }
+
+        var pbuf = [line];
+        i++;
+        while (i < n) {
+          var q = lines[i], qt = q.trim();
+          if (!qt) break;
+          if (/^(#{1,6})\s/.test(qt) || /^```/.test(qt) || /^-{3,}$/.test(qt) || /^>\s?/.test(q) || ITEM_RE.test(q)) break;
+          if (q.indexOf('|') >= 0 && i + 1 < n && isTableSep(lines[i + 1])) break;
+          pbuf.push(q);
+          i++;
+        }
+        out.push('<p>' + inlineMd(pbuf.join(' ').trim()) + '</p>');
+      }
+      return { html: out.join('\n'), toc: toc };
+    }
+
+    var MOD_EYEBROW = {};
+    MODULES.forEach(function (m) { MOD_EYEBROW[m.id] = m.eyebrow; });
+
+    var main = document.getElementById('main');
+    var toc = document.getElementById('toc');
+    var tocHtml = '<p class="toc-title">Daftar Isi</p>';
+
+    MODULES.forEach(function (mod, idx) {
+      var src = document.getElementById(mod.srcId);
+      var md = src ? src.textContent : '';
+      if (!md || !md.trim() || md.trim().charAt(0) === '@') {
+        tocHtml += '<div class="toc-group"><p class="toc-group-head"><span class="dot"></span>' +
+          escHtml(mod.group) + '</p><p class="toc-note">Sumber markdown belum tersedia.</p></div>';
+        return;
+      }
+      var r = render(md, mod.id);
+      if (idx > 0) main.insertAdjacentHTML('beforeend', '<div class="mod-divider"></div>');
+      main.insertAdjacentHTML('beforeend', r.html);
+
+      tocHtml += '<div class="toc-group">' +
+        '<a class="toc-group-head" href="#mod-' + mod.id + '"><span class="dot"></span>' + escHtml(mod.group) + '</a>' +
+        '<ol>' + r.toc.map(function (it) {
+          var s = splitNum(it.text);
+          return '<li class="lvl-' + it.level + '"><a href="#' + it.id + '">' +
+            '<span class="n">' + escHtml(s.n) + '</span><span>' + escHtml(s.label) + '</span></a></li>';
+        }).join('') + '</ol></div>';
+    });
+
+    tocHtml += '<div class="toc-group upcoming">' +
+      '<p class="toc-group-head"><span class="dot"></span>Academy <span class="soon">Segera</span></p>' +
+      '<p class="toc-note">Modul Academy menyusul di dokumen ini.</p></div>';
+
+    toc.innerHTML = tocHtml;
+
+    // ---------- scroll spy ----------
+    var anchorEls = Array.prototype.slice.call(main.querySelectorAll('[id^="mod-"], h2.hd[id], h3.hd[id]'));
+    var linkMap = {};
+    Array.prototype.slice.call(toc.querySelectorAll('a[href^="#"]')).forEach(function (a) {
+      linkMap[a.getAttribute('href').slice(1)] = a;
+    });
+    if ('IntersectionObserver' in window && anchorEls.length) {
+      var visible = new Set();
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) visible.add(en.target.id); else visible.delete(en.target.id);
+        });
+        var top = anchorEls.filter(function (el) { return visible.has(el.id); })[0];
+        if (!top) return;
+        Object.keys(linkMap).forEach(function (k) { linkMap[k].classList.remove('active'); });
+        if (linkMap[top.id]) linkMap[top.id].classList.add('active');
+      }, { rootMargin: '-12% 0px -72% 0px' });
+      anchorEls.forEach(function (el) { io.observe(el); });
+    }
+  })();
+</script>
