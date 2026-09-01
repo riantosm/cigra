@@ -104,7 +104,9 @@ atas peta) · `warningText` `#B45309` · `dangerText` `#B91C1C` · `alertBannerS
 `#FEECEC`/`#FDE0E0`/`#FBD5D5` (banner emergency CommanderHome) · `mapCanvasStart/End`
 `#E8F0E6`/`#E3EDF7` · `gradientInactiveStart/End` `#A78BFA`/`#8B5CF6` (avatar nonaktif) ·
 `gradientDangerStart`/`gradientWarnStart`/`gradientSuccessStart` `#F87171`/`#FBBF6B`/`#4ADE80`
-(avatar ber-tint status) · `haloPrimary`/`haloDanger` `rgba(37,99,235,0.10)`/`rgba(220,38,38,0.10)`
+(avatar ber-tint status) · `gradientDangerCtaStart` `#EF4444` (start gradient tombol/ikon danger —
+red-500, sepadan dengan `gradientPrimaryStart`; **bukan** `#F87171`/`#FCA5A5` yang terlihat pudar di
+ukuran CTA) · `haloPrimary`/`haloDanger` `rgba(37,99,235,0.10)`/`rgba(220,38,38,0.10)`
 (cincin "halo" di belakang badge ikon StatusModal §5.15) · `notifUnreadSurface`/`notifUnreadBorder`
 `#EEF4FF`/`#BFD3FB` (baris notifikasi belum dibaca).
 
@@ -117,7 +119,7 @@ atas peta) · `warningText` `#B45309` · `dangerText` `#B91C1C` · `alertBannerS
 | `chipSurface` | `#EEF3FD` | latar icon-chip & tombol aksi kecil |
 | `dividerOnGradient` | `#CBD5E1` | pemisah "•", garis tipis di atas latar gradient |
 | Gradient primary | `linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)` | tombol utama, avatar, tab aktif |
-| Gradient danger | `linear-gradient(135deg, #F87171 0%, #DC2626 100%)` | tombol Logout, tombol Emergency |
+| Gradient danger (CTA) | `linear-gradient(135deg, #EF4444 0%, #DC2626 100%)` | `GradientButton` tone danger (Logout), badge ikon error `StatusModal` |
 | `warningText` | `#B45309` | teks di atas `warningSurface` (kontras cukup) |
 
 ### 1c. Bayangan (shadow)
@@ -347,7 +349,10 @@ prop, default 56 → 52 di sini), tombol sekunder = pill putih inline.
 - **Badge ikon:** lingkaran `64`, gradient sesuai varian + halo
   `0 0 0 8px rgba(<aksen>,0.10), 0 10px 22px rgba(<aksen>,0.28)`, `margin-bottom 6`. Isi = ikon
   stroke putih (bukan glyph teks): `success` → gradient primary + centang (`M5 13l4 4L19 7`,
-  stroke `2.4`); `error` → gradient danger + `alert-triangle` (stroke `2`).
+  stroke `2.4`); `error` → gradient danger + `alert-triangle` (stroke `2`). Prop opsional `icon`
+  meng-override glyph tanpa mengubah warna varian — mis. `download` (`M12 3v11M7 10l5 5 5-5M5 20h14`,
+  stroke `2`) dipakai `AppVersionGate` supaya modal "Update" tetap primary/biru tapi ikonnya
+  bermakna unduh, bukan centang.
 - **Judul:** `18/700` `heading`, center. **Pesan:** `14` `textMuted`, center, `line-height 20`.
 - **Aksi:** baris `gap 12`, `margin-top 16`, lebar penuh. Tombol tinggi `48–52`, pill `999`,
   `flex: 1`:

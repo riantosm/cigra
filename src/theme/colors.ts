@@ -32,6 +32,11 @@ export const colors = {
   pageGradientEnd: '#E2EAF6',
   gradientPrimaryStart: '#3B82F6',
   gradientPrimaryEnd: '#2563EB',
+  // Danger CTA gradient (atoms/GradientButton tone="danger", StatusModal error icon + button).
+  // Saturated red-500 → red-600 (`danger`), mirroring the primary's tight/vivid blue-500 → blue-600.
+  // Deliberately NOT `dangerMuted` (#FCA5A5) / `gradientDangerStart` (#F87171) — both read washed-out
+  // at CTA size. `gradientDangerStart` stays reserved for the softer status-tinted avatar gradients.
+  gradientDangerCtaStart: '#EF4444',
   // Login-only decorative mountain silhouette (back → front).
   authMountainBack: '#CBD8EE',
   authMountainMid: '#B6C7E6',

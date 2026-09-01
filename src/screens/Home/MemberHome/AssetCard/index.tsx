@@ -65,6 +65,7 @@ export default function AssetCard(props: AssetCardProps) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
+    minWidth: 0,
     gap: 6,
     padding: 14,
     borderRadius: 16,

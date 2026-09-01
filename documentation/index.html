@@ -357,6 +357,20 @@ App memeriksa apakah build yang terpasang sudah usang dibanding versi terbaru ya
 Dipakai saat app start (dan opsional saat `AppState` kembali `active`). **Semua perbandingan versi
 dilakukan di client** — backend cukup mengumumkan versi terbaru + minimum per platform.
 
+> **Status: SUDAH DIIMPLEMENTASIKAN & endpoint LIVE.** Bentuk response cocok 100% dengan kontrak di
+> bawah. FE: `appVersion.service.ts` + `utils/appVersion.ts` + `hooks/useAppVersionGate.ts` +
+> `organisms/AppVersionGate` (dipasang di `RootNavigator`, versi terpasang dibaca via
+> `react-native-device-info`).
+>
+> **Gap data backend yang perlu dibereskan** (bukan mismatch kontrak):
+> 1. `download_url` **dan** `store_url` dua-duanya masih `null` untuk android & ios → tombol
+>    "Update Sekarang" belum punya tujuan. Minimal isi salah satu (Android: URL APK langsung;
+>    iOS: URL App Store).
+> 2. `latest_build` masih tidak sejalan dengan `versionCode` rilis nyata (contoh: API `latest_build: 1`
+>    padahal APK yang beredar sudah `versionCode 2`). Backend harus mengisi `latest_build` = `versionCode`
+>    (Android) / `CFBundleVersion` (iOS) build terbaru, atau aturan "build tertinggal → wajib update"
+>    salah picu.
+
 ### 1.1 Endpoint
 
 ```
@@ -410,21 +424,30 @@ Field berlaku untuk tiap blok platform:
 | `released_at` | string \| null | ISO-8601 |
 
 > **Perbandingan versi** dilakukan di client dengan semantic-version compare (`0.2` < `0.3` < `0.10`),
-> bukan string compare. Dari versi terpasang vs blok platform:
-> - terpasang **<** `min_supported_version` → update **wajib**
-> - `min_supported_version` **≤** terpasang **<** `latest_version` → update **disarankan**
-> - terpasang **≥** `latest_version` → tidak ada update
+> bukan string compare. Urutan cek dari versi + build terpasang vs blok platform:
+> 1. `build` terpasang **<** `latest_build` (ada APK lebih baru) → update **wajib** (harus unduh APK
+>    baru). Dicek **paling awal**, sebelum `version` string — mis. `latest_build` 2 vs APK build 1 →
+>    modal muncul; `latest_build` 2 vs APK build 2 → tidak muncul (2 < 2 salah). `latest_build`
+>    diterima number (`2`) maupun string (`"2"`).
+> 2. `version` terpasang **<** `min_supported_version` → update **wajib**
+> 3. `min_supported_version` **≤** `version` terpasang **<** `latest_version` → update **disarankan**
+> 4. selain itu → tidak ada update
 >
-> Kalau versi terpasang tidak dikenal / lebih baru dari `latest_version`, anggap tidak ada update.
+> Cek `build` dilewati kalau `latest_build` (atau build terpasang) tidak diketahui. Kalau `version`
+> terpasang tidak bisa diparse **dan** build tidak tertinggal, anggap tidak ada update (jangan blokir
+> user karena format versi aneh).
 
 ### 1.3 Perilaku app
 
-- **Update wajib** → `StatusModal` non-dismissable (tanpa aksi sekunder, `onRequestClose` no-op —
-  pola sama seperti gate lokasi di `Home`), satu tombol "Update Sekarang" yang membuka `download_url`
-  (atau `store_url`) via `Linking.openURL`.
-- **Update disarankan** → `StatusModal` biasa dengan aksi "Update" + "Nanti"; "Nanti" menyimpan
-  `latest_version` yang di-skip di AsyncStorage supaya tidak muncul lagi untuk versi itu sampai ada
-  rilis lebih baru.
+- **Update wajib** → `StatusModal` non-dismissable (`onRequestClose` no-op — pola sama seperti gate
+  lokasi di `Home`), **bertema primary/biru** dengan ikon badge "download", satu tombol **"Update"**
+  yang membuka `download_url` (atau `store_url`) via `Linking.openURL`; kalau dua-duanya `null`,
+  tombol tetap "Update" tapi hanya cek ulang endpoint (menunggu backend mengisi URL). Di build debug
+  (`__DEV__`) ada aksi sekunder "Lewati (dev)" supaya app tetap bisa dipakai saat pengembangan — di
+  build release tidak ada.
+- **Update disarankan** → `StatusModal` biasa (juga primary/biru + ikon "download") dengan aksi
+  "Update" + "Nanti"; "Nanti" menyimpan `latest_version` yang di-skip di AsyncStorage (key
+  `skipped_app_version`) supaya tidak muncul lagi untuk versi itu sampai ada rilis lebih baru.
 - Request gagal (network / non-2xx) → **diabaikan diam-diam**, app jalan normal (jangan blokir user
   hanya karena cek versi gagal).
 

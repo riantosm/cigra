@@ -10,6 +10,11 @@ import { contentEnterTransition } from '@/utils/motion';
 
 export type StatusModalVariant = 'success' | 'error';
 
+// Glyph di badge ikon. Default mengikuti `variant` (success → centang, error → segitiga).
+// `download` dipakai layar cek versi (AppVersionGate) supaya modal "Update" tetap bertema
+// primary/biru tapi ikonnya tetap bermakna "unduh pembaruan", bukan centang "selesai".
+export type StatusModalIcon = StatusModalVariant | 'download';
+
 export interface StatusModalAction {
   label: string;
   onPress: () => void;
@@ -19,6 +24,8 @@ export interface StatusModalAction {
 export interface StatusModalProps {
   visible: boolean;
   variant: StatusModalVariant;
+  /** Override glyph badge; default = `variant`. */
+  icon?: StatusModalIcon;
   title: string;
   message: string;
   primaryAction: StatusModalAction;
@@ -38,24 +45,26 @@ const haloByVariant: Record<StatusModalVariant, string> = {
 
 const gradientStops: Record<StatusModalVariant, [string, string]> = {
   success: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
-  error: [colors.dangerMuted, colors.danger],
+  error: [colors.gradientDangerCtaStart, colors.danger],
 };
 
 // Icon badge glyph — inlined (not the shared Icon atom) so the stroke weight matches
-// DESIGN_SYSTEM §5.15: success check `2.4`, error alert-triangle `2`.
-const glyphByVariant: Record<StatusModalVariant, { d: string; strokeWidth: number }> = {
+// DESIGN_SYSTEM §5.15: success check `2.4`, error alert-triangle `2`, download `2`.
+const glyphByIcon: Record<StatusModalIcon, { d: string; strokeWidth: number }> = {
   success: { d: 'M5 13l4 4L19 7', strokeWidth: 2.4 },
   error: { d: 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z M12 9v4M12 17h.01', strokeWidth: 2 },
+  download: { d: 'M12 3v11M7 10l5 5 5-5M5 20h14', strokeWidth: 2 },
 };
 
 // Popup konfirmasi / hasil aksi (DESIGN_SYSTEM §5.15) — dipakai untuk SEMUA feedback aksi
 // (sukses/gagal) & konfirmasi destruktif, bukan `Alert.alert`. Artboard: "Emergency Popup"
 // (success, 1 tombol) & "Settings Popup" (error, 2 tombol).
 export default function StatusModal(props: StatusModalProps) {
-  const { visible, variant, title, message, primaryAction, secondaryAction, onRequestClose } = props;
+  const { visible, variant, icon, title, message, primaryAction, secondaryAction, onRequestClose } =
+    props;
   const accent = accentByVariant[variant];
   const [from, to] = gradientStops[variant];
-  const glyph = glyphByVariant[variant];
+  const glyph = glyphByIcon[icon ?? variant];
   const primaryTone = primaryAction.variant === 'danger' || variant === 'error' ? 'danger' : 'primary';
 
   return (

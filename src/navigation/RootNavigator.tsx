@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import AppVersionGate from '@/components/organisms/AppVersionGate';
 import MainTabNavigator from '@/navigation/MainTabNavigator';
 import { ROUTES } from '@/navigation/paths';
 import RequireAuth from '@/navigation/RequireAuth';
@@ -77,52 +78,55 @@ export default function RootNavigator() {
   }, [isLogin, roles]);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name={ROUTES.login}>
-        {screenProps => (
-          <RequireGuest navigation={screenProps.navigation}>
-            <LoginScreen {...screenProps} />
-          </RequireGuest>
-        )}
-      </Stack.Screen>
-      <Stack.Screen name={ROUTES.forgotPassword}>
-        {screenProps => (
-          <RequireGuest navigation={screenProps.navigation}>
-            <ForgotPasswordScreen {...screenProps} />
-          </RequireGuest>
-        )}
-      </Stack.Screen>
-      <Stack.Screen name={ROUTES.changePassword}>
-        {screenProps => (
-          <RequireAuth navigation={screenProps.navigation} skipPasswordChangeGate>
-            <ChangePasswordScreen {...screenProps} />
-          </RequireAuth>
-        )}
-      </Stack.Screen>
-      <Stack.Screen name={ROUTES.main}>
-        {screenProps => (
-          <RequireAuth navigation={screenProps.navigation}>
-            <MainTabNavigator />
-          </RequireAuth>
-        )}
-      </Stack.Screen>
-      <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
-      <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
-      <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />
-      <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
-      <Stack.Screen name={ROUTES.comingSoon} component={ComingSoonScreen} />
-      <Stack.Screen name={ROUTES.personnelMap} component={PersonnelMapScreen} />
-      <Stack.Screen name={ROUTES.personnelTracking} component={PersonnelTrackingScreen} />
-      <Stack.Screen name={ROUTES.notifications} component={NotificationsScreen} />
-      <Stack.Screen name={ROUTES.emergencyList} component={EmergencyListScreen} />
-      <Stack.Screen name={ROUTES.sendAnnouncement} component={SendAnnouncementScreen} />
-      <Stack.Screen name={ROUTES.alarmSatuan} component={AlarmSatuanScreen} />
-      <Stack.Screen name={ROUTES.healthDashboard} component={HealthDashboardScreen} />
-      <Stack.Screen name={ROUTES.healthPersonnelSearch} component={HealthPersonnelSearchScreen} />
-      <Stack.Screen name={ROUTES.healthPersonnelProfile} component={HealthPersonnelProfileScreen} />
-      <Stack.Screen name={ROUTES.healthRecordInput} component={HealthRecordInputScreen} />
-      <Stack.Screen name={ROUTES.healthRecordDetail} component={HealthRecordDetailScreen} />
-      <Stack.Screen name={ROUTES.healthMyHistory} component={HealthMyHistoryScreen} />
-    </Stack.Navigator>
+    <>
+      <AppVersionGate />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name={ROUTES.login}>
+          {screenProps => (
+            <RequireGuest navigation={screenProps.navigation}>
+              <LoginScreen {...screenProps} />
+            </RequireGuest>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name={ROUTES.forgotPassword}>
+          {screenProps => (
+            <RequireGuest navigation={screenProps.navigation}>
+              <ForgotPasswordScreen {...screenProps} />
+            </RequireGuest>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name={ROUTES.changePassword}>
+          {screenProps => (
+            <RequireAuth navigation={screenProps.navigation} skipPasswordChangeGate>
+              <ChangePasswordScreen {...screenProps} />
+            </RequireAuth>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name={ROUTES.main}>
+          {screenProps => (
+            <RequireAuth navigation={screenProps.navigation}>
+              <MainTabNavigator />
+            </RequireAuth>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
+        <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
+        <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />
+        <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
+        <Stack.Screen name={ROUTES.comingSoon} component={ComingSoonScreen} />
+        <Stack.Screen name={ROUTES.personnelMap} component={PersonnelMapScreen} />
+        <Stack.Screen name={ROUTES.personnelTracking} component={PersonnelTrackingScreen} />
+        <Stack.Screen name={ROUTES.notifications} component={NotificationsScreen} />
+        <Stack.Screen name={ROUTES.emergencyList} component={EmergencyListScreen} />
+        <Stack.Screen name={ROUTES.sendAnnouncement} component={SendAnnouncementScreen} />
+        <Stack.Screen name={ROUTES.alarmSatuan} component={AlarmSatuanScreen} />
+        <Stack.Screen name={ROUTES.healthDashboard} component={HealthDashboardScreen} />
+        <Stack.Screen name={ROUTES.healthPersonnelSearch} component={HealthPersonnelSearchScreen} />
+        <Stack.Screen name={ROUTES.healthPersonnelProfile} component={HealthPersonnelProfileScreen} />
+        <Stack.Screen name={ROUTES.healthRecordInput} component={HealthRecordInputScreen} />
+        <Stack.Screen name={ROUTES.healthRecordDetail} component={HealthRecordDetailScreen} />
+        <Stack.Screen name={ROUTES.healthMyHistory} component={HealthMyHistoryScreen} />
+      </Stack.Navigator>
+    </>
   );
 }

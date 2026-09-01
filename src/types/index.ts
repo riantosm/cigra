@@ -4,3 +4,4 @@ export * from './location.types';
 export * from './catalog.types';
 export * from './stellingAlarm.types';
 export * from './health.types';
+export * from './appVersion.types';

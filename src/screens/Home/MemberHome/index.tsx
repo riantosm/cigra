@@ -287,11 +287,13 @@ export default function MemberHome(props: MemberHomeProps) {
           <View style={styles.assetRow}>
             <AssetCard
               icon="weapon"
+              style={styles.assetCard}
               {...DUMMY_ASSETS.weapon}
               onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
             />
             <AssetCard
               icon="car"
+              style={styles.assetCard}
               {...DUMMY_ASSETS.vehicle}
               onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
             />
@@ -405,7 +407,13 @@ const styles = StyleSheet.create({
   },
   assetRow: {
     flexDirection: 'row',
+    alignItems: 'stretch',
     gap: 12,
+  },
+  assetCard: {
+    flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
   },
   listCard: {
     paddingHorizontal: 14,

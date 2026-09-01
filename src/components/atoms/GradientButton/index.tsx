@@ -20,7 +20,7 @@ export interface GradientButtonProps extends Omit<PressableProps, 'children' | '
 
 const toneStops: Record<GradientButtonTone, [string, string]> = {
   primary: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
-  danger: [colors.dangerMuted, colors.danger],
+  danger: [colors.gradientDangerCtaStart, colors.danger],
 };
 
 const toneShadow: Record<GradientButtonTone, string> = {
