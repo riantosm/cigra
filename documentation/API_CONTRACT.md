@@ -1,6 +1,6 @@
 # API Contract — Smart Battalion
 
-**Pengecekan frontend terakhir: 1 September 2026, 20.30 WIB**
+**Pengecekan frontend terakhir: 1 September 2026, 18.59 WIB**
 
 Kontrak API untuk surface yang masih dummy + status integrasinya di app. Envelope, pagination
 (`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah — seragam dengan

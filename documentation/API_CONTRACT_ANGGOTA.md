@@ -1,6 +1,6 @@
 # API Contract — Home Anggota
 
-**Pengecekan frontend terakhir: 1 September 2026, 17.03 WIB**
+**Pengecekan frontend terakhir: 1 September 2026, 18.59 WIB**
 
 Kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Envelope, pagination,
 format waktu, dan enum seragam dengan `API_CONTRACT.md`. Semua endpoint di bawah berskup **user

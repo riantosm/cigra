@@ -21,7 +21,7 @@ DOCS = {
 }
 
 # Tanggal pengecekan frontend terakhir — tampil di atas Daftar Isi. Update saat sweep status berikutnya.
-CHECKED = "1 September 2026, 20.30 WIB"
+CHECKED = "1 September 2026, 18.59 WIB"
 
 html = TEMPLATE.read_text(encoding="utf-8").replace("@@CHECKED@@", CHECKED)
 for token, path in DOCS.items():

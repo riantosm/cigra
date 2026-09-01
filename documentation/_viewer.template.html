@@ -245,6 +245,33 @@
     overflow-wrap: anywhere;
   }
 
+  /* ---------- endpoint chip (klik = salin) ---------- */
+  code.ep {
+    position: relative; display: inline-flex; align-items: stretch; gap: 0;
+    padding: 0; border: 1px solid var(--code-line); border-radius: 6px;
+    background: var(--code-bg); overflow: hidden; cursor: pointer;
+    vertical-align: baseline; line-height: 1.5; user-select: none;
+  }
+  code.ep:hover { border-color: var(--accent); }
+  code.ep:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  code.ep .ep-verb {
+    padding: 1.5px 7px; font-weight: 700; letter-spacing: 0.04em; color: #fff;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  code.ep .ep-path { padding: 1.5px 8px; color: var(--code-ink); background: var(--code-bg); }
+  code.ep.verb-get    .ep-verb { background: #2563EB; color: #fff; }
+  code.ep.verb-post   .ep-verb { background: #15A34A; color: #fff; }
+  code.ep.verb-patch  .ep-verb { background: #C7D426; color: #2B2F06; }
+  code.ep.verb-put    .ep-verb { background: #EA6A0C; color: #fff; }
+  code.ep.verb-delete .ep-verb { background: #DC2626; color: #fff; }
+  code.ep.copied { border-color: #15A34A; }
+  code.ep.copied::after {
+    content: "Tersalin"; position: absolute; left: 50%; bottom: 100%;
+    transform: translate(-50%, -5px); background: var(--ink); color: var(--ground);
+    font-family: "IBM Plex Sans", sans-serif; font-size: 10.5px; font-weight: 600;
+    padding: 3px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none;
+  }
+
   .md-list { margin: 14px 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; max-width: 72ch; }
   .md-list li { color: var(--ink-soft); }
   .md-list li::marker { color: var(--muted); }
@@ -460,7 +487,19 @@
       s = escHtml(s);
       s = s.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
       s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, t, u) { return '<a href="' + escAttr(u) + '">' + t + '</a>'; });
-      s = s.replace(/\u0000(\d+)\u0000/g, function (m, i) { return '<code>' + escHtml(codes[+i]) + '</code>'; });
+      s = s.replace(/\u0000(\d+)\u0000/g, function (m, i) {
+        var c = codes[+i];
+        var vm = c.match(/^(GET|POST|PUT|PATCH|DELETE)(\s+\/\S.*)?$/);
+        if (vm) {
+          var verb = vm[1], path = vm[2] || '';
+          return '<code class="ep verb-' + verb.toLowerCase() + '" role="button" tabindex="0"' +
+            ' title="Klik untuk salin" data-copy="' + escAttr(c) + '">' +
+            '<span class="ep-verb">' + verb + '</span>' +
+            (path ? '<span class="ep-path">' + escHtml(path.replace(/^\s+/, '')) + '</span>' : '') +
+            '</code>';
+        }
+        return '<code>' + escHtml(c) + '</code>';
+      });
       return s;
     }
 
@@ -722,25 +761,82 @@
     expandGroupFor(location.hash);
     window.addEventListener('hashchange', function () { expandGroupFor(location.hash); });
 
-    // ---------- scroll spy ----------
+    // ---------- scroll spy (posisi-based, andal saat klik daftar isi) ----------
     var anchorEls = Array.prototype.slice.call(main.querySelectorAll('[id^="mod-"], h2.hd[id], h3.hd[id]'));
     var linkMap = {};
     Array.prototype.slice.call(toc.querySelectorAll('a[href^="#"]')).forEach(function (a) {
       linkMap[a.getAttribute('href').slice(1)] = a;
     });
-    if ('IntersectionObserver' in window && anchorEls.length) {
-      var visible = new Set();
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting) visible.add(en.target.id); else visible.delete(en.target.id);
-        });
-        var top = anchorEls.filter(function (el) { return visible.has(el.id); })[0];
-        if (!top) return;
-        Object.keys(linkMap).forEach(function (k) { linkMap[k].classList.remove('active'); });
-        if (linkMap[top.id]) linkMap[top.id].classList.add('active');
-      }, { rootMargin: '-12% 0px -72% 0px' });
-      anchorEls.forEach(function (el) { io.observe(el); });
+    var LINE = 120; // px dari atas — kira-kira sejajar scroll-margin heading
+    var spyLock = 0; // abaikan update sementara setelah klik, biar smooth-scroll selesai
+    function setActive(id) {
+      Object.keys(linkMap).forEach(function (k) { linkMap[k].classList.remove('active'); });
+      if (id && linkMap[id]) {
+        linkMap[id].classList.add('active');
+        var g = linkMap[id].closest('.toc-group');
+        if (g) g.classList.remove('collapsed');
+      }
     }
+    function currentId() {
+      var cur = anchorEls.length ? anchorEls[0].id : null;
+      for (var k = 0; k < anchorEls.length; k++) {
+        if (anchorEls[k].getBoundingClientRect().top - LINE <= 1) cur = anchorEls[k].id;
+        else break;
+      }
+      // kalau sudah mentok bawah halaman, sorot heading terakhir yang terlihat
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2 && anchorEls.length) {
+        cur = anchorEls[anchorEls.length - 1].id;
+      }
+      return cur;
+    }
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        if (Date.now() < spyLock) return;
+        setActive(currentId());
+      });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // klik item daftar isi → langsung tandai item itu, kunci spy sebentar
+    toc.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('.toc li a[href^="#"]');
+      if (!a) return;
+      spyLock = Date.now() + 900;
+      setActive(a.getAttribute('href').slice(1));
+    });
+    setActive(currentId());
+
+    // ---------- endpoint chip: klik = salin ----------
+    function copyText(text, ok) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, ok);
+      } else {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+          document.body.removeChild(ta); ok();
+        } catch (err) { ok(); }
+      }
+    }
+    document.addEventListener('click', function (e) {
+      var ep = e.target.closest && e.target.closest('code.ep');
+      if (!ep) return;
+      copyText(ep.getAttribute('data-copy') || ep.textContent, function () {
+        ep.classList.add('copied');
+        setTimeout(function () { ep.classList.remove('copied'); }, 1300);
+      });
+    });
+    document.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.classList &&
+          e.target.classList.contains('ep')) {
+        e.preventDefault();
+        e.target.click();
+      }
+    });
 
     // ---------- copy buttons ----------
     document.addEventListener('click', function (e) {
