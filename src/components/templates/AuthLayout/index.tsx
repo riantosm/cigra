@@ -73,7 +73,7 @@ export default AuthLayout;
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.pageGradientStart,
+    backgroundColor: colors.authGradientStart,
   },
   flex: {
     flex: 1,

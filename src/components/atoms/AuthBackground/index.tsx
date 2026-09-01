@@ -22,9 +22,9 @@ export default function AuthBackground(props: AuthBackgroundProps) {
       <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="authPage" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={colors.pageGradientStart} />
-            <Stop offset="0.45" stopColor={colors.pageGradientMid} />
-            <Stop offset="1" stopColor={colors.pageGradientEnd} />
+            <Stop offset="0" stopColor={colors.authGradientStart} />
+            <Stop offset="0.45" stopColor={colors.authGradientMid} />
+            <Stop offset="1" stopColor={colors.authGradientEnd} />
           </LinearGradient>
         </Defs>
         <Rect width={width} height={height} fill="url(#authPage)" />

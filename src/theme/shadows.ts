@@ -50,6 +50,16 @@ export const smallButtonShadow: ViewStyle = {
   elevation: 3,
 };
 
+// Home header (screens/Home/HomeHeader) — a soft NEUTRAL drop shadow (not blue-tinted) so the
+// solid-white bar reads as a calm surface separator on the near-white page ground.
+export const headerShadow: ViewStyle = {
+  shadowColor: colors.text,
+  shadowOpacity: 0.05,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 2,
+};
+
 // Bottom tab bar — upward blue glow.
 export const tabBarShadow: ViewStyle = {
   shadowColor: colors.primary,

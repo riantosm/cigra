@@ -1,5 +1,6 @@
 export const colors = {
-  background: '#F2F5FB',
+  // Latar dasar aplikasi — putih sedikit abu (kartu konten `surface` = #FFF di atasnya).
+  background: '#F5F6F8',
   surface: '#FFFFFF',
   border: '#E4E9F2',
   text: '#0F172A',
@@ -19,17 +20,23 @@ export const colors = {
   dangerMuted: '#FCA5A5',
   primarySurface: '#DBEAFE',
   neutralSurface: '#F1F5F9',
-  // --- "Canvas theme" tokens (DESIGN_SYSTEM.md §1b) — gradient bg, soft borders, blue-tinted shadow.
-  // Rolled out on the Auth screens first; reuse these as more screens adopt the canvas look.
+  // --- "Canvas theme" tokens (DESIGN_SYSTEM.md §1b) — near-white page ground, soft borders,
+  // blue-tinted card shadow. Live on the Auth screens + Komandan/Home/Semua Peran groups.
   heading: '#1E293B',
   placeholder: '#94A3B8',
   borderSoft: '#E7EDF9',
   chipSurface: '#EEF3FD',
   // Pemisah "•" / garis tipis di atas latar gradient (DESIGN_SYSTEM §1b).
   dividerOnGradient: '#CBD5E1',
-  pageGradientStart: '#EFF1FA',
-  pageGradientMid: '#E7ECF8',
-  pageGradientEnd: '#E2EAF6',
+  // Latar "canvas" untuk SEMUA layar non-Auth — putih sedikit abu (revisi 2026-09-01, DESIGN_SYSTEM §1b).
+  // Gradasi sangat halus; kartu konten tetap `surface` #FFF. Dulu lavender-biru (lihat `authGradient*`).
+  pageGradientStart: '#F7F8FA',
+  pageGradientMid: '#F4F6F9',
+  pageGradientEnd: '#F2F4F7',
+  // Latar Auth (Login/OTP/Lupa Password/Ganti Password) — TETAP gradient lavender-biru + siluet gunung.
+  authGradientStart: '#EFF1FA',
+  authGradientMid: '#E7ECF8',
+  authGradientEnd: '#E2EAF6',
   gradientPrimaryStart: '#3B82F6',
   gradientPrimaryEnd: '#2563EB',
   // Danger CTA gradient (atoms/GradientButton tone="danger", StatusModal error icon + button).
@@ -47,13 +54,10 @@ export const colors = {
   // Frosted track behind a segmented pill toggle sitting on the gradient backdrop.
   pillTrackSurface: 'rgba(255, 255, 255, 0.55)',
   pillTrackBorder: 'rgba(255, 255, 255, 0.8)',
-  // Near-opaque white for overlay cards floating on a map (PersonnelMap legend) & the Home header.
+  // Near-opaque white for overlay cards floating on a map (PersonnelMap legend).
   floatingSurface: 'rgba(255, 255, 255, 0.94)',
-  headerSurface: 'rgba(255, 255, 255, 0.72)',
-  // Large translucent "blob" circles for non-Auth canvas screens (slightly softer than the
-  // Auth-only decorBlob* pair). Used by atoms/ScreenBackground.
-  pageBlobStrong: 'rgba(255, 255, 255, 0.45)',
-  pageBlobSoft: 'rgba(255, 255, 255, 0.32)',
+  // Home header (screens/Home/HomeHeader) — putih solid di atas latar near-white.
+  headerSurface: '#FFFFFF',
   // Readable text on top of warningSurface (badge "Stale" / "Menunggu" / "Ditangani" / "Rusak Ringan").
   warningText: '#B45309',
   // Emphatic red heading on danger surfaces (Emergency banner title, alarm code card).

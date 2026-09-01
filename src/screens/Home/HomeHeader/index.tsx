@@ -7,7 +7,7 @@ import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
 import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
-import { cardShadow, smallButtonShadow } from '@/theme/shadows';
+import { headerShadow, smallButtonShadow } from '@/theme/shadows';
 import type { AuthUser } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
 import { titleCase } from '@/utils/format';
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     backgroundColor: colors.headerSurface,
-    ...cardShadow,
+    ...headerShadow,
   },
   headerLeft: {
     flex: 1,

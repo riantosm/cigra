@@ -36,7 +36,7 @@ di `src/theme/colors.ts`.
 
 | Token | Hex | Pakai |
 |---|---|---|
-| `background` | `#F2F5FB` | latar layar `MainLayout` |
+| `background` | `#F5F6F8` | latar layar `MainLayout` (putih sedikit abu — kartu `surface` #FFF di atasnya) |
 | `surface` | `#FFFFFF` | kartu, header |
 | `border` | `#E4E9F2` | garis pemisah / border kartu |
 | `text` | `#0F172A` | teks utama |
@@ -56,8 +56,15 @@ Gradien identitas modul (dipakai di kartu katalog):
 
 ### 1b. Token "canvas theme" (evolusi visual — target tampilan baru)
 
-Tampilan yang dipakai di canvas desain (lebih lembut, ada gradient & shadow biru). **Saat
+Tampilan yang dipakai di canvas desain (lebih lembut, ada shadow biru). **Saat
 mengimplementasikan ini ke kode, tambahkan sebagai token baru** di `src/theme/colors.ts`.
+
+> **Revisi latar 2026-09-01 — "putih sedikit abu".** Latar semua layar **non-Auth** tidak lagi
+> gradient lavender-biru; sekarang near-white `#F7F8FA → #F2F4F7` (`pageGradient*`), kartu konten
+> tetap `surface` #FFF. Blob pojok putih di `atoms/ScreenBackground` **dihapus** (tak kelihatan di
+> latar near-white); `headerSurface` jadi `#FFFFFF` solid + `headerShadow` netral (bukan `cardShadow`
+> biru). Layar **Autentikasi** (Login/OTP/Lupa Password/Ganti Password) **tetap** gradient lavender
+> + gunung + blob, lewat token terpisah `authGradient*` (`AuthBackground` / `AuthLayout`).
 Sudah dipakai penuh di **layar Autentikasi** (Login, Login-OTP, Lupa Password, Ganti Password) —
 lihat komponen `AuthBackground` / `AuthLayout` / `GradientButton` / `AuthField` / `AuthToggle` —
 **dan seluruh grup layar Komandan** (CommanderHome, CatalogList, CatalogDetail, PersonnelTracking,
@@ -66,8 +73,8 @@ PersonnelMap, SendAnnouncement, AlarmSatuan, EmergencyList) plus ketiga Home dan
 semua `MainLayout variant="canvas"` + `subtitle`; `StatusModal` sudah §5.15).
 Infrastruktur bersama:
 
-- `atoms/ScreenBackground` — gradient backdrop + blob pojok untuk layar non-Auth (versi ringan
-  `AuthBackground`, tanpa gunung/watermark).
+- `atoms/ScreenBackground` — gradient backdrop near-white untuk layar non-Auth (tanpa blob/gunung/
+  watermark; `AuthBackground` yang masih pakai blob + gunung, khusus Auth).
 - `templates/MainLayout` prop `variant="canvas"` + `subtitle` — header besar `22/800` tanpa
   nav-bar/border, tombol back kotak putih `40×40`. `variant` default `'plain'` (layar lama tak
   berubah).
@@ -93,13 +100,14 @@ prop `autoFocus`) untuk baris pencarian, kartu list `borderSoft` + `cardShadow`,
 + `tabBarShadow` (tanpa border atas).
 
 Token yang **sudah ada** di `src/theme/colors.ts`: `heading` `#1E293B` · `placeholder` `#94A3B8` ·
-`borderSoft` `#E7EDF9` · `chipSurface` `#EEF3FD` · `pageGradientStart` `#EFF1FA` /
-`pageGradientMid` `#E7ECF8` / `pageGradientEnd` `#E2EAF6` · `gradientPrimaryStart` `#3B82F6` /
+`borderSoft` `#E7EDF9` · `chipSurface` `#EEF3FD` · `pageGradientStart` `#F7F8FA` /
+`pageGradientMid` `#F4F6F9` / `pageGradientEnd` `#F2F4F7` (latar near-white non-Auth) ·
+`authGradientStart/Mid/End` `#EFF1FA`/`#E7ECF8`/`#E2EAF6` (latar lavender khusus Auth) ·
+`gradientPrimaryStart` `#3B82F6` /
 `gradientPrimaryEnd` `#2563EB` · `authMountainBack/Mid/Front` `#CBD8EE`/`#B6C7E6`/`#9FB5DC` (siluet
-gunung Login) · `decorBlobStrong/Soft` `rgba(255,255,255,0.5/0.35)` (blob pojok) ·
+gunung Login) · `decorBlobStrong/Soft` `rgba(255,255,255,0.5/0.35)` (blob pojok — Auth saja) ·
 `pillTrackSurface/Border` `rgba(255,255,255,0.55/0.8)` (track toggle pill di atas gradient) ·
-`pageBlobStrong/Soft` `rgba(255,255,255,0.45/0.32)` (blob `ScreenBackground`) · `headerSurface`
-`rgba(255,255,255,0.72)` (Home header) · `floatingSurface` `rgba(255,255,255,0.94)` (kartu di
+`headerSurface` `#FFFFFF` (Home header) · `floatingSurface` `rgba(255,255,255,0.94)` (kartu di
 atas peta) · `warningText` `#B45309` · `dangerText` `#B91C1C` · `alertBannerStart/End/Border`
 `#FEECEC`/`#FDE0E0`/`#FBD5D5` (banner emergency CommanderHome) · `mapCanvasStart/End`
 `#E8F0E6`/`#E3EDF7` · `gradientInactiveStart/End` `#A78BFA`/`#8B5CF6` (avatar nonaktif) ·
@@ -112,7 +120,8 @@ ukuran CTA) · `haloPrimary`/`haloDanger` `rgba(37,99,235,0.10)`/`rgba(220,38,38
 
 | Nama | Nilai | Pakai |
 |---|---|---|
-| Latar layar (gradient) | `linear-gradient(180deg, #EFF1FA 0%, #E7ECF8 45%, #E2EAF6 100%)` | latar semua layar |
+| Latar layar non-Auth | `linear-gradient(180deg, #F7F8FA 0%, #F4F6F9 45%, #F2F4F7 100%)` | putih sedikit abu — semua layar kecuali Auth |
+| Latar layar Auth | `linear-gradient(180deg, #EFF1FA 0%, #E7ECF8 45%, #E2EAF6 100%)` | lavender-biru + gunung — Login/OTP/Lupa/Ganti Password |
 | `borderSoft` | `#E7EDF9` | border kartu (lebih lembut dari `border`) |
 | `heading` | `#1E293B` | judul & angka besar |
 | `placeholder` | `#94A3B8` | teks placeholder input |
@@ -126,7 +135,7 @@ ukuran CTA) · `haloPrimary`/`haloDanger` `rgba(37,99,235,0.10)`/`rgba(220,38,38
 
 Preset RN siap-pakai di **`src/theme/shadows.ts`** — import dari sana, jangan tulis prop shadow
 inline: `cardShadow`, `cardShadowRaised`, `ctaPrimaryShadow`, `ctaDangerShadow`,
-`smallButtonShadow`, `tabBarShadow`.
+`smallButtonShadow`, `headerShadow`, `tabBarShadow`.
 
 | Nama | Nilai CSS (canvas) | RN kira-kira |
 |---|---|---|
@@ -135,10 +144,12 @@ inline: `cardShadow`, `cardShadowRaised`, `ctaPrimaryShadow`, `ctaDangerShadow`,
 | Tombol/CTA primary | `0 14px 30px rgba(37,99,235,0.30)` | elevation 8 |
 | Tombol/CTA danger | `0 14px 30px rgba(220,38,38,0.30)` | elevation 8 |
 | Tombol kecil (kotak) | `0 4px 12px rgba(37,99,235,0.10)` | elevation 3 |
+| Home header (`headerShadow`) | `0 4px 16px rgba(15,23,42,0.05)` | `shadowColor:'#0F172A', shadowOpacity:0.05, shadowRadius:16, offset:{0,4}, elevation:2` |
 | Tab bar bawah | `0 -6px 24px rgba(37,99,235,0.12)` | elevation 8, offset y -4 |
 
 Warna shadow **selalu bernuansa biru** (`rgba(37,99,235,...)`) atau warna aksen komponen —
-tidak pernah hitam murni, kecuali `overlay`.
+tidak pernah hitam murni, **kecuali** `overlay` dan `headerShadow` (netral slate — bar putih solid
+di atas latar near-white butuh bayangan tak berwarna).
 
 ---
 
@@ -330,10 +341,14 @@ persen `11/600` muted / progress bar (`track` `4px` `chipSurface`, `fill` warna 
 
 ### 5.14 Latar dekoratif
 
-Setiap layar: 1–2 "blob" `rgba(255,255,255,0.35–0.45)` lingkaran besar (`160–220px`) di pojok
-atas, `position: absolute`, `pointer-events: none`, `overflow: hidden` di root. Layar Login juga
-punya siluet gunung 3 lapis di bawah + watermark perisai di kanan. **Jangan berlebihan** — blob
-saja untuk layar biasa.
+**Layar non-Auth:** latar polos near-white `pageGradient*` (`atoms/ScreenBackground`), **tanpa
+blob** — sejak revisi "putih sedikit abu" 2026-09-01 (§1b) blob putih tak lagi kelihatan di latar
+terang, jadi dihapus.
+
+**Layar Auth (`atoms/AuthBackground`):** 1–2 "blob" `rgba(255,255,255,0.35–0.5)` lingkaran besar
+(`200–240px`) di pojok atas, `position: absolute`, `pointer-events: none`, `overflow: hidden` di
+root; Login juga punya siluet gunung 3 lapis di bawah + watermark perisai di kanan. **Jangan
+berlebihan.**
 
 ### 5.15 StatusModal — popup konfirmasi / hasil
 

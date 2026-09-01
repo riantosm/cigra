@@ -3,17 +3,12 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { colors } from '@/theme/colors';
 
-export interface ScreenBackgroundProps {
-  /** `'default'` shows two translucent corner blobs; `'none'` is a plain gradient. */
-  blobs?: 'default' | 'none';
-}
-
-// Full-bleed decorative backdrop for "canvas theme" screens (DESIGN_SYSTEM.md §5.14, §6):
-// vertical page gradient + a couple of translucent corner blobs. Rendered absolutely behind
-// the content, never interactive. The Auth screens use the richer `atoms/AuthBackground`
-// (mountains/watermark); everything else uses this.
-export default function ScreenBackground(props: ScreenBackgroundProps) {
-  const { blobs = 'default' } = props;
+// Full-bleed backdrop for "canvas theme" screens (DESIGN_SYSTEM.md §5.14, §6): a near-white
+// vertical page gradient, rendered absolutely behind the content, never interactive. The
+// translucent corner blobs were dropped in the 2026-09-01 near-white revision (invisible on
+// the near-white ground). The Auth screens use the richer `atoms/AuthBackground`
+// (lavender gradient + blobs + mountains); everything else uses this.
+export default function ScreenBackground() {
   const { width, height } = useWindowDimensions();
 
   return (
@@ -28,34 +23,6 @@ export default function ScreenBackground(props: ScreenBackgroundProps) {
         </Defs>
         <Rect width={width} height={height} fill="url(#screenPage)" />
       </Svg>
-
-      {blobs === 'default' ? (
-        <>
-          <View style={[styles.blob, styles.blobTopRight]} />
-          <View style={[styles.blob, styles.blobLeft]} />
-        </>
-      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  blob: {
-    position: 'absolute',
-    borderRadius: 999,
-  },
-  blobTopRight: {
-    top: -70,
-    right: -80,
-    width: 220,
-    height: 220,
-    backgroundColor: colors.pageBlobStrong,
-  },
-  blobLeft: {
-    top: 140,
-    left: -70,
-    width: 170,
-    height: 170,
-    backgroundColor: colors.pageBlobSoft,
-  },
-});
