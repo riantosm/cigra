@@ -1,154 +1,170 @@
-import { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
+import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
-import { useAppSelector } from '@/store/hooks';
-import type { LocalAnnouncement } from '@/store/slices/announcementSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from '@/store/slices/notificationSlice';
 import { colors } from '@/theme/colors';
+import type { AppNotification } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.notifications>;
 
-type NotificationType = 'emergency' | 'announcement' | 'info' | 'system';
-
-interface AppNotification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  created_at: string;
-  read: boolean;
-}
-
-const typeIcon: Record<NotificationType, IconName> = {
+const typeIcon: Record<string, IconName> = {
   emergency: 'emergency',
   announcement: 'megaphone',
   info: 'info',
   system: 'settings',
 };
 
-const typeColor: Record<NotificationType, string> = {
+const typeColor: Record<string, string> = {
   emergency: colors.danger,
   announcement: colors.warning,
   info: colors.primary,
   system: colors.textMuted,
 };
 
-const typeSurface: Record<NotificationType, string> = {
+const typeSurface: Record<string, string> = {
   emergency: colors.dangerSurface,
   announcement: colors.chipSurface,
   info: colors.primarySurface,
   system: colors.chipSurface,
 };
 
-// Dummy sementara — belum ada endpoint `GET /notifications` (lihat API_CONTRACT.md). Bentuk field
-// di sini (type/title/body/created_at/read) sengaja disamakan dengan draf kontrak itu supaya
-// tinggal ganti sumber datanya begitu API tersedia.
-const DUMMY_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: '1',
-    type: 'emergency',
-    title: 'Sinyal Darurat Baru',
-    body: 'Praka Rizky Maulana menekan tombol darurat di Pos Timur.',
-    created_at: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'announcement',
-    title: 'Apel Pagi',
-    body: 'Apel pagi besok pukul 06.00 di Lapangan Utama. Seluruh personel wajib hadir.',
-    created_at: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'info',
-    title: 'Perawatan Kendaraan',
-    body: 'Jadwal perawatan rutin kendaraan dinas telah diperbarui.',
-    created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'system',
-    title: 'Pelacakan Lokasi Aktif',
-    body: 'Layanan pelacakan lokasi latar belakang berjalan normal.',
-    created_at: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'announcement',
-    title: 'Perubahan Jadwal Piket',
-    body: 'Jadwal piket minggu ini mengalami penyesuaian. Cek menu Jadwal Piket.',
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-  },
-];
-
-// Pengumuman yang dikirim komandan (redux, lihat SendAnnouncement) ikut muncul di daftar
-// notifikasi — dianggap belum dibaca dan selalu di urutan paling atas berdasar waktu.
-function announcementToNotification(announcement: LocalAnnouncement): AppNotification {
-  return {
-    id: `ann-${announcement.id}`,
-    type: announcement.type === 'info' ? 'info' : 'announcement',
-    title: announcement.title,
-    body: announcement.body,
-    created_at: announcement.created_at,
-    read: false,
-  };
+function iconFor(type: string): IconName {
+  return typeIcon[type] ?? 'info';
 }
 
 export default function NotificationsScreen(props: Props) {
   const { navigation } = props;
-  const sentAnnouncements = useAppSelector(state => state.announcements.sent);
+  const dispatch = useAppDispatch();
+  const { items, meta, status, unreadTotal } = useAppSelector(state => state.notifications);
+  const [selected, setSelected] = useState<AppNotification | null>(null);
 
-  const notifications = useMemo(() => {
-    const merged = [...sentAnnouncements.map(announcementToNotification), ...DUMMY_NOTIFICATIONS];
-    return merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [sentAnnouncements]);
+  const load = useCallback(
+    (page: number) => {
+      dispatch(fetchNotifications({ page }));
+    },
+    [dispatch],
+  );
+
+  useEffect(() => {
+    load(1);
+  }, [load]);
+
+  const isLoading = status === 'loading';
+  const canLoadMore = meta ? meta.current_page < meta.last_page : false;
+
+  function handlePress(item: AppNotification) {
+    if (!item.read) dispatch(markNotificationRead(item.id));
+    setSelected(item);
+  }
+
+  function actionFor(item: AppNotification): { label: string; onPress: () => void } | undefined {
+    const action = item.action;
+    if (action?.type === 'emergency') {
+      return {
+        label: 'Buka Detail Darurat',
+        onPress: () => {
+          setSelected(null);
+          navigation.navigate(ROUTES.emergencyDetail, { id: String(action.id) });
+        },
+      };
+    }
+    if (action?.type === 'emergency_list') {
+      return {
+        label: 'Buka Daftar Darurat',
+        onPress: () => {
+          setSelected(null);
+          navigation.navigate(ROUTES.emergencyList);
+        },
+      };
+    }
+    return undefined;
+  }
 
   return (
     <MainLayout
       title="Notifikasi"
       subtitle="Pemberitahuan & pengumuman"
       variant="canvas"
-      onBack={() => navigation.goBack()}>
-      <FlatList
-        data={notifications}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={<Text style={styles.empty}>Belum ada notifikasi.</Text>}
-        renderItem={({ item }) => (
-          <PressableScale
-            scaleTo={0.98}
-            onPress={() => {
-              if (item.type === 'emergency') navigation.navigate(ROUTES.emergencyList);
-            }}>
-            <Card style={[styles.row, !item.read && styles.rowUnread]}>
-              <View style={[styles.iconCircle, { backgroundColor: typeSurface[item.type] }]}>
-                <Icon name={typeIcon[item.type]} size={18} color={typeColor[item.type]} />
-              </View>
-              <View style={styles.textGroup}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.body} numberOfLines={2}>
-                  {item.body}
-                </Text>
-                <Text style={styles.time}>{formatRelativeTime(item.created_at) ?? '-'}</Text>
-              </View>
-              {!item.read ? <View style={styles.unreadDot} /> : null}
-            </Card>
+      onBack={() => navigation.goBack()}
+      right={
+        unreadTotal > 0 ? (
+          <PressableScale onPress={() => dispatch(markAllNotificationsRead())} hitSlop={8}>
+            <Text style={styles.markAll}>Tandai semua</Text>
           </PressableScale>
-        )}
+        ) : null
+      }>
+      <FlatList
+        data={items}
+        keyExtractor={item => String(item.id)}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={isLoading && items.length > 0} onRefresh={() => load(1)} tintColor={colors.primary} />
+        }
+        onEndReachedThreshold={0.4}
+        onEndReached={() => {
+          if (canLoadMore && !isLoading && meta) load(meta.current_page + 1);
+        }}
+        ListEmptyComponent={
+          isLoading ? (
+            <ActivityIndicator style={styles.loader} color={colors.primary} />
+          ) : (
+            <Text style={styles.empty}>Belum ada notifikasi.</Text>
+          )
+        }
+        ListFooterComponent={
+          canLoadMore && items.length > 0 ? (
+            <ActivityIndicator style={styles.footerLoader} color={colors.primary} />
+          ) : undefined
+        }
+        renderItem={({ item }) => {
+          const color = typeColor[item.type] ?? colors.primary;
+          const surface = typeSurface[item.type] ?? colors.primarySurface;
+          return (
+            <PressableScale scaleTo={0.98} onPress={() => handlePress(item)}>
+              <Card style={[styles.row, !item.read && styles.rowUnread]}>
+                <View style={[styles.iconCircle, { backgroundColor: surface }]}>
+                  <Icon name={iconFor(item.type)} size={18} color={color} />
+                </View>
+                <View style={styles.textGroup}>
+                  <Text style={styles.title} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.body} numberOfLines={2}>
+                    {item.body}
+                  </Text>
+                  <Text style={styles.time}>{formatRelativeTime(item.created_at) ?? '-'}</Text>
+                </View>
+                {!item.read ? <View style={styles.unreadDot} /> : null}
+              </Card>
+            </PressableScale>
+          );
+        }}
+      />
+
+      <MessageDetailSheet
+        visible={selected !== null}
+        onRequestClose={() => setSelected(null)}
+        icon={selected ? iconFor(selected.type) : 'info'}
+        iconColor={(selected && typeColor[selected.type]) || colors.primary}
+        iconSurface={(selected && typeSurface[selected.type]) || colors.primarySurface}
+        title={selected?.title ?? ''}
+        body={selected?.body ?? ''}
+        metaLines={[selected ? formatRelativeTime(selected.created_at) ?? undefined : undefined]}
+        action={selected ? actionFor(selected) : undefined}
       />
     </MainLayout>
   );
@@ -160,6 +176,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 96,
     gap: 12,
+  },
+  markAll: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  loader: {
+    marginTop: 40,
+  },
+  footerLoader: {
+    marginVertical: 16,
   },
   empty: {
     marginTop: 32,

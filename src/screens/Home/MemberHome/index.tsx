@@ -9,6 +9,7 @@ import PressableScale from '@/components/atoms/PressableScale';
 import ScreenBackground from '@/components/atoms/ScreenBackground';
 import SyncStrip from '@/components/molecules/SyncStrip';
 import MemberIdCard from '@/components/organisms/MemberIdCard';
+import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import QrIdentityModal from '@/components/organisms/QrIdentityModal';
 import AssetCard from '@/screens/Home/MemberHome/AssetCard';
 import NoticeRow from '@/screens/Home/MemberHome/NoticeRow';
@@ -19,6 +20,7 @@ import HomeHeader from '@/screens/Home/HomeHeader';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
+import { useAppSelector } from '@/store/hooks';
 import { getMyLocationApi } from '@/services/api/location.service';
 import {
   getMyAssetsApi,
@@ -29,6 +31,7 @@ import {
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
 import type {
+  Announcement,
   AuthUser,
   MeAssets,
   MeIdCard,
@@ -37,7 +40,8 @@ import type {
   MyLocationResult,
 } from '@/types';
 import type { BadgeVariant } from '@/components/atoms/Badge';
-import { formatDateShort, formatRelativeTime, titleCase } from '@/utils/format';
+import type { IconName } from '@/components/atoms/Icon';
+import { formatDateShort, formatDateTime, formatRelativeTime, joinFields, titleCase } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 
 export type MemberHomeNavigationProp = CompositeNavigationProp<
@@ -51,38 +55,22 @@ export interface MemberHomeProps {
   onRefresh: () => Promise<void>;
 }
 
-// "Pengumuman Terbaru" masih dummy — GET /announcements belum diintegrasikan di layar ini
-// (lihat API_CONTRACT_ANGGOTA.md §5). Sisanya (Kartu Anggota, Status Saya, Aset Saya, Aktivitas
-// Terbaru) sudah nyata lewat /me/id-card, /me/status, /me/assets, /me/movements.
-const DUMMY_NOTICES = [
-  {
-    id: 'n1',
-    type: 'announcement' as const,
-    title: 'Pengumuman Apel Pagi',
-    detail: 'Besok, 06:00 di Lapangan',
-    sender: 'Pasi Ops',
-    time: '08:15',
-    unread: true,
-  },
-  {
-    id: 'n2',
-    type: 'info' as const,
-    title: 'Perawatan Kendaraan Rutin',
-    detail: 'Cek jadwal perawatan',
-    sender: 'Pasi Log',
-    time: 'Kemarin 16:45',
-    unread: false,
-  },
-  {
-    id: 'n3',
-    type: 'info' as const,
-    title: 'Latihan Menembak',
-    detail: 'Lapangan Tembak 2',
-    sender: 'Pasi Ops',
-    time: '25 Mei 10:30',
-    unread: false,
-  },
-];
+import type { NoticeType } from '@/screens/Home/MemberHome/NoticeRow';
+
+// "Pengumuman Terbaru" diambil dari GET /announcements (redux `announcements` slice, dimuat di
+// Home/index.tsx). Sisanya lewat /me/id-card, /me/status, /me/assets, /me/movements.
+const NOTICE_TYPES: NoticeType[] = ['alert', 'announcement', 'info'];
+
+function toNoticeType(type: string): NoticeType {
+  return (NOTICE_TYPES as string[]).includes(type) ? (type as NoticeType) : 'info';
+}
+
+// Ikon/warna sheet baca-penuh — samakan dengan NoticeRow (alert→danger, announcement→primary, info→warning).
+const NOTICE_META: Record<NoticeType, { icon: IconName; color: string; surface: string }> = {
+  alert: { icon: 'alert-triangle', color: colors.danger, surface: colors.dangerSurface },
+  announcement: { icon: 'megaphone', color: colors.primary, surface: colors.primarySurface },
+  info: { icon: 'calendar', color: colors.warning, surface: colors.warningSurface },
+};
 
 type AssetCardData = {
   category: string;
@@ -183,6 +171,8 @@ function clockLabel(iso: string | null | undefined): string {
 export default function MemberHome(props: MemberHomeProps) {
   const { user, navigation, onRefresh } = props;
   const bottomPadding = useTabScreenBottomPadding();
+  const announcements = useAppSelector(state => state.announcements.items);
+  const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
   const [isQrModalVisible, setIsQrModalVisible] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
@@ -285,15 +275,7 @@ export default function MemberHome(props: MemberHomeProps) {
   }, [status, coords]);
 
   function openMyMovements() {
-    if (serviceNumber) {
-      navigation.navigate(ROUTES.catalogDetail, {
-        resource: 'personnel',
-        id: serviceNumber,
-        initialTab: 'visitor',
-      });
-    } else {
-      navigation.navigate(ROUTES.comingSoon, { title: 'Riwayat Pergerakan' });
-    }
+    navigation.navigate(ROUTES.myMovements);
   }
 
   const shortcuts = [
@@ -307,7 +289,7 @@ export default function MemberHome(props: MemberHomeProps) {
       icon: 'megaphone' as const,
       color: colors.warning,
       label: 'Pengumuman',
-      onPress: () => navigation.navigate(ROUTES.notifications),
+      onPress: () => navigation.navigate(ROUTES.announcements),
     },
     {
       icon: 'phone' as const,
@@ -408,25 +390,30 @@ export default function MemberHome(props: MemberHomeProps) {
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Pengumuman Terbaru</Text>
-            <PressableScale onPress={() => navigation.navigate(ROUTES.notifications)}>
+            <PressableScale onPress={() => navigation.navigate(ROUTES.announcements)}>
               <Text style={styles.sectionLink}>Lihat Semua</Text>
             </PressableScale>
           </View>
           <View style={styles.listCard}>
-            {DUMMY_NOTICES.map((item, index) => (
-              <View
-                key={item.id}
-                style={index < DUMMY_NOTICES.length - 1 ? styles.listRowDivider : undefined}>
-                <NoticeRow
-                  type={item.type}
-                  title={item.title}
-                  detail={item.detail}
-                  sender={item.sender}
-                  time={item.time}
-                  unread={item.unread}
-                />
-              </View>
-            ))}
+            {announcements.length === 0 ? (
+              <Text style={styles.emptyRow}>Belum ada pengumuman.</Text>
+            ) : (
+              announcements.slice(0, 3).map((item, index, shown) => (
+                <PressableScale
+                  key={item.id}
+                  scaleTo={0.98}
+                  onPress={() => setSelectedNotice(item)}
+                  style={index < shown.length - 1 ? styles.listRowDivider : undefined}>
+                  <NoticeRow
+                    type={toNoticeType(item.type)}
+                    title={item.title}
+                    detail={item.body}
+                    sender={item.created_by?.name ?? 'Komando'}
+                    time={formatRelativeTime(item.published_at) ?? '-'}
+                  />
+                </PressableScale>
+              ))
+            )}
           </View>
 
           <View style={styles.sectionHeader}>
@@ -453,6 +440,33 @@ export default function MemberHome(props: MemberHomeProps) {
         name={displayName}
         subtitle={`NRP ${serviceNumber ?? '-'}`}
         onRequestClose={() => setIsQrModalVisible(false)}
+      />
+
+      <MessageDetailSheet
+        visible={selectedNotice !== null}
+        onRequestClose={() => setSelectedNotice(null)}
+        icon={selectedNotice ? NOTICE_META[toNoticeType(selectedNotice.type)].icon : 'megaphone'}
+        iconColor={selectedNotice ? NOTICE_META[toNoticeType(selectedNotice.type)].color : colors.primary}
+        iconSurface={selectedNotice ? NOTICE_META[toNoticeType(selectedNotice.type)].surface : colors.primarySurface}
+        title={selectedNotice?.title ?? ''}
+        body={selectedNotice?.body ?? ''}
+        metaLines={[
+          selectedNotice?.created_by?.name ?? undefined,
+          selectedNotice
+            ? joinFields(
+                formatRelativeTime(selectedNotice.published_at) ?? undefined,
+                formatDateTime(selectedNotice.published_at) ?? undefined,
+              )
+            : undefined,
+          selectedNotice?.scope_label ?? undefined,
+        ]}
+        action={{
+          label: 'Lihat Semua Pengumuman',
+          onPress: () => {
+            setSelectedNotice(null);
+            navigation.navigate(ROUTES.announcements);
+          },
+        }}
       />
     </SafeAreaView>
   );

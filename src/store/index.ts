@@ -14,17 +14,20 @@ import {
 import { apiSyncMiddleware } from '@/store/middleware/apiSyncMiddleware';
 import announcementReducer from '@/store/slices/announcementSlice';
 import authReducer from '@/store/slices/authSlice';
+import notificationReducer from '@/store/slices/notificationSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   announcements: announcementReducer,
+  notifications: notificationReducer,
 });
 
 const persistedReducer = persistReducer(
   {
     key: 'root',
     storage: AsyncStorage,
-    whitelist: ['auth', 'announcements'],
+    // `announcements` & `notifications` selalu di-fetch dari server, tidak perlu dipersist.
+    whitelist: ['auth'],
   },
   rootReducer,
 );

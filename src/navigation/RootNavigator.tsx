@@ -11,9 +11,12 @@ import { locationTracking } from '@/native/locationTracking';
 import CatalogDetailScreen from '@/screens/CatalogDetail';
 import CatalogListScreen from '@/screens/CatalogList';
 import ChangePasswordScreen from '@/screens/ChangePassword';
+import ActivityMovementsScreen from '@/screens/ActivityMovements';
 import AlarmSatuanScreen from '@/screens/AlarmSatuan';
+import AnnouncementsScreen from '@/screens/Announcements';
 import ComingSoonScreen from '@/screens/ComingSoon';
 import EmergencyContactsScreen from '@/screens/EmergencyContacts';
+import EmergencyDetailScreen from '@/screens/EmergencyDetail';
 import EmergencyListScreen from '@/screens/EmergencyList';
 import ForgotPasswordScreen from '@/screens/ForgotPassword';
 import HealthDashboardScreen from '@/screens/HealthDashboard';
@@ -23,6 +26,7 @@ import HealthPersonnelSearchScreen from '@/screens/HealthPersonnelSearch';
 import HealthRecordDetailScreen from '@/screens/HealthRecordDetail';
 import HealthRecordInputScreen from '@/screens/HealthRecordInput';
 import LoginScreen from '@/screens/Login';
+import MyMovementsScreen from '@/screens/MyMovements';
 import NotificationsScreen from '@/screens/Notifications';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
 import PersonnelTrackingScreen from '@/screens/PersonnelTracking';
@@ -119,7 +123,11 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.personnelTracking} component={PersonnelTrackingScreen} />
         <Stack.Screen name={ROUTES.notifications} component={NotificationsScreen} />
         <Stack.Screen name={ROUTES.emergencyList} component={EmergencyListScreen} />
+        <Stack.Screen name={ROUTES.emergencyDetail} component={EmergencyDetailScreen} />
         <Stack.Screen name={ROUTES.emergencyContacts} component={EmergencyContactsScreen} />
+        <Stack.Screen name={ROUTES.announcements} component={AnnouncementsScreen} />
+        <Stack.Screen name={ROUTES.myMovements} component={MyMovementsScreen} />
+        <Stack.Screen name={ROUTES.activityMovements} component={ActivityMovementsScreen} />
         <Stack.Screen name={ROUTES.sendAnnouncement} component={SendAnnouncementScreen} />
         <Stack.Screen name={ROUTES.alarmSatuan} component={AlarmSatuanScreen} />
         <Stack.Screen name={ROUTES.healthDashboard} component={HealthDashboardScreen} />

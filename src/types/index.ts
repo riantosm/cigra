@@ -6,3 +6,7 @@ export * from './stellingAlarm.types';
 export * from './health.types';
 export * from './appVersion.types';
 export * from './me.types';
+export * from './dashboard.types';
+export * from './activity.types';
+export * from './announcement.types';
+export * from './notification.types';

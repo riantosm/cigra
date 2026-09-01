@@ -9,6 +9,7 @@ import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import ScreenBackground from '@/components/atoms/ScreenBackground';
 import SyncStrip from '@/components/molecules/SyncStrip';
+import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import PersonnelMap from '@/components/organisms/PersonnelMap';
 import ActivityRow from '@/screens/Home/ActivityRow';
 import AnnouncementRow from '@/screens/Home/AnnouncementRow';
@@ -20,11 +21,23 @@ import StatCard from '@/screens/Home/StatCard';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
+import { getActivityMovementsApi } from '@/services/api/activity.service';
+import { getDashboardSituationApi } from '@/services/api/dashboard.service';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
+import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
 import { contentEnterTransition } from '@/utils/motion';
-import type { AuthUser, PersonnelLocationOverviewItem } from '@/types';
+import { formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
+import type {
+  ActivityMovement,
+  Announcement,
+  AuthUser,
+  DashboardSituation,
+  PersonnelLocationOverviewItem,
+  SituationSummaryItem,
+} from '@/types';
+import type { IconName } from '@/components/atoms/Icon';
 
 export type CommanderHomeNavigationProp = CompositeNavigationProp<
   MainTabScreenProps<'Home'>['navigation'],
@@ -37,27 +50,62 @@ export interface CommanderHomeProps {
   onRefresh: () => Promise<void>;
 }
 
-// Konten dashboard di bawah ini (statistik satuan, aktivitas, pengumuman) masih contoh/placeholder
-// mengikuti desain — belum ada API buat data unit-wide ini, jadi ganti dengan data asli begitu
-// endpoint-nya tersedia (lihat API_CONTRACT.md).
-const situationStats = [
-  { icon: 'users', label: 'Total Personel', value: '427', meta: '100%', percent: 100, color: colors.primary },
-  { icon: 'shield-check', label: 'Di Markas', value: '381', meta: '89.2%', percent: 89.2, color: colors.success },
-  { icon: 'map-pin', label: 'Di Luar Markas', value: '46', meta: '10.8%', percent: 10.8, color: colors.warning },
-  { icon: 'alert-triangle', label: 'Absen', value: '5', meta: '1.2%', percent: 1.2, color: colors.danger },
-] as const;
+// Ikon + warna kartu "Ringkasan Situasi" per-key dari GET /dashboard/situation `summary[]`.
+const SITUATION_META: Record<string, { icon: IconName; color: string }> = {
+  at_base: { icon: 'shield-check', color: colors.success },
+  off_base: { icon: 'map-pin', color: colors.warning },
+  absent: { icon: 'alert-triangle', color: colors.danger },
+  on_leave: { icon: 'calendar', color: colors.primary },
+};
 
-const recentMovements = [
-  { name: 'Serka Andi Pratama', detail: 'Keluar Markas • Dinas • Pos Utama', time: '14:32', direction: 'out' },
-  { name: 'Praka Rizky Maulana', detail: 'Masuk Markas • Pos Utama', time: '13:58', direction: 'in' },
-  { name: 'Koptu Dedi Setiawan', detail: 'Keluar Markas • Patroli • Pos Timur', time: '13:21', direction: 'out' },
-] as const;
+interface SituationStat {
+  icon: IconName;
+  label: string;
+  value: string;
+  meta: string;
+  percent: number;
+  color: string;
+}
 
-const announcements = [
-  { icon: 'alert-triangle', title: 'ALARM: KADAL', detail: 'Kontigensi', sender: 'Komandan', time: '09:30', color: colors.danger, unread: true },
-  { icon: 'megaphone', title: 'Pengumuman Apel Pagi', detail: 'Besok 06:00 di Lapangan Utama', sender: 'Pasi Ops', time: '08:15', color: colors.warning, unread: false },
-  { icon: 'info', title: 'Perawatan Kendaraan', detail: 'Cek jadwal perawatan rutin', sender: 'Pasi Log', time: 'Kemarin 16:45', color: colors.primary, unread: false },
-] as const;
+function toSituationStats(data: DashboardSituation | null): SituationStat[] {
+  if (!data) return [];
+  const total: SituationStat = {
+    icon: 'users',
+    label: 'Total Personel',
+    value: String(data.total_personnel),
+    meta: '100%',
+    percent: 100,
+    color: colors.primary,
+  };
+  const rest = (data.summary ?? []).map((item: SituationSummaryItem): SituationStat => {
+    const meta = SITUATION_META[item.key] ?? { icon: 'users' as IconName, color: colors.primary };
+    return {
+      icon: meta.icon,
+      label: item.label,
+      value: String(item.count),
+      meta: `${item.percent}%`,
+      percent: item.percent,
+      color: meta.color,
+    };
+  });
+  return [total, ...rest].slice(0, 4);
+}
+
+// Samakan dengan halaman "Pengumuman" (screens/Announcements).
+const ANNOUNCEMENT_META: Record<string, { icon: IconName; color: string; surface: string }> = {
+  alert: { icon: 'alert-triangle', color: colors.danger, surface: colors.dangerSurface },
+  announcement: { icon: 'megaphone', color: colors.warning, surface: colors.chipSurface },
+  info: { icon: 'info', color: colors.primary, surface: colors.primarySurface },
+};
+
+function announcementMeta(type: string) {
+  return ANNOUNCEMENT_META[type] ?? ANNOUNCEMENT_META.announcement;
+}
+
+function movementDetail(item: ActivityMovement): string {
+  const head = item.note ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
+  return joinFields(head, item.purpose, item.location_label);
+}
 
 // Jumlah quick action yang tampil langsung di grid Home (2 baris x 4, termasuk kartu "Lainnya" di
 // slot ke-8). Sisanya (Alarm Satuan, Buku Saku, Laporan Cepat) ada di bottom sheet "Lainnya".
@@ -70,6 +118,12 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const [isQuickActionSheetVisible, setIsQuickActionSheetVisible] = useState(false);
   const [personnelLocations, setPersonnelLocations] = useState<PersonnelLocationOverviewItem[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
+  const [situation, setSituation] = useState<DashboardSituation | null>(null);
+  const [isLoadingSituation, setIsLoadingSituation] = useState(true);
+  const [movements, setMovements] = useState<ActivityMovement[]>([]);
+  const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
+
+  const announcements = useAppSelector(state => state.announcements.items);
 
   const loadPersonnelLocations = useCallback(async () => {
     try {
@@ -84,19 +138,34 @@ export default function CommanderHome(props: CommanderHomeProps) {
     }
   }, []);
 
+  const loadDashboard = useCallback(async () => {
+    const [situationResult, movementsResult] = await Promise.allSettled([
+      getDashboardSituationApi(),
+      getActivityMovementsApi({ per_page: 3 }),
+    ]);
+    if (situationResult.status === 'fulfilled') setSituation(situationResult.value);
+    if (movementsResult.status === 'fulfilled') setMovements(movementsResult.value.items);
+    setIsLoadingSituation(false);
+  }, []);
+
   useEffect(() => {
     loadPersonnelLocations();
-  }, [loadPersonnelLocations]);
+    loadDashboard();
+  }, [loadPersonnelLocations, loadDashboard]);
 
   async function handleRefresh() {
     setIsRefreshing(true);
     try {
-      await Promise.all([onRefresh(), loadPersonnelLocations()]);
+      await Promise.all([onRefresh(), loadPersonnelLocations(), loadDashboard()]);
       setLastSyncedAt(new Date());
     } finally {
       setIsRefreshing(false);
     }
   }
+
+  const situationStats = toSituationStats(situation);
+  const recentActivity = movements.slice(0, 3);
+  const recentAnnouncements = announcements.slice(0, 3);
 
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const bottomPadding = useTabScreenBottomPadding();
@@ -211,23 +280,35 @@ export default function CommanderHome(props: CommanderHomeProps) {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Ringkasan Situasi</Text>
           </View>
-          <View style={styles.statGrid}>
-            {[situationStats.slice(0, 2), situationStats.slice(2, 4)].map((row, rowIndex) => (
-              <View key={rowIndex} style={styles.statRow}>
-                {row.map(stat => (
-                  <StatCard
-                    key={stat.label}
-                    icon={stat.icon}
-                    label={stat.label}
-                    value={stat.value}
-                    meta={stat.meta}
-                    color={stat.color}
-                    percent={stat.percent}
-                  />
+          {isLoadingSituation && situationStats.length === 0 ? (
+            <View style={styles.listCard}>
+              <Text style={styles.emptyRow}>Memuat ringkasan situasi...</Text>
+            </View>
+          ) : situationStats.length === 0 ? (
+            <View style={styles.listCard}>
+              <Text style={styles.emptyRow}>Ringkasan situasi belum tersedia.</Text>
+            </View>
+          ) : (
+            <View style={styles.statGrid}>
+              {[situationStats.slice(0, 2), situationStats.slice(2, 4)]
+                .filter(row => row.length > 0)
+                .map((row, rowIndex) => (
+                  <View key={rowIndex} style={styles.statRow}>
+                    {row.map(stat => (
+                      <StatCard
+                        key={stat.label}
+                        icon={stat.icon}
+                        label={stat.label}
+                        value={stat.value}
+                        meta={stat.meta}
+                        color={stat.color}
+                        percent={stat.percent}
+                      />
+                    ))}
+                  </View>
                 ))}
-              </View>
-            ))}
-          </View>
+            </View>
+          )}
 
           <PressableScale
             scaleTo={0.98}
@@ -237,8 +318,12 @@ export default function CommanderHome(props: CommanderHomeProps) {
               <Icon name="emergency" size={20} color={colors.danger} />
             </View>
             <View style={styles.alertTextGroup}>
-              <Text style={styles.alertTitle}>1 Emergency Terakhir</Text>
-              <Text style={styles.alertSubtitle}>Perhatian diperlukan</Text>
+              <Text style={styles.alertTitle}>
+                {situation?.active_alerts ?? 0} Sinyal Darurat Aktif
+              </Text>
+              <Text style={styles.alertSubtitle}>
+                {(situation?.active_alerts ?? 0) > 0 ? 'Perhatian diperlukan' : 'Tidak ada yang aktif'}
+              </Text>
             </View>
             <View style={styles.alertLink}>
               <Text style={styles.alertLinkText}>Lihat Detail</Text>
@@ -248,45 +333,67 @@ export default function CommanderHome(props: CommanderHomeProps) {
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
-            <Text style={styles.sectionLinkDisabled}>Lihat Semua</Text>
-          </View>
-          <View style={styles.listCard}>
-            {recentMovements.map((movement, index) => (
-              <View
-                key={movement.name}
-                style={index < recentMovements.length - 1 ? styles.listRowDivider : undefined}>
-                <ActivityRow
-                  name={movement.name}
-                  detail={movement.detail}
-                  time={movement.time}
-                  direction={movement.direction}
-                />
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Pengumuman Terbaru</Text>
-            <PressableScale onPress={() => navigation.navigate(ROUTES.notifications)}>
+            <PressableScale onPress={() => navigation.navigate(ROUTES.activityMovements)}>
               <Text style={styles.sectionLink}>Lihat Semua</Text>
             </PressableScale>
           </View>
           <View style={styles.listCard}>
-            {announcements.map((item, index) => (
-              <View
-                key={item.title}
-                style={index < announcements.length - 1 ? styles.listRowDivider : undefined}>
-                <AnnouncementRow
-                  icon={item.icon}
-                  title={item.title}
-                  detail={item.detail}
-                  sender={item.sender}
-                  time={item.time}
-                  color={item.color}
-                  unread={item.unread}
-                />
-              </View>
-            ))}
+            {recentActivity.length === 0 ? (
+              <Text style={styles.emptyRow}>Belum ada aktivitas keluar/masuk.</Text>
+            ) : (
+              recentActivity.map((movement, index) => (
+                <PressableScale
+                  key={movement.id}
+                  scaleTo={0.98}
+                  style={index < recentActivity.length - 1 ? styles.listRowDivider : undefined}
+                  onPress={() =>
+                    navigation.navigate(ROUTES.catalogDetail, {
+                      resource: 'personnel',
+                      id: movement.personnel.service_number,
+                      initialTab: 'visitor',
+                    })
+                  }>
+                  <ActivityRow
+                    name={joinFields(movement.personnel.rank, movement.personnel.full_name) || movement.personnel.full_name}
+                    detail={movementDetail(movement)}
+                    time={formatRelativeTime(movement.occurred_at) ?? '-'}
+                    direction={movement.direction === 'out' ? 'out' : 'in'}
+                  />
+                </PressableScale>
+              ))
+            )}
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Pengumuman Terbaru</Text>
+            <PressableScale onPress={() => navigation.navigate(ROUTES.announcements)}>
+              <Text style={styles.sectionLink}>Lihat Semua</Text>
+            </PressableScale>
+          </View>
+          <View style={styles.listCard}>
+            {recentAnnouncements.length === 0 ? (
+              <Text style={styles.emptyRow}>Belum ada pengumuman.</Text>
+            ) : (
+              recentAnnouncements.map((item, index, shown) => {
+                const meta = announcementMeta(item.type);
+                return (
+                  <PressableScale
+                    key={item.id}
+                    scaleTo={0.98}
+                    style={index < shown.length - 1 ? styles.listRowDivider : undefined}
+                    onPress={() => setSelectedNotice(item)}>
+                    <AnnouncementRow
+                      icon={meta.icon}
+                      title={item.title}
+                      detail={item.body}
+                      sender={item.created_by?.name ?? 'Komando'}
+                      time={formatRelativeTime(item.published_at) ?? '-'}
+                      color={meta.color}
+                    />
+                  </PressableScale>
+                );
+              })
+            )}
           </View>
 
           <View style={styles.sectionHeader}>
@@ -310,6 +417,33 @@ export default function CommanderHome(props: CommanderHomeProps) {
         visible={isQuickActionSheetVisible}
         actions={quickActions}
         onRequestClose={() => setIsQuickActionSheetVisible(false)}
+      />
+
+      <MessageDetailSheet
+        visible={selectedNotice !== null}
+        onRequestClose={() => setSelectedNotice(null)}
+        icon={selectedNotice ? announcementMeta(selectedNotice.type).icon : 'megaphone'}
+        iconColor={selectedNotice ? announcementMeta(selectedNotice.type).color : colors.primary}
+        iconSurface={selectedNotice ? announcementMeta(selectedNotice.type).surface : colors.primarySurface}
+        title={selectedNotice?.title ?? ''}
+        body={selectedNotice?.body ?? ''}
+        metaLines={[
+          selectedNotice?.created_by?.name ?? undefined,
+          selectedNotice
+            ? joinFields(
+                formatRelativeTime(selectedNotice.published_at) ?? undefined,
+                formatDateTime(selectedNotice.published_at) ?? undefined,
+              )
+            : undefined,
+          selectedNotice?.scope_label ?? undefined,
+        ]}
+        action={{
+          label: 'Lihat Semua Pengumuman',
+          onPress: () => {
+            setSelectedNotice(null);
+            navigation.navigate(ROUTES.announcements);
+          },
+        }}
       />
     </SafeAreaView>
   );
@@ -427,6 +561,11 @@ const styles = StyleSheet.create({
   listRowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSoft,
+  },
+  emptyRow: {
+    fontSize: 13,
+    color: colors.textMuted,
+    paddingVertical: 16,
   },
   mapPreview: {
     height: 160,

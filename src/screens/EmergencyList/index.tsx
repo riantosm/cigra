@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View, RefreshControl } from 'react-native';
 
 import Badge from '@/components/atoms/Badge';
 import type { BadgeVariant } from '@/components/atoms/Badge';
@@ -8,128 +8,56 @@ import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
 import Card from '@/components/molecules/Card';
+import FilterSheet from '@/components/organisms/FilterSheet';
+import type { FilterField } from '@/components/organisms/FilterSheet';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
+import { getPanicButtonsApi } from '@/services/api/panicButton.service';
 import { colors } from '@/theme/colors';
+import type { PanicButtonListItem, PanicButtonStatus } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
-import { formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
+import { extractErrorMessage, formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.emergencyList>;
 
-type EmergencyStatus = 'active' | 'acknowledged' | 'resolved';
-
-interface EmergencyEvent {
-  id: string;
-  personnel: {
-    service_number: string;
-    full_name: string;
-    rank: string | null;
-    unit: string | null;
-    photo: string | null;
-  };
-  latitude: number;
-  longitude: number;
-  address: string | null;
-  description: string | null;
-  status: EmergencyStatus;
-  created_at: string;
-}
-
-const statusLabel: Record<EmergencyStatus, string> = {
+export const emergencyStatusLabel: Record<string, string> = {
   active: 'Aktif',
   acknowledged: 'Ditangani',
   resolved: 'Selesai',
 };
 
-const statusBadgeVariant: Record<EmergencyStatus, BadgeVariant> = {
+export const emergencyStatusBadgeVariant: Record<string, BadgeVariant> = {
   active: 'danger',
   acknowledged: 'warning',
   resolved: 'success',
 };
 
-const statusAvatarGradient: Record<EmergencyStatus, [string, string]> = {
+const statusAvatarGradient: Record<string, [string, string]> = {
   active: [colors.gradientDangerStart, colors.danger],
   acknowledged: [colors.gradientWarnStart, colors.warning],
   resolved: [colors.gradientSuccessStart, colors.success],
 };
 
-// Dummy sementara — belum ada endpoint `GET /panic-buttons` (list). Lihat API_CONTRACT.md; bentuk
-// field di sini sengaja disamakan dengan draf kontrak itu supaya tinggal ganti sumber datanya.
-const DUMMY_EMERGENCIES: EmergencyEvent[] = [
-  {
-    id: '1',
-    personnel: {
-      service_number: '3101050004',
-      full_name: 'Praka Rizky Maulana',
-      rank: 'Prajurit Satu',
-      unit: 'Kompi Senapan A',
-      photo: null,
-    },
-    latitude: -6.15472,
-    longitude: 106.85201,
-    address: 'Pos Timur, Markas Batalyon',
-    description: 'Tombol darurat ditekan.',
-    status: 'active',
-    created_at: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    personnel: {
-      service_number: '3101050002',
-      full_name: 'Anggota Satuan',
-      rank: 'Prajurit Satu',
-      unit: 'Kompi Senapan A',
-      photo: null,
-    },
-    latitude: -6.15444,
-    longitude: 106.853,
-    address: 'Kompi Senapan A',
-    description: 'Sinyal darurat.',
-    status: 'acknowledged',
-    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    personnel: {
-      service_number: '3101050003',
-      full_name: 'Komandan Satuan 2',
-      rank: 'Letnan Kolonel',
-      unit: 'Batalyon HQ Central',
-      photo: null,
-    },
-    latitude: -6.79097,
-    longitude: 107.64943,
-    address: 'Batalyon HQ Central',
-    description: 'Sinyal darurat.',
-    status: 'resolved',
-    created_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '4',
-    personnel: {
-      service_number: '3101050001',
-      full_name: 'Komandan Batalyon',
-      rank: 'Letnan Kolonel',
-      unit: 'Batalyon HQ Central',
-      photo: null,
-    },
-    latitude: -6.15444,
-    longitude: 106.85318,
-    address: 'Batalyon HQ Central',
-    description: 'Sinyal darurat (uji coba).',
-    status: 'resolved',
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+const STATUS_FILTER_FIELD: FilterField = {
+  key: 'status',
+  label: 'Status',
+  options: [
+    { label: emergencyStatusLabel.active, value: 'active' },
+    { label: emergencyStatusLabel.acknowledged, value: 'acknowledged' },
+    { label: emergencyStatusLabel.resolved, value: 'resolved' },
+  ],
+};
 
-function EmergencyAvatar({ event }: { event: EmergencyEvent }) {
+const PER_PAGE = 20;
+
+function EmergencyAvatar({ item }: { item: PanicButtonListItem }) {
   const [failed, setFailed] = useState(false);
-  const [start, end] = statusAvatarGradient[event.status];
-  if (!isDisplayablePhoto(event.personnel.photo) || failed) {
+  const [start, end] = statusAvatarGradient[item.status] ?? statusAvatarGradient.resolved;
+  if (!isDisplayablePhoto(item.personnel.photo) || failed) {
     return (
       <GradientAvatar
-        label={event.personnel.full_name.charAt(0).toUpperCase()}
+        label={item.personnel.full_name.charAt(0).toUpperCase()}
         gradientStart={start}
         gradientEnd={end}
         size={44}
@@ -137,12 +65,59 @@ function EmergencyAvatar({ event }: { event: EmergencyEvent }) {
     );
   }
   return (
-    <SecureImage path={event.personnel.photo} style={styles.avatar} onLoadError={() => setFailed(true)} />
+    <SecureImage path={item.personnel.photo} style={styles.avatar} onLoadError={() => setFailed(true)} />
   );
 }
 
 export default function EmergencyListScreen(props: Props) {
   const { navigation } = props;
+
+  const [items, setItems] = useState<PanicButtonListItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+
+  const statusFilter = (filters.status as PanicButtonStatus | undefined) ?? undefined;
+
+  const load = useCallback(
+    async (targetPage: number, mode: 'initial' | 'refresh' | 'more') => {
+      if (mode === 'initial') setIsLoading(true);
+      if (mode === 'refresh') setIsRefreshing(true);
+      if (mode === 'more') setIsLoadingMore(true);
+      setErrorMessage(null);
+      try {
+        const result = await getPanicButtonsApi({
+          page: targetPage,
+          per_page: PER_PAGE,
+          status: statusFilter,
+        });
+        setItems(previous =>
+          targetPage <= 1 ? result.items : [...previous, ...result.items.filter(i => !previous.some(p => p.id === i.id))],
+        );
+        setPage(result.meta?.current_page ?? targetPage);
+        setLastPage(result.meta?.last_page ?? targetPage);
+      } catch (error) {
+        setErrorMessage(extractErrorMessage(error, 'Gagal memuat sinyal darurat.'));
+        if (mode !== 'more') setItems([]);
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [statusFilter],
+  );
+
+  useEffect(() => {
+    load(1, 'initial');
+  }, [load]);
+
+  const canLoadMore = page < lastPage;
 
   return (
     <MainLayout
@@ -150,65 +125,126 @@ export default function EmergencyListScreen(props: Props) {
       subtitle="Riwayat tombol darurat personel"
       variant="canvas"
       onBack={() => navigation.goBack()}>
-      <FlatList
-        data={DUMMY_EMERGENCIES}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<Text style={styles.empty}>Belum ada sinyal darurat.</Text>}
-        renderItem={({ item }) => (
-          <PressableScale
-            scaleTo={0.98}
-            onPress={() =>
-              navigation.navigate(ROUTES.catalogDetail, {
-                resource: 'personnel',
-                id: item.personnel.service_number,
-                initialTab: 'location',
-              })
-            }>
-            <Card style={styles.row}>
-              <View style={styles.rowTop}>
-                <EmergencyAvatar event={item} />
-                <View style={styles.identity}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {item.personnel.full_name}
-                  </Text>
-                  <Text style={styles.meta} numberOfLines={1}>
-                    {joinFields(item.personnel.rank, item.personnel.unit)}
+      <PressableScale
+        scaleTo={0.98}
+        onPress={() => setIsFilterVisible(true)}
+        contentStyle={styles.filterBar}
+        style={styles.searchRow}>
+        <Icon name="filter" size={16} color={colors.primary} />
+        <Text style={styles.filterBarText}>
+          {statusFilter ? `Status: ${emergencyStatusLabel[statusFilter]}` : 'Semua status'}
+        </Text>
+        <Icon name="chevron-down" size={16} color={colors.textMuted} />
+      </PressableScale>
+
+      {isLoading ? (
+        <ActivityIndicator style={styles.loader} color={colors.primary} />
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={item => String(item.id)}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={() => load(1, 'refresh')} tintColor={colors.primary} />
+          }
+          onEndReachedThreshold={0.4}
+          onEndReached={() => {
+            if (canLoadMore && !isLoadingMore) load(page + 1, 'more');
+          }}
+          ListEmptyComponent={
+            <Text style={styles.empty}>{errorMessage ?? 'Belum ada sinyal darurat.'}</Text>
+          }
+          ListFooterComponent={
+            isLoadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : undefined
+          }
+          renderItem={({ item }) => (
+            <PressableScale
+              scaleTo={0.98}
+              onPress={() => navigation.navigate(ROUTES.emergencyDetail, { id: String(item.id) })}>
+              <Card style={styles.row}>
+                <View style={styles.rowTop}>
+                  <EmergencyAvatar item={item} />
+                  <View style={styles.identity}>
+                    <Text style={styles.name} numberOfLines={1}>
+                      {item.personnel.full_name}
+                    </Text>
+                    <Text style={styles.meta} numberOfLines={1}>
+                      {joinFields(item.personnel.rank, item.personnel.unit)}
+                    </Text>
+                  </View>
+                  <Badge
+                    label={emergencyStatusLabel[item.status] ?? item.status}
+                    variant={emergencyStatusBadgeVariant[item.status] ?? 'neutral'}
+                  />
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Icon name="map-pin" size={14} color={colors.textMuted} />
+                  <Text style={styles.detailText} numberOfLines={1}>
+                    {item.address ?? `${item.latitude.toFixed(5)}, ${item.longitude.toFixed(5)}`}
                   </Text>
                 </View>
-                <Badge label={statusLabel[item.status]} variant={statusBadgeVariant[item.status]} />
-              </View>
+                <View style={styles.detailRow}>
+                  <Icon name="clock" size={14} color={colors.textMuted} />
+                  <Text style={styles.detailText} numberOfLines={1}>
+                    {formatRelativeTime(item.created_at) ?? '-'} · {formatDateTime(item.created_at) ?? '-'}
+                  </Text>
+                </View>
 
-              <View style={styles.detailRow}>
-                <Icon name="map-pin" size={14} color={colors.textMuted} />
-                <Text style={styles.detailText} numberOfLines={1}>
-                  {item.address ?? `${item.latitude.toFixed(5)}, ${item.longitude.toFixed(5)}`}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Icon name="clock" size={14} color={colors.textMuted} />
-                <Text style={styles.detailText} numberOfLines={1}>
-                  {formatRelativeTime(item.created_at) ?? '-'} · {formatDateTime(item.created_at) ?? '-'}
-                </Text>
-              </View>
+                <View style={styles.footerRow}>
+                  <Text style={styles.detailLink}>Lihat detail</Text>
+                  <Icon name="chevron-right" size={16} color={colors.primary} />
+                </View>
+              </Card>
+            </PressableScale>
+          )}
+        />
+      )}
 
-              <View style={styles.footerRow}>
-                <Text style={styles.detailLink}>Lihat detail personel</Text>
-                <Icon name="chevron-right" size={16} color={colors.primary} />
-              </View>
-            </Card>
-          </PressableScale>
-        )}
+      <FilterSheet
+        visible={isFilterVisible}
+        fields={[STATUS_FILTER_FIELD]}
+        value={filters}
+        onApply={setFilters}
+        onRequestClose={() => setIsFilterVisible(false)}
       />
     </MainLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  searchRow: {
+    marginHorizontal: 24,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+  },
+  filterBarText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  loader: {
+    marginTop: 48,
+  },
+  footerLoader: {
+    marginVertical: 16,
+  },
   listContent: {
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingTop: 4,
     paddingBottom: 96,
     gap: 12,
   },

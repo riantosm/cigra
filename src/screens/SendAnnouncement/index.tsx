@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 
@@ -14,8 +14,8 @@ import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { announcementCreated, announcementDeleted } from '@/store/slices/announcementSlice';
-import type { AnnouncementScope, AnnouncementType } from '@/store/slices/announcementSlice';
+import { createAnnouncement, fetchAnnouncements } from '@/store/slices/announcementSlice';
+import type { AnnouncementScope, AnnouncementType } from '@/types';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
 import { formatDateTime, formatRelativeTime } from '@/utils/format';
@@ -26,16 +26,12 @@ const BODY_MAX = 1000;
 const TITLE_MAX = 80;
 const HISTORY_PREVIEW = 3;
 
+// Samakan dengan halaman "Pengumuman" (screens/Announcements) supaya tipe pengumuman punya
+// warna/ikon yang konsisten di seluruh aplikasi.
 const typeMeta: Record<AnnouncementType, { label: string; icon: IconName; color: string; surface: string }> = {
-  announcement: { label: 'Pengumuman', icon: 'megaphone', color: colors.primary, surface: colors.primarySurface },
-  alert: { label: 'Peringatan', icon: 'bell', color: colors.danger, surface: colors.dangerSurface },
-  info: { label: 'Info', icon: 'info', color: colors.textMuted, surface: colors.neutralSurface },
-};
-
-const scopeLabel: Record<AnnouncementScope, string> = {
-  all: 'Semua Personel',
-  unit: 'Satuan Anda',
-  role: 'Per Peran',
+  alert: { label: 'Peringatan', icon: 'alert-triangle', color: colors.danger, surface: colors.dangerSurface },
+  announcement: { label: 'Pengumuman', icon: 'megaphone', color: colors.warning, surface: colors.chipSurface },
+  info: { label: 'Info', icon: 'info', color: colors.primary, surface: colors.primarySurface },
 };
 
 interface FieldHeaderProps {
@@ -59,37 +55,50 @@ function FieldHeader(props: FieldHeaderProps) {
 export default function SendAnnouncementScreen(props: Props) {
   const { navigation } = props;
   const dispatch = useAppDispatch();
-  const senderName = useAppSelector(state => state.auth.user?.name ?? 'Komandan');
-  const sent = useAppSelector(state => state.announcements.sent);
+  const sent = useAppSelector(state => state.announcements.items);
+  const sending = useAppSelector(state => state.announcements.sending);
+  const sendError = useAppSelector(state => state.announcements.sendError);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [type, setType] = useState<AnnouncementType>('announcement');
   const [scope, setScope] = useState<AnnouncementScope>('all');
   const [successVisible, setSuccessVisible] = useState(false);
-  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [errorVisible, setErrorVisible] = useState(false);
 
-  const canSubmit = title.trim().length > 0 && body.trim().length > 0;
-  const visibleHistory = showAllHistory ? sent : sent.slice(0, HISTORY_PREVIEW);
+  useEffect(() => {
+    dispatch(fetchAnnouncements({ page: 1, per_page: 20 }));
+  }, [dispatch]);
 
-  function handleSubmit() {
+  const canSubmit = title.trim().length > 0 && body.trim().length > 0 && !sending;
+  const visibleHistory = sent.slice(0, HISTORY_PREVIEW);
+
+  async function handleSubmit() {
     if (!canSubmit) return;
-    dispatch(
-      announcementCreated({
+    const result = await dispatch(
+      createAnnouncement({
         type,
         title: title.trim(),
         body: body.trim(),
         severity: 'normal',
-        scope,
-        scope_label: scopeLabel[scope],
-        created_by_name: senderName,
+        target: {
+          scope,
+          // Belum ada pemilih satuan/peran di form — backend menurunkan target dari satuan
+          // pengirim untuk scope 'unit'. Lihat catatan di API_CONTRACT.md §2.4.
+          unit_ids: [],
+          role: null,
+        },
       }),
     );
-    setTitle('');
-    setBody('');
-    setType('announcement');
-    setScope('all');
-    setSuccessVisible(true);
+    if (createAnnouncement.fulfilled.match(result)) {
+      setTitle('');
+      setBody('');
+      setType('announcement');
+      setScope('all');
+      setSuccessVisible(true);
+    } else {
+      setErrorVisible(true);
+    }
   }
 
   return (
@@ -168,6 +177,7 @@ export default function SendAnnouncementScreen(props: Props) {
               label="Kirim Pengumuman"
               onPress={handleSubmit}
               disabled={!canSubmit}
+              loading={sending}
               style={styles.submit}
             />
 
@@ -179,15 +189,11 @@ export default function SendAnnouncementScreen(props: Props) {
                   <Text style={styles.historyCountText}>{sent.length}</Text>
                 </View>
               </View>
-              {sent.length > HISTORY_PREVIEW ? (
-                <PressableScale onPress={() => setShowAllHistory(value => !value)} hitSlop={8}>
+              {sent.length > 0 ? (
+                <PressableScale onPress={() => navigation.navigate(ROUTES.announcements)} hitSlop={8}>
                   <View style={styles.seeAll}>
-                    <Text style={styles.seeAllText}>{showAllHistory ? 'Ringkas' : 'Lihat semua'}</Text>
-                    <Icon
-                      name={showAllHistory ? 'chevron-down' : 'chevron-right'}
-                      size={14}
-                      color={colors.primary}
-                    />
+                    <Text style={styles.seeAllText}>Lihat semua</Text>
+                    <Icon name="chevron-right" size={14} color={colors.primary} />
                   </View>
                 </PressableScale>
               ) : null}
@@ -198,9 +204,9 @@ export default function SendAnnouncementScreen(props: Props) {
             ) : (
               <View style={styles.historyList}>
                 {visibleHistory.map(item => {
-                  const meta = typeMeta[item.type];
+                  const meta = typeMeta[item.type as AnnouncementType] ?? typeMeta.announcement;
                   return (
-                    <Card key={item.id} style={styles.histCard}>
+                    <Card key={String(item.id)} style={styles.histCard}>
                       <View style={styles.histRow}>
                         <View style={[styles.histIcon, { backgroundColor: meta.surface }]}>
                           <Icon name={meta.icon} size={18} color={meta.color} />
@@ -210,30 +216,25 @@ export default function SendAnnouncementScreen(props: Props) {
                             <View style={[styles.typePill, { backgroundColor: meta.surface }]}>
                               <Text style={[styles.typePillLabel, { color: meta.color }]}>{meta.label}</Text>
                             </View>
-                            <PressableScale
-                              onPress={() => dispatch(announcementDeleted(item.id))}
-                              hitSlop={8}
-                              style={styles.deleteButton}>
-                              <Icon name="trash" size={13} color={colors.danger} />
-                              <Text style={styles.deleteLabel}>Hapus</Text>
-                            </PressableScale>
                           </View>
                           <Text style={styles.histTitle}>{item.title}</Text>
                           <Text style={styles.histText} numberOfLines={2}>
                             {item.body}
                           </Text>
                           <View style={styles.histMetaRow}>
-                            <View style={styles.histMetaItem}>
-                              <Icon name="users" size={12} color={colors.textMuted} />
-                              <Text style={styles.histMeta}>{item.scope_label}</Text>
-                            </View>
+                            {item.scope_label ? (
+                              <View style={styles.histMetaItem}>
+                                <Icon name="users" size={12} color={colors.textMuted} />
+                                <Text style={styles.histMeta}>{item.scope_label}</Text>
+                              </View>
+                            ) : null}
                             <View style={styles.histMetaItem}>
                               <Icon name="clock" size={12} color={colors.textMuted} />
-                              <Text style={styles.histMeta}>{formatRelativeTime(item.created_at) ?? '-'}</Text>
+                              <Text style={styles.histMeta}>{formatRelativeTime(item.published_at) ?? '-'}</Text>
                             </View>
                             <View style={styles.histMetaItem}>
                               <Icon name="calendar" size={12} color={colors.textMuted} />
-                              <Text style={styles.histMeta}>{formatDateTime(item.created_at) ?? '-'}</Text>
+                              <Text style={styles.histMeta}>{formatDateTime(item.published_at) ?? '-'}</Text>
                             </View>
                           </View>
                         </View>
@@ -251,16 +252,25 @@ export default function SendAnnouncementScreen(props: Props) {
         visible={successVisible}
         variant="success"
         title="Pengumuman Terkirim"
-        message="Pengumuman masuk ke daftar notifikasi personel."
+        message="Pengumuman berhasil dikirim ke personel."
         onRequestClose={() => setSuccessVisible(false)}
         primaryAction={{ label: 'Selesai', onPress: () => setSuccessVisible(false) }}
         secondaryAction={{
-          label: 'Lihat Notifikasi',
+          label: 'Lihat Pengumuman',
           onPress: () => {
             setSuccessVisible(false);
-            navigation.navigate(ROUTES.notifications);
+            navigation.navigate(ROUTES.announcements);
           },
         }}
+      />
+
+      <StatusModal
+        visible={errorVisible}
+        variant="error"
+        title="Gagal Mengirim"
+        message={sendError ?? 'Pengumuman gagal dikirim. Coba lagi.'}
+        onRequestClose={() => setErrorVisible(false)}
+        primaryAction={{ label: 'Tutup', onPress: () => setErrorVisible(false) }}
       />
     </MainLayout>
   );

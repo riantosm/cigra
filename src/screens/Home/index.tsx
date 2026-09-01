@@ -12,6 +12,8 @@ import { useDoubleBackToExit } from '@/hooks/useDoubleBackToExit';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
+import { fetchAnnouncements } from '@/store/slices/announcementSlice';
+import { fetchNotifications } from '@/store/slices/notificationSlice';
 import {
   LocationUnavailableError,
   getCurrentCoordinates,
@@ -52,12 +54,20 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const refreshFeeds = useCallback(() => {
+    // Lonceng notifikasi + "Pengumuman Terbaru" tampil di semua role Home — muat di level ini
+    // sekali, bukan di tiap body Home.
+    dispatch(fetchNotifications({ page: 1 }));
+    dispatch(fetchAnnouncements({ page: 1, per_page: 5 }));
+  }, [dispatch]);
+
   useEffect(() => {
     ensureLocationReady();
     // Home tidak pernah manggil API lain — pastikan sesi tetap divalidasi/di-refresh di sini juga,
     // bukan cuma menunggu layar lain yang kebetulan manggil API.
     dispatch(refreshUser());
-  }, [dispatch, ensureLocationReady]);
+    refreshFeeds();
+  }, [dispatch, ensureLocationReady, refreshFeeds]);
 
   useEffect(() => {
     // Pengguna biasanya mengaktifkan izin/GPS lewat Settings lalu kembali ke app —
@@ -66,10 +76,11 @@ export default function HomeScreen() {
       if (state === 'active') {
         ensureLocationReady();
         dispatch(refreshUser());
+        refreshFeeds();
       }
     });
     return () => subscription.remove();
-  }, [dispatch, ensureLocationReady]);
+  }, [dispatch, ensureLocationReady, refreshFeeds]);
 
   // Cek GPS/izin lokasi bisa butuh puluhan detik (lihat komentar timeout di utils/location.ts),
   // jauh lebih lama dari API sesi sendiri — jangan diikutsertakan di sini supaya pull-to-refresh
@@ -78,8 +89,9 @@ export default function HomeScreen() {
   // cuma tidak ikut ditunggu oleh spinner refresh.
   const refreshSession = useCallback(async () => {
     ensureLocationReady();
+    refreshFeeds();
     await dispatch(refreshUser());
-  }, [dispatch, ensureLocationReady]);
+  }, [dispatch, ensureLocationReady, refreshFeeds]);
 
   const isGpsIssue = locationIssue?.reason === 'gps-disabled';
   const roles = user?.roles ?? [];

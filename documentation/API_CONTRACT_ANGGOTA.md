@@ -17,7 +17,8 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
 | Header + Kartu Anggota (identitas) | `GET /auth/me` → `user.personnel` |
 | Tile "Lokasi Terakhir" & "Update Terakhir" | `GET /locations/me` |
 | Shortcut "Peta Personel" | `GET /locations/overview` |
-| "Aktivitas Terbaru → Lihat Semua" | tab `visitor` di `CatalogDetail` personel sendiri (`visitor_log_history` dari `GET /catalog/personnel/{personnel}`) |
+| "Aktivitas Terbaru → Lihat Semua" | layar `MyMovements` → `GET /me/movements` (paginasi) |
+| "Pengumuman Terbaru" + "Lihat Semua" | `GET /announcements` (lihat `API_CONTRACT.md` §2.3) — bukan endpoint khusus anggota |
 
 ---
 
@@ -115,7 +116,7 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
 
 ## 4. Aktivitas Terbaru (pergerakan saya)
 
-> [!DONE] Terintegrasi (`getMyMovementsApi({ per_page: 3 })`). Diflatten jadi 1 baris per lintasan (masuk ATAU keluar).
+> [!DONE] `MemberHome` "Aktivitas Terbaru" menampilkan 3 teratas (`getMyMovementsApi({ per_page: 3 })`). "Lihat Semua" → layar **`MyMovements`** (route `myMovements`) — `getMyMovementsApi({ page, per_page: 20 })` full list, pull-to-refresh + "muat lebih banyak" (pakai `meta.current_page`/`last_page`; kalau `meta` absen, lanjut selama halaman terakhir mengembalikan 20 item penuh). Baris pakai `TimelineRow` (arah in/out, `note`/label arah sebagai judul, `location_label · purpose` detail, waktu relatif `occurred_at`).
 
 `GET /me/movements`
 
@@ -139,57 +140,7 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
 - `direction`: `in` (masuk markas) | `out` (keluar markas).
 - Client: `note` sebagai judul, `location_label` / `purpose` sebagai detail, `occurred_at` diformat relatif.
 
-## 5. Pengumuman Terbaru
-
-> [!TODO] Masih `DUMMY_NOTICES`. Layar butuh daftar pengumuman yang **menyasar user login** — subset dari §2.3 (`API_CONTRACT.md`) tapi sudah difilter di backend + ada flag `read` per user.
-
-`GET /me/announcements`
-
-**Query (opsional):** `page`, `per_page` (default 10; layar Home hanya pakai 3) · `only_unread` (`true` | `false`). · **Payload:** —
-
-**Response `200`** — array + `meta` (termasuk `meta.unread_total`). Item: `id`, `type`, `title`,
-`body`, `severity`, `created_by{id, name}`, `published_at`, `read`, `action` (`{type, id}` tujuan
-navigasi, opsional / `null`).
-
-```json
-{
-  "success": true,
-  "data": [
-    { "id": 41, "type": "alert", "title": "Apel Luar Biasa 15.00",
-      "body": "Seluruh personel Kompi A berkumpul di Lapangan Utama pukul 15.00.",
-      "severity": "high",
-      "created_by": { "id": 4, "name": "Pasi Ops" },
-      "published_at": "2026-09-01T09:12:00+07:00",
-      "read": false,
-      "action": { "type": "announcement", "id": 41 } },
-    { "id": 39, "type": "announcement", "title": "Jadwal Piket Minggu Ini",
-      "body": "Rotasi piket pos gerbang diperbarui, cek papan pengumuman.",
-      "severity": "normal",
-      "created_by": { "id": 7, "name": "Bati Tuud" },
-      "published_at": "2026-08-31T16:40:00+07:00",
-      "read": true,
-      "action": null },
-    { "id": 35, "type": "info", "title": "Pemeliharaan Kendaraan Dinas",
-      "body": "Servis berkala Hilux D 1234 AB dijadwalkan 3 September.",
-      "severity": "normal",
-      "created_by": { "id": 12, "name": "Batih Har" },
-      "published_at": "2026-08-30T11:05:00+07:00",
-      "read": true,
-      "action": null }
-  ],
-  "meta": { "current_page": 1, "last_page": 4, "per_page": 10, "total": 32, "unread_total": 1 }
-}
-```
-
-- `type`: `alert` | `announcement` | `info` — ikon + warna aksen di layar (`alert` merah,
-  `announcement` biru, `info` abu).
-- `severity`: `high` | `normal` — opsional; kalau tidak ada client turunkan dari `type`.
-- `read`: `false` → baris ditandai belum dibaca (titik/aksen). `meta.unread_total` untuk badge.
-- `action`: tujuan navigasi saat baris ditekan (mengikuti resource yang sudah ada + `id`), atau `null`.
-- Client menampilkan `title` (judul), `body` (1 baris detail), `created_by.name` (pengirim),
-  `published_at` (relatif). Home hanya menampilkan 3 teratas → "Lihat Semua" ke layar `Notifications`.
-
-## 6. Shortcut "Kontak Darurat" (Akses Cepat)
+## 5. Shortcut "Kontak Darurat" (Akses Cepat)
 
 > [!DONE] Terintegrasi — layar `EmergencyContacts` (`getEmergencyContactsApi`), daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
 

@@ -1,6 +1,6 @@
 # API Contract — Smart Battalion
 
-**Pengecekan frontend terakhir: 1 September 2026, 17.03 WIB**
+**Pengecekan frontend terakhir: 1 September 2026, 20.30 WIB**
 
 Kontrak API untuk surface yang masih dummy + status integrasinya di app. Envelope, pagination
 (`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah — seragam dengan
@@ -60,7 +60,9 @@ Request gagal → diabaikan diam-diam.
 
 ### 2.1 Ringkasan Situasi
 
-> [!TODO] `CommanderHome` `situationStats` masih hardcoded.
+> [!DONE] Dipakai di "Ringkasan Situasi" Home Komandan. Kartu pertama selalu Total Personel (`total_personnel`), sisanya diambil dari `summary[]` (maks 4 kartu). Ikon & warna kartu ditentukan dari `key` tiap item — sudah dikenali: `at_base`, `off_base`, `absent`, `on_leave`; `key` lain akan tampil dengan ikon & warna default. Banner "Sinyal Darurat Aktif" mengambil angka dari `active_alerts`.
+>
+> Catatan: `status_distribution[]` belum ditampilkan di aplikasi. Supaya ikon & warna kartu cocok, pastikan `key` pada `summary[]` konsisten dengan daftar di atas; teks kartu diambil apa adanya dari `label`.
 
 `GET /dashboard/situation`
 
@@ -90,7 +92,9 @@ Request gagal → diabaikan diam-diam.
 
 ### 2.2 Aktivitas Terbaru (Pergerakan)
 
-> [!TODO] Belum ada endpoint.
+> [!DONE] Di Home Komandan, "Aktivitas Terbaru" menampilkan 3 pergerakan terbaru. Tiap baris bisa di-tap untuk membuka detail personel yang bersangkutan. "Lihat Semua" membuka halaman **Aktivitas** — daftar lengkap dengan tarik-untuk-refresh dan "muat lebih banyak".
+>
+> Catatan: halaman ini khusus data satuan (untuk komandan). Home Anggota memakai endpoint lain (`GET /me/movements`, lihat API_CONTRACT_ANGGOTA §4) untuk aktivitas milik user sendiri.
 
 `GET /activities/movements`
 
@@ -114,7 +118,9 @@ Request gagal → diabaikan diam-diam.
 
 ### 2.3 Pengumuman & Alert (list)
 
-> [!TODO] Endpoint mungkin sudah ada di backend, tapi `MemberHome` + `Notifications` masih pakai data `DUMMY_*` — layar belum dihubungkan.
+> [!DONE] `GET /announcements` sudah dipakai di seluruh aplikasi. "Pengumuman Terbaru" tampil di Home Komandan & Home Anggota (masing-masing 3 terbaru), dan tiap baris **bisa di-tap** untuk membuka pop-up baca-penuh (judul + isi lengkap + pengirim/waktu). "Lihat Semua" membuka halaman **Pengumuman** — daftar lengkap dengan tarik-untuk-refresh dan "muat lebih banyak", tiap baris juga bisa di-tap. Semua diambil dari data list; **tidak ada endpoint detail terpisah**.
+>
+> Catatan: belum ada status "sudah dibaca" per-pengumuman di sini (itu ditangani lewat Notifikasi, §3). Warna tipe pengumuman: Peringatan → merah, Pengumuman → kuning, Info → biru. `severity` dari server belum dipakai di tampilan. Query `since` belum dipakai.
 
 `GET /announcements`
 
@@ -139,7 +145,12 @@ Request gagal → diabaikan diam-diam.
 
 ### 2.4 Kirim Pengumuman
 
-> [!TODO] Layar `SendAnnouncement` selesai; untuk sementara menyimpan ke redux lokal (`announcementCreated`, dipersist) dan langsung muncul di Notifikasi. Tinggal ganti ke `POST /announcements` + `GET /announcements/mine`.
+> [!PARTIAL] Form "Kirim Pengumuman" sudah bisa mengirim pengumuman ke server. Setelah berhasil, muncul notifikasi sukses dan pengumuman langsung tampil di daftar; kalau gagal, pesan error dari server ditampilkan. Masih ada dua hal yang belum lengkap — lihat rincian di bawah.
+
+**Yang masih kurang / butuh backend:**
+
+- **Belum ada pilihan tujuan yang spesifik.** Di form, "Kirim ke" bisa dipilih Semua / Satuan / Peran, tapi aplikasi belum punya daftar satuan maupun daftar peran untuk ditawarkan ke user, jadi pengumuman untuk sekarang selalu terkirim tanpa detail satuan/peran. Perlu diputuskan: apakah server otomatis menentukan tujuan dari satuan si pengirim, atau backend menyediakan daftar satuan & peran supaya aplikasi bisa menampilkannya sebagai pilihan.
+- **"Riwayat Terkirim" masih menampilkan semua pengumuman**, bukan hanya yang dikirim user yang sedang login, karena belum ada endpoint "pengumuman yang saya kirim" dan belum ada endpoint untuk menghapus pengumuman. Sementara ini tombol hapus per-pengumuman disembunyikan. Begitu kedua endpoint itu tersedia, riwayat bisa disaring per pengirim dan tombol hapus dimunculkan lagi.
 
 `POST /announcements`
 
@@ -177,7 +188,9 @@ Request gagal → diabaikan diam-diam.
 
 ### 3.1 List
 
-> [!TODO] `Notifications` pakai `DUMMY_NOTIFICATIONS` + digabung pengumuman lokal dari redux. Badge lonceng = 2 dummy-unread + jumlah pengumuman terkirim.
+> [!DONE] Dipakai di halaman Notifikasi (ikon lonceng), untuk **semua role** (komandan & anggota). Daftar dengan tarik-untuk-refresh + "muat lebih banyak", angka di badge lonceng diambil dari `meta.unread_total`. Data di-load saat aplikasi dibuka & tiap kali kembali aktif. Baris di-tap → ditandai sudah dibaca + membuka pop-up baca-penuh (judul + isi). Kalau item punya `action` bertipe darurat, pop-up menampilkan tombol untuk membuka detail / daftar sinyal darurat.
+>
+> Catatan: `action` bertipe selain darurat belum menuju ke mana-mana (mis. `announcement` — belum ada halaman detail satu pengumuman), tapi isinya tetap bisa dibaca penuh di pop-up.
 
 `GET /notifications`
 
@@ -202,7 +215,7 @@ Request gagal → diabaikan diam-diam.
 
 ### 3.2 Tandai Dibaca
 
-> [!TODO] Belum ada endpoint.
+> [!DONE] Notifikasi ditandai dibaca otomatis saat barisnya di-tap. Ada juga tombol "Tandai semua" di header halaman Notifikasi. Angka `unread_total` dari response dipakai langsung untuk memperbarui badge lonceng.
 
 `POST /notifications/{id}/read` · `POST /notifications/read-all`
 
@@ -216,7 +229,9 @@ Request gagal → diabaikan diam-diam.
 
 ### 4.1 List
 
-> [!TODO] Melengkapi `POST /panic-buttons` yang sudah live. `EmergencyList` masih `DUMMY_EMERGENCIES`. Bentuk `personnel` mengikuti `/locations/overview`.
+> [!DONE] Dipakai di halaman Sinyal Darurat: daftar dengan tarik-untuk-refresh + "muat lebih banyak", plus filter status (Aktif / Ditangani / Selesai) yang dikirim sebagai query `status`. Tiap baris membuka halaman detail. Warna badge: Aktif → merah, Ditangani → kuning, Selesai → hijau.
+>
+> Catatan: `meta.filters` dari response belum dipakai (filter diatur di aplikasi). Belum ada fitur pencarian.
 
 `GET /panic-buttons`
 
@@ -245,7 +260,9 @@ Request gagal → diabaikan diam-diam.
 
 ### 4.2 Detail
 
-> [!TODO] Belum ada endpoint.
+> [!DONE] Ada halaman detail sinyal darurat: identitas personel + status, waktu/lokasi/akurasi/keterangan, siapa yang menangani, tombol "Buka di Google Maps", dan **Kronologi** dari `timeline[]`. Tarik-untuk-refresh.
+>
+> Catatan: `handled_by` bisa berupa object `{ id, name }` atau teks biasa — aplikasi menangani keduanya. Kalau `timeline` kosong, bagian Kronologi disembunyikan.
 
 `GET /panic-buttons/{id}`
 
@@ -255,7 +272,11 @@ Request gagal → diabaikan diam-diam.
 
 ### 4.3 Update Status
 
-> [!TODO] Belum ada endpoint.
+> [!BUG] Di halaman detail, **khusus komandan**, ada tombol "Tandai Ditangani" (Aktif → Ditangani) dan "Tandai Selesai" (→ Selesai, dengan kolom catatan opsional). Sisi aplikasi sudah jalan: request terkirim, pop-up berhasil muncul. Tapi **status di data tidak benar-benar berubah** — setelah di-refresh, sinyal darurat masih berstatus sama seperti sebelumnya. Perlu dicek di backend apakah `PATCH /panic-buttons/{id}` benar-benar menyimpan perubahan status (dan catatannya).
+>
+> Catatan lain:
+> - Pembatasan "khusus komandan" ini hanya di sisi aplikasi — server tetap harus menolak permintaan ini dari user non-komandan.
+> - Setelah update, aplikasi mengambil ulang detail lengkap lewat `GET /panic-buttons/{id}` (tidak memakai response PATCH langsung), karena response PATCH sempat tidak mengembalikan data lengkap (mis. tanpa `personnel`) yang bikin halaman error. Idealnya response PATCH mengembalikan object detail yang sama persis dengan endpoint detail.
 
 `PATCH /panic-buttons/{id}`
 

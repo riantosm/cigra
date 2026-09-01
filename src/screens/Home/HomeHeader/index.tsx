@@ -12,10 +12,6 @@ import type { AuthUser } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
 import { titleCase } from '@/utils/format';
 
-// Notifikasi dummy bawaan yang berstatus belum dibaca (lihat screens/Notifications) — dijumlahkan
-// dengan pengumuman yang dikirim komandan untuk angka badge lonceng.
-const BASE_UNREAD_NOTIFICATIONS = 2;
-
 export interface HomeHeaderProps {
   user: AuthUser | null;
   onAvatarPress: () => void;
@@ -34,8 +30,7 @@ function greetingForHour(hour: number): string {
 export default function HomeHeader(props: HomeHeaderProps) {
   const { user, onAvatarPress, onBellPress } = props;
   const [photoFailed, setPhotoFailed] = useState(false);
-  const sentAnnouncementCount = useAppSelector(state => state.announcements.sent.length);
-  const unreadCount = BASE_UNREAD_NOTIFICATIONS + sentAnnouncementCount;
+  const unreadCount = useAppSelector(state => state.notifications.unreadTotal);
   const personnel = user?.personnel;
   const displayName = personnel ? [personnel.rank, personnel.full_name].filter(Boolean).join(' ') : (user?.name ?? '-');
   const unitLabel = personnel?.current_assignment?.unit ?? '-';
