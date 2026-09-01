@@ -15,25 +15,20 @@ persis).
 ## 1. Cek Versi Aplikasi (Force / Suggest Update)
 
 App memeriksa apakah build yang terpasang sudah usang dibanding versi terbaru yang dirilis backend.
-Dipakai saat app start (dan opsional saat `AppState` kembali `active`). Kalau versi terpasang **di bawah**
-`min_supported_version` → update **wajib** (blocking modal, tidak bisa ditutup); kalau di bawah
-`latest_version` tapi masih ≥ `min_supported_version` → update **disarankan** (modal bisa di-skip).
+Dipakai saat app start (dan opsional saat `AppState` kembali `active`). **Semua perbandingan versi
+dilakukan di client** — backend cukup mengumumkan versi terbaru + minimum per platform.
 
 ### 1.1 Endpoint
 
 ```
-GET /app-version?platform=android&version=0.2&build=2
+GET /app-version
 ```
 
-**Publik** — tidak butuh `Authorization` (dicek sebelum/juga di layar login). `Accept: application/json` tetap dikirim.
+**Publik** — tidak butuh `Authorization` (dicek juga di layar login). `Accept: application/json` tetap dikirim.
 
-**Query**
-
-| Parameter | Wajib | Contoh | Keterangan |
-|-----------|-------|--------|------------|
-| `platform` | ya | `android` \| `ios` | dari `Platform.OS` |
-| `version` | ya | `0.2` | `versionName` (Android) / `CFBundleShortVersionString` (iOS) — dari `react-native-device-info` `getVersion()` |
-| `build` | tidak | `2` | `versionCode` / `CFBundleVersion` — `getBuildNumber()`; dipakai backend kalau `version` sama tapi build beda |
+**Tanpa query.** Response memuat blok untuk tiap platform; client memilih blok sesuai `Platform.OS`,
+lalu membandingkan sendiri dengan versi terpasang (`react-native-device-info` — `getVersion()` /
+`getBuildNumber()`).
 
 ### 1.2 Response `200`
 
@@ -41,44 +36,56 @@ GET /app-version?platform=android&version=0.2&build=2
 {
   "success": true,
   "data": {
-    "platform": "android",
-    "latest_version": "0.3",
-    "latest_build": 3,
-    "min_supported_version": "0.2",
-    "update_available": true,
-    "update_required": false,
-    "download_url": "https://cdn.smartbattalion.example/apk/SmartBattalion-v0.3(3)-release.apk",
-    "store_url": null,
-    "release_notes": "- Perbaikan sinkronisasi lokasi\n- Tambah riwayat peminjaman senjata",
-    "released_at": "2026-09-15T10:00:00+07:00"
+    "android": {
+      "latest_version": "0.3",
+      "latest_build": 3,
+      "min_supported_version": "0.2",
+      "download_url": "https://cdn.smartbattalion.example/apk/SmartBattalion-v0.3(3)-release.apk",
+      "store_url": null,
+      "release_notes": "- Perbaikan sinkronisasi lokasi\n- Tambah riwayat peminjaman senjata",
+      "released_at": "2026-09-15T10:00:00+07:00"
+    },
+    "ios": {
+      "latest_version": "0.3",
+      "latest_build": 3,
+      "min_supported_version": "0.2",
+      "download_url": null,
+      "store_url": "https://apps.apple.com/app/id6500000000",
+      "release_notes": "- Perbaikan sinkronisasi lokasi\n- Tambah riwayat peminjaman senjata",
+      "released_at": "2026-09-15T10:00:00+07:00"
+    }
   }
 }
 ```
+
+Field berlaku untuk tiap blok platform:
 
 | field | tipe | keterangan |
 |-------|------|------------|
 | `latest_version` | string | versi rilis terbaru (format sama dengan `versionName`, mis. `"0.3"`) |
 | `latest_build` | number \| null | build number terbaru (opsional) |
-| `min_supported_version` | string | versi minimum yang masih boleh dipakai; di bawah ini → `update_required: true` |
-| `update_available` | boolean | `true` kalau `version` terpasang < `latest_version` |
-| `update_required` | boolean | `true` kalau `version` terpasang < `min_supported_version` — app **wajib** update |
+| `min_supported_version` | string | versi minimum yang masih boleh dipakai |
 | `download_url` | string \| null | link **langsung** ke APK terbaru (Android sideload). `null` kalau distribusi lewat store |
-| `store_url` | string \| null | link Play Store / App Store (dipakai kalau ada, diutamakan di iOS) |
+| `store_url` | string \| null | link Play Store / App Store (diutamakan di iOS) |
 | `release_notes` | string \| null | catatan rilis untuk ditampilkan di modal (plain text / markdown ringan) |
 | `released_at` | string \| null | ISO-8601 |
 
 > **Perbandingan versi** dilakukan di client dengan semantic-version compare (`0.2` < `0.3` < `0.10`),
-> bukan string compare. Kalau `version` tidak dikenal / lebih baru dari `latest_version`, backend cukup
-> balas `update_available: false`.
+> bukan string compare. Dari versi terpasang vs blok platform:
+> - terpasang **<** `min_supported_version` → update **wajib**
+> - `min_supported_version` **≤** terpasang **<** `latest_version` → update **disarankan**
+> - terpasang **≥** `latest_version` → tidak ada update
+>
+> Kalau versi terpasang tidak dikenal / lebih baru dari `latest_version`, anggap tidak ada update.
 
 ### 1.3 Perilaku app
 
-- `update_required: true` → `StatusModal` non-dismissable (tanpa aksi sekunder, `onRequestClose` no-op —
+- **Update wajib** → `StatusModal` non-dismissable (tanpa aksi sekunder, `onRequestClose` no-op —
   pola sama seperti gate lokasi di `Home`), satu tombol "Update Sekarang" yang membuka `download_url`
   (atau `store_url`) via `Linking.openURL`.
-- `update_available: true` & `update_required: false` → `StatusModal` biasa dengan aksi "Update" +
-  "Nanti"; "Nanti" menyimpan `latest_version` yang di-skip di AsyncStorage supaya tidak muncul lagi
-  untuk versi itu sampai ada rilis lebih baru.
+- **Update disarankan** → `StatusModal` biasa dengan aksi "Update" + "Nanti"; "Nanti" menyimpan
+  `latest_version` yang di-skip di AsyncStorage supaya tidak muncul lagi untuk versi itu sampai ada
+  rilis lebih baru.
 - Request gagal (network / non-2xx) → **diabaikan diam-diam**, app jalan normal (jangan blokir user
   hanya karena cek versi gagal).
 
