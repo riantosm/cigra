@@ -13,6 +13,7 @@ import CatalogListScreen from '@/screens/CatalogList';
 import ChangePasswordScreen from '@/screens/ChangePassword';
 import AlarmSatuanScreen from '@/screens/AlarmSatuan';
 import ComingSoonScreen from '@/screens/ComingSoon';
+import EmergencyContactsScreen from '@/screens/EmergencyContacts';
 import EmergencyListScreen from '@/screens/EmergencyList';
 import ForgotPasswordScreen from '@/screens/ForgotPassword';
 import HealthDashboardScreen from '@/screens/HealthDashboard';
@@ -118,6 +119,7 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.personnelTracking} component={PersonnelTrackingScreen} />
         <Stack.Screen name={ROUTES.notifications} component={NotificationsScreen} />
         <Stack.Screen name={ROUTES.emergencyList} component={EmergencyListScreen} />
+        <Stack.Screen name={ROUTES.emergencyContacts} component={EmergencyContactsScreen} />
         <Stack.Screen name={ROUTES.sendAnnouncement} component={SendAnnouncementScreen} />
         <Stack.Screen name={ROUTES.alarmSatuan} component={AlarmSatuanScreen} />
         <Stack.Screen name={ROUTES.healthDashboard} component={HealthDashboardScreen} />

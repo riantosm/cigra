@@ -20,10 +20,24 @@ import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getMyLocationApi } from '@/services/api/location.service';
+import {
+  getMyAssetsApi,
+  getMyIdCardApi,
+  getMyMovementsApi,
+  getMyStatusApi,
+} from '@/services/api/me.service';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
-import type { AuthUser, MyLocationResult } from '@/types';
-import { formatRelativeTime } from '@/utils/format';
+import type {
+  AuthUser,
+  MeAssets,
+  MeIdCard,
+  MeMovement,
+  MeStatus,
+  MyLocationResult,
+} from '@/types';
+import type { BadgeVariant } from '@/components/atoms/Badge';
+import { formatDateShort, formatRelativeTime, titleCase } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 
 export type MemberHomeNavigationProp = CompositeNavigationProp<
@@ -37,15 +51,9 @@ export interface MemberHomeProps {
   onRefresh: () => Promise<void>;
 }
 
-// Semua data di bawah ini masih contoh/placeholder mengikuti desain — kontrak endpoint aslinya
-// ada di API_CONTRACT_ANGGOTA.md. Yang sudah nyata: identitas Kartu Anggota (user.personnel) dan
-// tile "Lokasi Terakhir" / "Update Terakhir" (GET /locations/me).
-const DUMMY_MOVEMENTS = [
-  { id: 'm1', direction: 'in' as const, title: 'Masuk Markas', detail: 'Pos Utama', time: '08:14' },
-  { id: 'm2', direction: 'out' as const, title: 'Keluar Markas', detail: 'Dinas', time: '07:05' },
-  { id: 'm3', direction: 'in' as const, title: 'Masuk Markas', detail: 'Pos Utama', time: 'Kemarin 17:42' },
-];
-
+// "Pengumuman Terbaru" masih dummy — GET /announcements belum diintegrasikan di layar ini
+// (lihat API_CONTRACT_ANGGOTA.md §5). Sisanya (Kartu Anggota, Status Saya, Aset Saya, Aktivitas
+// Terbaru) sudah nyata lewat /me/id-card, /me/status, /me/assets, /me/movements.
 const DUMMY_NOTICES = [
   {
     id: 'n1',
@@ -76,30 +84,87 @@ const DUMMY_NOTICES = [
   },
 ];
 
-const DUMMY_ASSETS = {
-  weapon: {
-    category: 'Senjata Dinas',
-    name: 'SS2-V1',
-    count: 1,
-    lines: [
-      { label: 'No. Senjata', value: 'SB-0231' },
-      { label: 'Serial', value: 'PINDAD-21B0231' },
-    ],
-    badgeLabel: 'Baik',
-    badgeVariant: 'success' as const,
-  },
-  vehicle: {
-    category: 'Kendaraan',
-    name: 'Toyota Hilux Double Cabin',
-    count: 1,
-    lines: [
-      { label: 'No. Polisi', value: 'D 1234 AB' },
-      { label: 'STNK', value: 'Aktif s/d 12 Nov 2026' },
-    ],
-    badgeLabel: 'STNK Aktif',
-    badgeVariant: 'primary' as const,
-  },
+type AssetCardData = {
+  category: string;
+  name: string;
+  count: number;
+  lines: { label: string; value: string }[];
+  badgeLabel: string;
+  badgeVariant: BadgeVariant;
 };
+
+const EMPTY_WEAPON_CARD: AssetCardData = {
+  category: 'Senjata Dinas',
+  name: 'Belum ada senjata dinas',
+  count: 0,
+  lines: [],
+  badgeLabel: 'Tidak ada',
+  badgeVariant: 'neutral',
+};
+
+const EMPTY_VEHICLE_CARD: AssetCardData = {
+  category: 'Kendaraan',
+  name: 'Belum ada kendaraan',
+  count: 0,
+  lines: [],
+  badgeLabel: 'Tidak ada',
+  badgeVariant: 'neutral',
+};
+
+function conditionVariant(status: string): BadgeVariant {
+  const key = status.toLowerCase();
+  if (key.includes('good') || key.includes('baik') || key.includes('siap')) return 'success';
+  if (key.includes('minor') || key.includes('ringan') || key.includes('rusak_ringan')) return 'warning';
+  if (key.includes('damage') || key.includes('rusak') || key.includes('berat')) return 'danger';
+  return 'neutral';
+}
+
+function stnkVariant(status: string): BadgeVariant {
+  if (status === 'active') return 'primary';
+  if (status === 'expiring_soon') return 'warning';
+  if (status === 'expired') return 'danger';
+  return 'neutral';
+}
+
+function toWeaponCard(assets: MeAssets | null): AssetCardData {
+  const weapon = assets?.weapons?.[0];
+  if (!weapon) return EMPTY_WEAPON_CARD;
+  return {
+    category: 'Senjata Dinas',
+    name: weapon.category || weapon.weapon_number,
+    count: assets?.weapons.length ?? 1,
+    lines: [
+      { label: 'No. Senjata', value: weapon.weapon_number },
+      ...(weapon.serial_number ? [{ label: 'Serial', value: weapon.serial_number }] : []),
+    ],
+    badgeLabel: weapon.condition_label || titleCase(weapon.condition_status) || 'Kondisi -',
+    badgeVariant: conditionVariant(weapon.condition_status),
+  };
+}
+
+function toVehicleCard(assets: MeAssets | null): AssetCardData {
+  const vehicle = assets?.vehicles?.[0];
+  if (!vehicle) return EMPTY_VEHICLE_CARD;
+  return {
+    category: 'Kendaraan',
+    name: vehicle.brand_model,
+    count: assets?.vehicles.length ?? 1,
+    lines: [
+      ...(vehicle.plate_number ? [{ label: 'No. Polisi', value: vehicle.plate_number }] : []),
+      ...(vehicle.stnk_valid_until
+        ? [{ label: 'STNK', value: `s/d ${formatDateShort(vehicle.stnk_valid_until)}` }]
+        : []),
+    ],
+    badgeLabel:
+      vehicle.stnk_status_label || titleCase(vehicle.stnk_status) || 'STNK -',
+    badgeVariant: stnkVariant(vehicle.stnk_status),
+  };
+}
+
+function movementTitle(movement: MeMovement): string {
+  if (movement.note) return movement.note;
+  return movement.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas';
+}
 
 function accuracyLabel(accuracy: number | null | undefined): string {
   if (accuracy == null) return 'Akurasi tidak diketahui';
@@ -121,6 +186,10 @@ export default function MemberHome(props: MemberHomeProps) {
   const [isQrModalVisible, setIsQrModalVisible] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
+  const [idCard, setIdCard] = useState<MeIdCard | null>(null);
+  const [status, setStatus] = useState<MeStatus | null>(null);
+  const [assets, setAssets] = useState<MeAssets | null>(null);
+  const [movements, setMovements] = useState<MeMovement[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadMyLocation = useCallback(async () => {
@@ -131,15 +200,31 @@ export default function MemberHome(props: MemberHomeProps) {
     }
   }, []);
 
+  // Tiap surface dimuat independen (allSettled) — mis. GET /me/assets sempat 500 di backend,
+  // jangan sampai menjatuhkan Kartu Anggota / Status / Aktivitas.
+  const loadMe = useCallback(async () => {
+    const [idCardResult, statusResult, assetsResult, movementsResult] = await Promise.allSettled([
+      getMyIdCardApi(),
+      getMyStatusApi(),
+      getMyAssetsApi(),
+      getMyMovementsApi({ per_page: 3 }),
+    ]);
+    if (idCardResult.status === 'fulfilled') setIdCard(idCardResult.value);
+    if (statusResult.status === 'fulfilled') setStatus(statusResult.value);
+    if (assetsResult.status === 'fulfilled') setAssets(assetsResult.value);
+    if (movementsResult.status === 'fulfilled') setMovements(movementsResult.value.items);
+  }, []);
+
   useEffect(() => {
     loadMyLocation();
-  }, [loadMyLocation]);
+    loadMe();
+  }, [loadMyLocation, loadMe]);
 
   async function handleRefresh() {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      await Promise.all([onRefresh(), loadMyLocation()]);
+      await Promise.all([onRefresh(), loadMyLocation(), loadMe()]);
       setLastSyncedAt(new Date());
     } finally {
       setIsRefreshing(false);
@@ -155,39 +240,49 @@ export default function MemberHome(props: MemberHomeProps) {
   const coords = myLocation?.location ?? null;
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-  const statusTiles = useMemo(
-    () => [
+  const idCardVerified = (idCard?.verification_status ?? '') === 'verified';
+  const qrPayload = idCard?.qr_payload ?? serviceNumber;
+
+  const weaponCard = useMemo(() => toWeaponCard(assets), [assets]);
+  const vehicleCard = useMemo(() => toVehicleCard(assets), [assets]);
+
+  const statusTiles = useMemo(() => {
+    const presence = status?.presence ?? null;
+    const duty = status?.duty ?? null;
+    const loc = status?.location ?? null;
+    const locCapturedAt = loc?.captured_at ?? coords?.captured_at ?? null;
+
+    return [
       {
         icon: 'shield-check' as const,
         color: colors.success,
         label: 'Status Saat Ini',
-        value: 'Di Markas',
-        sub: 'Sejak 08:14',
+        value: presence?.label ?? 'Belum Ada Data',
+        sub: presence?.since ? `Sejak ${clockLabel(presence.since)}` : '-',
       },
       {
         icon: 'briefcase' as const,
         color: colors.primary,
         label: 'Tugas / Dinas',
-        value: 'Dinas Dalam',
-        sub: 'Hari ini',
+        value: duty?.label ?? 'Belum Ada Data',
+        sub: duty?.period_label ?? '-',
       },
       {
         icon: 'map-pin' as const,
         color: colors.warning,
         label: 'Lokasi Terakhir',
-        value: coords ? 'Markas' : 'Belum Ada Data',
-        sub: coords ? accuracyLabel(coords.accuracy) : '-',
+        value: loc?.label ?? (coords ? 'Tersedia' : 'Belum Ada Data'),
+        sub: loc?.accuracy_label ?? (coords ? accuracyLabel(coords.accuracy) : '-'),
       },
       {
         icon: 'clock' as const,
         color: colors.primary,
         label: 'Update Terakhir',
-        value: formatRelativeTime(coords?.captured_at) ?? '-',
-        sub: clockLabel(coords?.captured_at),
+        value: formatRelativeTime(locCapturedAt) ?? '-',
+        sub: clockLabel(locCapturedAt),
       },
-    ],
-    [coords],
-  );
+    ];
+  }, [status, coords]);
 
   function openMyMovements() {
     if (serviceNumber) {
@@ -209,28 +304,16 @@ export default function MemberHome(props: MemberHomeProps) {
       onPress: () => navigation.navigate(ROUTES.bukuSaku),
     },
     {
-      icon: 'history' as const,
-      color: colors.primary,
-      label: 'Riwayat Pergerakan',
-      onPress: openMyMovements,
-    },
-    {
       icon: 'megaphone' as const,
       color: colors.warning,
       label: 'Pengumuman',
       onPress: () => navigation.navigate(ROUTES.notifications),
     },
     {
-      icon: 'map-pin' as const,
-      color: colors.success,
-      label: 'Peta Personel',
-      onPress: () => navigation.navigate(ROUTES.personnelMap),
-    },
-    {
       icon: 'phone' as const,
       color: colors.danger,
       label: 'Kontak Darurat',
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Kontak Darurat' }),
+      onPress: () => navigation.navigate(ROUTES.emergencyContacts),
     },
   ];
 
@@ -262,19 +345,18 @@ export default function MemberHome(props: MemberHomeProps) {
             position={personnel?.current_assignment?.position ?? null}
             unit={personnel?.current_assignment?.unit ?? null}
             dutyStatusLabel={isActive ? 'AKTIF' : 'NONAKTIF'}
-            verified
+            verified={idCardVerified}
+            qrPayload={qrPayload}
             onShowFullQr={() => setIsQrModalVisible(true)}
           />
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Status Saya</Text>
-            <PressableScale onPress={() => navigation.navigate(ROUTES.profile)}>
-              <Text style={styles.sectionLink}>Lihat Detail</Text>
-            </PressableScale>
           </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            style={styles.statusTilesScroll}
             contentContainerStyle={styles.statusTilesRow}>
             {statusTiles.map(tile => (
               <StatusTile key={tile.label} {...tile} />
@@ -288,13 +370,13 @@ export default function MemberHome(props: MemberHomeProps) {
             <AssetCard
               icon="weapon"
               style={styles.assetCard}
-              {...DUMMY_ASSETS.weapon}
+              {...weaponCard}
               onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
             />
             <AssetCard
               icon="car"
               style={styles.assetCard}
-              {...DUMMY_ASSETS.vehicle}
+              {...vehicleCard}
               onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
             />
           </View>
@@ -306,18 +388,22 @@ export default function MemberHome(props: MemberHomeProps) {
             </PressableScale>
           </View>
           <View style={styles.listCard}>
-            {DUMMY_MOVEMENTS.map((item, index) => (
-              <View
-                key={item.id}
-                style={index < DUMMY_MOVEMENTS.length - 1 ? styles.listRowDivider : undefined}>
-                <TimelineRow
-                  direction={item.direction}
-                  title={item.title}
-                  detail={item.detail}
-                  time={item.time}
-                />
-              </View>
-            ))}
+            {movements.length === 0 ? (
+              <Text style={styles.emptyRow}>Belum ada aktivitas keluar/masuk.</Text>
+            ) : (
+              movements.map((item, index) => (
+                <View
+                  key={item.id}
+                  style={index < movements.length - 1 ? styles.listRowDivider : undefined}>
+                  <TimelineRow
+                    direction={item.direction === 'out' ? 'out' : 'in'}
+                    title={movementTitle(item)}
+                    detail={item.location_label ?? item.purpose ?? '-'}
+                    time={formatRelativeTime(item.occurred_at) ?? clockLabel(item.occurred_at)}
+                  />
+                </View>
+              ))
+            )}
           </View>
 
           <View style={styles.sectionHeader}>
@@ -363,7 +449,7 @@ export default function MemberHome(props: MemberHomeProps) {
 
       <QrIdentityModal
         visible={isQrModalVisible}
-        value={serviceNumber}
+        value={qrPayload}
         name={displayName}
         subtitle={`NRP ${serviceNumber ?? '-'}`}
         onRequestClose={() => setIsQrModalVisible(false)}
@@ -401,9 +487,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primary,
   },
+  // Padding + margin negatif penyeimbang di semua sisi: beri ruang buat shadow tile (cardShadow,
+  // radius 20) yang kalau tidak, terpotong di tepi ScrollView horizontal (bawah + kiri).
+  statusTilesScroll: {
+    marginVertical: -10,
+    marginHorizontal: -10,
+  },
   statusTilesRow: {
     gap: 10,
-    paddingRight: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
   },
   assetRow: {
     flexDirection: 'row',
@@ -426,6 +519,11 @@ const styles = StyleSheet.create({
   listRowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSoft,
+  },
+  emptyRow: {
+    fontSize: 13,
+    color: colors.textMuted,
+    paddingVertical: 16,
   },
   shortcutRow: {
     flexDirection: 'row',

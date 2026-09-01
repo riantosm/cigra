@@ -25,6 +25,7 @@ export type RootStackParamList = {
   [ROUTES.personnelTracking]: undefined;
   [ROUTES.notifications]: undefined;
   [ROUTES.emergencyList]: undefined;
+  [ROUTES.emergencyContacts]: undefined;
   [ROUTES.sendAnnouncement]: undefined;
   [ROUTES.alarmSatuan]: undefined;
   [ROUTES.healthDashboard]: undefined;

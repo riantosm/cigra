@@ -15,8 +15,10 @@ export interface MemberIdCardProps {
   // Nilai mentah `personnel.photo` dari API — di-resolve & di-fetch dengan token oleh SecureImage.
   photoPath: string | null | undefined;
   name: string;
-  // NRP — juga jadi isi QR.
+  // NRP — ditampilkan sebagai teks identitas.
   serviceNumber: string | null;
+  // Isi QR — dari GET /me/id-card `qr_payload` (default = NRP). Kalau tidak diisi, fallback ke NRP.
+  qrPayload?: string | null;
   rank: string | null;
   position: string | null;
   unit: string | null;
@@ -41,8 +43,10 @@ function IdentityField(props: { label: string; value: string }) {
 // tatap muka. Identitas datang dari `user.personnel` (GET /auth/me), status verifikasi dari
 // GET /me/id-card (lihat API_CONTRACT_ANGGOTA.md §1) — sementara di-hardcode `verified`.
 export default function MemberIdCard(props: MemberIdCardProps) {
-  const { photoPath, name, serviceNumber, rank, position, unit, dutyStatusLabel, verified, onShowFullQr } = props;
+  const { photoPath, name, serviceNumber, qrPayload, rank, position, unit, dutyStatusLabel, verified, onShowFullQr } =
+    props;
   const [photoFailed, setPhotoFailed] = useState(false);
+  const qrValue = qrPayload ?? serviceNumber;
 
   return (
     <View style={styles.card}>
@@ -100,7 +104,7 @@ export default function MemberIdCard(props: MemberIdCardProps) {
 
         <View style={styles.qrColumn}>
           <PressableScale onPress={onShowFullQr} style={styles.qrFrame}>
-            <QrCode value={serviceNumber} size={104} />
+            <QrCode value={qrValue} size={104} />
           </PressableScale>
           <PressableScale onPress={onShowFullQr} contentStyle={styles.qrButton}>
             <Icon name="search" size={13} color={colors.primary} />

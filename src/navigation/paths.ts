@@ -17,6 +17,7 @@ export const ROUTES = {
   personnelTracking: 'PersonnelTracking',
   notifications: 'Notifications',
   emergencyList: 'EmergencyList',
+  emergencyContacts: 'EmergencyContacts',
   sendAnnouncement: 'SendAnnouncement',
   alarmSatuan: 'AlarmSatuan',
   healthDashboard: 'HealthDashboard',
