@@ -20,7 +20,10 @@ DOCS = {
     "@@ANGGOTA@@": HERE / "API_CONTRACT_ANGGOTA.md",
 }
 
-html = TEMPLATE.read_text(encoding="utf-8")
+# Tanggal pengecekan frontend terakhir — tampil di atas Daftar Isi. Update saat sweep status berikutnya.
+CHECKED = "1 September 2026, 17.03 WIB"
+
+html = TEMPLATE.read_text(encoding="utf-8").replace("@@CHECKED@@", CHECKED)
 for token, path in DOCS.items():
     md = path.read_text(encoding="utf-8")
     if "</script" in md.lower():

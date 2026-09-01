@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
 <title>API Contract — Smart Battalion</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
@@ -124,9 +128,9 @@
 
   /* ---------- shell ---------- */
   .shell {
-    display: grid; grid-template-columns: 256px minmax(0, 1fr);
-    gap: clamp(24px, 5vw, 60px);
-    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 300px minmax(0, 1fr);
+    gap: clamp(24px, 5vw, 56px);
+    max-width: 1240px; margin: 0 auto;
     padding: 0 clamp(16px, 4vw, 40px) 120px;
   }
 
@@ -143,14 +147,23 @@
   }
   .toc-group { margin-bottom: 18px; }
   .toc-group-head {
-    display: flex; align-items: center; gap: 8px;
-    margin: 0 0 8px; padding: 5px 10px; border-radius: 7px;
-    font-size: 12.5px; font-weight: 600; color: var(--ink);
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    margin: 0 0 8px; padding: 6px 10px; border-radius: 7px;
+    font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
+    background: none; border: none; text-align: left; cursor: pointer;
   }
-  a.toc-group-head:hover { background: var(--surface); text-decoration: none; }
-  a.toc-group-head.active { background: var(--accent-wash); color: var(--accent-ink); }
+  button.toc-group-head:hover { background: var(--surface); }
+  .toc-group-head .gname { margin-right: auto; }
+  .toc-group-head .gstat {
+    padding: 1px 6px; border-radius: 5px;
+    font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .toc-group-head .chev { flex: none; color: var(--muted); transition: transform .15s; }
+  .toc-group.collapsed .toc-group-head .chev { transform: rotate(-90deg); }
+  .toc-group.collapsed > ol { display: none; }
   .toc-group-head .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); flex: none; }
-  .toc-group.upcoming .toc-group-head { color: var(--muted); }
+  .toc-group.upcoming .toc-group-head { color: var(--muted); cursor: default; }
   .toc-group.upcoming .dot { background: var(--line); }
   .soon {
     font-family: "IBM Plex Mono", monospace; font-size: 9px; font-weight: 600;
@@ -164,12 +177,13 @@
     border-left: 1px solid var(--line);
   }
   .toc li a {
-    display: grid; grid-template-columns: auto 1fr; gap: 8px;
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center;
     padding: 6px 10px; border-radius: 7px; margin-left: -1px;
-    color: var(--ink-soft); font-size: 13px; line-height: 1.35;
+    color: var(--ink-soft); font-size: 13px; line-height: 1.35; min-width: 0;
     border-left: 2px solid transparent;
   }
-  .toc li a .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); padding-top: 1px; }
+  .toc li a .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+  .toc li a .tlabel { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .toc li.lvl-3 a { padding-left: 20px; font-size: 12.5px; color: var(--muted); }
   .toc li a:hover { background: var(--surface); text-decoration: none; }
   .toc li a.active { background: var(--accent-wash); color: var(--accent-ink); border-left-color: var(--accent); }
@@ -211,6 +225,19 @@
   .hd-4 { font-size: 0.95rem; font-weight: 600; margin: 26px 0 10px; color: var(--ink-soft); }
   .hd code { font-size: 0.8em; font-weight: 500; }
   .hd-2 + p, .hd-3 + p, .hd-4 + p, .mod-title + p { margin-top: 0; }
+
+  /* ---------- kartu per "poin" ---------- */
+  .pcard {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px clamp(16px, 3vw, 26px); margin: 22px 0; box-shadow: var(--shadow);
+  }
+  .pcard > :first-child { margin-top: 0; }
+  .pcard > :last-child { margin-bottom: 0; }
+  .pcard .hd-2, .pcard .hd-3 { margin-top: 0; }
+  .pcard .hd-2 { border-bottom: none; padding-bottom: 0; margin-bottom: 14px; }
+  .pcard .cx:first-child { margin-top: 4px; }
+  .pcard .cx, .pcard .table-wrap { box-shadow: none; }
+  .pcard .table-wrap { background: var(--surface-2); }
 
   code {
     font-size: 0.86em; padding: 1.5px 5px; border-radius: 5px;
@@ -295,7 +322,56 @@
     main { padding-top: 8px; }
   }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+  /* ---------- status callouts ---------- */
+  .cx {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px;
+    margin: 16px 0; padding: 11px 14px; border-radius: 11px;
+    border: 1px solid var(--line); border-left: 3px solid var(--line);
+    background: var(--surface); box-shadow: var(--shadow); max-width: 74ch; font-size: 13.5px;
+  }
+  .cx-tag {
+    font-family: "IBM Plex Mono", monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap;
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .cx-body { color: var(--ink-soft); }
+  .cx-body code { font-size: 0.84em; }
+  .cx-done { border-left-color: #16A34A; }
+  .cx-done .cx-tag { color: #0C7A4E; background: #E4F5EC; }
+  .cx-partial { border-left-color: #D97706; }
+  .cx-partial .cx-tag { color: #9A5B12; background: #FBEFD9; }
+  .cx-bug { border-left-color: #DC2626; }
+  .cx-bug .cx-tag { color: #B42318; background: #FBE7E5; }
+  .cx-todo { border-left-color: var(--line); }
+  .cx-todo .cx-tag { color: var(--soon-fg); background: var(--soon-bg); }
+  :root[data-theme="dark"] .cx-done .cx-tag { color: #62D3A0; background: #123026; }
+  :root[data-theme="dark"] .cx-partial .cx-tag { color: #E7B267; background: #33260F; }
+  :root[data-theme="dark"] .cx-bug .cx-tag { color: #F0A9A0; background: #3A1D1A; }
+
+  .toc-checked {
+    margin: -6px 0 16px; padding: 8px 10px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--line);
+    font-size: 11.5px; line-height: 1.5; color: var(--muted);
+  }
+  .toc-checked b { display: block; color: var(--ink); font-size: 12.5px; font-weight: 600; }
+
+  .tstat {
+    justify-self: end; padding: 1px 5px; border-radius: 5px;
+    font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+  }
+  .tstat-done { color: #0C7A4E; background: #E4F5EC; }
+  .tstat-partial { color: #9A5B12; background: #FBEFD9; }
+  .tstat-bug { color: #B42318; background: #FBE7E5; }
+  .tstat-todo { color: var(--soon-fg); background: var(--soon-bg); }
+  :root[data-theme="dark"] .tstat-done { color: #62D3A0; background: #123026; }
+  :root[data-theme="dark"] .tstat-partial { color: #E7B267; background: #33260F; }
+  :root[data-theme="dark"] .tstat-bug { color: #F0A9A0; background: #3A1D1A; }
 </style>
+</head>
+
+<body>
 
 <header class="topbar">
   <span class="wordmark">
@@ -465,7 +541,17 @@
     function render(md, docId) {
       md = md.replace(/\r\n?/g, '\n');
       var lines = md.split('\n');
-      var out = [], toc = [], i = 0, n = lines.length;
+      var out = [], toc = [], i = 0, n = lines.length, pendingHead = null, cardOpen = false;
+
+      function closeCard() { if (cardOpen) { out.push('</section>'); cardOpen = false; } }
+      function nextContentIsHeading(from) {
+        for (var k = from; k < n; k++) {
+          var t = lines[k].trim();
+          if (!t || /^-{3,}$/.test(t)) continue;
+          return /^#{1,6}\s+/.test(t);
+        }
+        return true;
+      }
 
       while (i < n) {
         var line = lines[i], trimmed = line.trim();
@@ -486,12 +572,21 @@
         var hm = trimmed.match(/^(#{1,6})\s+(.*)$/);
         if (hm) {
           var lvl = hm[1].length, txt = hm[2].replace(/\s+#*\s*$/, '');
+          pendingHead = null;
+          closeCard();
           if (lvl === 1) {
             out.push('<header class="mod-title" id="mod-' + docId + '"><p class="eyebrow">' +
               escHtml(MOD_EYEBROW[docId] || '') + '</p><h1>' + inlineMd(txt) + '</h1></header>');
           } else {
             var id = docId + '-' + slugify(txt);
-            if (lvl === 2 || lvl === 3) toc.push({ level: lvl, text: txt.replace(/`/g, ''), id: id });
+            if (lvl === 2 || lvl === 3) {
+              pendingHead = { level: lvl, text: txt.replace(/`/g, ''), id: id, status: '' };
+              toc.push(pendingHead);
+            }
+            // Bungkus tiap "poin" dalam kartu putih: setiap h3, dan setiap h2 yang punya isi
+            // sendiri (bukan cuma judul grup untuk h3 di bawahnya).
+            var asCard = lvl === 3 || (lvl === 2 && !nextContentIsHeading(i + 1)) || lvl > 3;
+            if (asCard) { out.push('<section class="pcard">'); cardOpen = true; }
             out.push('<h' + lvl + ' id="' + id + '" class="hd hd-' + lvl + '">' + inlineMd(txt) + '</h' + lvl + '>');
           }
           i++;
@@ -501,7 +596,18 @@
         if (/^>\s?/.test(line)) {
           var qbuf = [];
           while (i < n && /^>\s?/.test(lines[i])) { qbuf.push(lines[i].replace(/^>\s?/, '')); i++; }
-          out.push('<blockquote>' + qbuf.join('\n').split(/\n\s*\n/).map(function (p) {
+          var qjoined = qbuf.join('\n').trim();
+          var cm = qjoined.match(/^\[!(\w+)\]\s*([\s\S]*)$/);
+          if (cm) {
+            var CX = { done: 'Sudah diintegrasikan', partial: 'Ada catatan', bug: 'Error backend', todo: 'Belum ada endpoint' };
+            var ckind = cm[1].toLowerCase();
+            if (!CX[ckind]) ckind = 'todo';
+            if (pendingHead && !pendingHead.status) pendingHead.status = ckind;
+            out.push('<div class="cx cx-' + ckind + '"><span class="cx-tag">' + escHtml(CX[ckind]) +
+              '</span><span class="cx-body">' + inlineMd(cm[2].replace(/\n/g, ' ').trim()) + '</span></div>');
+            continue;
+          }
+          out.push('<blockquote>' + qjoined.split(/\n\s*\n/).map(function (p) {
             return '<p>' + inlineMd(p.replace(/\n/g, ' ').trim()) + '</p>';
           }).join('') + '</blockquote>');
           continue;
@@ -542,6 +648,7 @@
         }
         out.push('<p>' + inlineMd(pbuf.join(' ').trim()) + '</p>');
       }
+      closeCard();
       return { html: out.join('\n'), toc: toc };
     }
 
@@ -550,7 +657,8 @@
 
     var main = document.getElementById('main');
     var toc = document.getElementById('toc');
-    var tocHtml = '<p class="toc-title">Daftar Isi</p>';
+    var tocHtml = '<p class="toc-title">Daftar Isi</p>' +
+      '<p class="toc-checked">Pengecekan frontend terakhir<b>@@CHECKED@@</b></p>';
 
     MODULES.forEach(function (mod, idx) {
       var src = document.getElementById(mod.srcId);
@@ -564,12 +672,26 @@
       if (idx > 0) main.insertAdjacentHTML('beforeend', '<div class="mod-divider"></div>');
       main.insertAdjacentHTML('beforeend', r.html);
 
-      tocHtml += '<div class="toc-group">' +
-        '<a class="toc-group-head" href="#mod-' + mod.id + '"><span class="dot"></span>' + escHtml(mod.group) + '</a>' +
+      var TSTAT = { done: 'Selesai', partial: 'Catatan', bug: 'Error', todo: 'Belum' };
+      var kinds = r.toc.map(function (t) { return t.status; }).filter(Boolean);
+      // Prioritas agregat grup: error > catatan > belum > selesai
+      var agg = kinds.indexOf('bug') >= 0 ? 'bug'
+        : kinds.indexOf('partial') >= 0 ? 'partial'
+        : kinds.indexOf('todo') >= 0 ? 'todo'
+        : kinds.length ? 'done' : '';
+      var chev = '<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+      var gstat = agg ? '<span class="gstat tstat-' + agg + '">' + TSTAT[agg] + '</span>' : '';
+
+      tocHtml += '<div class="toc-group collapsed">' +
+        '<button type="button" class="toc-group-head" aria-expanded="false">' +
+        '<span class="dot"></span><span class="gname">' + escHtml(mod.group) + '</span>' +
+        gstat + chev + '</button>' +
         '<ol>' + r.toc.map(function (it) {
           var s = splitNum(it.text);
+          var badge = it.status ? '<span class="tstat tstat-' + it.status + '">' + TSTAT[it.status] + '</span>' : '<span></span>';
           return '<li class="lvl-' + it.level + '"><a href="#' + it.id + '">' +
-            '<span class="n">' + escHtml(s.n) + '</span><span>' + escHtml(s.label) + '</span></a></li>';
+            '<span class="n">' + escHtml(s.n) + '</span>' +
+            '<span class="tlabel">' + escHtml(s.label) + '</span>' + badge + '</a></li>';
         }).join('') + '</ol></div>';
     });
 
@@ -578,6 +700,27 @@
       '<p class="toc-note">Modul Academy menyusul di dokumen ini.</p></div>';
 
     toc.innerHTML = tocHtml;
+
+    // ---------- accordion (grup default tertutup) ----------
+    toc.addEventListener('click', function (e) {
+      var head = e.target.closest && e.target.closest('button.toc-group-head');
+      if (!head) return;
+      var g = head.parentNode;
+      var open = g.classList.toggle('collapsed') === false;
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    function expandGroupFor(hash) {
+      if (!hash) return;
+      var t = toc.querySelector('a[href="' + hash + '"], button[data-mod]');
+      var g = t && t.closest('.toc-group');
+      if (g && g.classList.contains('collapsed')) {
+        g.classList.remove('collapsed');
+        var h = g.querySelector('button.toc-group-head');
+        if (h) h.setAttribute('aria-expanded', 'true');
+      }
+    }
+    expandGroupFor(location.hash);
+    window.addEventListener('hashchange', function () { expandGroupFor(location.hash); });
 
     // ---------- scroll spy ----------
     var anchorEls = Array.prototype.slice.call(main.querySelectorAll('[id^="mod-"], h2.hd[id], h3.hd[id]'));
@@ -629,3 +772,6 @@
     });
   })();
 </script>
+
+</body>
+</html>

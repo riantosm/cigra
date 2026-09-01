@@ -1,43 +1,36 @@
-# API Contract — Home Anggota (Draf)
+# API Contract — Home Anggota
 
-Draf kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Semua surface di
-layar ini **masih memakai data dummy** kecuali yang disebut "sudah nyata" di bawah. Bentuk envelope,
-pagination (`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah
-**seragam dengan API yang sudah berjalan** (`/auth/*`, `/locations/*`, `/catalog/*`) —
-sama seperti `API_CONTRACT.md`, tidak diulang di sini.
+**Pengecekan frontend terakhir: 1 September 2026, 17.03 WIB**
 
-> Status: **usulan frontend**. Nama field/endpoint boleh disesuaikan tim backend selama bentuk
-> envelope & pagination tetap konsisten dengan endpoint yang sudah berjalan.
+Kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Envelope, pagination,
+format waktu, dan enum seragam dengan `API_CONTRACT.md`. Semua endpoint di bawah berskup **user
+yang login** (dari `Authorization: Bearer <token>`) — tidak perlu parameter NRP di path.
 
-Semua endpoint di bawah berskup **user yang login** (diambil dari `Authorization: Bearer <token>`),
-jadi tidak perlu parameter `personnel`/`service_number` di path.
+Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** · **Belum ada endpoint**.
 
 ---
 
 ## 0. Yang sudah nyata (tidak perlu endpoint baru)
 
-| Bagian layar                     | Sumber data sekarang                                   |
-|----------------------------------|-------------------------------------------------------|
-| Header + Kartu Anggota (identitas)| `GET /auth/me` → `user.personnel` (sudah dipakai)     |
-| QR Code di Kartu Anggota         | **payload = NRP** (`personnel.service_number`) apa adanya — tidak perlu API |
-| Tile "Lokasi Terakhir" & "Update Terakhir" (Status Saya) | `GET /locations/me` (sudah dipakai di Profile) |
-| Shortcut "Peta Personel"         | `GET /locations/overview` (sudah ada)                 |
-| Shortcut "Pengumuman" / "Lihat Semua" pengumuman | layar `Notifications` (lihat `API_CONTRACT.md` §3) |
-| "Aktivitas Terbaru → Lihat Semua" & shortcut "Riwayat Pergerakan" | tab `visitor` ("Riwayat visitor") di `CatalogDetail` personel diri sendiri — diisi `visitor_log_history` dari `GET /catalog/personnel/{personnel}` |
+| Bagian layar | Sumber data sekarang |
+|---|---|
+| Header + Kartu Anggota (identitas) | `GET /auth/me` → `user.personnel` |
+| Tile "Lokasi Terakhir" & "Update Terakhir" | `GET /locations/me` |
+| Shortcut "Peta Personel" | `GET /locations/overview` |
+| "Aktivitas Terbaru → Lihat Semua" | tab `visitor` di `CatalogDetail` personel sendiri (`visitor_log_history` dari `GET /catalog/personnel/{personnel}`) |
 
 ---
 
 ## 1. Kartu Anggota — status verifikasi identitas
 
-Mengisi badge **"Terverifikasi"** di pojok kanan atas Kartu Anggota dan (opsional) membatasi masa
-berlaku QR.
+> [!DONE] Terintegrasi di `MemberHome` (`getMyIdCardApi`). `verification_status === 'verified'` → badge "Terverifikasi"; `qr_payload` → nilai QR (fallback ke NRP).
 
+`GET /me/id-card`
 
-```
-GET /me/id-card
-```
+**Query:** — · **Payload:** —
 
-**Response `200`**
+**Response `200`** — `data`: `{ service_number, verification_status, verified_at, qr_payload, qr_expires_at }`
+
 ```json
 {
   "success": true,
@@ -51,190 +44,162 @@ GET /me/id-card
 }
 ```
 
-- `verification_status`: `verified` | `pending` | `unverified` (client fallback netral untuk nilai lain).
-- `qr_payload`: string yang di-encode ke QR. **Default = NRP.** Field ini disediakan supaya backend
-  bisa mengganti ke token bertanda-tangan nanti tanpa ubah client.
-- `qr_expires_at`: `null` = tidak kedaluwarsa. Kalau diisi, client bisa menampilkan hitung mundur /
-  auto-refresh (belum diimplementasikan).
-
----
+- `verification_status`: `verified` | `pending` | `unverified` (fallback netral untuk nilai lain).
+- `qr_payload`: string yang di-encode ke QR, default = NRP.
+- `qr_expires_at`: `null` = tidak kedaluwarsa.
 
 ## 2. Status Saya
 
-Mengisi 4 tile di bagian **"Status Saya"**: Status Saat Ini, Tugas / Dinas, Lokasi Terakhir,
-Update Terakhir. (Lokasi Terakhir + Update Terakhir sudah bisa diisi dari `GET /locations/me` —
-endpoint ini melengkapi 2 tile sisanya + memberi label lokasi yang lebih manusiawi.)
+> [!DONE] Terintegrasi (`getMyStatusApi`) — mengisi 3 tile pertama + label lokasi. Tile jatuh ke "Belum Ada Data" kalau request gagal.
 
-```
-GET /me/status
-```
+`GET /me/status`
 
-**Response `200`**
+**Query:** — · **Payload:** —
+
+**Response `200`** — `data`: `as_of`, `presence{key, label, since}`,
+`duty{key, label, period_label, starts_at, ends_at}`, `location{label, accuracy_label, status, captured_at}`.
+
 ```json
 {
   "success": true,
   "data": {
     "as_of": "2026-08-30T09:41:00+07:00",
-    "presence": {
-      "key": "at_base",
-      "label": "Di Markas",
-      "since": "2026-08-30T08:14:00+07:00"
-    },
+    "presence": { "key": "at_base", "label": "Di Markas", "since": "2026-08-30T08:14:00+07:00" },
     "duty": {
-      "key": "internal_duty",
-      "label": "Dinas Dalam",
-      "period_label": "Hari ini",
-      "starts_at": "2026-08-30T07:00:00+07:00",
-      "ends_at": "2026-08-30T19:00:00+07:00"
+      "key": "internal_duty", "label": "Dinas Dalam", "period_label": "Hari ini",
+      "starts_at": "2026-08-30T07:00:00+07:00", "ends_at": "2026-08-30T19:00:00+07:00"
     },
     "location": {
-      "label": "Markas",
-      "accuracy_label": "Akurasi tinggi",
-      "status": "fresh",
-      "captured_at": "2026-08-30T09:39:00+07:00"
+      "label": "Markas", "accuracy_label": "Akurasi tinggi",
+      "status": "fresh", "captured_at": "2026-08-30T09:39:00+07:00"
     }
   }
 }
 ```
 
-- `presence.key`: `at_base` | `off_base` | `on_leave` | `absent` (fallback netral untuk nilai lain).
-- `duty.key`: `internal_duty` | `field_duty` | `guard` | `standby` | `off` | dst — dikirim mentah,
-  label dari `duty.label`.
-- `location.label`: hasil reverse-geocode / nama pos di sisi backend (client tidak reverse-geocode).
-- `location.accuracy_label`: string siap tampil (mis. "Akurasi tinggi" / "Akurasi sedang"). Kalau
-  tidak ada, client turunkan sendiri dari `accuracy` di `GET /locations/me`.
-
----
+- `presence.key`: `at_base` | `off_base` | `on_leave` | `absent`.
+- `duty.key`: `internal_duty` | `field_duty` | `guard` | `standby` | `off` | dst — label dari `duty.label`.
+- `location.label`: hasil reverse-geocode / nama pos di backend (client tidak reverse-geocode).
+- `location.accuracy_label`: string siap tampil; kalau kosong client turunkan dari `accuracy` `GET /locations/me`.
 
 ## 3. Aset Saya
 
-Mengisi bagian **"Aset Saya"** (kartu Senjata Dinas + Kendaraan). Data ini sebetulnya sudah ada di
-katalog (`/catalog/weapon-assignments`, `/catalog/vehicles`) tapi terfilter ke pemiliknya — endpoint
-ini ringkasan "milik saya" supaya client tidak perlu menarik seluruh daftar lalu memfilter.
+> [!BUG] `GET /me/assets` mengembalikan `500 "Server Error"`. FE sudah wired (`getMyAssetsApi`, di-guard `Promise.allSettled`) — kartu Senjata/Kendaraan tetap di placeholder sampai backend diperbaiki.
 
-```
-GET /me/assets
-```
+`GET /me/assets`
 
-**Response `200`**
+**Query:** — · **Payload:** —
+
+**Response `200`** — `data`: `{ weapons: [...], vehicles: [...] }`
+
 ```json
 {
   "success": true,
   "data": {
     "weapons": [
-      {
-        "id": 21,
-        "weapon_number": "SB-0231",
-        "serial_number": "PINDAD-21B0231",
-        "category": "SS2-V1",
-        "condition_status": "good",
-        "condition_label": "Baik",
-        "assigned_at": "2025-01-10T00:00:00+07:00"
-      }
+      { "id": 21, "weapon_number": "SB-0231", "serial_number": "PINDAD-21B0231",
+        "category": "SS2-V1", "condition_status": "good", "condition_label": "Baik",
+        "assigned_at": "2025-01-10T00:00:00+07:00" }
     ],
     "vehicles": [
-      {
-        "id": 8,
-        "brand_model": "Toyota Hilux Double Cabin",
-        "plate_number": "D 1234 AB",
-        "stnk_valid_until": "2026-11-12",
-        "stnk_status": "active",
-        "stnk_status_label": "STNK Aktif"
-      }
+      { "id": 8, "brand_model": "Toyota Hilux Double Cabin", "plate_number": "D 1234 AB",
+        "stnk_valid_until": "2026-11-12", "stnk_status": "active", "stnk_status_label": "STNK Aktif" }
     ]
   }
 }
 ```
 
 - Array kosong → client menampilkan empty-state ("Belum ada senjata dinas" / "Belum ada kendaraan").
-- `condition_status` / `stnk_status`: enum mentah; `*_label` opsional (client punya fallback
-  `titleCase()`).
+- `condition_status` / `stnk_status`: enum mentah; `*_label` opsional (client punya fallback `titleCase()`).
 - `stnk_status`: `active` | `expiring_soon` | `expired`.
-
----
 
 ## 4. Aktivitas Terbaru (pergerakan saya)
 
-Mengisi bagian **"Aktivitas Terbaru"** di Home (3 entri teratas) — **diflatten jadi 1 baris per
-lintasan** (masuk ATAU keluar). Serupa dengan `visitor_log_history` pada `GET /catalog/personnel/{personnel}`,
-tapi untuk diri sendiri dan sebagai endpoint list tersendiri.
+> [!DONE] Terintegrasi (`getMyMovementsApi({ per_page: 3 })`). Diflatten jadi 1 baris per lintasan (masuk ATAU keluar).
 
-```
-GET /me/movements
-```
+`GET /me/movements`
 
-**Query** (opsional)
+**Query (opsional):** `page`, `per_page` (default 10). · **Payload:** —
 
-| Parameter | Keterangan |
-|-----------|------------|
-| `page`, `per_page` | pagination — default `per_page` 10 |
+**Response `200`** — array + `meta` (mungkin absen). Item: `{ id, direction, occurred_at, location_label, purpose, note }`.
 
-**Response `200`**
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 5501,
-      "direction": "in",
-      "occurred_at": "2026-08-30T08:14:00+07:00",
-      "location_label": "Pos Utama",
-      "purpose": null,
-      "note": "Masuk Markas"
-    },
-    {
-      "id": 5498,
-      "direction": "out",
-      "occurred_at": "2026-08-30T07:05:00+07:00",
-      "location_label": null,
-      "purpose": "Dinas",
-      "note": "Keluar Markas"
-    },
-    {
-      "id": 5477,
-      "direction": "in",
-      "occurred_at": "2026-08-29T17:42:00+07:00",
-      "location_label": "Pos Utama",
-      "purpose": null,
-      "note": "Masuk Markas"
-    }
+    { "id": 5501, "direction": "in", "occurred_at": "2026-08-30T08:14:00+07:00",
+      "location_label": "Pos Utama", "purpose": null, "note": "Masuk Markas" },
+    { "id": 5498, "direction": "out", "occurred_at": "2026-08-30T07:05:00+07:00",
+      "location_label": null, "purpose": "Dinas", "note": "Keluar Markas" }
   ],
   "meta": { "current_page": 1, "last_page": 6, "per_page": 10, "total": 58 }
 }
 ```
 
 - `direction`: `in` (masuk markas) | `out` (keluar markas).
-- Client menampilkan `note` sebagai judul, `location_label` / `purpose` sebagai detail, dan
-  `occurred_at` diformat relatif / jam.
-
----
+- Client: `note` sebagai judul, `location_label` / `purpose` sebagai detail, `occurred_at` diformat relatif.
 
 ## 5. Pengumuman Terbaru
 
-Mengisi bagian **"Pengumuman Terbaru"** di Home (3 entri teratas) — **subset dari
-`API_CONTRACT.md` §2.3 (`GET /announcements`)**, difilter ke pengumuman yang menyasar user login.
-Tidak butuh endpoint baru; cukup panggil `GET /announcements?per_page=3`. Field yang dipakai layar:
+> [!TODO] Masih `DUMMY_NOTICES`. Layar butuh daftar pengumuman yang **menyasar user login** — subset dari §2.3 (`API_CONTRACT.md`) tapi sudah difilter di backend + ada flag `read` per user.
 
-| Field (dari §2.3) | Dipakai untuk        |
-|-------------------|----------------------|
-| `title`           | judul baris          |
-| `body`            | detail (1 baris)     |
-| `created_by.name` | label pengirim ("Pasi Ops") |
-| `published_at`    | jam / tanggal relatif |
-| `type`            | ikon + warna aksen (`alert` merah, `announcement` biru, `info` abu) |
+`GET /me/announcements`
 
-Sampai `GET /announcements` tersedia, layar memakai `DUMMY_NOTICES` yang bentuknya sudah disamakan
-dengan tabel di atas.
+**Query (opsional):** `page`, `per_page` (default 10; layar Home hanya pakai 3) · `only_unread` (`true` | `false`). · **Payload:** —
 
----
+**Response `200`** — array + `meta` (termasuk `meta.unread_total`). Item: `id`, `type`, `title`,
+`body`, `severity`, `created_by{id, name}`, `published_at`, `read`, `action` (`{type, id}` tujuan
+navigasi, opsional / `null`).
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": 41, "type": "alert", "title": "Apel Luar Biasa 15.00",
+      "body": "Seluruh personel Kompi A berkumpul di Lapangan Utama pukul 15.00.",
+      "severity": "high",
+      "created_by": { "id": 4, "name": "Pasi Ops" },
+      "published_at": "2026-09-01T09:12:00+07:00",
+      "read": false,
+      "action": { "type": "announcement", "id": 41 } },
+    { "id": 39, "type": "announcement", "title": "Jadwal Piket Minggu Ini",
+      "body": "Rotasi piket pos gerbang diperbarui, cek papan pengumuman.",
+      "severity": "normal",
+      "created_by": { "id": 7, "name": "Bati Tuud" },
+      "published_at": "2026-08-31T16:40:00+07:00",
+      "read": true,
+      "action": null },
+    { "id": 35, "type": "info", "title": "Pemeliharaan Kendaraan Dinas",
+      "body": "Servis berkala Hilux D 1234 AB dijadwalkan 3 September.",
+      "severity": "normal",
+      "created_by": { "id": 12, "name": "Batih Har" },
+      "published_at": "2026-08-30T11:05:00+07:00",
+      "read": true,
+      "action": null }
+  ],
+  "meta": { "current_page": 1, "last_page": 4, "per_page": 10, "total": 32, "unread_total": 1 }
+}
+```
+
+- `type`: `alert` | `announcement` | `info` — ikon + warna aksen di layar (`alert` merah,
+  `announcement` biru, `info` abu).
+- `severity`: `high` | `normal` — opsional; kalau tidak ada client turunkan dari `type`.
+- `read`: `false` → baris ditandai belum dibaca (titik/aksen). `meta.unread_total` untuk badge.
+- `action`: tujuan navigasi saat baris ditekan (mengikuti resource yang sudah ada + `id`), atau `null`.
+- Client menampilkan `title` (judul), `body` (1 baris detail), `created_by.name` (pengirim),
+  `published_at` (relatif). Home hanya menampilkan 3 teratas → "Lihat Semua" ke layar `Notifications`.
 
 ## 6. Shortcut "Kontak Darurat" (Akses Cepat)
 
-Saat ini `ComingSoon`. Usulan:
+> [!DONE] Terintegrasi — layar `EmergencyContacts` (`getEmergencyContactsApi`), daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
 
-```
-GET /emergency-contacts
-```
+`GET /emergency-contacts`
+
+**Query:** — · **Payload:** —
+
+**Response `200`** — `data[]`: `{ id, label, phone, category }`. `category`: `command` | `medical` |
+`security` | `general` (nilai lain → grup "Lainnya").
+
 ```json
 {
   "success": true,
@@ -245,4 +210,3 @@ GET /emergency-contacts
   ]
 }
 ```
-Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.

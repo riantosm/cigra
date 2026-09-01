@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
 <title>API Contract — Smart Battalion</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
@@ -124,9 +128,9 @@
 
   /* ---------- shell ---------- */
   .shell {
-    display: grid; grid-template-columns: 256px minmax(0, 1fr);
-    gap: clamp(24px, 5vw, 60px);
-    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 300px minmax(0, 1fr);
+    gap: clamp(24px, 5vw, 56px);
+    max-width: 1240px; margin: 0 auto;
     padding: 0 clamp(16px, 4vw, 40px) 120px;
   }
 
@@ -143,14 +147,23 @@
   }
   .toc-group { margin-bottom: 18px; }
   .toc-group-head {
-    display: flex; align-items: center; gap: 8px;
-    margin: 0 0 8px; padding: 5px 10px; border-radius: 7px;
-    font-size: 12.5px; font-weight: 600; color: var(--ink);
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    margin: 0 0 8px; padding: 6px 10px; border-radius: 7px;
+    font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
+    background: none; border: none; text-align: left; cursor: pointer;
   }
-  a.toc-group-head:hover { background: var(--surface); text-decoration: none; }
-  a.toc-group-head.active { background: var(--accent-wash); color: var(--accent-ink); }
+  button.toc-group-head:hover { background: var(--surface); }
+  .toc-group-head .gname { margin-right: auto; }
+  .toc-group-head .gstat {
+    padding: 1px 6px; border-radius: 5px;
+    font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .toc-group-head .chev { flex: none; color: var(--muted); transition: transform .15s; }
+  .toc-group.collapsed .toc-group-head .chev { transform: rotate(-90deg); }
+  .toc-group.collapsed > ol { display: none; }
   .toc-group-head .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); flex: none; }
-  .toc-group.upcoming .toc-group-head { color: var(--muted); }
+  .toc-group.upcoming .toc-group-head { color: var(--muted); cursor: default; }
   .toc-group.upcoming .dot { background: var(--line); }
   .soon {
     font-family: "IBM Plex Mono", monospace; font-size: 9px; font-weight: 600;
@@ -164,12 +177,13 @@
     border-left: 1px solid var(--line);
   }
   .toc li a {
-    display: grid; grid-template-columns: auto 1fr; gap: 8px;
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center;
     padding: 6px 10px; border-radius: 7px; margin-left: -1px;
-    color: var(--ink-soft); font-size: 13px; line-height: 1.35;
+    color: var(--ink-soft); font-size: 13px; line-height: 1.35; min-width: 0;
     border-left: 2px solid transparent;
   }
-  .toc li a .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); padding-top: 1px; }
+  .toc li a .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+  .toc li a .tlabel { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .toc li.lvl-3 a { padding-left: 20px; font-size: 12.5px; color: var(--muted); }
   .toc li a:hover { background: var(--surface); text-decoration: none; }
   .toc li a.active { background: var(--accent-wash); color: var(--accent-ink); border-left-color: var(--accent); }
@@ -211,6 +225,19 @@
   .hd-4 { font-size: 0.95rem; font-weight: 600; margin: 26px 0 10px; color: var(--ink-soft); }
   .hd code { font-size: 0.8em; font-weight: 500; }
   .hd-2 + p, .hd-3 + p, .hd-4 + p, .mod-title + p { margin-top: 0; }
+
+  /* ---------- kartu per "poin" ---------- */
+  .pcard {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px clamp(16px, 3vw, 26px); margin: 22px 0; box-shadow: var(--shadow);
+  }
+  .pcard > :first-child { margin-top: 0; }
+  .pcard > :last-child { margin-bottom: 0; }
+  .pcard .hd-2, .pcard .hd-3 { margin-top: 0; }
+  .pcard .hd-2 { border-bottom: none; padding-bottom: 0; margin-bottom: 14px; }
+  .pcard .cx:first-child { margin-top: 4px; }
+  .pcard .cx, .pcard .table-wrap { box-shadow: none; }
+  .pcard .table-wrap { background: var(--surface-2); }
 
   code {
     font-size: 0.86em; padding: 1.5px 5px; border-radius: 5px;
@@ -295,7 +322,56 @@
     main { padding-top: 8px; }
   }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+  /* ---------- status callouts ---------- */
+  .cx {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px;
+    margin: 16px 0; padding: 11px 14px; border-radius: 11px;
+    border: 1px solid var(--line); border-left: 3px solid var(--line);
+    background: var(--surface); box-shadow: var(--shadow); max-width: 74ch; font-size: 13.5px;
+  }
+  .cx-tag {
+    font-family: "IBM Plex Mono", monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap;
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .cx-body { color: var(--ink-soft); }
+  .cx-body code { font-size: 0.84em; }
+  .cx-done { border-left-color: #16A34A; }
+  .cx-done .cx-tag { color: #0C7A4E; background: #E4F5EC; }
+  .cx-partial { border-left-color: #D97706; }
+  .cx-partial .cx-tag { color: #9A5B12; background: #FBEFD9; }
+  .cx-bug { border-left-color: #DC2626; }
+  .cx-bug .cx-tag { color: #B42318; background: #FBE7E5; }
+  .cx-todo { border-left-color: var(--line); }
+  .cx-todo .cx-tag { color: var(--soon-fg); background: var(--soon-bg); }
+  :root[data-theme="dark"] .cx-done .cx-tag { color: #62D3A0; background: #123026; }
+  :root[data-theme="dark"] .cx-partial .cx-tag { color: #E7B267; background: #33260F; }
+  :root[data-theme="dark"] .cx-bug .cx-tag { color: #F0A9A0; background: #3A1D1A; }
+
+  .toc-checked {
+    margin: -6px 0 16px; padding: 8px 10px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--line);
+    font-size: 11.5px; line-height: 1.5; color: var(--muted);
+  }
+  .toc-checked b { display: block; color: var(--ink); font-size: 12.5px; font-weight: 600; }
+
+  .tstat {
+    justify-self: end; padding: 1px 5px; border-radius: 5px;
+    font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+  }
+  .tstat-done { color: #0C7A4E; background: #E4F5EC; }
+  .tstat-partial { color: #9A5B12; background: #FBEFD9; }
+  .tstat-bug { color: #B42318; background: #FBE7E5; }
+  .tstat-todo { color: var(--soon-fg); background: var(--soon-bg); }
+  :root[data-theme="dark"] .tstat-done { color: #62D3A0; background: #123026; }
+  :root[data-theme="dark"] .tstat-partial { color: #E7B267; background: #33260F; }
+  :root[data-theme="dark"] .tstat-bug { color: #F0A9A0; background: #3A1D1A; }
 </style>
+</head>
+
+<body>
 
 <header class="topbar">
   <span class="wordmark">
@@ -337,53 +413,28 @@
 
 <footer id="footer">API Contract — Smart Battalion · draf usulan frontend</footer>
 
-<script type="text/markdown" id="src-umum"># API Contract — Smart Battalion (Draf)
+<script type="text/markdown" id="src-umum"># API Contract — Smart Battalion
 
-Draf kontrak API untuk endpoint yang **belum ada** dan saat ini masih memakai data dummy di aplikasi.
-Semua bentuk di bawah dibuat **seragam dengan API yang sudah berjalan** (`/auth/*`, `/locations/*`,
-`/catalog/*`, `/panic-buttons`) — envelope sukses/gagal, pagination (`?page=&per_page=`), waktu
-ISO-8601 dengan offset, dan enum `snake_case` mentah (label dirapikan di client). Begitu backend
-menyediakan endpoint ini, tinggal ganti sumber data di layar terkait (dummy-nya sudah dibentuk sama
-persis).
+**Pengecekan frontend terakhir: 1 September 2026, 17.03 WIB**
 
-> Status: **usulan frontend**. Nama field/endpoint boleh disesuaikan tim backend selama bentuk
-> envelope & pagination tetap konsisten.
+Kontrak API untuk surface yang masih dummy + status integrasinya di app. Envelope, pagination
+(`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah — seragam dengan
+API yang sudah berjalan (`/auth/*`, `/locations/*`, `/catalog/*`, `/panic-buttons`).
+
+Legenda badge: **Sudah diintegrasikan** · **Ada catatan** (jalan, perlu penyesuaian) ·
+**Error backend** (alur terblokir) · **Belum ada endpoint** (layar masih dummy).
 
 ---
 
-## 1. Cek Versi Aplikasi (Force / Suggest Update)
+## 1. Cek Versi Aplikasi
 
-App memeriksa apakah build yang terpasang sudah usang dibanding versi terbaru yang dirilis backend.
-Dipakai saat app start (dan opsional saat `AppState` kembali `active`). **Semua perbandingan versi
-dilakukan di client** — backend cukup mengumumkan versi terbaru + minimum per platform.
+> [!DONE] FE selesai & terverifikasi di device (`appVersion.service.ts`, `utils/appVersion.ts`, `hooks/useAppVersionGate.ts`, `organisms/AppVersionGate` di `RootNavigator`). Endpoint live & sesuai kontrak. Catatan operasional: isi `download_url`/`store_url` + `latest_build` = `versionCode` rilis di backend sebelum flownya benar-benar mendorong update.
 
-> **Status: SUDAH DIIMPLEMENTASIKAN & endpoint LIVE.** Bentuk response cocok 100% dengan kontrak di
-> bawah. FE: `appVersion.service.ts` + `utils/appVersion.ts` + `hooks/useAppVersionGate.ts` +
-> `organisms/AppVersionGate` (dipasang di `RootNavigator`, versi terpasang dibaca via
-> `react-native-device-info`).
->
-> **Gap data backend yang perlu dibereskan** (bukan mismatch kontrak):
-> 1. `download_url` **dan** `store_url` dua-duanya masih `null` untuk android & ios → tombol
->    "Update Sekarang" belum punya tujuan. Minimal isi salah satu (Android: URL APK langsung;
->    iOS: URL App Store).
-> 2. `latest_build` masih tidak sejalan dengan `versionCode` rilis nyata (contoh: API `latest_build: 1`
->    padahal APK yang beredar sudah `versionCode 2`). Backend harus mengisi `latest_build` = `versionCode`
->    (Android) / `CFBundleVersion` (iOS) build terbaru, atau aturan "build tertinggal → wajib update"
->    salah picu.
+`GET /app-version` — publik, tanpa `Authorization`.
 
-### 1.1 Endpoint
+**Query:** — · **Payload:** —
 
-```
-GET /app-version
-```
-
-**Publik** — tidak butuh `Authorization` (dicek juga di layar login). `Accept: application/json` tetap dikirim.
-
-**Tanpa query.** Response memuat blok untuk tiap platform; client memilih blok sesuai `Platform.OS`,
-lalu membandingkan sendiri dengan versi terpasang (`react-native-device-info` — `getVersion()` /
-`getBuildNumber()`).
-
-### 1.2 Response `200`
+**Response `200`**
 
 ```json
 {
@@ -393,85 +444,46 @@ lalu membandingkan sendiri dengan versi terpasang (`react-native-device-info` �
       "latest_version": "0.3",
       "latest_build": 3,
       "min_supported_version": "0.2",
-      "download_url": "https://cdn.smartbattalion.example/apk/SmartBattalion-v0.3(3)-release.apk",
+      "download_url": "https://cdn.example/apk/SmartBattalion-v0.3.apk",
       "store_url": null,
-      "release_notes": "- Perbaikan sinkronisasi lokasi\n- Tambah riwayat peminjaman senjata",
+      "release_notes": "- Perbaikan sinkronisasi lokasi",
       "released_at": "2026-09-15T10:00:00+07:00"
     },
-    "ios": {
-      "latest_version": "0.3",
-      "latest_build": 3,
-      "min_supported_version": "0.2",
-      "download_url": null,
-      "store_url": "https://apps.apple.com/app/id6500000000",
-      "release_notes": "- Perbaikan sinkronisasi lokasi\n- Tambah riwayat peminjaman senjata",
-      "released_at": "2026-09-15T10:00:00+07:00"
-    }
+    "ios": { "_": "bentuk sama; download_url null, store_url terisi" }
   }
 }
 ```
 
-Field berlaku untuk tiap blok platform:
-
-| field | tipe | keterangan |
-|-------|------|------------|
-| `latest_version` | string | versi rilis terbaru (format sama dengan `versionName`, mis. `"0.3"`) |
-| `latest_build` | number \| null | build number terbaru (opsional) |
+| field (per blok `android` / `ios`) | tipe | keterangan |
+|---|---|---|
+| `latest_version` | string | versi rilis terbaru (`versionName`) |
+| `latest_build` | number \| null | build terbaru (`versionCode` / `CFBundleVersion`) |
 | `min_supported_version` | string | versi minimum yang masih boleh dipakai |
-| `download_url` | string \| null | link **langsung** ke APK terbaru (Android sideload). `null` kalau distribusi lewat store |
-| `store_url` | string \| null | link Play Store / App Store (diutamakan di iOS) |
-| `release_notes` | string \| null | catatan rilis untuk ditampilkan di modal (plain text / markdown ringan) |
+| `download_url` | string \| null | link langsung APK (Android sideload) |
+| `store_url` | string \| null | link Play Store / App Store |
+| `release_notes` | string \| null | ditampilkan di modal |
 | `released_at` | string \| null | ISO-8601 |
 
-> **Perbandingan versi** dilakukan di client dengan semantic-version compare (`0.2` < `0.3` < `0.10`),
-> bukan string compare. Urutan cek dari versi + build terpasang vs blok platform:
-> 1. `build` terpasang **<** `latest_build` (ada APK lebih baru) → update **wajib** (harus unduh APK
->    baru). Dicek **paling awal**, sebelum `version` string — mis. `latest_build` 2 vs APK build 1 →
->    modal muncul; `latest_build` 2 vs APK build 2 → tidak muncul (2 < 2 salah). `latest_build`
->    diterima number (`2`) maupun string (`"2"`).
-> 2. `version` terpasang **<** `min_supported_version` → update **wajib**
-> 3. `min_supported_version` **≤** `version` terpasang **<** `latest_version` → update **disarankan**
-> 4. selain itu → tidak ada update
->
-> Cek `build` dilewati kalau `latest_build` (atau build terpasang) tidak diketahui. Kalau `version`
-> terpasang tidak bisa diparse **dan** build tidak tertinggal, anggap tidak ada update (jangan blokir
-> user karena format versi aneh).
-
-### 1.3 Perilaku app
-
-- **Update wajib** → `StatusModal` non-dismissable (`onRequestClose` no-op — pola sama seperti gate
-  lokasi di `Home`), **bertema primary/biru** dengan ikon badge "download", satu tombol **"Update"**
-  yang membuka `download_url` (atau `store_url`) via `Linking.openURL`; kalau dua-duanya `null`,
-  tombol tetap "Update" tapi hanya cek ulang endpoint (menunggu backend mengisi URL). Di build debug
-  (`__DEV__`) ada aksi sekunder "Lewati (dev)" supaya app tetap bisa dipakai saat pengembangan — di
-  build release tidak ada.
-- **Update disarankan** → `StatusModal` biasa (juga primary/biru + ikon "download") dengan aksi
-  "Update" + "Nanti"; "Nanti" menyimpan `latest_version` yang di-skip di AsyncStorage (key
-  `skipped_app_version`) supaya tidak muncul lagi untuk versi itu sampai ada rilis lebih baru.
-- Request gagal (network / non-2xx) → **diabaikan diam-diam**, app jalan normal (jangan blokir user
-  hanya karena cek versi gagal).
+**Perbandingan versi** (semua di client, semantic-version — `0.2 < 0.3 < 0.10`):
+build terpasang `<` `latest_build` → **wajib** · versi `<` `min_supported_version` → **wajib** ·
+`min_supported_version` ≤ versi `<` `latest_version` → **disarankan** · selain itu → tidak ada.
+Request gagal → diabaikan diam-diam.
 
 ---
 
 ## 2. Home Komandan
 
-### 2.1 Ringkasan Situasi + Distribusi Status
+### 2.1 Ringkasan Situasi
 
-Mengisi bagian **"Ringkasan Situasi"** (4 kartu: Total Personel, Di Markas, Di Luar Markas, Absen)
-dan **"Distribusi Status Personel"** bila nanti diaktifkan lagi.
+> [!TODO] `CommanderHome` `situationStats` masih hardcoded.
 
-```
-GET /dashboard/situation
-```
+`GET /dashboard/situation`
 
-**Query** (opsional)
+**Query (opsional):** `unit_id` (filter unit) · `date` (default hari ini). · **Payload:** —
 
-| Parameter | Keterangan |
-|-----------|------------|
-| `unit_id` | filter per unit |
-| `date` | default: hari ini |
+**Response `200`** — `data`: `as_of`, `total_personnel`, `summary[]` (`key`, `label`, `count`, `percent`),
+`status_distribution[]` (bentuk sama), `active_alerts`.
 
-**Response `200`**
 ```json
 {
   "success": true,
@@ -479,17 +491,12 @@ GET /dashboard/situation
     "as_of": "2026-08-30T15:07:00+07:00",
     "total_personnel": 427,
     "summary": [
-      { "key": "at_base",   "label": "Di Markas",     "count": 381, "percent": 89.2 },
-      { "key": "off_base",  "label": "Di Luar Markas", "count": 46,  "percent": 10.8 },
-      { "key": "absent",    "label": "Absen",          "count": 5,   "percent": 1.2 }
+      { "key": "at_base", "label": "Di Markas", "count": 381, "percent": 89.2 },
+      { "key": "off_base", "label": "Di Luar Markas", "count": 46, "percent": 10.8 },
+      { "key": "absent", "label": "Absen", "count": 5, "percent": 1.2 }
     ],
     "status_distribution": [
-      { "key": "active",    "label": "Aktif",      "count": 376, "percent": 88.1 },
-      { "key": "field_duty","label": "Dinas Luar", "count": 28,  "percent": 6.6 },
-      { "key": "permit",    "label": "Izin",       "count": 12,  "percent": 2.8 },
-      { "key": "sick",      "label": "Sakit",      "count": 6,   "percent": 1.4 },
-      { "key": "leave",     "label": "Cuti",       "count": 3,   "percent": 0.7 },
-      { "key": "inactive",  "label": "Tidak Aktif","count": 2,   "percent": 0.4 }
+      { "key": "active", "label": "Aktif", "count": 376, "percent": 88.1 }
     ],
     "active_alerts": 1
   }
@@ -498,43 +505,23 @@ GET /dashboard/situation
 
 ### 2.2 Aktivitas Terbaru (Pergerakan)
 
-Bagian **"Aktivitas Terbaru → Pergerakan Terakhir"**.
+> [!TODO] Belum ada endpoint.
 
-```
-GET /activities/movements
-```
+`GET /activities/movements`
 
-**Query** (opsional)
+**Query (opsional):** `unit_id` · `page`, `per_page` (default 10) · `direction` (`in` | `out`). · **Payload:** —
 
-| Parameter | Keterangan |
-|-----------|------------|
-| `unit_id` | filter per unit |
-| `page`, `per_page` | pagination — default `per_page` 10 |
-| `direction` | `in` \| `out` |
+**Response `200`** — array + `meta` pagination. Item: `id`, `direction`,
+`personnel{service_number, full_name, rank}`, `location_label`, `purpose`, `note`, `occurred_at`.
 
-**Response `200`**
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 91,
-      "direction": "out",
+    { "id": 91, "direction": "out",
       "personnel": { "service_number": "3101050010", "full_name": "Serka Andi Pratama", "rank": "SERKA" },
-      "location_label": "Pos Utama",
-      "purpose": "Dinas",
-      "note": "Keluar Markas",
-      "occurred_at": "2026-08-30T14:32:00+07:00"
-    },
-    {
-      "id": 90,
-      "direction": "in",
-      "personnel": { "service_number": "3101050011", "full_name": "Praka Rizky Maulana", "rank": "PRAKA" },
-      "location_label": "Pos Utama",
-      "purpose": null,
-      "note": "Masuk Markas",
-      "occurred_at": "2026-08-30T13:58:00+07:00"
-    }
+      "location_label": "Pos Utama", "purpose": "Dinas", "note": "Keluar Markas",
+      "occurred_at": "2026-08-30T14:32:00+07:00" }
   ],
   "meta": { "current_page": 1, "last_page": 5, "per_page": 10, "total": 47 }
 }
@@ -542,72 +529,48 @@ GET /activities/movements
 
 ### 2.3 Pengumuman & Alert (list)
 
-Bagian **"Aktivitas Terbaru → Pengumuman & Alert"**.
+> [!TODO] Endpoint mungkin sudah ada di backend, tapi `MemberHome` + `Notifications` masih pakai data `DUMMY_*` — layar belum dihubungkan.
 
-```
-GET /announcements
-```
+`GET /announcements`
 
-**Query** (opsional)
+**Query (opsional):** `page`, `per_page` (default 10) · `type` (`alert` | `announcement` | `info`) ·
+`since` (ISO-8601, hanya yang terbit setelah waktu ini). · **Payload:** —
 
-| Parameter | Keterangan |
-|-----------|------------|
-| `page`, `per_page` | pagination — default `per_page` 10 |
-| `type` | `alert` \| `announcement` \| `info` |
-| `since` | ISO-8601 — hanya yang terbit setelah waktu ini |
+**Response `200`** — array + `meta`. Item: `id`, `type`, `title`, `body`, `severity`,
+`created_by{id, name}`, `published_at`.
 
-**Response `200`**
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 12,
-      "type": "alert",
-      "title": "ALARM: KADAL",
-      "body": "Kontigensi. Seluruh personel siaga di titik kumpul.",
-      "severity": "high",
+    { "id": 12, "type": "alert", "title": "ALARM: KADAL",
+      "body": "Kontigensi. Seluruh personel siaga di titik kumpul.", "severity": "high",
       "created_by": { "id": 1, "name": "Komandan Batalyon" },
-      "published_at": "2026-08-30T09:30:00+07:00"
-    },
-    {
-      "id": 11,
-      "type": "announcement",
-      "title": "Apel Pagi",
-      "body": "Besok 06:00 di Lapangan Utama.",
-      "severity": "normal",
-      "created_by": { "id": 4, "name": "Pasi Ops" },
-      "published_at": "2026-08-30T08:15:00+07:00"
-    }
+      "published_at": "2026-08-30T09:30:00+07:00" }
   ],
   "meta": { "current_page": 1, "last_page": 3, "per_page": 10, "total": 24 }
 }
 ```
 
-### 2.4 Kirim Pengumuman (Quick Action) — layar `SendAnnouncement`
+### 2.4 Kirim Pengumuman
 
-Layar form sudah dibangun. Sementara ini **draf lokal**: pengumuman yang dikirim disimpan di
-`redux` (dipersist) dan langsung dimunculkan di daftar Notifikasi (§3) di perangkat pengirim.
-Begitu endpoint ada, `POST /announcements` menggantikan `announcementCreated` dan `GET
-/announcements/mine` mengisi seksi "Riwayat Terkirim".
+> [!TODO] Layar `SendAnnouncement` selesai; untuk sementara menyimpan ke redux lokal (`announcementCreated`, dipersist) dan langsung muncul di Notifikasi. Tinggal ganti ke `POST /announcements` + `GET /announcements/mine`.
 
-**Field form → payload**
+`POST /announcements`
 
-| Form (label UI)  | field payload  | nilai |
-|------------------|----------------|-------|
-| Judul            | `title`        | string, ≤ 80 |
-| Isi Pengumuman   | `body`         | string, ≤ 1000 |
-| Tipe             | `type`         | `announcement` \| `alert` \| `info` |
-| Kirim ke         | `target.scope` | `all` \| `unit` \| `role` |
+**Query:** — · **Payload:**
 
-Form tidak lagi punya input prioritas — client selalu mengirim `severity: "normal"` (backend boleh
-menurunkan dari `type`, mis. `alert` → `high`).
+| field | nilai |
+|---|---|
+| `title` | string, ≤ 80 |
+| `body` | string, ≤ 1000 |
+| `type` | `announcement` \| `alert` \| `info` |
+| `severity` | selalu `"normal"` dari client (backend boleh naikkan dari `type`, mis. `alert` → `high`) |
+| `target` | `{ scope, unit_ids, role }` |
 
-```
-POST /announcements
-```
+`target.scope`: `all` | `unit` | `role`. `unit_ids`: array angka (dipakai saat `scope = unit`).
+`role`: string (dipakai saat `scope = role`), selain itu `null`.
 
-**Body**
 ```json
 {
   "type": "announcement",
@@ -618,172 +581,77 @@ POST /announcements
 }
 ```
 
-**Response `201`**
-```json
-{
-  "success": true,
-  "message": "Pengumuman terkirim ke 128 personel.",
-  "data": {
-    "id": 13,
-    "type": "announcement",
-    "title": "Apel Pagi",
-    "body": "Besok 06:00 di Lapangan Utama.",
-    "severity": "normal",
-    "scope_label": "Kompi Senapan A",
-    "recipients_count": 128,
-    "created_by": { "id": 1, "name": "Komandan Batalyon" },
-    "created_at": "2026-08-30T15:20:00+07:00"
-  }
-}
-```
+**Response `201`** — `data`: item pengumuman + `scope_label`, `recipients_count`, `created_by`, `created_at`.
 
-**Riwayat terkirim (untuk seksi "Riwayat Terkirim" di layar)**
-```
-GET /announcements/mine        # pengumuman yang dibuat user login
-DELETE /announcements/{id}      # tarik/hapus pengumuman
-```
-`GET /announcements/mine` — array item dengan bentuk = `data` pada response `POST` di atas,
-`meta` pagination standar.
+**Riwayat terkirim:** `GET /announcements/mine` (array bentuk = `data` di atas + `meta`) ·
+`DELETE /announcements/{id}` (tarik / hapus).
 
 ---
 
 ## 3. Notifikasi (ikon lonceng di header)
 
-### 3.1 List Notifikasi
+### 3.1 List
 
-```
-GET /notifications
-```
+> [!TODO] `Notifications` pakai `DUMMY_NOTIFICATIONS` + digabung pengumuman lokal dari redux. Badge lonceng = 2 dummy-unread + jumlah pengumuman terkirim.
 
-**Query** (opsional)
+`GET /notifications`
 
-| Parameter | Keterangan |
-|-----------|------------|
-| `page`, `per_page` | pagination — default `per_page` 20 |
-| `only_unread` | `true` \| `false` |
-| `type` | `emergency` \| `announcement` \| `info` \| `system` |
+**Query (opsional):** `page`, `per_page` (default 20) · `only_unread` (`true` | `false`) ·
+`type` (`emergency` | `announcement` | `info` | `system`). · **Payload:** —
 
-`meta.unread_total` = jumlah belum dibaca (dipakai badge di ikon lonceng).
+**Response `200`** — array + `meta` (termasuk `meta.unread_total` untuk badge lonceng). Item:
+`id`, `type`, `title`, `body`, `read`, `created_at`, `action` (`{type, id}` tujuan navigasi, opsional / `null`).
 
-**Response `200`**
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 501,
-      "type": "emergency",
-      "title": "Sinyal Darurat Baru",
+    { "id": 501, "type": "emergency", "title": "Sinyal Darurat Baru",
       "body": "Praka Rizky Maulana menekan tombol darurat di Pos Timur.",
-      "read": false,
-      "created_at": "2026-08-30T15:03:00+07:00",
-      "action": { "type": "emergency", "id": 88 }
-    },
-    {
-      "id": 500,
-      "type": "announcement",
-      "title": "Apel Pagi",
-      "body": "Apel pagi besok pukul 06.00 di Lapangan Utama.",
-      "read": false,
-      "created_at": "2026-08-30T14:10:00+07:00",
-      "action": { "type": "announcement", "id": 11 }
-    },
-    {
-      "id": 499,
-      "type": "info",
-      "title": "Perawatan Kendaraan",
-      "body": "Jadwal perawatan rutin kendaraan dinas telah diperbarui.",
-      "read": true,
-      "created_at": "2026-08-30T09:00:00+07:00",
-      "action": null
-    }
+      "read": false, "created_at": "2026-08-30T15:03:00+07:00",
+      "action": { "type": "emergency", "id": 88 } }
   ],
   "meta": { "current_page": 1, "last_page": 4, "per_page": 20, "total": 68, "unread_total": 4 }
 }
 ```
 
-- `action` (opsional): tujuan navigasi saat item ditekan. `type` mengikuti resource yang sudah ada
-  (`emergency`, `announcement`, `personnel`, dst) + `id`.
-
 ### 3.2 Tandai Dibaca
 
-```
-POST /notifications/{id}/read
-POST /notifications/read-all
-```
+> [!TODO] Belum ada endpoint.
 
-**Response `200`**
-```json
-{ "success": true, "message": "Notifikasi ditandai dibaca.", "data": { "unread_total": 3 } }
-```
+`POST /notifications/{id}/read` · `POST /notifications/read-all`
+
+**Query:** — · **Payload:** —
+
+**Response `200`**: `{ "success": true, "data": { "unread_total": 3 } }`
 
 ---
 
-## 4. Sinyal Darurat / Emergency (list & detail)
-
-Melengkapi `POST /panic-buttons` yang sudah ada. Bentuk `personnel` & `location` mengikuti pola
-`/locations/overview`.
+## 4. Sinyal Darurat / Emergency
 
 ### 4.1 List
 
-```
-GET /panic-buttons
-```
+> [!TODO] Melengkapi `POST /panic-buttons` yang sudah live. `EmergencyList` masih `DUMMY_EMERGENCIES`. Bentuk `personnel` mengikuti `/locations/overview`.
 
-**Query** (opsional)
+`GET /panic-buttons`
 
-| Parameter | Keterangan |
-|-----------|------------|
-| `page`, `per_page` | pagination — default `per_page` 20 |
-| `status` | `active` \| `acknowledged` \| `resolved` |
-| `unit_id` | filter per unit |
-| `from`, `to` | rentang waktu (ISO-8601) |
+**Query (opsional):** `page`, `per_page` (default 20) · `status` (`active` | `acknowledged` | `resolved`) ·
+`unit_id` · `from`, `to` (rentang waktu ISO-8601). · **Payload:** —
 
-**Response `200`**
+**Response `200`** — array + `meta` + `filters`. Item: `id`, `status`,
+`personnel{service_number, full_name, rank, unit, photo}`, `latitude`, `longitude`, `accuracy`,
+`address`, `description`, `created_at`, `acknowledged_at`, `resolved_at`, `handled_by`.
+
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 88,
-      "status": "active",
-      "personnel": {
-        "service_number": "3101050004",
-        "full_name": "Praka Rizky Maulana",
-        "rank": "PRATU",
-        "unit": "Kompi Senapan A",
-        "photo": "https://ui-avatars.com/api/?name=Praka+Rizky+Maulana&background=3a7ca5&color=fff"
-      },
-      "latitude": -6.15472,
-      "longitude": 106.85201,
-      "accuracy": 12.5,
-      "address": "Pos Timur, Markas Batalyon",
-      "description": "Tombol darurat ditekan.",
+    { "id": 88, "status": "active",
+      "personnel": { "service_number": "3101050004", "full_name": "Praka Rizky Maulana", "rank": "PRATU", "unit": "Kompi Senapan A", "photo": null },
+      "latitude": -6.15472, "longitude": 106.85201, "accuracy": 12.5,
+      "address": "Pos Timur, Markas Batalyon", "description": "Tombol darurat ditekan.",
       "created_at": "2026-08-30T15:03:00+07:00",
-      "acknowledged_at": null,
-      "resolved_at": null,
-      "handled_by": null
-    },
-    {
-      "id": 87,
-      "status": "resolved",
-      "personnel": {
-        "service_number": "3101050002",
-        "full_name": "Anggota Satuan",
-        "rank": "PRATU",
-        "unit": "Kompi Senapan A",
-        "photo": null
-      },
-      "latitude": -6.15444,
-      "longitude": 106.853,
-      "accuracy": 11.0,
-      "address": "Kompi Senapan A",
-      "description": "Sinyal darurat.",
-      "created_at": "2026-08-30T12:00:00+07:00",
-      "acknowledged_at": "2026-08-30T12:02:00+07:00",
-      "resolved_at": "2026-08-30T12:40:00+07:00",
-      "handled_by": { "id": 1, "name": "Komandan Batalyon" }
-    }
+      "acknowledged_at": null, "resolved_at": null, "handled_by": null }
   ],
   "meta": { "current_page": 1, "last_page": 2, "per_page": 20, "total": 23 },
   "filters": { "status": null, "unit_id": null }
@@ -792,155 +660,92 @@ GET /panic-buttons
 
 ### 4.2 Detail
 
-```
-GET /panic-buttons/{id}
-```
+> [!TODO] Belum ada endpoint.
 
-**Response `200`** — sama seperti satu item list, ditambah `history` pergerakan singkat & `timeline`:
-```json
-{
-  "success": true,
-  "data": {
-    "id": 88,
-    "status": "active",
-    "personnel": { "service_number": "3101050004", "full_name": "Praka Rizky Maulana", "rank": "PRATU", "unit": "Kompi Senapan A", "photo": null },
-    "latitude": -6.15472, "longitude": 106.85201, "accuracy": 12.5,
-    "address": "Pos Timur, Markas Batalyon",
-    "description": "Tombol darurat ditekan.",
-    "created_at": "2026-08-30T15:03:00+07:00",
-    "acknowledged_at": null, "resolved_at": null, "handled_by": null,
-    "timeline": [
-      { "event": "created", "actor": null, "at": "2026-08-30T15:03:00+07:00" }
-    ]
-  }
-}
-```
+`GET /panic-buttons/{id}`
+
+**Query:** — · **Payload:** —
+
+**Response `200`** — satu item list (bentuk = 4.1) + `timeline[]` (`{ event, actor, at }`).
 
 ### 4.3 Update Status
 
-```
-PATCH /panic-buttons/{id}
-```
+> [!TODO] Belum ada endpoint.
 
-**Body**: `{ "status": "acknowledged" }` atau `{ "status": "resolved", "note": "Sudah ditangani tim Pos Timur." }`
+`PATCH /panic-buttons/{id}`
 
-**Response `200`**: object detail terbaru (bentuk sama seperti 4.2).
+**Query:** — · **Payload:** `{ "status": "acknowledged" }` atau
+`{ "status": "resolved", "note": "Sudah ditangani tim Pos Timur." }`
+
+**Response `200`** — object detail terbaru (bentuk = 4.2).
 
 ---
 
 ## 5. Layar Lain yang Masih Dummy
 
-| Layar / Menu           | Status        | Usulan endpoint |
-|------------------------|---------------|-----------------|
-| Buku Saku              | kosong        | `GET /handbook` → list kategori + `GET /handbook/{slug}` (isi markdown/HTML) |
-| Laporan Cepat (QA)     | ComingSoon    | `POST /quick-reports` (body: `type`, `title`, `body`, `attachments[]`, `location`) + `GET /quick-reports` |
-| Jadwal Piket (QA)      | ComingSoon    | `GET /duty-roster?week=` |
-| Cuti & Izin (QA)       | ComingSoon    | `GET /leaves?status=` + `POST /leaves` |
-| Statistik Unit (QA)    | ComingSoon    | `GET /dashboard/stats?range=` |
-| Riwayat (tab)          | kosong        | agregat dari `/activities/movements`, `/leaves`, `/quick-reports` milik user login |
-| Lainnya (tab)          | kosong        | menu statis di client (tidak perlu API) |
+Semua layar di bawah belum ada endpoint.
 
-### 5.1 Buku Saku (contoh)
+| Layar | Usulan endpoint |
+|---|---|
+| Buku Saku | `GET /handbook` (list) + `GET /handbook/{slug}` (isi markdown/HTML) |
+| Laporan Cepat | `POST /quick-reports` + `GET /quick-reports` |
+| Jadwal Piket | `GET /duty-roster?week=` |
+| Cuti & Izin | `GET /leaves?status=` + `POST /leaves` |
+| Statistik Unit | `GET /dashboard/stats?range=` |
+| Riwayat (tab) | agregat `/activities/movements` + `/leaves` + `/quick-reports` milik user login |
+| Lainnya (tab) | menu statis di client — tanpa API |
 
-```
-GET /handbook
-```
-```json
-{
-  "success": true,
-  "data": [
-    { "slug": "protap-jaga", "title": "Protap Jaga", "icon": "shield-check", "updated_at": "2026-07-01T09:00:00+07:00" },
-    { "slug": "kontak-darurat", "title": "Kontak Darurat", "icon": "phone", "updated_at": "2026-06-15T09:00:00+07:00" }
-  ]
-}
-```
+### 5.1 Buku Saku
 
-```
-GET /handbook/{slug}
-```
-```json
-{
-  "success": true,
-  "data": {
-    "slug": "protap-jaga",
-    "title": "Protap Jaga",
-    "content_format": "markdown",
-    "content": "## Protap Jaga\n\n1. ...",
-    "updated_at": "2026-07-01T09:00:00+07:00"
-  }
-}
-```
+> [!TODO] Belum ada endpoint.
 
-### 5.2 Laporan Cepat (contoh)
+`GET /handbook` → `data[]`: `{ slug, title, icon, updated_at }`
 
-```
-POST /quick-reports
-```
-```json
-{
-  "type": "kejadian",
-  "title": "Pohon tumbang di gerbang timur",
-  "body": "Akses terhalang, perlu bantuan.",
-  "location": { "latitude": -6.1547, "longitude": 106.852, "accuracy": 10.0 },
-  "attachments": []
-}
-```
-**Response `201`**
-```json
-{
-  "success": true,
-  "message": "Laporan terkirim.",
-  "data": {
-    "id": 71,
-    "type": "kejadian",
-    "title": "Pohon tumbang di gerbang timur",
-    "status": "submitted",
-    "reported_by": { "id": 22, "name": "Serka Andi Pratama" },
-    "created_at": "2026-08-30T15:40:00+07:00"
-  }
-}
-```
+`GET /handbook/{slug}` → `data`: `{ slug, title, content_format: "markdown", content, updated_at }`
+
+### 5.2 Laporan Cepat
+
+> [!TODO] Belum ada endpoint.
+
+`POST /quick-reports`
+
+**Payload:** `{ type, title, body, location: { latitude, longitude, accuracy }, attachments: [] }`
+
+**Response `201`** — `data`: `{ id, type, title, status: "submitted", reported_by, created_at }`
 </script>
-<script type="text/markdown" id="src-anggota"># API Contract — Home Anggota (Draf)
+<script type="text/markdown" id="src-anggota"># API Contract — Home Anggota
 
-Draf kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Semua surface di
-layar ini **masih memakai data dummy** kecuali yang disebut "sudah nyata" di bawah. Bentuk envelope,
-pagination (`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah
-**seragam dengan API yang sudah berjalan** (`/auth/*`, `/locations/*`, `/catalog/*`) —
-sama seperti `API_CONTRACT.md`, tidak diulang di sini.
+**Pengecekan frontend terakhir: 1 September 2026, 17.03 WIB**
 
-> Status: **usulan frontend**. Nama field/endpoint boleh disesuaikan tim backend selama bentuk
-> envelope & pagination tetap konsisten dengan endpoint yang sudah berjalan.
+Kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Envelope, pagination,
+format waktu, dan enum seragam dengan `API_CONTRACT.md`. Semua endpoint di bawah berskup **user
+yang login** (dari `Authorization: Bearer <token>`) — tidak perlu parameter NRP di path.
 
-Semua endpoint di bawah berskup **user yang login** (diambil dari `Authorization: Bearer <token>`),
-jadi tidak perlu parameter `personnel`/`service_number` di path.
+Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** · **Belum ada endpoint**.
 
 ---
 
 ## 0. Yang sudah nyata (tidak perlu endpoint baru)
 
-| Bagian layar                     | Sumber data sekarang                                   |
-|----------------------------------|-------------------------------------------------------|
-| Header + Kartu Anggota (identitas)| `GET /auth/me` → `user.personnel` (sudah dipakai)     |
-| QR Code di Kartu Anggota         | **payload = NRP** (`personnel.service_number`) apa adanya — tidak perlu API |
-| Tile "Lokasi Terakhir" & "Update Terakhir" (Status Saya) | `GET /locations/me` (sudah dipakai di Profile) |
-| Shortcut "Peta Personel"         | `GET /locations/overview` (sudah ada)                 |
-| Shortcut "Pengumuman" / "Lihat Semua" pengumuman | layar `Notifications` (lihat `API_CONTRACT.md` §3) |
-| "Aktivitas Terbaru → Lihat Semua" & shortcut "Riwayat Pergerakan" | tab `visitor` ("Riwayat visitor") di `CatalogDetail` personel diri sendiri — diisi `visitor_log_history` dari `GET /catalog/personnel/{personnel}` |
+| Bagian layar | Sumber data sekarang |
+|---|---|
+| Header + Kartu Anggota (identitas) | `GET /auth/me` → `user.personnel` |
+| Tile "Lokasi Terakhir" & "Update Terakhir" | `GET /locations/me` |
+| Shortcut "Peta Personel" | `GET /locations/overview` |
+| "Aktivitas Terbaru → Lihat Semua" | tab `visitor` di `CatalogDetail` personel sendiri (`visitor_log_history` dari `GET /catalog/personnel/{personnel}`) |
 
 ---
 
 ## 1. Kartu Anggota — status verifikasi identitas
 
-Mengisi badge **"Terverifikasi"** di pojok kanan atas Kartu Anggota dan (opsional) membatasi masa
-berlaku QR.
+> [!DONE] Terintegrasi di `MemberHome` (`getMyIdCardApi`). `verification_status === 'verified'` → badge "Terverifikasi"; `qr_payload` → nilai QR (fallback ke NRP).
 
+`GET /me/id-card`
 
-```
-GET /me/id-card
-```
+**Query:** — · **Payload:** —
 
-**Response `200`**
+**Response `200`** — `data`: `{ service_number, verification_status, verified_at, qr_payload, qr_expires_at }`
+
 ```json
 {
   "success": true,
@@ -954,190 +759,162 @@ GET /me/id-card
 }
 ```
 
-- `verification_status`: `verified` | `pending` | `unverified` (client fallback netral untuk nilai lain).
-- `qr_payload`: string yang di-encode ke QR. **Default = NRP.** Field ini disediakan supaya backend
-  bisa mengganti ke token bertanda-tangan nanti tanpa ubah client.
-- `qr_expires_at`: `null` = tidak kedaluwarsa. Kalau diisi, client bisa menampilkan hitung mundur /
-  auto-refresh (belum diimplementasikan).
-
----
+- `verification_status`: `verified` | `pending` | `unverified` (fallback netral untuk nilai lain).
+- `qr_payload`: string yang di-encode ke QR, default = NRP.
+- `qr_expires_at`: `null` = tidak kedaluwarsa.
 
 ## 2. Status Saya
 
-Mengisi 4 tile di bagian **"Status Saya"**: Status Saat Ini, Tugas / Dinas, Lokasi Terakhir,
-Update Terakhir. (Lokasi Terakhir + Update Terakhir sudah bisa diisi dari `GET /locations/me` —
-endpoint ini melengkapi 2 tile sisanya + memberi label lokasi yang lebih manusiawi.)
+> [!DONE] Terintegrasi (`getMyStatusApi`) — mengisi 3 tile pertama + label lokasi. Tile jatuh ke "Belum Ada Data" kalau request gagal.
 
-```
-GET /me/status
-```
+`GET /me/status`
 
-**Response `200`**
+**Query:** — · **Payload:** —
+
+**Response `200`** — `data`: `as_of`, `presence{key, label, since}`,
+`duty{key, label, period_label, starts_at, ends_at}`, `location{label, accuracy_label, status, captured_at}`.
+
 ```json
 {
   "success": true,
   "data": {
     "as_of": "2026-08-30T09:41:00+07:00",
-    "presence": {
-      "key": "at_base",
-      "label": "Di Markas",
-      "since": "2026-08-30T08:14:00+07:00"
-    },
+    "presence": { "key": "at_base", "label": "Di Markas", "since": "2026-08-30T08:14:00+07:00" },
     "duty": {
-      "key": "internal_duty",
-      "label": "Dinas Dalam",
-      "period_label": "Hari ini",
-      "starts_at": "2026-08-30T07:00:00+07:00",
-      "ends_at": "2026-08-30T19:00:00+07:00"
+      "key": "internal_duty", "label": "Dinas Dalam", "period_label": "Hari ini",
+      "starts_at": "2026-08-30T07:00:00+07:00", "ends_at": "2026-08-30T19:00:00+07:00"
     },
     "location": {
-      "label": "Markas",
-      "accuracy_label": "Akurasi tinggi",
-      "status": "fresh",
-      "captured_at": "2026-08-30T09:39:00+07:00"
+      "label": "Markas", "accuracy_label": "Akurasi tinggi",
+      "status": "fresh", "captured_at": "2026-08-30T09:39:00+07:00"
     }
   }
 }
 ```
 
-- `presence.key`: `at_base` | `off_base` | `on_leave` | `absent` (fallback netral untuk nilai lain).
-- `duty.key`: `internal_duty` | `field_duty` | `guard` | `standby` | `off` | dst — dikirim mentah,
-  label dari `duty.label`.
-- `location.label`: hasil reverse-geocode / nama pos di sisi backend (client tidak reverse-geocode).
-- `location.accuracy_label`: string siap tampil (mis. "Akurasi tinggi" / "Akurasi sedang"). Kalau
-  tidak ada, client turunkan sendiri dari `accuracy` di `GET /locations/me`.
-
----
+- `presence.key`: `at_base` | `off_base` | `on_leave` | `absent`.
+- `duty.key`: `internal_duty` | `field_duty` | `guard` | `standby` | `off` | dst — label dari `duty.label`.
+- `location.label`: hasil reverse-geocode / nama pos di backend (client tidak reverse-geocode).
+- `location.accuracy_label`: string siap tampil; kalau kosong client turunkan dari `accuracy` `GET /locations/me`.
 
 ## 3. Aset Saya
 
-Mengisi bagian **"Aset Saya"** (kartu Senjata Dinas + Kendaraan). Data ini sebetulnya sudah ada di
-katalog (`/catalog/weapon-assignments`, `/catalog/vehicles`) tapi terfilter ke pemiliknya — endpoint
-ini ringkasan "milik saya" supaya client tidak perlu menarik seluruh daftar lalu memfilter.
+> [!BUG] `GET /me/assets` mengembalikan `500 "Server Error"`. FE sudah wired (`getMyAssetsApi`, di-guard `Promise.allSettled`) — kartu Senjata/Kendaraan tetap di placeholder sampai backend diperbaiki.
 
-```
-GET /me/assets
-```
+`GET /me/assets`
 
-**Response `200`**
+**Query:** — · **Payload:** —
+
+**Response `200`** — `data`: `{ weapons: [...], vehicles: [...] }`
+
 ```json
 {
   "success": true,
   "data": {
     "weapons": [
-      {
-        "id": 21,
-        "weapon_number": "SB-0231",
-        "serial_number": "PINDAD-21B0231",
-        "category": "SS2-V1",
-        "condition_status": "good",
-        "condition_label": "Baik",
-        "assigned_at": "2025-01-10T00:00:00+07:00"
-      }
+      { "id": 21, "weapon_number": "SB-0231", "serial_number": "PINDAD-21B0231",
+        "category": "SS2-V1", "condition_status": "good", "condition_label": "Baik",
+        "assigned_at": "2025-01-10T00:00:00+07:00" }
     ],
     "vehicles": [
-      {
-        "id": 8,
-        "brand_model": "Toyota Hilux Double Cabin",
-        "plate_number": "D 1234 AB",
-        "stnk_valid_until": "2026-11-12",
-        "stnk_status": "active",
-        "stnk_status_label": "STNK Aktif"
-      }
+      { "id": 8, "brand_model": "Toyota Hilux Double Cabin", "plate_number": "D 1234 AB",
+        "stnk_valid_until": "2026-11-12", "stnk_status": "active", "stnk_status_label": "STNK Aktif" }
     ]
   }
 }
 ```
 
 - Array kosong → client menampilkan empty-state ("Belum ada senjata dinas" / "Belum ada kendaraan").
-- `condition_status` / `stnk_status`: enum mentah; `*_label` opsional (client punya fallback
-  `titleCase()`).
+- `condition_status` / `stnk_status`: enum mentah; `*_label` opsional (client punya fallback `titleCase()`).
 - `stnk_status`: `active` | `expiring_soon` | `expired`.
-
----
 
 ## 4. Aktivitas Terbaru (pergerakan saya)
 
-Mengisi bagian **"Aktivitas Terbaru"** di Home (3 entri teratas) — **diflatten jadi 1 baris per
-lintasan** (masuk ATAU keluar). Serupa dengan `visitor_log_history` pada `GET /catalog/personnel/{personnel}`,
-tapi untuk diri sendiri dan sebagai endpoint list tersendiri.
+> [!DONE] Terintegrasi (`getMyMovementsApi({ per_page: 3 })`). Diflatten jadi 1 baris per lintasan (masuk ATAU keluar).
 
-```
-GET /me/movements
-```
+`GET /me/movements`
 
-**Query** (opsional)
+**Query (opsional):** `page`, `per_page` (default 10). · **Payload:** —
 
-| Parameter | Keterangan |
-|-----------|------------|
-| `page`, `per_page` | pagination — default `per_page` 10 |
+**Response `200`** — array + `meta` (mungkin absen). Item: `{ id, direction, occurred_at, location_label, purpose, note }`.
 
-**Response `200`**
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 5501,
-      "direction": "in",
-      "occurred_at": "2026-08-30T08:14:00+07:00",
-      "location_label": "Pos Utama",
-      "purpose": null,
-      "note": "Masuk Markas"
-    },
-    {
-      "id": 5498,
-      "direction": "out",
-      "occurred_at": "2026-08-30T07:05:00+07:00",
-      "location_label": null,
-      "purpose": "Dinas",
-      "note": "Keluar Markas"
-    },
-    {
-      "id": 5477,
-      "direction": "in",
-      "occurred_at": "2026-08-29T17:42:00+07:00",
-      "location_label": "Pos Utama",
-      "purpose": null,
-      "note": "Masuk Markas"
-    }
+    { "id": 5501, "direction": "in", "occurred_at": "2026-08-30T08:14:00+07:00",
+      "location_label": "Pos Utama", "purpose": null, "note": "Masuk Markas" },
+    { "id": 5498, "direction": "out", "occurred_at": "2026-08-30T07:05:00+07:00",
+      "location_label": null, "purpose": "Dinas", "note": "Keluar Markas" }
   ],
   "meta": { "current_page": 1, "last_page": 6, "per_page": 10, "total": 58 }
 }
 ```
 
 - `direction`: `in` (masuk markas) | `out` (keluar markas).
-- Client menampilkan `note` sebagai judul, `location_label` / `purpose` sebagai detail, dan
-  `occurred_at` diformat relatif / jam.
-
----
+- Client: `note` sebagai judul, `location_label` / `purpose` sebagai detail, `occurred_at` diformat relatif.
 
 ## 5. Pengumuman Terbaru
 
-Mengisi bagian **"Pengumuman Terbaru"** di Home (3 entri teratas) — **subset dari
-`API_CONTRACT.md` §2.3 (`GET /announcements`)**, difilter ke pengumuman yang menyasar user login.
-Tidak butuh endpoint baru; cukup panggil `GET /announcements?per_page=3`. Field yang dipakai layar:
+> [!TODO] Masih `DUMMY_NOTICES`. Layar butuh daftar pengumuman yang **menyasar user login** — subset dari §2.3 (`API_CONTRACT.md`) tapi sudah difilter di backend + ada flag `read` per user.
 
-| Field (dari §2.3) | Dipakai untuk        |
-|-------------------|----------------------|
-| `title`           | judul baris          |
-| `body`            | detail (1 baris)     |
-| `created_by.name` | label pengirim ("Pasi Ops") |
-| `published_at`    | jam / tanggal relatif |
-| `type`            | ikon + warna aksen (`alert` merah, `announcement` biru, `info` abu) |
+`GET /me/announcements`
 
-Sampai `GET /announcements` tersedia, layar memakai `DUMMY_NOTICES` yang bentuknya sudah disamakan
-dengan tabel di atas.
+**Query (opsional):** `page`, `per_page` (default 10; layar Home hanya pakai 3) · `only_unread` (`true` | `false`). · **Payload:** —
 
----
+**Response `200`** — array + `meta` (termasuk `meta.unread_total`). Item: `id`, `type`, `title`,
+`body`, `severity`, `created_by{id, name}`, `published_at`, `read`, `action` (`{type, id}` tujuan
+navigasi, opsional / `null`).
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": 41, "type": "alert", "title": "Apel Luar Biasa 15.00",
+      "body": "Seluruh personel Kompi A berkumpul di Lapangan Utama pukul 15.00.",
+      "severity": "high",
+      "created_by": { "id": 4, "name": "Pasi Ops" },
+      "published_at": "2026-09-01T09:12:00+07:00",
+      "read": false,
+      "action": { "type": "announcement", "id": 41 } },
+    { "id": 39, "type": "announcement", "title": "Jadwal Piket Minggu Ini",
+      "body": "Rotasi piket pos gerbang diperbarui, cek papan pengumuman.",
+      "severity": "normal",
+      "created_by": { "id": 7, "name": "Bati Tuud" },
+      "published_at": "2026-08-31T16:40:00+07:00",
+      "read": true,
+      "action": null },
+    { "id": 35, "type": "info", "title": "Pemeliharaan Kendaraan Dinas",
+      "body": "Servis berkala Hilux D 1234 AB dijadwalkan 3 September.",
+      "severity": "normal",
+      "created_by": { "id": 12, "name": "Batih Har" },
+      "published_at": "2026-08-30T11:05:00+07:00",
+      "read": true,
+      "action": null }
+  ],
+  "meta": { "current_page": 1, "last_page": 4, "per_page": 10, "total": 32, "unread_total": 1 }
+}
+```
+
+- `type`: `alert` | `announcement` | `info` — ikon + warna aksen di layar (`alert` merah,
+  `announcement` biru, `info` abu).
+- `severity`: `high` | `normal` — opsional; kalau tidak ada client turunkan dari `type`.
+- `read`: `false` → baris ditandai belum dibaca (titik/aksen). `meta.unread_total` untuk badge.
+- `action`: tujuan navigasi saat baris ditekan (mengikuti resource yang sudah ada + `id`), atau `null`.
+- Client menampilkan `title` (judul), `body` (1 baris detail), `created_by.name` (pengirim),
+  `published_at` (relatif). Home hanya menampilkan 3 teratas → "Lihat Semua" ke layar `Notifications`.
 
 ## 6. Shortcut "Kontak Darurat" (Akses Cepat)
 
-Saat ini `ComingSoon`. Usulan:
+> [!DONE] Terintegrasi — layar `EmergencyContacts` (`getEmergencyContactsApi`), daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
 
-```
-GET /emergency-contacts
-```
+`GET /emergency-contacts`
+
+**Query:** — · **Payload:** —
+
+**Response `200`** — `data[]`: `{ id, label, phone, category }`. `category`: `command` | `medical` |
+`security` | `general` (nilai lain → grup "Lainnya").
+
 ```json
 {
   "success": true,
@@ -1148,7 +925,6 @@ GET /emergency-contacts
   ]
 }
 ```
-Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
 </script>
 
 <script>
@@ -1276,7 +1052,17 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
     function render(md, docId) {
       md = md.replace(/\r\n?/g, '\n');
       var lines = md.split('\n');
-      var out = [], toc = [], i = 0, n = lines.length;
+      var out = [], toc = [], i = 0, n = lines.length, pendingHead = null, cardOpen = false;
+
+      function closeCard() { if (cardOpen) { out.push('</section>'); cardOpen = false; } }
+      function nextContentIsHeading(from) {
+        for (var k = from; k < n; k++) {
+          var t = lines[k].trim();
+          if (!t || /^-{3,}$/.test(t)) continue;
+          return /^#{1,6}\s+/.test(t);
+        }
+        return true;
+      }
 
       while (i < n) {
         var line = lines[i], trimmed = line.trim();
@@ -1297,12 +1083,21 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
         var hm = trimmed.match(/^(#{1,6})\s+(.*)$/);
         if (hm) {
           var lvl = hm[1].length, txt = hm[2].replace(/\s+#*\s*$/, '');
+          pendingHead = null;
+          closeCard();
           if (lvl === 1) {
             out.push('<header class="mod-title" id="mod-' + docId + '"><p class="eyebrow">' +
               escHtml(MOD_EYEBROW[docId] || '') + '</p><h1>' + inlineMd(txt) + '</h1></header>');
           } else {
             var id = docId + '-' + slugify(txt);
-            if (lvl === 2 || lvl === 3) toc.push({ level: lvl, text: txt.replace(/`/g, ''), id: id });
+            if (lvl === 2 || lvl === 3) {
+              pendingHead = { level: lvl, text: txt.replace(/`/g, ''), id: id, status: '' };
+              toc.push(pendingHead);
+            }
+            // Bungkus tiap "poin" dalam kartu putih: setiap h3, dan setiap h2 yang punya isi
+            // sendiri (bukan cuma judul grup untuk h3 di bawahnya).
+            var asCard = lvl === 3 || (lvl === 2 && !nextContentIsHeading(i + 1)) || lvl > 3;
+            if (asCard) { out.push('<section class="pcard">'); cardOpen = true; }
             out.push('<h' + lvl + ' id="' + id + '" class="hd hd-' + lvl + '">' + inlineMd(txt) + '</h' + lvl + '>');
           }
           i++;
@@ -1312,7 +1107,18 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
         if (/^>\s?/.test(line)) {
           var qbuf = [];
           while (i < n && /^>\s?/.test(lines[i])) { qbuf.push(lines[i].replace(/^>\s?/, '')); i++; }
-          out.push('<blockquote>' + qbuf.join('\n').split(/\n\s*\n/).map(function (p) {
+          var qjoined = qbuf.join('\n').trim();
+          var cm = qjoined.match(/^\[!(\w+)\]\s*([\s\S]*)$/);
+          if (cm) {
+            var CX = { done: 'Sudah diintegrasikan', partial: 'Ada catatan', bug: 'Error backend', todo: 'Belum ada endpoint' };
+            var ckind = cm[1].toLowerCase();
+            if (!CX[ckind]) ckind = 'todo';
+            if (pendingHead && !pendingHead.status) pendingHead.status = ckind;
+            out.push('<div class="cx cx-' + ckind + '"><span class="cx-tag">' + escHtml(CX[ckind]) +
+              '</span><span class="cx-body">' + inlineMd(cm[2].replace(/\n/g, ' ').trim()) + '</span></div>');
+            continue;
+          }
+          out.push('<blockquote>' + qjoined.split(/\n\s*\n/).map(function (p) {
             return '<p>' + inlineMd(p.replace(/\n/g, ' ').trim()) + '</p>';
           }).join('') + '</blockquote>');
           continue;
@@ -1353,6 +1159,7 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
         }
         out.push('<p>' + inlineMd(pbuf.join(' ').trim()) + '</p>');
       }
+      closeCard();
       return { html: out.join('\n'), toc: toc };
     }
 
@@ -1361,7 +1168,8 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
 
     var main = document.getElementById('main');
     var toc = document.getElementById('toc');
-    var tocHtml = '<p class="toc-title">Daftar Isi</p>';
+    var tocHtml = '<p class="toc-title">Daftar Isi</p>' +
+      '<p class="toc-checked">Pengecekan frontend terakhir<b>1 September 2026, 17.03 WIB</b></p>';
 
     MODULES.forEach(function (mod, idx) {
       var src = document.getElementById(mod.srcId);
@@ -1375,12 +1183,26 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
       if (idx > 0) main.insertAdjacentHTML('beforeend', '<div class="mod-divider"></div>');
       main.insertAdjacentHTML('beforeend', r.html);
 
-      tocHtml += '<div class="toc-group">' +
-        '<a class="toc-group-head" href="#mod-' + mod.id + '"><span class="dot"></span>' + escHtml(mod.group) + '</a>' +
+      var TSTAT = { done: 'Selesai', partial: 'Catatan', bug: 'Error', todo: 'Belum' };
+      var kinds = r.toc.map(function (t) { return t.status; }).filter(Boolean);
+      // Prioritas agregat grup: error > catatan > belum > selesai
+      var agg = kinds.indexOf('bug') >= 0 ? 'bug'
+        : kinds.indexOf('partial') >= 0 ? 'partial'
+        : kinds.indexOf('todo') >= 0 ? 'todo'
+        : kinds.length ? 'done' : '';
+      var chev = '<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+      var gstat = agg ? '<span class="gstat tstat-' + agg + '">' + TSTAT[agg] + '</span>' : '';
+
+      tocHtml += '<div class="toc-group collapsed">' +
+        '<button type="button" class="toc-group-head" aria-expanded="false">' +
+        '<span class="dot"></span><span class="gname">' + escHtml(mod.group) + '</span>' +
+        gstat + chev + '</button>' +
         '<ol>' + r.toc.map(function (it) {
           var s = splitNum(it.text);
+          var badge = it.status ? '<span class="tstat tstat-' + it.status + '">' + TSTAT[it.status] + '</span>' : '<span></span>';
           return '<li class="lvl-' + it.level + '"><a href="#' + it.id + '">' +
-            '<span class="n">' + escHtml(s.n) + '</span><span>' + escHtml(s.label) + '</span></a></li>';
+            '<span class="n">' + escHtml(s.n) + '</span>' +
+            '<span class="tlabel">' + escHtml(s.label) + '</span>' + badge + '</a></li>';
         }).join('') + '</ol></div>';
     });
 
@@ -1389,6 +1211,27 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
       '<p class="toc-note">Modul Academy menyusul di dokumen ini.</p></div>';
 
     toc.innerHTML = tocHtml;
+
+    // ---------- accordion (grup default tertutup) ----------
+    toc.addEventListener('click', function (e) {
+      var head = e.target.closest && e.target.closest('button.toc-group-head');
+      if (!head) return;
+      var g = head.parentNode;
+      var open = g.classList.toggle('collapsed') === false;
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    function expandGroupFor(hash) {
+      if (!hash) return;
+      var t = toc.querySelector('a[href="' + hash + '"], button[data-mod]');
+      var g = t && t.closest('.toc-group');
+      if (g && g.classList.contains('collapsed')) {
+        g.classList.remove('collapsed');
+        var h = g.querySelector('button.toc-group-head');
+        if (h) h.setAttribute('aria-expanded', 'true');
+      }
+    }
+    expandGroupFor(location.hash);
+    window.addEventListener('hashchange', function () { expandGroupFor(location.hash); });
 
     // ---------- scroll spy ----------
     var anchorEls = Array.prototype.slice.call(main.querySelectorAll('[id^="mod-"], h2.hd[id], h3.hd[id]'));
@@ -1440,3 +1283,6 @@ Client menampilkan daftar tombol tap-to-call (`tel:`), dikelompokkan per `catego
     });
   })();
 </script>
+
+</body>
+</html>
