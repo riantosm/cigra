@@ -2,7 +2,9 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<title>API Contract — Smart Battalion</title>
+<title>API Contract — Smart Battalion Apps</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -102,6 +104,11 @@
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
   }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-logo {
+    width: 30px; height: 30px; flex: none; border-radius: 8px;
+    display: block; object-fit: contain;
+  }
   .wordmark { display: flex; flex-direction: column; line-height: 1.25; }
   .wordmark b { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
   .wordmark span {
@@ -143,22 +150,47 @@
   .toc-title {
     font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
     letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
-    margin: 0 0 16px;
+    margin: 0 0 12px;
   }
-  .toc-group { margin-bottom: 18px; }
+  .toc-tools { margin: 0 0 16px; }
+  .toc-search {
+    width: 100%; box-sizing: border-box; margin-bottom: 8px;
+    padding: 7px 11px; border-radius: 8px; font: inherit; font-size: 12.5px;
+    color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  }
+  .toc-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  .toc-search::placeholder { color: var(--muted); }
+  .toc-filters { display: flex; flex-wrap: wrap; gap: 5px; }
+  .toc-filters .tf {
+    padding: 3px 8px; border-radius: 999px; cursor: pointer;
+    font-family: "IBM Plex Mono", monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--muted); background: var(--surface); border: 1px solid var(--line);
+  }
+  .toc-filters .tf:hover { color: var(--ink); }
+  .toc-filters .tf[aria-pressed="true"] { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .toc-filters .tf-done[aria-pressed="true"] { background: #16A34A; border-color: #16A34A; }
+  .toc-filters .tf-partial[aria-pressed="true"] { background: #D97706; border-color: #D97706; }
+  .toc-filters .tf-bug[aria-pressed="true"] { background: #DC2626; border-color: #DC2626; }
+  .toc-filters .tf-todo[aria-pressed="true"] { background: var(--soon-fg); border-color: var(--soon-fg); }
+  .toc-empty { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); }
+  .toc-group { margin-bottom: 14px; }        /* grup terbuka: beri napas */
+  .toc-group.collapsed { margin-bottom: 1px; } /* grup tertutup: rapat */
   .toc-group-head {
     display: flex; align-items: center; gap: 8px; width: 100%;
-    margin: 0 0 8px; padding: 6px 10px; border-radius: 7px;
+    margin: 0 0 4px; padding: 5px 10px; border-radius: 7px;
     font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
     background: none; border: none; text-align: left; cursor: pointer;
   }
+  .toc-group.collapsed .toc-group-head { margin-bottom: 0; }
   button.toc-group-head:hover { background: var(--surface); }
   .toc-group-head .gname { margin-right: auto; }
   .toc-group-head .gstat {
-    padding: 1px 6px; border-radius: 5px;
+    padding: 1px 6px; border-radius: 5px; white-space: nowrap;
     font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 700;
     letter-spacing: 0.04em; text-transform: uppercase;
   }
+  .toc-group-head .gstat + .gstat { margin-left: -4px; }
   .toc-group-head .chev { flex: none; color: var(--muted); transition: transform .15s; }
   .toc-group.collapsed .toc-group-head .chev { transform: rotate(-90deg); }
   .toc-group.collapsed > ol { display: none; }
@@ -201,6 +233,8 @@
     font-size: clamp(1.7rem, 4vw, 2.15rem); font-weight: 700; letter-spacing: -0.02em;
     line-height: 1.14; text-wrap: balance; margin: 0 0 12px;
   }
+  .intro-title { display: flex; align-items: center; gap: 12px; }
+  .intro-logo { width: 40px; height: 40px; flex: none; border-radius: 9px; object-fit: contain; }
   .intro p { color: var(--ink-soft); max-width: 66ch; margin: 0 0 10px; }
 
   .mod-divider { height: 1px; background: var(--line); margin: 80px 0 0; }
@@ -291,7 +325,10 @@
     position: relative; margin: 14px 0; border-radius: 12px;
     border: 1px solid var(--code-line); background: var(--code-bg); max-width: 100%;
   }
-  .code-scroll { overflow-x: auto; border-radius: 12px; }
+  .code-scroll { overflow: auto; border-radius: 12px; max-height: 340px; overscroll-behavior: contain; }
+  .code-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+  .code-scroll::-webkit-scrollbar-thumb { background: var(--code-line); border-radius: 6px; border: 2px solid var(--code-bg); }
+  .code-scroll::-webkit-scrollbar-track { background: transparent; }
   pre { margin: 0; padding: 16px 18px; font-size: 12.8px; line-height: 1.7; color: var(--code-ink); tab-size: 2; }
   pre code { background: none; border: none; padding: 0; font-size: inherit; color: inherit; }
   .copy-btn {
@@ -376,12 +413,13 @@
   :root[data-theme="dark"] .cx-partial .cx-tag { color: #E7B267; background: #33260F; }
   :root[data-theme="dark"] .cx-bug .cx-tag { color: #F0A9A0; background: #3A1D1A; }
 
-  .toc-checked {
-    margin: -6px 0 16px; padding: 8px 10px; border-radius: 8px;
-    background: var(--surface); border: 1px solid var(--line);
-    font-size: 11.5px; line-height: 1.5; color: var(--muted);
+  .topbar .checked {
+    display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.2;
+    font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: right;
   }
-  .toc-checked b { display: block; color: var(--ink); font-size: 12.5px; font-weight: 600; }
+  .topbar .checked b { color: var(--ink-soft); font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+  @media (max-width: 620px) { .topbar .checked { display: none; } }
 
   .tstat {
     justify-self: end; padding: 1px 5px; border-radius: 5px;
@@ -401,12 +439,16 @@
 <body>
 
 <header class="topbar">
-  <span class="wordmark">
-    <b>API Contract</b>
-    <span>Smart Battalion</span>
+  <span class="brand">
+    <img class="brand-logo" src="data:image/png;base64,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" alt="Smart Battalion Apps" width="30" height="30">
+    <span class="wordmark">
+      <b>API Contract</b>
+      <span>Smart Battalion Apps</span>
+    </span>
   </span>
   <span class="pill">Draf</span>
   <span class="spacer"></span>
+  <span class="checked">Pengecekan terakhir<b>3 September 2026</b></span>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti tema">
     <span id="themeLabel">Gelap</span>
   </button>
@@ -421,7 +463,7 @@
   <main id="main">
     <div class="intro">
       <p class="eyebrow">Dokumentasi · Draf usulan frontend</p>
-      <h1>API Contract — Smart Battalion</h1>
+      <h1 class="intro-title"><img class="intro-logo" src="data:image/png;base64,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" alt="" width="40" height="40">API Contract — Smart Battalion Apps</h1>
       <p>
         Kumpulan draf kontrak API untuk surface yang masih memakai data dummy di aplikasi. Semua
         bentuk envelope, pagination, format waktu, dan enum seragam dengan endpoint yang sudah
@@ -429,39 +471,303 @@
         <code>/panic-buttons</code>).
       </p>
       <p>
-        Halaman ini dirender otomatis dari <code>documentation/API_CONTRACT.md</code> dan
-        <code>documentation/API_CONTRACT_ANGGOTA.md</code> — sumber kebenaran tetap kedua berkas
-        markdown itu.
+        Halaman ini dirender otomatis dari <code>documentation/API_CONTRACT.md</code> — sumber
+        kebenaran tetap berkas markdown itu. Aturan penulisannya ada di
+        <code>documentation/STYLE_GUIDE.md</code>.
       </p>
     </div>
     <!-- modul diisi oleh script -->
   </main>
 </div>
 
-<footer id="footer">API Contract — Smart Battalion · draf usulan frontend</footer>
+<footer id="footer">API Contract — Smart Battalion Apps · draf usulan frontend</footer>
 
-<script type="text/markdown" id="src-umum"># API Contract — Smart Battalion
+<script type="text/markdown" id="src-doc"># API Contract — Smart Battalion Apps
 
-**Pengecekan frontend terakhir: 1 September 2026, 18.59 WIB**
+**Pengecekan terakhir: 3 September 2026**
 
-Kontrak API untuk surface yang masih dummy + status integrasinya di app. Envelope, pagination
-(`?page=&per_page=`), waktu ISO-8601 dengan offset, dan enum `snake_case` mentah — seragam dengan
-API yang sudah berjalan (`/auth/*`, `/locations/*`, `/catalog/*`, `/panic-buttons`).
+Dokumentasi **semua endpoint** yang dipanggil aplikasi (yang sudah jalan maupun yang masih
+dummy) beserta status integrasinya. Dibagi per **peran**: Umum (semua role), Komandan,
+Anggota, Petugas Kesehatan.
+
+Konvensi seragam untuk semua endpoint:
+
+- Base URL dari `Config.API_BASE_URL` — **sudah termasuk suffix `/api`**, jadi path di sini
+  ditulis mulai dari `/auth/...`, `/locations/...`, dst.
+- Envelope `{ "success": true, "data": … }`. Beberapa endpoint lama memakai
+  `{ "success": true, "message": "…" }` (tanpa `data`) — ditandai di bagiannya.
+- Paginasi: query `?page=&per_page=`, meta di `meta: { current_page, last_page, per_page, total }`.
+- Waktu ISO-8601 dengan offset (`2026-08-30T15:07:00+07:00`). Enum `snake_case` mentah.
+- `Authorization: Bearer <access_token>` disisipkan otomatis oleh interceptor axios untuk
+  semua request selama token ada. Token kedaluwarsa → interceptor coba `POST /auth/refresh`
+  sekali lalu retry; gagal → logout. Lihat Umum §1.1.3.
 
 Legenda badge: **Sudah diintegrasikan** · **Ada catatan** (jalan, perlu penyesuaian) ·
 **Error backend** (alur terblokir) · **Belum ada endpoint** (layar masih dummy).
 
+Format & aturan penulisan berkas ini: lihat `STYLE_GUIDE.md`.
+
 ---
 
-## 1. Cek Versi Aplikasi
+# Umum
 
-> [!DONE] FE selesai & terverifikasi di device (`appVersion.service.ts`, `utils/appVersion.ts`, `hooks/useAppVersionGate.ts`, `organisms/AppVersionGate` di `RootNavigator`). Endpoint live & sesuai kontrak. Catatan operasional: isi `download_url`/`store_url` + `latest_build` = `versionCode` rilis di backend sebelum flownya benar-benar mendorong update.
+Endpoint yang dipakai lintas peran (autentikasi, versi app, notifikasi, pengumuman baca,
+lokasi milik sendiri, foto, kirim sinyal darurat).
 
-`GET /app-version` — publik, tanpa `Authorization`.
+## 1. Autentikasi
 
-**Query:** — · **Payload:** —
+### 1.1 Login (password)
 
-**Response `200`**
+> [!DONE] `authSlice.login` thunk. Field identitas namanya `login` (bisa username/NRP/email), **bukan** `username`. Response `requires_password_change` + `reset_token` memicu gate ganti-password paksa (lihat 1.7).
+
+`POST /auth/login` — guest; 401 di sini **tidak** memicu alur refresh/logout.
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `login` | string | Wajib | username / NRP / email |
+| `password` | string | Wajib | — |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJ0eXAi…",
+    "token_type": "bearer",
+    "expires_in": 3600,
+    "requires_password_change": false,
+    "reset_token": null,
+    "user": {
+      "id": 12,
+      "name": "Andi Pratama",
+      "username": "andi",
+      "email": "andi@satuan.mil",
+      "tenant_id": 1,
+      "must_change_password": false,
+      "is_active": true,
+      "roles": [
+        "komandan"
+      ],
+      "permissions": [
+        "dashboard.view"
+      ],
+      "personnel": {
+        "id": 45,
+        "full_name": "Andi Pratama",
+        "service_number": "3101050010",
+        "rank": "SERKA",
+        "birth_place": "Bandung",
+        "birth_date": "1990-04-12",
+        "birth_date_formatted": "12 April 1990",
+        "blood_type": "O",
+        "gender": "L",
+        "address": "…",
+        "phone": "0812…",
+        "photo": null,
+        "status": "active",
+        "current_assignment": {
+          "position": "Danton",
+          "unit": "Kompi A",
+          "start_date": "2024-01-01"
+        },
+        "assignments": []
+      }
+    }
+  }
+}
+```
+
+- `user.roles` menentukan Home yang dirender: `komandan` → CommanderHome, `petugas_kesehatan`
+  → HealthOfficerHome, selain itu → MemberHome. `instruktur_apel` di `roles` memunculkan quick
+  action Kekuatan Apel.
+- `user.personnel` = `null` untuk akun non-prajurit (mis. `petkes` / admin) — sebagian layar
+  anggota menyembunyikan dirinya kalau `personnel` kosong. Diverifikasi via API live 2026-09-02.
+- `is_active` datang sebagai **`0`/`1` (int)**, bukan boolean — FE pakai truthiness, aman.
+
+### 1.2 Login OTP
+
+> [!DONE] Flow dua langkah di layar Login (toggle "Kode OTP"). Langkah request pakai state lokal layar (tidak menyentuh Redux); verify lewat `authSlice.loginWithOtp`.
+
+`POST /auth/otp/request` · `POST /auth/otp/verify`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `login` | string | Wajib | username / NRP / email (kedua langkah) |
+| `otp` | string | Wajib pada `verify` | 6 digit dari SMS/email |
+
+**Response request `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Kode OTP dikirim."
+}
+```
+
+**Response verify `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJ0eXAi…",
+    "requires_password_change": false,
+    "reset_token": null,
+    "user": {
+      "id": 12,
+      "name": "Andi Pratama",
+      "username": "andi"
+    }
+  }
+}
+```
+`verify` tidak mengembalikan `expires_in` / `token_type`.
+
+### 1.3 Refresh Token
+
+> [!DONE] Otomatis oleh interceptor response axios pada 401 (kecuali `/auth/login`, `/auth/logout`, `/auth/refresh`). Single-flight: banyak 401 bersamaan menunggu satu refresh yang sama. Foreground-service lokasi native punya implementasi refresh sendiri (HttpURLConnection).
+
+`POST /auth/refresh` — Bearer = **access token lama**, **tanpa body**. Token lama langsung
+dianulir begitu refresh sukses (rotating token).
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJ0eXAi…",
+    "token_type": "bearer",
+    "expires_in": 3600
+  }
+}
+```
+Selain 2xx / `success: false` → dianggap gagal permanen → logout.
+
+### 1.4 Logout
+
+> [!DONE] `Settings` / `ChangePassword`: dispatch `logoutLocal()` (sinkron, bersihkan state) lalu `logout()` thunk (panggil API + bersihkan token/tracking/push) tanpa di-`await`. 401 di endpoint ini tidak memicu logout ulang (hindari loop).
+
+`POST /auth/logout`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Logout berhasil."
+}
+```
+
+### 1.5 Profil Sendiri
+
+> [!DONE] `authSlice.refreshUser` thunk — dipanggil saat app dibuka (`RootNavigator`), di `Home` (mount + `AppState` active), dan `Profile` (mount). Re-sync `must_change_password` → `AuthState.requiresPasswordChange` (menangkap reset paksa admin di tengah sesi).
+
+`GET /auth/me`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 12,
+    "name": "Andi Pratama",
+    "username": "andi",
+    "email": "andi@satuan.mil",
+    "tenant_id": 1,
+    "is_active": 1,
+    "must_change_password": false,
+    "roles": [
+      "komandan",
+      "instruktur_apel"
+    ],
+    "permissions": [
+      "dashboard.view"
+    ],
+    "personnel": {
+      "id": 45,
+      "full_name": "Andi Pratama",
+      "service_number": "3101050010",
+      "rank": "SERKA",
+      "…": "lihat 1.1"
+    },
+    "family": null
+  }
+}
+```
+
+### 1.6 Lupa Password
+
+> [!DONE] Layar `ForgotPassword` (guest), dua langkah. State lokal penuh — reset password tidak otomatis login.
+
+`POST /auth/forgot-password` · `POST /auth/reset-password`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `login` | string | Wajib | username / NRP / email (kedua langkah) |
+| `otp` | string | Wajib pada `reset-password` | dari SMS/email |
+| `password` | string | Wajib pada `reset-password` | min 8 karakter |
+| `password_confirmation` | string | Wajib pada `reset-password` | sama dengan `password` |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Kode OTP telah dikirim."
+}
+```
+`reset` → `{ "success": true, "message": "Password berhasil diubah." }`. Keduanya tanpa `data`.
+
+### 1.7 Ganti Password (paksa & manual)
+
+> [!DONE] Layar `ChangePassword`. Kalau `AuthState.resetToken` ada → dipakai (tidak minta password lama); kalau tidak → form minta `current_password` (mis. sesi restore dari redux-persist). Sukses → `passwordChanged()` (bersihkan flag+token) + `navigation.replace(Main)`.
+
+`POST /auth/change-password`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `password` | string | Wajib | min 8 karakter |
+| `password_confirmation` | string | Wajib | sama dengan `password` |
+| `reset_token` | string | Wajib jika tanpa `current_password` | token 1x-pakai dari response login |
+| `current_password` | string | Wajib jika tanpa `reset_token` | password lama |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Password berhasil diubah."
+}
+```
+
+## 2. Cek Versi Aplikasi
+
+> [!BUG] FE selesai & terverifikasi (`appVersion.service.ts`, `utils/appVersion.ts`, `hooks/useAppVersionGate.ts`, `organisms/AppVersionGate`). **Masalah backend (sweep API live 2026-09-02):** `data.android.download_url` sekarang terisi tapi menunjuk ke `…/api/secure-files/app-releases/…apk` yang **butuh `Authorization: Bearer`** — `curl` tanpa header → `401`. FE membukanya via `Linking.openURL()` (browser sistem, **tanpa** header auth) → user dapat `401 JSON`, bukan APK. **Unduh paksa-update tidak berfungsi.** Backend perlu sajikan APK dari path publik / URL bertanda-tangan sementara.
+>
+> Data saat ini: android `latest_version` `0.2` / `latest_build` `2` (= versi terpasang → gate tidak memaksa update, benar). ios `download_url`/`store_url` masih `null`.
+
+`GET /app-version` — publik, tanpa `Authorization` wajib.
+
+**Tanpa parameter.**
+
+**Response `200`:**
 
 ```json
 {
@@ -476,7 +782,9 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** (jalan, perlu penyesu
       "release_notes": "- Perbaikan sinkronisasi lokasi",
       "released_at": "2026-09-15T10:00:00+07:00"
     },
-    "ios": { "_": "bentuk sama; download_url null, store_url terisi" }
+    "ios": {
+      "_": "bentuk sama; download_url null, store_url terisi"
+    }
   }
 }
 ```
@@ -496,22 +804,284 @@ build terpasang `<` `latest_build` → **wajib** · versi `<` `min_supported_ver
 `min_supported_version` ≤ versi `<` `latest_version` → **disarankan** · selain itu → tidak ada.
 Request gagal → diabaikan diam-diam.
 
+## 3. Notifikasi
+
+### 3.1 List
+
+> [!DONE] Halaman Notifikasi (ikon lonceng), **semua role**. Daftar + tarik-untuk-refresh + "muat lebih banyak" (via `meta`), badge lonceng = `meta.unread_total`. Diverifikasi API live 2026-09-02: `per_page`, `only_unread=true`, `type=emergency` semua bekerja.
+>
+> Catatan: `action` non-darurat (mis. `announcement`) belum menuju ke mana-mana, isinya tetap terbaca di pop-up.
+
+`GET /notifications`
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | default 20 (dihormati backend) |
+| `only_unread` | boolean | Opsional | `true` / `false` |
+| `type` | string | Opsional | `emergency` / `announcement` / `info` / `system` |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 501,
+      "type": "emergency",
+      "title": "Sinyal Darurat Baru",
+      "body": "Praka Rizky Maulana menekan tombol darurat di Pos Timur.",
+      "read": false,
+      "created_at": "2026-08-30T15:03:00+07:00",
+      "action": {
+        "type": "emergency",
+        "id": 88
+      }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 4,
+    "per_page": 20,
+    "total": 68,
+    "unread_total": 4
+  }
+}
+```
+
+### 3.2 Tandai Dibaca
+
+> [!BUG] **`POST /notifications/{id}/read` → `404 "The route api/notifications/{id}/read could not be found."`** (POST & PATCH sama-sama 404) — diuji API live 2026-09-02 dengan id notifikasi nyata. **Route ini tidak ada.** FE (`markNotificationReadApi`) memanggilnya tiap baris di-tap → gagal diam-diam. Hanya `POST /notifications/read-all` yang jalan (`200 { success, message: "Notifikasi berhasil ditandai dibaca." }`). Backend perlu menambahkan route `{id}/read` (atau beri tahu path yang benar). Efek di app: "Tandai semua" jalan, tandai-satu tidak.
+
+`POST /notifications/{id}/read` (❌ 404) · `POST /notifications/read-all` (✅ 200)
+
+**Tanpa parameter.**
+
+**Response `read-all` `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Notifikasi berhasil ditandai dibaca.",
+  "data": {
+    "unread_total": 0
+  }
+}
+```
+`{id}/read` → `404 { "message": "The route api/notifications/1/read could not be found." }`.
+
+## 4. Pengumuman (baca)
+
+> [!DONE] `GET /announcements` dipakai lintas app via `announcementSlice`. "Pengumuman Terbaru" (3 terbaru) di Home Komandan & Home Anggota; tiap baris → pop-up baca-penuh. "Lihat Semua" → halaman **Pengumuman** (daftar penuh + tarik-untuk-refresh + "muat lebih banyak"). Semua dari data list — **tidak ada endpoint detail**.
+>
+> Catatan: status "sudah dibaca" per-pengumuman ada di Notifikasi (§3), bukan di sini. Warna tipe: Peringatan → merah, Pengumuman → kuning, Info → biru. `severity` & query `since` belum dipakai. (Kirim pengumuman = Komandan §2.3.)
+
+`GET /announcements`
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | default 10 |
+| `type` | string | Opsional | `alert` / `announcement` / `info` |
+| `since` | string | Opsional | ISO-8601; **belum dipakai** FE |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 12,
+      "type": "alert",
+      "title": "ALARM: KADAL",
+      "body": "Kontigensi. Seluruh personel siaga di titik kumpul.",
+      "severity": "high",
+      "created_by": {
+        "id": 1,
+        "name": "Komandan Batalyon"
+      },
+      "published_at": "2026-08-30T09:30:00+07:00"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 3,
+    "per_page": 10,
+    "total": 24
+  }
+}
+```
+
+## 5. Lokasi (milik sendiri)
+
+### 5.1 Kirim Lokasi
+
+> [!DONE] Dikirim oleh foreground-service lokasi native (tetap jalan walau app di-kill) **dan** dari JS. Payload minimal `latitude`+`longitude`; sisanya opsional. Butuh izin lokasi + GPS aktif (di-gate keras di `Home`). Diuji live 2026-09-02: `201` `{ success, message, data }`.
+
+`POST /locations`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `latitude` | number | Wajib | — |
+| `longitude` | number | Wajib | — |
+| `accuracy` | number | Opsional | meter |
+| `altitude` | number | Opsional | — |
+| `heading` | number | Opsional | — |
+| `speed` | number | Opsional | — |
+| `captured_at` | string | Opsional | ISO-8601 |
+| `source` | string | Opsional | mis. `foreground-service` / `manual` |
+
+**Response `201`:**
+
+```json
+{
+  "success": true,
+  "message": "Posisi berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "accuracy": 9.5,
+    "altitude": null,
+    "heading": null,
+    "speed": null,
+    "captured_at": "2026-09-02T12:00:00+07:00",
+    "source": "foreground-service"
+  }
+}
+```
+
+### 5.2 Lokasi Saya
+
+> [!DONE] `GET /locations/me` — tile "Lokasi Terakhir" / "Update Terakhir" di MemberHome, dan fallback label lokasi untuk "Status Saya" (Anggota §3.2).
+
+`GET /locations/me`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "profile": {
+      "id": 45,
+      "service_number": "3101050010",
+      "full_name": "Andi Pratama",
+      "rank": "SERKA",
+      "unit": "Kompi A",
+      "tenant_id": 1
+    },
+    "location": {
+      "id": 9901,
+      "latitude": -6.1547,
+      "longitude": 106.852,
+      "accuracy": 8.0,
+      "altitude": null,
+      "heading": null,
+      "speed": null,
+      "captured_at": "2026-08-30T15:39:00+07:00",
+      "source": "foreground-service"
+    },
+    "status": "fresh",
+    "history": [
+      {
+        "id": 9900,
+        "latitude": -6.1547,
+        "longitude": 106.852,
+        "accuracy": 10,
+        "captured_at": "2026-08-30T15:38:00+07:00",
+        "source": "foreground-service"
+      }
+    ]
+  }
+}
+```
+
+Catatan: `status` = `fresh` | `stale` | `offline`; `location` bisa `null`.
+
+## 6. Foto / Berkas Aman (secure-files)
+
+> [!DONE] Semua foto personel/persit/kendaraan (`photo` di berbagai response) dirender lewat `atoms/SecureImage`. Path mentah dinormalkan ke `<host>/api/secure-files/<tail>` oleh `resolveSecureFileUrl`; header `Authorization: Bearer` **hanya** ditempel untuk URL di host API kita.
+>
+> Catatan: personel tanpa foto asli → backend mengirim placeholder **SVG** (dulu `ui-avatars.com`, sekarang `data:image/svg+xml;base64,…`). RN tidak bisa men-decode SVG → `isDisplayablePhoto()` menolak keduanya dan komponen jatuh ke inisial / `GradientAvatar`.
+
+`GET /secure-files/{path}` — mis. `/secure-files/personnel/photos/abc.jpg`. Butuh `Authorization: Bearer`.
+
+**Tanpa parameter.**
+
+**Response**: berkas biner (image).
+
+## 7. Kirim Sinyal Darurat (panic button)
+
+> [!DONE] Dua pemicu independen (by design): tombol tab Emergency (butuh 3 ketukan dalam 1.2s untuk kirim langsung; ketukan pertama selalu navigasi ke layar Emergency) & tombol di layar Emergency (satu tap). Logika di `hooks/usePanicButton.ts`: ambil koordinat device → `POST /panic-buttons` → `StatusModal` sukses/gagal. Tersedia untuk **semua role**. Diuji live 2026-09-02 (akun `anggota`): `201`, sinyal masuk ke daftar komandan dengan `status: active`.
+>
+> Catatan: butuh `android.permission.VIBRATE` (haptic) & izin lokasi. `LocationUnavailableError` membedakan `permission-denied` vs `gps-disabled`. Response `POST` **tidak** meng-echo `description` (tapi ada di `GET /panic-buttons/{id}`). Kelola/tindak lanjut sinyal darurat = Komandan §2.4.
+
+`POST /panic-buttons`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `latitude` | number | Wajib | — |
+| `longitude` | number | Wajib | — |
+| `address` | string | Opsional | — |
+| `description` | string | Opsional | tidak di-echo di response POST |
+
+**Response `201`:**
+
+```json
+{
+  "success": true,
+  "message": "Panic Button berhasil dikirim.",
+  "data": {
+    "id": 161,
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "address": "Pos Timur, Markas Batalyon",
+    "created_at": "2026-09-02T17:13:42+07:00"
+  }
+}
+```
+
+Catatan: `data` tidak meng-echo `description`.
+## 8. Push Notification (FCM)
+
+> [!DONE] Tanpa endpoint REST — `initializePushNotifications(roles)` subscribe ke FCM topic per role lewat `@react-native-firebase/messaging`. Backend cukup mem-broadcast ke topic. Notifikasi in-app tetap dibaca dari `GET /notifications` (§3).
+
 ---
 
-## 2. Home Komandan
+# Komandan
 
-### 2.1 Ringkasan Situasi
+Endpoint untuk role `komandan` (sebagian juga `instruktur_apel`). Backend **wajib** menegakkan
+izinnya — pembatasan di app hanya UI.
 
-> [!DONE] Dipakai di "Ringkasan Situasi" Home Komandan. Kartu pertama selalu Total Personel (`total_personnel`), sisanya diambil dari `summary[]` (maks 4 kartu). Ikon & warna kartu ditentukan dari `key` tiap item — sudah dikenali: `at_base`, `off_base`, `absent`, `on_leave`; `key` lain akan tampil dengan ikon & warna default. Banner "Sinyal Darurat Aktif" mengambil angka dari `active_alerts`.
+## 1. Ringkasan Situasi
+
+> [!DONE] "Ringkasan Situasi" Home Komandan. Kartu pertama selalu Total Personel (`total_personnel`), sisanya dari `summary[]` (maks 4). Ikon & warna per `key` — dikenali: `at_base`, `off_base`, `absent`, `on_leave`; `key` lain → default. Banner "Sinyal Darurat Aktif" = `active_alerts`.
 >
-> Catatan: `status_distribution[]` belum ditampilkan di aplikasi. Supaya ikon & warna kartu cocok, pastikan `key` pada `summary[]` konsisten dengan daftar di atas; teks kartu diambil apa adanya dari `label`.
+> Catatan: `status_distribution[]` belum ditampilkan di app. Teks kartu apa adanya dari `label`.
 
 `GET /dashboard/situation`
 
-**Query (opsional):** `unit_id` (filter unit) · `date` (default hari ini). · **Payload:** —
+**Query:**
 
-**Response `200`** — `data`: `as_of`, `total_personnel`, `summary[]` (`key`, `label`, `count`, `percent`),
-`status_distribution[]` (bentuk sama), `active_alerts`.
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `unit_id` | integer | Opsional | filter unit |
+| `date` | string | Opsional | `YYYY-MM-DD`, default hari ini |
+
+**Response `200`:**
 
 ```json
 {
@@ -520,94 +1090,101 @@ Request gagal → diabaikan diam-diam.
     "as_of": "2026-08-30T15:07:00+07:00",
     "total_personnel": 427,
     "summary": [
-      { "key": "at_base", "label": "Di Markas", "count": 381, "percent": 89.2 },
-      { "key": "off_base", "label": "Di Luar Markas", "count": 46, "percent": 10.8 },
-      { "key": "absent", "label": "Absen", "count": 5, "percent": 1.2 }
+      {
+        "key": "at_base",
+        "label": "Di Markas",
+        "count": 381,
+        "percent": 89.2
+      },
+      {
+        "key": "off_base",
+        "label": "Di Luar Markas",
+        "count": 46,
+        "percent": 10.8
+      },
+      {
+        "key": "absent",
+        "label": "Absen",
+        "count": 5,
+        "percent": 1.2
+      }
     ],
     "status_distribution": [
-      { "key": "active", "label": "Aktif", "count": 376, "percent": 88.1 }
+      {
+        "key": "active",
+        "label": "Aktif",
+        "count": 376,
+        "percent": 88.1
+      }
     ],
     "active_alerts": 1
   }
 }
 ```
 
-### 2.2 Aktivitas Terbaru (Pergerakan)
+## 2. Aktivitas Pergerakan Satuan
 
-> [!DONE] Di Home Komandan, "Aktivitas Terbaru" menampilkan 3 pergerakan terbaru. Tiap baris bisa di-tap untuk membuka detail personel yang bersangkutan. "Lihat Semua" membuka halaman **Aktivitas** — daftar lengkap dengan tarik-untuk-refresh dan "muat lebih banyak".
+> [!DONE] Home Komandan "Aktivitas Terbaru" = 3 pergerakan terbaru, tiap baris → detail personel. "Lihat Semua" → layar **Aktivitas** (tarik-untuk-refresh + "muat lebih banyak").
 >
-> Catatan: halaman ini khusus data satuan (untuk komandan). Home Anggota memakai endpoint lain (`GET /me/movements`, lihat API_CONTRACT_ANGGOTA §4) untuk aktivitas milik user sendiri.
+> Catatan: khusus data satuan; pergerakan milik user sendiri = Anggota §3.4. Nilai `direction` termasuk `returned` selain `in`/`out`.
 
 `GET /activities/movements`
 
-**Query (opsional):** `unit_id` · `page`, `per_page` (default 10) · `direction` (`in` | `out`). · **Payload:** —
+**Query:**
 
-**Response `200`** — array + `meta` pagination. Item: `id`, `direction`,
-`personnel{service_number, full_name, rank}`, `location_label`, `purpose`, `note`, `occurred_at`.
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `unit_id` | integer | Opsional | — |
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | **diabaikan** backend (tetap 10) |
+| `direction` | string | Opsional | `in` / `out` — **filter diabaikan** backend |
 
-```json
-{
-  "success": true,
-  "data": [
-    { "id": 91, "direction": "out",
-      "personnel": { "service_number": "3101050010", "full_name": "Serka Andi Pratama", "rank": "SERKA" },
-      "location_label": "Pos Utama", "purpose": "Dinas", "note": "Keluar Markas",
-      "occurred_at": "2026-08-30T14:32:00+07:00" }
-  ],
-  "meta": { "current_page": 1, "last_page": 5, "per_page": 10, "total": 47 }
-}
-```
-
-### 2.3 Pengumuman & Alert (list)
-
-> [!DONE] `GET /announcements` sudah dipakai di seluruh aplikasi. "Pengumuman Terbaru" tampil di Home Komandan & Home Anggota (masing-masing 3 terbaru), dan tiap baris **bisa di-tap** untuk membuka pop-up baca-penuh (judul + isi lengkap + pengirim/waktu). "Lihat Semua" membuka halaman **Pengumuman** — daftar lengkap dengan tarik-untuk-refresh dan "muat lebih banyak", tiap baris juga bisa di-tap. Semua diambil dari data list; **tidak ada endpoint detail terpisah**.
->
-> Catatan: belum ada status "sudah dibaca" per-pengumuman di sini (itu ditangani lewat Notifikasi, §3). Warna tipe pengumuman: Peringatan → merah, Pengumuman → kuning, Info → biru. `severity` dari server belum dipakai di tampilan. Query `since` belum dipakai.
-
-`GET /announcements`
-
-**Query (opsional):** `page`, `per_page` (default 10) · `type` (`alert` | `announcement` | `info`) ·
-`since` (ISO-8601, hanya yang terbit setelah waktu ini). · **Payload:** —
-
-**Response `200`** — array + `meta`. Item: `id`, `type`, `title`, `body`, `severity`,
-`created_by{id, name}`, `published_at`.
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": [
-    { "id": 12, "type": "alert", "title": "ALARM: KADAL",
-      "body": "Kontigensi. Seluruh personel siaga di titik kumpul.", "severity": "high",
-      "created_by": { "id": 1, "name": "Komandan Batalyon" },
-      "published_at": "2026-08-30T09:30:00+07:00" }
+    {
+      "id": 91,
+      "direction": "out",
+      "personnel": {
+        "service_number": "3101050010",
+        "full_name": "Serka Andi Pratama",
+        "rank": "SERKA"
+      },
+      "location_label": "Pos Utama",
+      "purpose": "Dinas",
+      "note": "Keluar Markas",
+      "occurred_at": "2026-08-30T14:32:00+07:00"
+    }
   ],
-  "meta": { "current_page": 1, "last_page": 3, "per_page": 10, "total": 24 }
+  "meta": {
+    "current_page": 1,
+    "last_page": 5,
+    "per_page": 10,
+    "total": 47
+  }
 }
 ```
 
-### 2.4 Kirim Pengumuman
+## 3. Kirim Pengumuman
 
-> [!PARTIAL] Form "Kirim Pengumuman" sudah bisa mengirim pengumuman ke server. Setelah berhasil, muncul notifikasi sukses dan pengumuman langsung tampil di daftar; kalau gagal, pesan error dari server ditampilkan. Masih ada dua hal yang belum lengkap — lihat rincian di bawah.
+### 3.1 Buat Pengumuman
 
-**Yang masih kurang / butuh backend:**
-
-- **Belum ada pilihan tujuan yang spesifik.** Di form, "Kirim ke" bisa dipilih Semua / Satuan / Peran, tapi aplikasi belum punya daftar satuan maupun daftar peran untuk ditawarkan ke user, jadi pengumuman untuk sekarang selalu terkirim tanpa detail satuan/peran. Perlu diputuskan: apakah server otomatis menentukan tujuan dari satuan si pengirim, atau backend menyediakan daftar satuan & peran supaya aplikasi bisa menampilkannya sebagai pilihan.
-- **"Riwayat Terkirim" masih menampilkan semua pengumuman**, bukan hanya yang dikirim user yang sedang login, karena belum ada endpoint "pengumuman yang saya kirim" dan belum ada endpoint untuk menghapus pengumuman. Sementara ini tombol hapus per-pengumuman disembunyikan. Begitu kedua endpoint itu tersedia, riwayat bisa disaring per pengirim dan tombol hapus dimunculkan lagi.
+> [!PARTIAL] Form "Kirim Pengumuman" bisa mengirim ke server (`createAnnouncement` thunk); sukses → `StatusModal` + langsung tampil di daftar. Diuji live 2026-09-02: `201`, `data` berisi `scope_label` (mis. `"Seluruh Anggota"`) + `created_by {id,name}` + `created_at` — **`recipients_count` tidak ada** di response (dokumen lama menyebut ada). **Belum ada pemilih tujuan spesifik** — "Kirim ke" (Semua/Satuan/Peran) hanya mengubah `target.scope`, tapi `unit_ids: []` & `role: null` **selalu** (app belum punya daftar satuan/peran). Perlu diputuskan: server menentukan tujuan dari satuan pengirim, atau backend menyediakan daftar satuan & peran.
 
 `POST /announcements`
 
-**Query:** — · **Payload:**
+**Payload (body):**
 
-| field | nilai |
-|---|---|
-| `title` | string, ≤ 80 |
-| `body` | string, ≤ 1000 |
-| `type` | `announcement` \| `alert` \| `info` |
-| `severity` | selalu `"normal"` dari client (backend boleh naikkan dari `type`, mis. `alert` → `high`) |
-| `target` | `{ scope, unit_ids, role }` |
-
-`target.scope`: `all` | `unit` | `role`. `unit_ids`: array angka (dipakai saat `scope = unit`).
-`role`: string (dipakai saat `scope = role`), selain itu `null`.
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `title` | string | Wajib | ≤ 80 karakter |
+| `body` | string | Wajib | ≤ 1000 karakter |
+| `type` | string | Wajib | `announcement` / `alert` / `info` |
+| `severity` | string | Wajib | selalu `"normal"` dari client (backend boleh naikkan dari `type`) |
+| `target` | object | Wajib | `{ scope, unit_ids, role }` — `scope`: `all` / `unit` / `role`. FE selalu kirim `unit_ids: []`, `role: null` |
 
 ```json
 {
@@ -615,288 +1192,1362 @@ Request gagal → diabaikan diam-diam.
   "title": "Apel Pagi",
   "body": "Besok 06:00 di Lapangan Utama.",
   "severity": "normal",
-  "target": { "scope": "unit", "unit_ids": [3], "role": null }
+  "target": {
+    "scope": "unit",
+    "unit_ids": [
+      3
+    ],
+    "role": null
+  }
 }
 ```
 
-**Response `201`** — `data`: item pengumuman + `scope_label`, `recipients_count`, `created_by`, `created_at`.
-
-**Riwayat terkirim:** `GET /announcements/mine` (array bentuk = `data` di atas + `meta`) ·
-`DELETE /announcements/{id}` (tarik / hapus).
-
----
-
-## 3. Notifikasi (ikon lonceng di header)
-
-### 3.1 List
-
-> [!DONE] Dipakai di halaman Notifikasi (ikon lonceng), untuk **semua role** (komandan & anggota). Daftar dengan tarik-untuk-refresh + "muat lebih banyak", angka di badge lonceng diambil dari `meta.unread_total`. Data di-load saat aplikasi dibuka & tiap kali kembali aktif. Baris di-tap → ditandai sudah dibaca + membuka pop-up baca-penuh (judul + isi). Kalau item punya `action` bertipe darurat, pop-up menampilkan tombol untuk membuka detail / daftar sinyal darurat.
->
-> Catatan: `action` bertipe selain darurat belum menuju ke mana-mana (mis. `announcement` — belum ada halaman detail satu pengumuman), tapi isinya tetap bisa dibaca penuh di pop-up.
-
-`GET /notifications`
-
-**Query (opsional):** `page`, `per_page` (default 20) · `only_unread` (`true` | `false`) ·
-`type` (`emergency` | `announcement` | `info` | `system`). · **Payload:** —
-
-**Response `200`** — array + `meta` (termasuk `meta.unread_total` untuk badge lonceng). Item:
-`id`, `type`, `title`, `body`, `read`, `created_at`, `action` (`{type, id}` tujuan navigasi, opsional / `null`).
+**Response `201`:**
 
 ```json
 {
   "success": true,
-  "data": [
-    { "id": 501, "type": "emergency", "title": "Sinyal Darurat Baru",
-      "body": "Praka Rizky Maulana menekan tombol darurat di Pos Timur.",
-      "read": false, "created_at": "2026-08-30T15:03:00+07:00",
-      "action": { "type": "emergency", "id": 88 } }
-  ],
-  "meta": { "current_page": 1, "last_page": 4, "per_page": 20, "total": 68, "unread_total": 4 }
+  "message": "Pengumuman berhasil terkirim.",
+  "data": {
+    "id": 24,
+    "type": "announcement",
+    "title": "Apel Pagi",
+    "body": "Besok 06:00 di Lapangan Utama.",
+    "severity": "normal",
+    "scope_label": "Seluruh Anggota",
+    "created_by": {
+      "id": 205,
+      "name": "komandan"
+    },
+    "created_at": "2026-09-02T17:14:23+07:00"
+  }
 }
 ```
 
-### 3.2 Tandai Dibaca
+Catatan: `data` **tanpa** `recipients_count`.
+### 3.2 Riwayat Terkirim
 
-> [!DONE] Notifikasi ditandai dibaca otomatis saat barisnya di-tap. Ada juga tombol "Tandai semua" di header halaman Notifikasi. Angka `unread_total` dari response dipakai langsung untuk memperbarui badge lonceng.
+> [!DONE] Sudah jalan. "Riwayat Terkirim" di layar SendAnnouncement menampilkan 3 pengumuman teratas dari **`GET /announcements`** (lihat Umum §1.4 — bukan endpoint khusus); "Lihat semua ›" → halaman Pengumuman. **Tidak butuh endpoint baru** dan **tidak ada fitur tarik/hapus** per-pengumuman.
+>
+> Catatan: daftar ini belum disaring "hanya yang saya kirim" (menampilkan semua pengumuman satuan). Kalau nanti butuh disaring per pengirim, backend cukup sediakan `GET /announcements/mine` (bentuk = 3.1 + `meta`).
 
-`POST /notifications/{id}/read` · `POST /notifications/read-all`
+`GET /announcements` — sama persis dengan Umum §1.4.
 
-**Query:** — · **Payload:** —
+**Tanpa parameter.**
 
-**Response `200`**: `{ "success": true, "data": { "unread_total": 3 } }`
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 12,
+      "type": "alert",
+      "title": "ALARM: KADAL",
+      "body": "Kontigensi. Seluruh personel siaga di titik kumpul.",
+      "severity": "high",
+      "created_by": {
+        "id": 1,
+        "name": "Komandan Batalyon"
+      },
+      "published_at": "2026-08-30T09:30:00+07:00"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 3,
+    "per_page": 10,
+    "total": 24
+  }
+}
+```
 
----
-
-## 4. Sinyal Darurat / Emergency
+## 4. Sinyal Darurat (kelola)
 
 ### 4.1 List
 
-> [!DONE] Dipakai di halaman Sinyal Darurat: daftar dengan tarik-untuk-refresh + "muat lebih banyak", plus filter status (Aktif / Ditangani / Selesai) yang dikirim sebagai query `status`. Tiap baris membuka halaman detail. Warna badge: Aktif → merah, Ditangani → kuning, Selesai → hijau.
+> [!PARTIAL] Halaman Sinyal Darurat: daftar + tarik-untuk-refresh + "muat lebih banyak" + chip filter status. Tiap baris → detail. Warna badge: Aktif → merah, Ditangani → kuning, Selesai → hijau.
 >
-> Catatan: `meta.filters` dari response belum dipakai (filter diatur di aplikasi). Belum ada fitur pencarian.
+> **Temuan sweep API live 2026-09-02:** (1) filter **`?status=`** tidak berfungsi — `active`/`acknowledged`/`resolved` semua mengembalikan daftar yang sama → chip filter di app tidak ada efek. (2) `per_page` **diabaikan** (tetap 20). (3) key `filters` **tidak ada** di response (dokumen lama menyebut ada). Backend perlu memasang filter `status` di query builder.
 
 `GET /panic-buttons`
 
-**Query (opsional):** `page`, `per_page` (default 20) · `status` (`active` | `acknowledged` | `resolved`) ·
-`unit_id` · `from`, `to` (rentang waktu ISO-8601). · **Payload:** —
+**Query:**
 
-**Response `200`** — array + `meta` + `filters`. Item: `id`, `status`,
-`personnel{service_number, full_name, rank, unit, photo}`, `latitude`, `longitude`, `accuracy`,
-`address`, `description`, `created_at`, `acknowledged_at`, `resolved_at`, `handled_by`.
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | **diabaikan** (tetap 20) |
+| `status` | string | Opsional | `active` / `acknowledged` / `resolved` — **filter tidak berfungsi** backend |
+| `unit_id` | integer | Opsional | — |
+| `from` / `to` | string | Opsional | rentang waktu ISO-8601 |
+
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": [
-    { "id": 88, "status": "active",
-      "personnel": { "service_number": "3101050004", "full_name": "Praka Rizky Maulana", "rank": "PRATU", "unit": "Kompi Senapan A", "photo": null },
-      "latitude": -6.15472, "longitude": 106.85201, "accuracy": 12.5,
-      "address": "Pos Timur, Markas Batalyon", "description": "Tombol darurat ditekan.",
+    {
+      "id": 88,
+      "status": "active",
+      "personnel": {
+        "service_number": "3101050004",
+        "full_name": "Praka Rizky Maulana",
+        "rank": "PRATU",
+        "unit": "Kompi Senapan A",
+        "photo": null
+      },
+      "latitude": -6.15472,
+      "longitude": 106.85201,
+      "accuracy": 12.5,
+      "address": "Pos Timur, Markas Batalyon",
+      "description": "Tombol darurat ditekan.",
       "created_at": "2026-08-30T15:03:00+07:00",
-      "acknowledged_at": null, "resolved_at": null, "handled_by": null }
+      "acknowledged_at": null,
+      "resolved_at": null,
+      "handled_by": null
+    }
   ],
-  "meta": { "current_page": 1, "last_page": 2, "per_page": 20, "total": 23 },
-  "filters": { "status": null, "unit_id": null }
+  "meta": {
+    "current_page": 1,
+    "last_page": 2,
+    "per_page": 20,
+    "total": 23
+  }
 }
 ```
 
+Catatan: `handled_by` bisa `{ id, name }` atau string; key `filters` **tidak dikirim**.
+
 ### 4.2 Detail
 
-> [!DONE] Ada halaman detail sinyal darurat: identitas personel + status, waktu/lokasi/akurasi/keterangan, siapa yang menangani, tombol "Buka di Google Maps", dan **Kronologi** dari `timeline[]`. Tarik-untuk-refresh.
+> [!DONE] Halaman detail: identitas + status, waktu/lokasi/akurasi/keterangan, `handled_by`, "Buka di Google Maps", **Kronologi** dari `timeline[]`. Tarik-untuk-refresh.
 >
-> Catatan: `handled_by` bisa berupa object `{ id, name }` atau teks biasa — aplikasi menangani keduanya. Kalau `timeline` kosong, bagian Kronologi disembunyikan.
+> Catatan: `handled_by` bisa object `{ id, name }` atau string — keduanya ditangani. `timeline` kosong → Kronologi disembunyikan.
 
 `GET /panic-buttons/{id}`
 
-**Query:** — · **Payload:** —
+**Tanpa parameter.**
 
-**Response `200`** — satu item list (bentuk = 4.1) + `timeline[]` (`{ event, actor, at }`).
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 88,
+    "status": "active",
+    "personnel": {
+      "service_number": "3101050004",
+      "full_name": "Praka Rizky Maulana",
+      "rank": "PRATU",
+      "unit": "Kompi Senapan A",
+      "photo": null
+    },
+    "latitude": -6.15472,
+    "longitude": 106.85201,
+    "accuracy": 12.5,
+    "address": "Pos Timur, Markas Batalyon",
+    "description": "Tombol darurat ditekan.",
+    "created_at": "2026-08-30T15:03:00+07:00",
+    "acknowledged_at": null,
+    "resolved_at": null,
+    "handled_by": null,
+    "timeline": [
+      {
+        "event": "created",
+        "actor": null,
+        "at": "2026-08-30T15:03:00+07:00"
+      }
+    ]
+  }
+}
+```
 
 ### 4.3 Update Status
 
-> [!BUG] Di halaman detail, **khusus komandan**, ada tombol "Tandai Ditangani" (Aktif → Ditangani) dan "Tandai Selesai" (→ Selesai, dengan kolom catatan opsional). Sisi aplikasi sudah jalan: request terkirim, pop-up berhasil muncul. Tapi **status di data tidak benar-benar berubah** — setelah di-refresh, sinyal darurat masih berstatus sama seperti sebelumnya. Perlu dicek di backend apakah `PATCH /panic-buttons/{id}` benar-benar menyimpan perubahan status (dan catatannya).
+> [!PARTIAL] `PATCH /panic-buttons/{id}` mengembalikan `200` + `{ "message": "Status Panic Button berhasil diperbarui.", "data": { "id": …, "status": "acknowledged" } }` — pernah tercatat **tidak menyimpan** perubahan (setelah refresh status kembali `active`). Perlu re-verifikasi apakah backend `update` sudah commit + kembalikan detail penuh.
 >
-> Catatan lain:
-> - Pembatasan "khusus komandan" ini hanya di sisi aplikasi — server tetap harus menolak permintaan ini dari user non-komandan.
-> - Setelah update, aplikasi mengambil ulang detail lengkap lewat `GET /panic-buttons/{id}` (tidak memakai response PATCH langsung), karena response PATCH sempat tidak mengembalikan data lengkap (mis. tanpa `personnel`) yang bikin halaman error. Idealnya response PATCH mengembalikan object detail yang sama persis dengan endpoint detail.
+> Catatan: (1) response PATCH cuma `{ id, status }`, bukan object detail — idealnya kembalikan detail penuh (= 4.2); app kini mengambil ulang `GET /panic-buttons/{id}` setelah PATCH. (2) Pembatasan "khusus komandan" hanya di app — server tetap harus menolak dari non-komandan.
 
 `PATCH /panic-buttons/{id}`
 
-**Query:** — · **Payload:** `{ "status": "acknowledged" }` atau
-`{ "status": "resolved", "note": "Sudah ditangani tim Pos Timur." }`
+**Payload (body):**
 
-**Response `200`** — object detail terbaru (bentuk = 4.2).
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `status` | string | Wajib | `acknowledged` / `resolved` |
+| `note` | string | Opsional | catatan (dipakai saat `resolved`) |
 
----
+**Response `200`:**
 
-## 5. Layar Lain yang Masih Dummy
+```json
+{
+  "success": true,
+  "message": "Status Panic Button berhasil diperbarui.",
+  "data": {
+    "id": 161,
+    "status": "acknowledged"
+  }
+}
+```
+**Diharapkan:** object detail terbaru (bentuk = 4.2) **dan** perubahan benar-benar tersimpan.
 
-Semua layar di bawah belum ada endpoint.
+## 5. Tracking Lokasi Personel
+
+### 5.1 Overview
+
+> [!DONE] Kartu "Peta Personel Real-time" (preview non-interaktif) di CommanderHome, layar **Peta Personel** fullscreen, dan layar **Tracking** (list). `PersonnelTracking` me-loop semua halaman (`fetchAllOverview`) karena search-nya client-side. Filter `status` server-side; marker callout / baris → detail personel (`{personnel}` = `service_number`).
+
+`GET /locations/overview`
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | — |
+| `status` | string | Opsional | `fresh` / `stale` / `offline` |
+| `unit_id` | integer | Opsional | — |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 45,
+      "service_number": "3101050010",
+      "full_name": "Andi Pratama",
+      "rank": "SERKA",
+      "unit": "Kompi A",
+      "tenant_id": 1,
+      "status": "fresh",
+      "location": {
+        "id": 9901,
+        "latitude": -6.1547,
+        "longitude": 106.852,
+        "accuracy": 8.0,
+        "altitude": null,
+        "heading": null,
+        "speed": null,
+        "captured_at": "2026-08-30T15:39:00+07:00",
+        "source": "foreground-service"
+      },
+      "last_seen": "2026-08-30T15:39:00+07:00"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 3,
+    "per_page": 50,
+    "total": 120
+  },
+  "filters": {
+    "status": null,
+    "unit_id": null
+  }
+}
+```
+
+### 5.2 Detail Lokasi Personel
+
+> [!DONE] Tab "Lokasi" di detail personel/persit (`organisms/LocationPanel` + `hooks/usePersonnelLocation`): fetch sekali lalu polling diam 60s **hanya saat tab Lokasi aktif**. Status badge + `PersonnelMap` + "Buka di Google Maps" + riwayat 50 entri (dari 5.3).
+
+`GET /locations/{personnel}` — `{personnel}` = NRP (`service_number`).
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "profile": {
+      "id": 45,
+      "service_number": "3101050010",
+      "full_name": "Andi Pratama",
+      "rank": "SERKA",
+      "unit": "Kompi A",
+      "tenant_id": 1
+    },
+    "location": null,
+    "status": "offline",
+    "history": []
+  }
+}
+```
+
+### 5.3 Riwayat Lokasi Personel
+
+> [!DONE] "Muat lebih banyak" di riwayat pergerakan pada `LocationPanel` (50/halaman).
+
+`GET /locations/{personnel}/history` — `{personnel}` = NRP.
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `from` / `to` | string | Opsional | rentang ISO-8601 |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 9901,
+      "latitude": -6.1547,
+      "longitude": 106.852,
+      "accuracy": 8.0,
+      "altitude": null,
+      "heading": null,
+      "speed": null,
+      "captured_at": "2026-08-30T15:39:00+07:00",
+      "source": "foreground-service"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 4,
+    "per_page": 50,
+    "total": 178
+  }
+}
+```
+
+## 6. Katalog / Direktori
+
+### 6.1 Personel
+
+> [!DONE] `CatalogList` + `CatalogDetail` (tab collapsing-header: Informasi / Riwayat visitor / Peminjaman Senjata / Lokasi). Sudah jalan di device. 5 resource katalog di-drive registry generic `utils/catalogResources.tsx`; semua list terima `search` + `page` + filter per-resource (diteruskan apa adanya sebagai query). Foto lewat secure-files (Umum §1.6).
+
+`GET /catalog/personnel` · `GET /catalog/personnel/{personnel}` — `{personnel}` = **NRP** (`service_number`); resource lain di §6 pakai `id` numerik.
+
+**Query (list):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `search` | string | Opsional | nama / NRP |
+| `page` | integer | Opsional | — |
+| `status` / `gender` / `blood_type` | string | Opsional | filter per-resource |
+
+**Response list `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 45,
+      "service_number": "3101050010",
+      "full_name": "Andi Pratama",
+      "rank": "SERKA",
+      "position": "Danton",
+      "unit": "Kompi A",
+      "gender": "male",
+      "blood_type": "O",
+      "phone": "0812…",
+      "photo": "/api/secure-files/personnel/photos/abc.jpg",
+      "status": "active",
+      "is_active": true,
+      "tenant_id": 1
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 50,
+    "total": 41,
+    "last_page": 1
+  }
+}
+```
+
+**Response detail `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 45,
+    "service_number": "3101050010",
+    "full_name": "Andi Pratama",
+    "rank": "SERKA",
+    "gender": "male",
+    "birth_place": "Bandung",
+    "birth_date": "1990-04-12",
+    "birth_date_formatted": "12 April 1990",
+    "blood_type": "O",
+    "address": "…",
+    "phone": "0812…",
+    "photo": null,
+    "status": "active",
+    "is_active": true,
+    "tenant_id": 1,
+    "current_assignment": {
+      "position": "Danton",
+      "unit": "Kompi A",
+      "start_date": "2024-01-01"
+    },
+    "assignment_history": [
+      {
+        "position": "Baton",
+        "unit": "Kompi A",
+        "start_date": "2022-01-01",
+        "end_date": "2023-12-31",
+        "is_primary": false
+      }
+    ],
+    "family_members": [
+      {
+        "id": 171,
+        "full_name": "Siti Rahayu",
+        "family_relation": "Istri",
+        "membership_number": "PST-0021",
+        "phone": "0813…"
+      }
+    ],
+    "vehicles": [
+      {
+        "id": 8,
+        "brand_model": "Honda Vario 150",
+        "plate_number": "D 1234 AB",
+        "category": "roda_2",
+        "condition_status": "good"
+      }
+    ],
+    "health_summary": {
+      "total_records": 3,
+      "last_examined_at": "2026-08-20T09:00:00+07:00",
+      "last_result": "Sehat"
+    },
+    "last_status_location": "inside",
+    "visitor_log_history": [
+      {
+        "id": 90,
+        "purpose": "Dinas",
+        "entered_at": "2026-08-30T07:00:00+07:00",
+        "exited_at": null,
+        "status": "inside",
+        "vehicle_plate": null,
+        "vehicle_type": null
+      }
+    ],
+    "weapon_loan_history": [
+      {
+        "id": 12,
+        "weapon_number": "SB-0231",
+        "serial_number": "PINDAD-21B0231",
+        "purpose": "Latihan",
+        "loaned_at": "2026-08-01T08:00:00+07:00",
+        "returned_at": "2026-08-01T17:00:00+07:00",
+        "status": "returned"
+      }
+    ]
+  }
+}
+```
+`family_members[]` tiap baris tappable → detail persit.
+
+### 6.2 Persit (Keluarga)
+
+> [!DONE] `CatalogList` + `CatalogDetail` (tab: Informasi / Riwayat visitor / Lokasi — tab Lokasi pakai posisi `spouse`). Sudah jalan di device.
+
+`GET /catalog/persit` · `GET /catalog/persit/{id}`
+
+**Query (list):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `search` | string | Opsional | — |
+| `page` | integer | Opsional | — |
+
+**Response list `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 171,
+      "membership_number": "PST-0021",
+      "full_name": "Siti Rahayu",
+      "family_relation": "Istri",
+      "phone": "0813…",
+      "spouse": {
+        "service_number": "3101050010",
+        "full_name": "Andi Pratama",
+        "rank": "SERKA"
+      },
+      "status": "active",
+      "tenant_id": 1
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 50,
+    "total": 120,
+    "last_page": 3
+  }
+}
+```
+
+**Response detail `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 171,
+    "membership_number": "PST-0021",
+    "full_name": "Siti Rahayu",
+    "family_relation": "Istri",
+    "phone": "0813…",
+    "birth_place": "Bandung",
+    "birth_date": "1992-05-01",
+    "birth_date_formatted": "1 Mei 1992",
+    "blood_type": "B",
+    "address": "…",
+    "occupation": "Ibu Rumah Tangga",
+    "photo": null,
+    "status": "active",
+    "tenant_id": 1,
+    "spouse": {
+      "id": 45,
+      "service_number": "3101050010",
+      "full_name": "Andi Pratama",
+      "rank": "SERKA"
+    },
+    "last_status_location": "outside",
+    "visitor_log_history": []
+  }
+}
+```
+
+### 6.3 Kendaraan
+
+> [!DONE] `CatalogList` + `CatalogDetail` (non-tab; detail + "Log Pos Kendaraan" dari `visitor_log_history`). Sudah jalan di device.
+
+`GET /catalog/vehicles` · `GET /catalog/vehicles/{id}`
+
+**Query (list):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `search` | string | Opsional | — |
+| `page` | integer | Opsional | — |
+
+**Response list `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 114,
+      "brand_model": "Toyota Hilux Double Cabin",
+      "plate_number": "D 1234 AB",
+      "category": "roda_4",
+      "ownership_type": "dinas",
+      "condition_status": "good",
+      "photo": null,
+      "owner": {
+        "service_number": "3101050010",
+        "full_name": "Andi Pratama"
+      },
+      "is_active": true,
+      "tenant_id": 1
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 50,
+    "total": 50,
+    "last_page": 1
+  }
+}
+```
+
+**Response detail `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 114,
+    "brand_model": "Toyota Hilux Double Cabin",
+    "plate_number": "D 1234 AB",
+    "engine_number": "2GD-1234567",
+    "frame_number": "MHF…",
+    "category": "roda_4",
+    "ownership_type": "dinas",
+    "condition_status": "good",
+    "stnk_expired_at": "2026-11-12",
+    "photo": null,
+    "notes": "—",
+    "is_active": true,
+    "tenant_id": 1,
+    "owner": {
+      "id": 45,
+      "service_number": "3101050010",
+      "full_name": "Andi Pratama",
+      "rank": "SERKA"
+    },
+    "visitor_log_history": [
+      {
+        "id": 55,
+        "purpose": "Patroli",
+        "entered_at": "2026-08-30T06:00:00+07:00",
+        "exited_at": "2026-08-30T12:00:00+07:00",
+        "status": "returned",
+        "driver_passenger_name": "Serka Andi",
+        "driver_passenger_phone": "0812…"
+      }
+    ]
+  }
+}
+```
+
+### 6.4 Kategori Senjata
+
+> [!DONE] Detail: array `weapons` **terpaginasi 50/halaman** (meta di root `meta` → `weapons_meta`) + query `search` (nomor **atau** seri). Panel "Daftar Senjata" seed dari halaman pertama di response detail, lalu search debounce + "Muat lebih banyak" sendiri.
+
+`GET /catalog/weapon-categories` · `GET /catalog/weapon-categories/{id}`
+
+**Query (list):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `search` | string | Opsional | nama kategori |
+| `page` | integer | Opsional | — |
+
+**Query (detail):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `search` | string | Opsional | nomor **atau** seri senjata |
+| `page` | integer | Opsional | halaman array `weapons` (50/halaman) |
+
+**Response list `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 6,
+      "name": "Senapan Serbu SS2-V1",
+      "code": "SS2V1",
+      "weapon_type": "senapan_serbu",
+      "caliber": "5.56mm",
+      "description": null,
+      "is_active": true,
+      "tenant_id": 1,
+      "total_weapons": 18
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 50,
+    "total": 6,
+    "last_page": 1
+  }
+}
+```
+
+**Response detail `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 6,
+    "name": "Senapan Serbu SS2-V1",
+    "code": "SS2V1",
+    "weapon_type": "senapan_serbu",
+    "caliber": "5.56mm",
+    "description": null,
+    "is_active": true,
+    "tenant_id": null,
+    "weapons": [
+      {
+        "id": 231,
+        "weapon_number": "SB-0231",
+        "serial_number": "PINDAD-21B0231",
+        "butt_number": "07",
+        "ownership_type": "dinas",
+        "condition_status": "good",
+        "inventory_status": "in_use",
+        "acquisition_date": "2021-03-01",
+        "current_unit": "Kompi A",
+        "is_active": true,
+        "holder_info": {
+          "type": "assignment",
+          "holder_type": "personnel",
+          "id": 45,
+          "service_number": "3101050010",
+          "full_name": "Andi Pratama",
+          "rank": "SERKA",
+          "unit": "Kompi A",
+          "assigned_at": "2026-08-01T08:00:00+07:00"
+        }
+      }
+    ]
+  },
+  "meta": {
+    "current_page": 1,
+    "per_page": 50,
+    "total": 18,
+    "last_page": 1
+  }
+}
+```
+`holder_info`: `holder_type: "other"` → `{ …, name }` (satuan/gudang) tanpa data personel; `null` → belum ada pemegang.
+
+### 6.5 Distribusi Senjata
+
+> [!DONE] `CatalogList` + `CatalogDetail` (non-tab). Sudah jalan di device.
+
+`GET /catalog/weapon-assignments` · `GET /catalog/weapon-assignments/{id}`
+
+**Query (list):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `search` | string | Opsional | — |
+| `page` | integer | Opsional | — |
+
+**Response list `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 124,
+      "weapon_number": "SB-0231",
+      "serial_number": "PINDAD-21B0231",
+      "category": "SS2-V1",
+      "assignment_type": "perorangan",
+      "assigned_at": "2026-08-01T08:00:00+07:00",
+      "returned_at": null,
+      "status": "active",
+      "assigned_to": {
+        "type": "personnel",
+        "id": 45,
+        "service_number": "3101050010",
+        "full_name": "Andi Pratama"
+      },
+      "tenant_id": 1
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 50,
+    "total": 47,
+    "last_page": 1
+  }
+}
+```
+
+**Response detail `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 124,
+    "assignment_type": "perorangan",
+    "assigned_at": "2026-08-01T08:00:00+07:00",
+    "returned_at": null,
+    "status": "active",
+    "notes": "—",
+    "tenant_id": 1,
+    "weapon": {
+      "id": 231,
+      "weapon_number": "SB-0231",
+      "serial_number": "PINDAD-21B0231",
+      "category": "SS2-V1",
+      "caliber": "5.56mm",
+      "condition_status": "good",
+      "inventory_status": "in_use"
+    },
+    "assigned_to": {
+      "type": "personnel",
+      "id": 45,
+      "service_number": "3101050010",
+      "full_name": "Andi Pratama"
+    },
+    "created_by": {
+      "id": 1,
+      "name": "Admin Gudang"
+    }
+  }
+}
+```
+
+## 7. Alarm Satuan (Stelling)
+
+### 7.1 Aktivasi Terkini
+
+> [!DONE] Layar "Alarm Satuan" — **monitor read-only** (`stellingAlarm.service.ts`). Kartu paling atas: aktivasi stelling terakhir di satuan, di-tint sesuai `color` kode terkait. `null` = belum pernah ada aktivasi (kartu disembunyikan). **Tidak ada pemutaran audio** `audio_url` in-app (butuh native audio lib).
+
+`GET /stelling-alarms/current`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3,
+    "code": "KUNING",
+    "condition": "Siaga",
+    "audio_url": null,
+    "activated_at": "2026-09-01T05:00:00+07:00",
+    "broadcast_status": "sent"
+  }
+}
+```
+
+Catatan: `data` bisa **`null`** (belum pernah ada aktivasi). `broadcast_status`: `sent` | `pending` | `failed` (string terbuka).
+
+### 7.2 Daftar Kode Alarm
+
+> [!DONE] Daftar referensi kode stelling + warna + rujukan audio. Dipakai untuk me-render list kode dan mencari `color` kode yang sedang aktif (7.1).
+
+`GET /stelling-alarms`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "code": "HIJAU",
+      "name": "Aman",
+      "condition": "Situasi normal",
+      "color": "#16A34A",
+      "is_active": true,
+      "audio_url": null
+    },
+    {
+      "id": 3,
+      "code": "KUNING",
+      "name": "Siaga",
+      "condition": "Peningkatan kewaspadaan",
+      "color": "#EAB308",
+      "is_active": true,
+      "audio_url": null
+    }
+  ]
+}
+```
+
+### 7.3 Riwayat Aktivasi
+
+> [!DONE] Daftar aktivasi stelling, terbaru → terlama (maks 20). Tiap baris menampilkan `code`, `condition`, waktu, dan pill `broadcast_status`.
+
+`GET /stelling-alarms/history`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 3,
+      "code": "KUNING",
+      "condition": "Siaga",
+      "audio_url": null,
+      "activated_at": "2026-09-01T05:00:00+07:00",
+      "broadcast_status": "sent"
+    }
+  ]
+}
+```
+
+### 7.4 Kirim Alarm
+
+> [!TODO] Belum ada endpoint. Layar butuh tombol untuk mengaktifkan/menyiarkan sebuah kode stelling ke satuan (memicu broadcast FCM + membuat record aktivasi baru yang lalu muncul di 7.1 & 7.3). Kemungkinan khusus role tertentu (komandan) — backend yang menentukan.
+
+`POST /stelling-alarms/activate`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `id` | integer | Wajib | id kode stelling dari 7.2 |
+
+**Response `201`:**
+
+```json
+{
+  "success": true,
+  "message": "Alarm stelling diaktifkan.",
+  "data": {
+    "id": 9,
+    "code": "KUNING",
+    "condition": "Siaga",
+    "audio_url": null,
+    "activated_at": "2026-09-02T18:00:00+07:00",
+    "broadcast_status": "pending"
+  }
+}
+```
+
+## 8. Kekuatan Apel
+
+### 8.1 Daftar Sesi Apel
+
+> [!DONE] Roll-call/apel — quick action "Kekuatan Apel" di Home Komandan, **hanya untuk role `instruktur_apel`** (backend menegakkan). 6 layar `RollCall*`, `services/api/rollCall.service.ts`. `{session}` di endpoint = id numerik sesi. Layar `RollCallList`: daftar berpaginasi + tarik-untuk-refresh + "muat lebih banyak", diuji di device.
+
+`GET /roll-calls` — paginated (Laravel paginator di dalam `data`).
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | — |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": 1,
+        "tenant_id": 1,
+        "date": "2026-08-28",
+        "time": "07:00:00",
+        "name": "Apel Pagi Satuan",
+        "status": "open",
+        "created_by": 2,
+        "closed_by": null,
+        "closed_at": null,
+        "created_at": "...",
+        "updated_at": "...",
+        "recap": {
+          "total": 41,
+          "present": 0,
+          "absent": 2,
+          "unmarked": 39,
+          "percentage": 0
+        }
+      }
+    ],
+    "total": 1
+  }
+}
+```
+FE menormalkan jadi `{ items, meta: { current_page, last_page, per_page, total } }` — `last_page`/`per_page`
+dihitung sendiri kalau backend tidak mengirimnya. Tiap item punya `recap` opsional (bentuk = 8.3) → kartu
+daftar menampilkan "N hadir · N tidak hadir · N belum" tanpa buka detail.
+
+### 8.2 Buka Sesi Apel Baru
+
+> [!DONE] Bug 500 sudah diperbaiki backend. Diverifikasi via API live 2026-09-02: `POST /roll-calls` → `201` `{ success, message: "Sesi kekuatan apel berhasil dibuka.", data: <sesi> }`, sesi hasilnya muncul di `GET /roll-calls` (`created_by` = user pembuat).
+
+`POST /roll-calls`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `date` | string | Wajib | `YYYY-MM-DD` |
+| `time` | string | Wajib | `HH:MM` |
+| `name` | string | Opsional | nama sesi apel |
+
+**Response `201`:**
+
+```json
+{
+  "success": true,
+  "message": "Sesi kekuatan apel berhasil dibuka.",
+  "data": {
+    "id": 6,
+    "tenant_id": 1,
+    "date": "2026-09-04T17:00:00.000000Z",
+    "time": "06:30",
+    "name": "Apel Siang Satuan",
+    "status": "open",
+    "created_by": 205,
+    "created_at": "2026-09-02T10:14:24.000000Z",
+    "updated_at": "2026-09-02T10:14:24.000000Z"
+  }
+}
+```
+
+Catatan: `date` disimpan sebagai **datetime ISO UTC** (`…T17:00:00.000000Z` = tengah malam WIB), bukan `"YYYY-MM-DD"` yang dikirim — FE parse via `new Date(...)` + `toLocaleDateString('id-ID')`.
+
+### 8.3 Detail & Rekap Sesi
+
+> [!DONE] Dipakai di `RollCallDetail` (kartu status + rekap + daftar Hadir/Absen/Belum) & jadi sumber roster untuk `RollCallSearch`. Diverifikasi via API live 2026-09-02: `recap` **sudah konsisten** dengan panjang array — sesi uji: `recap {present:30, absent:2, unmarked:9}` cocok dengan `present[].length`/`absent[].length`/`unmarked[].length`. Inkonsistensi lama sudah diperbaiki backend.
+
+`GET /roll-calls/{session}`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "session": {
+      "id": 1,
+      "tenant_id": 1,
+      "date": "2026-09-01T17:00:00.000000Z",
+      "time": "07:00:00",
+      "name": "Apel Pagi Satuan",
+      "status": "open"
+    },
+    "recap": {
+      "total": 41,
+      "present": 30,
+      "absent": 2,
+      "unmarked": 9,
+      "percentage": 73.2
+    },
+    "breakdown": [
+      {
+        "name": "Dinas",
+        "count": 1
+      },
+      {
+        "name": "Izin",
+        "count": 1
+      }
+    ],
+    "present": [
+      {
+        "id": 10,
+        "roll_call_session_id": 2,
+        "personnel_id": 45,
+        "status": "present",
+        "absence_reason_id": null,
+        "note": null,
+        "input_by_user_id": 205,
+        "personnel": {
+          "id": 45,
+          "full_name": "Andi Pratama",
+          "service_number": "123456",
+          "rank": {
+            "…": "objek pangkat"
+          },
+          "current_assignment": {
+            "…": ""
+          }
+        }
+      }
+    ],
+    "absent": [
+      {
+        "id": 38,
+        "personnel_id": 77,
+        "status": "absent",
+        "absence_reason_id": 3,
+        "note": null,
+        "absence_reason": {
+          "id": 3,
+          "name": "Dinas",
+          "description": "…",
+          "sort_order": 3
+        },
+        "personnel": {
+          "…": "objek Personnel lengkap"
+        }
+      }
+    ],
+    "unmarked": [
+      {
+        "id": 47,
+        "full_name": "Candra Wijaya",
+        "service_number": "123458",
+        "…": "objek Personnel lengkap"
+      }
+    ]
+  }
+}
+```
+
+- `present[]` / `absent[]` = objek entry (`id`, `roll_call_session_id`, `personnel_id`, `status`,
+  `absence_reason_id`, `note`, `input_by_user_id`, `+ personnel`). `unmarked[]` = objek Personnel
+  langsung (`id` = personnel_id), bukan objek entry.
+- `personnel` di present/absent/unmarked adalah **objek Personnel lengkap** (`rank_id`, `rank` object,
+  `current_assignment`, `photo_path`, `foto`, `birth_date`, dst.) — FE hanya membaca `full_name` +
+  `service_number`.
+- `absent[].absence_reason` = objek reason lengkap (`id`, `name`, `description`, `sort_order`, …) — FE
+  membaca `name`. `breakdown[]` = `{ name, count }` per keterangan absen.
+
+### 8.4 Input Kehadiran Anggota
+
+> [!DONE] Alur: Detail sesi → "Input Absen" (Hadir / Tidak Hadir) → layar Cari Personel (`RollCallSearch`) → Scan QR (`RollCallScan`, ikon di header; `react-native-vision-camera` + izin kamera) atau isi manual (`RollCallEntry`). Diuji di device (Hadir & Tidak Hadir) + verifikasi API live 2026-09-02: `200` `{ success, message: "Status personel berhasil disimpan.", data: <entry> }`, tercatat di rekap sesi.
+
+`POST /roll-calls/{session}/entries` — `{session}` = id numerik sesi.
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `personnel_id` | integer | Wajib | ID internal Personnel (dari 8.3 / 8.7) |
+| `status` | string | Wajib | `present` / `absent` |
+| `absence_reason_id` | integer | Wajib jika `absent` | id dari 8.6 |
+| `note` | string | Opsional | FE mengisi saat keterangan = "Lainnya" |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Status personel berhasil disimpan.",
+  "data": {
+    "id": 19,
+    "tenant_id": 1,
+    "roll_call_session_id": 2,
+    "personnel_id": 9,
+    "status": "absent",
+    "absence_reason_id": 8,
+    "note": "Kabur",
+    "input_by_user_id": 205,
+    "deleted_at": null,
+    "created_at": "2026-09-02T06:24:17.000000Z",
+    "updated_at": "2026-09-02T10:30:50.000000Z"
+  }
+}
+```
+
+Catatan: entry `present` bisa tanpa `note`/`deleted_at`; `absent` menyertakannya.
+### 8.5 Tutup Sesi Apel
+
+> [!DONE] Tombol "Tutup Sesi" di `RollCallDetail` (khusus sesi `open`, konfirmasi dulu). Diuji di device + verifikasi API live 2026-09-02 — `200` `{ success, message: "Sesi kekuatan apel berhasil ditutup.", data: <sesi lengkap status:"closed"> }`.
+
+`POST /roll-calls/{session}/close` — mengunci sesi.
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Sesi kekuatan apel berhasil ditutup.",
+  "data": {
+    "id": 6,
+    "tenant_id": 1,
+    "date": "2026-09-04T17:00:00.000000Z",
+    "time": "06:30:00",
+    "name": "Apel Siang Satuan",
+    "status": "closed",
+    "created_by": 205,
+    "closed_by": 205,
+    "closed_at": "2026-09-02T10:14:25.000000Z",
+    "deleted_at": null,
+    "created_at": "2026-09-02T10:14:24.000000Z",
+    "updated_at": "2026-09-02T10:14:25.000000Z"
+  }
+}
+```
+
+Catatan: `data` = objek sesi lengkap (FE `RollCallCloseResult` cuma pakai `id`/`status`/`closed_by`/`closed_at`).
+
+### 8.6 Daftar Keterangan Absen
+
+> [!DONE] Mengisi chip keterangan di `RollCallEntry`. Terpakai saat input "Tidak Hadir" yang diuji di device + verifikasi API live 2026-09-02.
+
+`GET /roll-calls/absence-reasons`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Izin",
+      "description": "Meninggalkan dinas/apel dengan izin atasan yang sah.",
+      "sort_order": 1,
+      "is_active": true,
+      "tenant_id": 1,
+      "deleted_at": null,
+      "created_at": "2026-08-28T03:55:45.000000Z",
+      "updated_at": "2026-08-28T03:55:45.000000Z"
+    }
+  ]
+}
+```
+
+Catatan: (FE cuma pakai `id`, `name`, `description`). 8 keterangan: Izin, Sakit, Dinas, Cuti, Pendidikan, Lepas Dinas, Tanpa Keterangan, Lainnya. `name` mengandung "lain" → memunculkan kolom teks bebas → dikirim sebagai `note`.
+
+### 8.7 Smart Search Personnel
+
+> [!DONE] Dipakai untuk resolusi `personnel_id` di `RollCallScan` (cocokkan `service_number` dari payload QR) dan sebagai fallback pencarian. Terpakai di alur input yang diuji di device.
+
+`GET /roll-calls/personnel/search?q={keyword}` — cari anggota aktif dalam satuan (nama/NRP), real-time.
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `q` | string | Wajib | nama / NRP (real-time) |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 9,
+      "tenant_id": 1,
+      "user_id": 10,
+      "service_number": "63813596",
+      "full_name": "Adiarja Sihotang",
+      "rank_id": 7,
+      "birth_place": "Bukittinggi",
+      "birth_date": "1976-07-18T17:00:00.000000Z",
+      "blood_type": "B",
+      "gender": "male",
+      "status": "active",
+      "rank": {
+        "id": 7,
+        "name": "SERKA"
+      },
+      "current_assignment": {
+        "unit": "Kompi A"
+      }
+    }
+  ]
+}
+```
+
+Catatan: backend kirim objek Personnel penuh; FE hanya baca `id` (dipakai sebagai `personnel_id`), `full_name`, `service_number`.
+
+## 9. Layar Lain yang Masih Dummy
+
+### 9.1 Buku Saku
+
+> [!TODO] Belum ada endpoint — usulan.
+
+`GET /handbook` · `GET /handbook/{slug}`
+
+**Tanpa parameter.**
+
+**Response list `200` (usulan):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "slug": "sop-piket",
+      "title": "SOP Piket",
+      "icon": "shield",
+      "updated_at": "2026-08-01T00:00:00+07:00"
+    }
+  ]
+}
+```
+
+**Response detail `200` (usulan):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "slug": "sop-piket",
+    "title": "SOP Piket",
+    "content_format": "markdown",
+    "content": "# SOP …",
+    "updated_at": "2026-08-01T00:00:00+07:00"
+  }
+}
+```
+
+### 9.2 Laporan Cepat
+
+> [!TODO] Belum ada endpoint.
+
+`POST /quick-reports`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `type` | string | Wajib | jenis laporan |
+| `title` | string | Wajib | — |
+| `body` | string | Wajib | isi laporan |
+| `location` | object | Opsional | `{ latitude, longitude, accuracy }` |
+| `attachments` | array | Opsional | — |
+
+**Response `201` (usulan):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "type": "kejadian",
+    "title": "Contoh",
+    "status": "submitted",
+    "reported_by": {
+      "id": 45,
+      "name": "Andi"
+    },
+    "created_at": "2026-09-02T10:00:00+07:00"
+  }
+}
+```
+
+### 9.3 Layar Dummy Lainnya
+
+> [!TODO] Belum ada endpoint — daftar usulan.
 
 | Layar | Usulan endpoint |
 |---|---|
-| Buku Saku | `GET /handbook` (list) + `GET /handbook/{slug}` (isi markdown/HTML) |
-| Laporan Cepat | `POST /quick-reports` + `GET /quick-reports` |
 | Jadwal Piket | `GET /duty-roster?week=` |
 | Cuti & Izin | `GET /leaves?status=` + `POST /leaves` |
 | Statistik Unit | `GET /dashboard/stats?range=` |
 | Riwayat (tab) | agregat `/activities/movements` + `/leaves` + `/quick-reports` milik user login |
 | Lainnya (tab) | menu statis di client — tanpa API |
 
-### 5.1 Buku Saku
-
-> [!TODO] Belum ada endpoint.
-
-`GET /handbook` → `data[]`: `{ slug, title, icon, updated_at }`
-
-`GET /handbook/{slug}` → `data`: `{ slug, title, content_format: "markdown", content, updated_at }`
-
-### 5.2 Laporan Cepat
-
-> [!TODO] Belum ada endpoint.
-
-`POST /quick-reports`
-
-**Payload:** `{ type, title, body, location: { latitude, longitude, accuracy }, attachments: [] }`
-
-**Response `201`** — `data`: `{ id, type, title, status: "submitted", reported_by, created_at }`
-
 ---
 
-## 6. Kekuatan Apel
+# Anggota
 
-> [!DONE] Fitur roll-call/apel. Entry point: quick action "Kekuatan Apel" di Home Komandan — **hanya
-> tampil untuk user dengan role `instruktur_apel`** (backend juga menegakkan izinnya) → daftar sesi.
-> Semua endpoint di bawah sudah diintegrasikan (`services/api/rollCall.service.ts`,
-> `types/rollCall.types.ts`, 6 layar `RollCall*`) & diuji di device (input Hadir & Tidak Hadir + Tutup
-> Sesi jalan). `{session}` = id numerik sesi. Alur input: Detail → Input Absen (Hadir / Tidak Hadir) →
-> **langsung** ke layar Cari Personel (Scan QR lewat ikon di header layar itu; `react-native-vision-camera`,
-> minta izin kamera, kalau ditolak permanen muncul popup ke Pengaturan).
->
-> **Catatan data:** pada sebagian sesi uji, `recap.present` tidak konsisten dengan panjang array `present[]`
-> di response detail (mis. recap present 7 tapi `present: []`). FE menampilkan apa adanya dari masing-masing
-> field — perlu backend menyamakan `recap` dengan isi array.
-
-### 6.1 Daftar Sesi Apel
-
-`GET /roll-calls` — paginated (Laravel paginator di dalam `data`).
-
-**Query:** `page`, `per_page`
-
-**Response `200`:**
-```json
-{ "success": true, "data": {
-  "current_page": 1,
-  "data": [ { "id": 1, "tenant_id": 1, "date": "2026-08-28", "time": "07:00:00",
-    "name": "Apel Pagi Satuan", "status": "open", "created_by": 2, "closed_by": null,
-    "closed_at": null, "created_at": "...", "updated_at": "...",
-    "recap": { "total": 41, "present": 0, "absent": 2, "unmarked": 39, "percentage": 0 } } ],
-  "total": 1
-} }
-```
-FE menormalkan jadi `{ items, meta: { current_page, last_page, per_page, total } }` — `last_page`/`per_page`
-dihitung sendiri kalau backend tidak mengirimnya. Sejak 2026-09-02 tiap item punya `recap` (bentuk sama
-seperti 6.3) — dipakai kartu daftar untuk menampilkan "N hadir · N tidak hadir · N belum" tanpa buka detail
-(FE menganggapnya opsional).
-
-### 6.2 Buka Sesi Apel Baru
-
-> [!BUG] Diuji di device 2026-09-02: `POST /roll-calls` mengembalikan **500 "Server Error"** untuk
-> payload yang sesuai kontrak (`{date:"2026-09-03","time":"07:00","name":"Apel Pagi Satuan"}`). FE
-> sudah benar & menampilkan modal error; menunggu perbaikan backend. `GET /roll-calls` sudah jalan
-> (mengembalikan list kosong).
-
-`POST /roll-calls`
-
-**Payload:** `{ "date": "2026-08-28", "time": "13:30", "name": "Apel Siang Satuan" }` — `date` = `YYYY-MM-DD`
-(wajib), `time` = `HH:MM` (wajib), `name` opsional.
-
-**Response `200/201`** — `data`: objek sesi (bentuk = 6.1) dengan `status: "open"`.
-
-### 6.3 Detail & Rekap Sesi
-
-`GET /roll-calls/{session}`
-
-**Response `200`:**
-```json
-{ "success": true, "data": {
-  "session": { "id": 1, "tenant_id": 1, "date": "2026-08-28", "time": "07:00:00", "name": "Apel Pagi Satuan", "status": "open" },
-  "recap": { "total": 120, "present": 115, "absent": 3, "unmarked": 2, "percentage": 95.8 },
-  "breakdown": [ { "name": "Sakit", "count": 2 } ],
-  "present": [ { "id": 10, "personnel_id": 45, "status": "present", "personnel": { "id": 45, "full_name": "Andi Pratama", "service_number": "123456" } } ],
-  "absent": [ { "id": 11, "personnel_id": 46, "status": "absent", "absence_reason_id": 2, "note": "Sakit flu berat", "absence_reason": { "id": 2, "name": "Sakit" }, "personnel": { "id": 46, "full_name": "Budi Santoso", "service_number": "123457" } } ],
-  "unmarked": [ { "id": 47, "full_name": "Candra Wijaya", "service_number": "123458" } ]
-} }
-```
-`unmarked[]` = objek Personnel langsung (`id` = personnel_id), bukan objek entry.
-
-### 6.4 Input Kehadiran Anggota
-
-`POST /roll-calls/{session}/entries`
-
-**Payload:**
-| Field | Tipe | Wajib | Keterangan |
-|---|---|---|---|
-| `personnel_id` | integer | Ya | ID internal Personnel |
-| `status` | string | Ya | `present` atau `absent` |
-| `absence_reason_id` | integer | Wajib jika `absent` | id dari 6.6 |
-| `note` | string | Tidak | catatan; FE mengisinya saat keterangan = "Lainnya" |
-
-**Response `200/201`** — `data`: `{ id, roll_call_session_id, personnel_id, status, absence_reason_id, note, input_by_user_id, updated_at }`
-
-### 6.5 Tutup Sesi Apel
-
-`POST /roll-calls/{session}/close` — mengunci sesi.
-
-**Response `200/201`** — `data`: `{ id, status: "closed", closed_by, closed_at }`
-
-### 6.6 Daftar Keterangan Absen
-
-`GET /roll-calls/absence-reasons`
-
-**Response `200`** — `data[]`: `{ id, name, description, sort_order }`. FE menampilkan tiap `name` sebagai chip;
-`name` yang mengandung "lain" (mis. "Lainnya") memunculkan kolom teks bebas → dikirim sebagai `note`.
-
-### 6.7 Smart Search Personnel
-
-`GET /roll-calls/personnel/search?q={keyword}` — cari anggota aktif dalam satuan (nama/NRP), real-time.
-
-**Response `200`** — `data[]`: `{ id, full_name, service_number }`. FE memakai `id` sebagai `personnel_id`
-saat input kehadiran / setelah scan QR (cocokkan `service_number` dengan payload QR).
-</script>
-<script type="text/markdown" id="src-anggota"># API Contract — Home Anggota
-
-**Pengecekan frontend terakhir: 1 September 2026, 18.59 WIB**
-
-Kontrak API untuk layar **Home Anggota** (`src/screens/Home/MemberHome`). Envelope, pagination,
-format waktu, dan enum seragam dengan `API_CONTRACT.md`. Semua endpoint di bawah berskup **user
-yang login** (dari `Authorization: Bearer <token>`) — tidak perlu parameter NRP di path.
-
-Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** · **Belum ada endpoint**.
-
----
-
-## 0. Yang sudah nyata (tidak perlu endpoint baru)
-
-| Bagian layar | Sumber data sekarang |
-|---|---|
-| Header + Kartu Anggota (identitas) | `GET /auth/me` → `user.personnel` |
-| Tile "Lokasi Terakhir" & "Update Terakhir" | `GET /locations/me` |
-| Shortcut "Peta Personel" | `GET /locations/overview` |
-| "Aktivitas Terbaru → Lihat Semua" | layar `MyMovements` → `GET /me/movements` (paginasi) |
-| "Pengumuman Terbaru" + "Lihat Semua" | `GET /announcements` (lihat `API_CONTRACT.md` §2.3) — bukan endpoint khusus anggota |
-
----
+Endpoint berskup **user yang login** (dari `Authorization: Bearer`) — tanpa parameter NRP di
+path. Dipakai `MemberHome` + turunannya.
 
 ## 1. Kartu Anggota — status verifikasi identitas
 
-> [!DONE] Terintegrasi di `MemberHome` (`getMyIdCardApi`). `verification_status === 'verified'` → badge "Terverifikasi"; `qr_payload` → nilai QR (fallback ke NRP).
+> [!DONE] `MemberHome` (`getMyIdCardApi`). `verification_status === 'verified'` → badge "Terverifikasi"; `qr_payload` → nilai QR (fallback NRP).
 
 `GET /me/id-card`
 
-**Query:** — · **Payload:** —
+**Tanpa parameter.**
 
-**Response `200`** — `data`: `{ service_number, verification_status, verified_at, qr_payload, qr_expires_at }`
+**Response `200`:**
 
 ```json
 {
@@ -912,33 +2563,40 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
 ```
 
 - `verification_status`: `verified` | `pending` | `unverified` (fallback netral untuk nilai lain).
-- `qr_payload`: string yang di-encode ke QR, default = NRP.
 - `qr_expires_at`: `null` = tidak kedaluwarsa.
 
 ## 2. Status Saya
 
-> [!DONE] Terintegrasi (`getMyStatusApi`) — mengisi 3 tile pertama + label lokasi. Tile jatuh ke "Belum Ada Data" kalau request gagal.
+> [!DONE] `getMyStatusApi` — mengisi 3 tile pertama + label lokasi. Tile → "Belum Ada Data" kalau request gagal.
 
 `GET /me/status`
 
-**Query:** — · **Payload:** —
+**Tanpa parameter.**
 
-**Response `200`** — `data`: `as_of`, `presence{key, label, since}`,
-`duty{key, label, period_label, starts_at, ends_at}`, `location{label, accuracy_label, status, captured_at}`.
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": {
     "as_of": "2026-08-30T09:41:00+07:00",
-    "presence": { "key": "at_base", "label": "Di Markas", "since": "2026-08-30T08:14:00+07:00" },
+    "presence": {
+      "key": "at_base",
+      "label": "Di Markas",
+      "since": "2026-08-30T08:14:00+07:00"
+    },
     "duty": {
-      "key": "internal_duty", "label": "Dinas Dalam", "period_label": "Hari ini",
-      "starts_at": "2026-08-30T07:00:00+07:00", "ends_at": "2026-08-30T19:00:00+07:00"
+      "key": "internal_duty",
+      "label": "Dinas Dalam",
+      "period_label": "Hari ini",
+      "starts_at": "2026-08-30T07:00:00+07:00",
+      "ends_at": "2026-08-30T19:00:00+07:00"
     },
     "location": {
-      "label": "Markas", "accuracy_label": "Akurasi tinggi",
-      "status": "fresh", "captured_at": "2026-08-30T09:39:00+07:00"
+      "label": "Markas",
+      "accuracy_label": "Akurasi tinggi",
+      "status": "fresh",
+      "captured_at": "2026-08-30T09:39:00+07:00"
     }
   }
 }
@@ -951,82 +2609,489 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
 
 ## 3. Aset Saya
 
-> [!BUG] `GET /me/assets` mengembalikan `500 "Server Error"`. FE sudah wired (`getMyAssetsApi`, di-guard `Promise.allSettled`) — kartu Senjata/Kendaraan tetap di placeholder sampai backend diperbaiki.
+> [!DONE] `MemberHome` "Aset Saya" (`getMyAssetsApi`, di-guard `Promise.allSettled`) — dua `AssetCard` (Senjata / Kendaraan), array kosong → placeholder "Belum ada …". Tap kartu → `BottomSheet` detail aset, datanya langsung dari item list (tanpa fetch tambahan).
 
 `GET /me/assets`
 
-**Query:** — · **Payload:** —
+**Tanpa parameter.**
 
-**Response `200`** — `data`: `{ weapons: [...], vehicles: [...] }`
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": {
     "weapons": [
-      { "id": 21, "weapon_number": "SB-0231", "serial_number": "PINDAD-21B0231",
-        "category": "SS2-V1", "condition_status": "good", "condition_label": "Baik",
-        "assigned_at": "2025-01-10T00:00:00+07:00" }
+      {
+        "id": 10,
+        "weapon_number": "REG/1/0010",
+        "serial_number": "8LV283851",
+        "category": "Pistol P3 Pindad",
+        "condition_status": "good",
+        "condition_label": "Baik",
+        "assigned_at": "2026-09-02T18:33:00+07:00"
+      }
     ],
     "vehicles": [
-      { "id": 8, "brand_model": "Toyota Hilux Double Cabin", "plate_number": "D 1234 AB",
-        "stnk_valid_until": "2026-11-12", "stnk_status": "active", "stnk_status_label": "STNK Aktif" }
+      {
+        "id": 2,
+        "brand_model": "Honda Vario 150",
+        "plate_number": "D 5678 XYZ",
+        "category": "roda_2",
+        "condition_status": "good",
+        "condition_label": "Baik"
+      }
     ]
   }
 }
 ```
 
-- Array kosong → client menampilkan empty-state ("Belum ada senjata dinas" / "Belum ada kendaraan").
-- `condition_status` / `stnk_status`: enum mentah; `*_label` opsional (client punya fallback `titleCase()`).
-- `stnk_status`: `active` | `expiring_soon` | `expired`.
+- Array kosong → client menampilkan empty-state.
+- Senjata **dan kendaraan** sama-sama pakai `condition_status` (enum mentah, mis. `good`) + `condition_label`
+  (siap tampil; client fallback ke `titleCase()`). **Tidak ada field STNK** di response ini.
+- `vehicle.category` = enum mentah (`roda_2` / `roda_4` …) — client format jadi "Roda 2".
 
 ## 4. Aktivitas Terbaru (pergerakan saya)
 
-> [!DONE] `MemberHome` "Aktivitas Terbaru" menampilkan 3 teratas (`getMyMovementsApi({ per_page: 3 })`). "Lihat Semua" → layar **`MyMovements`** (route `myMovements`) — `getMyMovementsApi({ page, per_page: 20 })` full list, pull-to-refresh + "muat lebih banyak" (pakai `meta.current_page`/`last_page`; kalau `meta` absen, lanjut selama halaman terakhir mengembalikan 20 item penuh). Baris pakai `TimelineRow` (arah in/out, `note`/label arah sebagai judul, `location_label · purpose` detail, waktu relatif `occurred_at`).
+> [!DONE] `MemberHome` "Aktivitas Terbaru" = 3 teratas (`per_page: 3`). "Lihat Semua" → layar **`MyMovements`** (`per_page: 20`, tarik-untuk-refresh + "muat lebih banyak"; kalau `meta` absen, lanjut selama halaman terakhir mengembalikan 20 item penuh). Baris pakai `TimelineRow`.
 
 `GET /me/movements`
 
-**Query (opsional):** `page`, `per_page` (default 10). · **Payload:** —
+**Query:**
 
-**Response `200`** — array + `meta` (mungkin absen). Item: `{ id, direction, occurred_at, location_label, purpose, note }`.
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | default 10 |
+
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": [
-    { "id": 5501, "direction": "in", "occurred_at": "2026-08-30T08:14:00+07:00",
-      "location_label": "Pos Utama", "purpose": null, "note": "Masuk Markas" },
-    { "id": 5498, "direction": "out", "occurred_at": "2026-08-30T07:05:00+07:00",
-      "location_label": null, "purpose": "Dinas", "note": "Keluar Markas" }
+    {
+      "id": 5501,
+      "direction": "in",
+      "occurred_at": "2026-08-30T08:14:00+07:00",
+      "location_label": "Pos Utama",
+      "purpose": null,
+      "note": "Masuk Markas"
+    },
+    {
+      "id": 5498,
+      "direction": "out",
+      "occurred_at": "2026-08-30T07:05:00+07:00",
+      "location_label": null,
+      "purpose": "Dinas",
+      "note": "Keluar Markas"
+    }
   ],
-  "meta": { "current_page": 1, "last_page": 6, "per_page": 10, "total": 58 }
+  "meta": {
+    "current_page": 1,
+    "last_page": 6,
+    "per_page": 10,
+    "total": 58
+  }
 }
 ```
 
 - `direction`: `in` (masuk markas) | `out` (keluar markas).
 - Client: `note` sebagai judul, `location_label` / `purpose` sebagai detail, `occurred_at` diformat relatif.
 
-## 5. Shortcut "Kontak Darurat" (Akses Cepat)
+## 5. Kontak Darurat
 
-> [!DONE] Terintegrasi — layar `EmergencyContacts` (`getEmergencyContactsApi`), daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
+> [!DONE] Layar `EmergencyContacts` (`getEmergencyContactsApi`), daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
 
 `GET /emergency-contacts`
 
-**Query:** — · **Payload:** —
+**Tanpa parameter.**
 
-**Response `200`** — `data[]`: `{ id, label, phone, category }`. `category`: `command` | `medical` |
-`security` | `general` (nilai lain → grup "Lainnya").
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": [
-    { "id": 1, "label": "Piket Batalyon", "phone": "62211234567", "category": "command" },
-    { "id": 2, "label": "Kesehatan / Poliklinik", "phone": "62211234568", "category": "medical" },
-    { "id": 3, "label": "Provos", "phone": "62211234569", "category": "security" }
+    {
+      "id": 1,
+      "label": "Piket Batalyon",
+      "phone": "62211234567",
+      "category": "command"
+    },
+    {
+      "id": 2,
+      "label": "Kesehatan / Poliklinik",
+      "phone": "62211234568",
+      "category": "medical"
+    },
+    {
+      "id": 3,
+      "label": "Provos",
+      "phone": "62211234569",
+      "category": "security"
+    }
   ]
 }
 ```
+
+## 6. Riwayat Kesehatan Saya
+
+> [!DONE] Layar `HealthMyHistory` (dibuka dari tab Riwayat → menu Kesehatan). Header identitas + list `HealthRecordCard` + "muat lebih banyak" + tarik-untuk-refresh; tiap baris → `HealthRecordDetail` (mode **read-only**, record dioper lewat param — endpoint detail petugas 403 untuk anggota).
+
+`GET /health/my` — **khusus anggota** (role prajurit).
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "personnel": {
+      "id": 5,
+      "service_number": "70663085",
+      "full_name": "Bagas Nugroho",
+      "rank": "PRATU",
+      "unit": "Kompi A",
+      "photo": null
+    },
+    "records": [
+      {
+        "id": 216,
+        "personnel_id": 5,
+        "health_check_type": "Pemeriksaan Umum",
+        "examined_at": "2026-08-20T09:00:00+07:00",
+        "result": "Sehat",
+        "notes": "Tekanan darah normal.",
+        "examined_by": "Letda dr. Sari",
+        "attachment_url": null,
+        "created_at": "2026-08-20T09:05:00+07:00",
+        "updated_at": "2026-08-20T09:05:00+07:00",
+        "can_edit": false
+      }
+    ]
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 15,
+    "total": 4
+  }
+}
+```
+
+Catatan: bentuk **beda** dari list kesehatan lain — `data` = `{ personnel, records[] }`.
+
+---
+
+# Petugas Kesehatan
+
+Endpoint `/health/*` untuk role `petugas_kesehatan` (juga `tenant_admin` / `superadmin`) —
+butuh permission `health-officer.access`, backend **403** kalau tidak berwenang. `{personnel}`
+di path = **NRP** (`service_number`). Envelope `{ success, data }`; list menambah `meta`.
+
+## 1. Dashboard Kesehatan
+
+> [!DONE] `HealthOfficerHome` (kartu `today_checked`/`month_total` + "Aktivitas Terbaru" dari `recent[]`) & layar `HealthDashboard` (tarik-untuk-refresh). Re-fetch saat tab fokus.
+
+`GET /health/dashboard`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "today_checked": 4,
+    "month_total": 37,
+    "recent": [
+      {
+        "id": 217,
+        "personnel_id": 5,
+        "health_check_type": "Pemeriksaan Umum",
+        "examined_at": "2026-09-02T09:00:00+07:00",
+        "result": "Sehat",
+        "notes": null,
+        "examined_by": "Petugas Kesehatan",
+        "attachment_url": null,
+        "created_at": "2026-09-02T17:14:50+07:00",
+        "updated_at": "2026-09-02T17:14:50+07:00",
+        "can_edit": true
+      }
+    ]
+  }
+}
+```
+
+## 2. Jenis Pemeriksaan
+
+> [!DONE] Mengisi `BottomSheet` "Jenis pemeriksaan" di `HealthRecordInput`. Di mode edit, string jenis dari detail dicocokkan balik ke `id` lewat daftar ini.
+
+`GET /health/check-types`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Pemeriksaan Umum",
+      "description": null
+    },
+    {
+      "id": 2,
+      "name": "Pemeriksaan Khusus",
+      "description": "Pemeriksaan lanjutan / rujukan."
+    }
+  ]
+}
+```
+
+## 3. Cari Anggota
+
+> [!DONE] `HealthPersonnelSearch` — debounce 500ms, min 2 karakter. `route.params.mode === 'input'` → hasil langsung ke `HealthRecordInput`; selain itu ke `HealthPersonnelProfile`.
+
+`GET /health/personnel/search`
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `q` | string | Wajib | nama / NRP; min 2 karakter (`<2` → `422`); maks 20 hasil |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 5,
+      "service_number": "70663085",
+      "full_name": "Bagas Nugroho",
+      "rank": "PRATU",
+      "unit": "Kompi A",
+      "photo": null
+    }
+  ]
+}
+```
+
+## 4. Profil Kesehatan Anggota
+
+> [!DONE] `HealthPersonnelProfile` — identitas + `health_summary`. Re-fetch saat fokus. "Catat Pemeriksaan" → `HealthRecordInput`.
+
+`GET /health/personnel/{personnel}` (NRP)
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5,
+    "service_number": "70663085",
+    "full_name": "Bagas Nugroho",
+    "rank": null,
+    "position": null,
+    "unit": "Kompi A",
+    "status": "active",
+    "photo": null,
+    "health_summary": {
+      "total_records": 2,
+      "last_record": null
+    }
+  }
+}
+```
+
+Catatan: `health_summary.last_record` = `HealthRecordSummary` (bentuk penuh di §5) | `null`.
+
+## 5. Riwayat Pemeriksaan Anggota
+
+> [!DONE] List paginasi di `HealthPersonnelProfile` ("muat lebih banyak").
+
+`GET /health/personnel/{personnel}/records` (NRP)
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `type` | integer / string | Opsional | id atau nama jenis pemeriksaan |
+| `from` / `to` | string | Opsional | rentang tanggal |
+| `page` | integer | Opsional | — |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 331,
+      "personnel_id": 45,
+      "health_check_type": "Pemeriksaan Berkala",
+      "examined_at": "2026-08-20T09:00:00+07:00",
+      "result": "Sehat",
+      "examined_by": "Letda dr. Sari",
+      "notes": "Tekanan darah normal.",
+      "attachment_url": null,
+      "can_edit": true,
+      "created_at": "2026-08-20T09:05:00+07:00",
+      "updated_at": "2026-08-20T09:05:00+07:00"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 15,
+    "total": 2
+  }
+}
+```
+`can_edit` dihitung **backend** (jendela 24 jam untuk petugas biasa) — FE cuma pakai flag ini untuk
+menampilkan/menyembunyikan tombol "Ubah", tidak pernah menghitung jendelanya sendiri.
+
+## 6. Input Pemeriksaan
+
+> [!DONE] **Bug 422 sudah beres.** Diverifikasi via API live 2026-09-02 (akun `petkes`): `POST .../records` dengan JSON polos `{ health_check_type_id, examined_at, result, notes }` → `201` `{ success, message: "Pemeriksaan kesehatan berhasil dicatat.", data: <HealthRecordSummary> }`. FE sudah benar dari awal.
+>
+> Catatan: upload attachment **belum di-wired** (tidak ada picker lib) — endpoint menerima `attachment` multipart (PDF/JPG/PNG ≤ 10 MB) tapi app selalu kirim JSON polos. Riwayat lama: multipart pernah bikin backend salah parse `health_check_type_id` → app sengaja pakai JSON polos selama tak ada file (aturan ini tetap dipertahankan).
+
+`POST /health/personnel/{personnel}/records` — `{personnel}` = NRP.
+
+**Payload (body, JSON polos):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `health_check_type_id` | integer | Wajib | dari §2 |
+| `examined_at` | string | Wajib | ISO-8601 + offset device (`toIsoWithOffset`); tidak boleh masa depan |
+| `result` | string | Wajib | hasil pemeriksaan |
+| `notes` | string | Opsional | — |
+| `attachment` | file | Opsional | multipart (PDF/JPG/PNG ≤ 10 MB) — **belum dipakai app** |
+
+**Response `201`:**
+
+```json
+{
+  "success": true,
+  "message": "Pemeriksaan kesehatan berhasil dicatat.",
+  "data": {
+    "id": 217,
+    "personnel_id": 5,
+    "health_check_type": "Pemeriksaan Umum",
+    "examined_at": "2026-09-02T09:00:00+07:00",
+    "result": "Sehat",
+    "notes": "—",
+    "examined_by": "Petugas Kesehatan",
+    "attachment_url": null,
+    "created_at": "2026-09-02T17:14:50+07:00",
+    "updated_at": "2026-09-02T17:14:50+07:00",
+    "can_edit": true
+  }
+}
+```
+
+## 7. Detail Pemeriksaan
+
+> [!DONE] `HealthRecordDetail` untuk **petugas**. Untuk **anggota** yang melihat record sendiri, endpoint ini **403** ("Hanya petugas kesehatan yang berwenang") → `HealthMyHistory` mengoper record dari `/health/my` sebagai `route.params.record` + `readOnly: true`, layar render dari param & lewati fetch.
+
+`GET /health/records/{id}`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 216,
+    "health_check_type": "Pemeriksaan Umum",
+    "examined_at": "2026-08-20T09:00:00+07:00",
+    "result": "Sehat",
+    "notes": "Tekanan darah normal.",
+    "examined_by": "Letda dr. Sari",
+    "attachment_url": null,
+    "can_edit": false,
+    "created_at": "2026-08-20T09:05:00+07:00",
+    "updated_at": "2026-08-20T09:05:00+07:00",
+    "personnel": {
+      "id": 5,
+      "service_number": "70663085",
+      "full_name": "Bagas Nugroho",
+      "rank": "PRATU",
+      "unit": "Kompi A",
+      "photo": null
+    }
+  }
+}
+```
+Anggota yang membuka record sendiri → **403** ("Hanya petugas kesehatan yang berwenang").
+
+## 8. Ubah Pemeriksaan
+
+> [!DONE] Terverifikasi di device + API live 2026-09-02 (`200`, `{ success, message: "Pemeriksaan kesehatan berhasil diperbarui.", data: <HealthRecordSummary> }`). `HealthRecordInput` dengan `route.params.recordId` → PUT. Hanya muncul kalau `can_edit` dari backend `true`. **PUT tidak menerima attachment** (per kontrak). `403` = jendela edit 24 jam lewat — pesan ramah dari backend, diteruskan lewat `extractErrorMessage`.
+
+`PUT /health/records/{id}`
+
+**Payload (body, JSON):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `health_check_type_id` | integer | Wajib | dari §2 |
+| `examined_at` | string | Wajib | ISO-8601 + offset device; tidak boleh masa depan |
+| `result` | string | Wajib | hasil pemeriksaan |
+| `notes` | string | Opsional | — |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Pemeriksaan kesehatan berhasil diperbarui.",
+  "data": {
+    "id": 217,
+    "personnel_id": 5,
+    "health_check_type": "Pemeriksaan Umum",
+    "examined_at": "2026-09-02T09:00:00+07:00",
+    "result": "[uji] hasil pemeriksaan",
+    "notes": "—",
+    "examined_by": "Petugas Kesehatan",
+    "attachment_url": null,
+    "created_at": "2026-09-02T17:14:50+07:00",
+    "updated_at": "2026-09-02T17:14:51+07:00",
+    "can_edit": true
+  }
+}
+```
+
+## 9. Lampiran Pemeriksaan (unduh)
+
+> [!DONE] Tombol "Unduh" di kartu attachment (`HealthRecordDetail`) — `downloadHealthAttachment` (`utils/healthAttachment.ts`) pakai **`react-native-blob-util`**: Android → DownloadManager ke folder Downloads publik + notifikasi; iOS → file-cache + share sheet. Header `Authorization` dari `healthAuthHeader()` (token live). Diakses baik petugas maupun anggota pemilik record (backend menegakkan).
+
+`GET /health/records/{id}/attachment` — butuh `Authorization: Bearer`. URL absolut dibangun
+`healthRecordAttachmentUrl()` (blob-util butuh URL penuh, bukan path relatif axios).
+
+**Tanpa parameter.**
+
+**Response**: berkas biner (PDF/JPG/PNG).
+
+Catatan: belum bisa diuji end-to-end — semua record uji `attachment_url: null` (upload belum di-wired).
 </script>
 
 <script>
@@ -1052,10 +3117,20 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
 
   // ---------- markdown renderer ----------
   (function () {
-    var MODULES = [
-      { id: 'umum',    srcId: 'src-umum',    group: 'Umum & Komandan', eyebrow: 'Modul 01 — Umum & Komandan' },
-      { id: 'anggota', srcId: 'src-anggota', group: 'Home Anggota',    eyebrow: 'Modul 02 — Home Anggota' }
-    ];
+    // Satu berkas sumber (API_CONTRACT.md). Blok top-level dipisah oleh heading `# `:
+    // blok pertama = judul + intro halaman, blok berikutnya = "bagian" (grup TOC).
+    function splitDoc(md) {
+      md = md.replace(/\r\n?/g, '\n');
+      var lines = md.split('\n'), blocks = [], cur = null;
+      for (var i = 0; i < lines.length; i++) {
+        var hm = lines[i].match(/^#\s+(.*)$/);
+        if (hm) { if (cur) blocks.push(cur); cur = { title: hm[1].trim(), body: [] }; }
+        else if (cur) cur.body.push(lines[i]);
+        else { /* teks sebelum '# ' pertama diabaikan */ }
+      }
+      if (cur) blocks.push(cur);
+      return blocks.map(function (b) { return { title: b.title, body: b.body.join('\n').trim() }; });
+    }
 
     function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
     function escAttr(s) { return escHtml(s).replace(/"/g, '&quot;'); }
@@ -1065,6 +3140,12 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
     function splitNum(t) {
       var m = t.match(/^(\d+(?:\.\d+)*)\.?\s+([\s\S]*)$/);
       return m ? { n: m[1], label: m[2] } : { n: '', label: t };
+    }
+    // Sisipkan nomor bagian di depan nomor lokal heading: "4. Judul" (bagian 2) -> "2.4 Judul",
+    // "4.3 Judul" (sub-poin, bagian 2) -> "2.4.3 Judul". Heading tanpa nomor lokal dibiarkan.
+    function renumber(txt, secOrd) {
+      var m = txt.match(/^(\d+(?:\.\d+)*)\.?\s+([\s\S]*)$/);
+      return m ? secOrd + '.' + m[1] + ' ' + m[2] : txt;
     }
 
     function inlineMd(s) {
@@ -1163,19 +3244,22 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
       }).join('') + '</' + tag + '>';
     }
 
-    function render(md, docId) {
+    function render(md, docId, secOrd) {
       md = md.replace(/\r\n?/g, '\n');
       var lines = md.split('\n');
       var out = [], toc = [], i = 0, n = lines.length, pendingHead = null, cardOpen = false;
 
       function closeCard() { if (cardOpen) { out.push('</section>'); cardOpen = false; } }
-      function nextContentIsHeading(from) {
+      // Poin payung = ada heading `###`+ sebelum ketemu `##`/`#` berikutnya. Poin payung tidak
+      // pernah dibungkus kartu putih (dan idealnya tidak punya isi apa pun — lihat STYLE_GUIDE).
+      function hasChildHeadings(from) {
         for (var k = from; k < n; k++) {
-          var t = lines[k].trim();
-          if (!t || /^-{3,}$/.test(t)) continue;
-          return /^#{1,6}\s+/.test(t);
+          var hm2 = lines[k].trim().match(/^(#{1,6})\s+/);
+          if (!hm2) continue;
+          if (hm2[1].length >= 3) return true;
+          return false; // ketemu `##` atau `#` dulu
         }
-        return true;
+        return false;
       }
 
       while (i < n) {
@@ -1200,19 +3284,29 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
           pendingHead = null;
           closeCard();
           if (lvl === 1) {
-            out.push('<header class="mod-title" id="mod-' + docId + '"><p class="eyebrow">' +
-              escHtml(MOD_EYEBROW[docId] || '') + '</p><h1>' + inlineMd(txt) + '</h1></header>');
+            // heading `# ` sudah dipisah jadi "bagian" oleh splitDoc — tak seharusnya sampai sini
+            out.push('<header class="mod-title"><h1>' + inlineMd(txt) + '</h1></header>');
           } else {
             var id = docId + '-' + slugify(txt);
+            var dispTxt = secOrd ? renumber(txt, secOrd) : txt;
             if (lvl === 2 || lvl === 3) {
-              pendingHead = { level: lvl, text: txt.replace(/`/g, ''), id: id, status: '' };
+              // Indeks pencarian: nomor + judul + endpoint (path) yang muncul beberapa baris di bawah.
+              var eps = '';
+              for (var ei = i + 1; ei < n && ei < i + 8; ei++) {
+                var et = lines[ei].trim();
+                if (/^#{1,6}\s/.test(et)) break;
+                var epm = et.match(/`(?:GET|POST|PUT|PATCH|DELETE)\s+\/[^`]+`/g);
+                if (epm) eps += ' ' + epm.join(' ').replace(/`/g, '');
+              }
+              pendingHead = { level: lvl, text: dispTxt.replace(/`/g, ''), id: id, status: '',
+                search: (dispTxt + eps).replace(/`/g, '').toLowerCase() };
               toc.push(pendingHead);
             }
             // Bungkus tiap "poin" dalam kartu putih: setiap h3, dan setiap h2 yang punya isi
             // sendiri (bukan cuma judul grup untuk h3 di bawahnya).
-            var asCard = lvl === 3 || (lvl === 2 && !nextContentIsHeading(i + 1)) || lvl > 3;
+            var asCard = lvl === 3 || (lvl === 2 && !hasChildHeadings(i + 1)) || lvl > 3;
             if (asCard) { out.push('<section class="pcard">'); cardOpen = true; }
-            out.push('<h' + lvl + ' id="' + id + '" class="hd hd-' + lvl + '">' + inlineMd(txt) + '</h' + lvl + '>');
+            out.push('<h' + lvl + ' id="' + id + '" class="hd hd-' + lvl + '">' + inlineMd(dispTxt) + '</h' + lvl + '>');
           }
           i++;
           continue;
@@ -1277,44 +3371,67 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
       return { html: out.join('\n'), toc: toc };
     }
 
-    var MOD_EYEBROW = {};
-    MODULES.forEach(function (m) { MOD_EYEBROW[m.id] = m.eyebrow; });
-
     var main = document.getElementById('main');
     var toc = document.getElementById('toc');
     var tocHtml = '<p class="toc-title">Daftar Isi</p>' +
-      '<p class="toc-checked">Pengecekan frontend terakhir<b>2 September 2026, 09.30 WIB</b></p>';
+      '<div class="toc-tools">' +
+        '<input type="search" id="tocSearch" class="toc-search" placeholder="Cari endpoint / judul / nomor…" autocomplete="off" aria-label="Cari daftar isi">' +
+        '<div class="toc-filters" id="tocFilters" role="group" aria-label="Filter status">' +
+          '<button type="button" class="tf" data-f="all" aria-pressed="true">Semua</button>' +
+          '<button type="button" class="tf tf-done" data-f="done" aria-pressed="false">Selesai</button>' +
+          '<button type="button" class="tf tf-partial" data-f="partial" aria-pressed="false">Catatan</button>' +
+          '<button type="button" class="tf tf-bug" data-f="bug" aria-pressed="false">Error</button>' +
+          '<button type="button" class="tf tf-todo" data-f="todo" aria-pressed="false">Belum</button>' +
+        '</div>' +
+        '<p class="toc-empty" id="tocEmpty" hidden>Tidak ada yang cocok.</p>' +
+      '</div>';
+    var TSTAT = { done: 'Selesai', partial: 'Catatan', bug: 'Error', todo: 'Belum' };
+    var CHEV = '<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 
-    MODULES.forEach(function (mod, idx) {
-      var src = document.getElementById(mod.srcId);
-      var md = src ? src.textContent : '';
-      if (!md || !md.trim() || md.trim().charAt(0) === '@') {
-        tocHtml += '<div class="toc-group"><p class="toc-group-head"><span class="dot"></span>' +
-          escHtml(mod.group) + '</p><p class="toc-note">Sumber markdown belum tersedia.</p></div>';
-        return;
-      }
-      var r = render(md, mod.id);
-      if (idx > 0) main.insertAdjacentHTML('beforeend', '<div class="mod-divider"></div>');
+    var docSrc = document.getElementById('src-doc');
+    var rawMd = docSrc ? docSrc.textContent : '';
+    var blocks = (rawMd && rawMd.trim() && rawMd.trim().charAt(0) !== '@') ? splitDoc(rawMd) : [];
+    // blocks[0] = judul + intro halaman (intro statis di HTML sudah cukup) — blocks[1..] = "bagian".
+    var groups = blocks.slice(1);
+
+    if (!groups.length) {
+      tocHtml += '<div class="toc-group"><p class="toc-group-head"><span class="dot"></span>Dokumen</p>' +
+        '<p class="toc-note">Sumber markdown belum tersedia.</p></div>';
+    }
+
+    groups.forEach(function (blk, gi) {
+      var gid = slugify(blk.title);
+      var secOrd = gi + 1;
+      var r = render(blk.body, gid, secOrd);
+      main.insertAdjacentHTML('beforeend',
+        '<div class="mod-divider"></div>' +
+        '<header class="mod-title" id="mod-' + gid + '"><p class="eyebrow">Bagian ' + secOrd +
+        '</p><h1>' + secOrd + '. ' + inlineMd(blk.title) + '</h1></header>');
       main.insertAdjacentHTML('beforeend', r.html);
 
-      var TSTAT = { done: 'Selesai', partial: 'Catatan', bug: 'Error', todo: 'Belum' };
       var kinds = r.toc.map(function (t) { return t.status; }).filter(Boolean);
-      // Prioritas agregat grup: error > catatan > belum > selesai
-      var agg = kinds.indexOf('bug') >= 0 ? 'bug'
-        : kinds.indexOf('partial') >= 0 ? 'partial'
-        : kinds.indexOf('todo') >= 0 ? 'todo'
-        : kinds.length ? 'done' : '';
-      var chev = '<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-      var gstat = agg ? '<span class="gstat tstat-' + agg + '">' + TSTAT[agg] + '</span>' : '';
+      // Badge bagian: satu pill per status non-selesai dengan jumlahnya ("2 Error", "1 Belum"),
+      // urutan error > belum > catatan. Kalau semua selesai → satu pill "Selesai" tanpa angka.
+      var counts = { bug: 0, todo: 0, partial: 0 };
+      kinds.forEach(function (k) { if (counts[k] != null) counts[k]++; });
+      var gstat = ['bug', 'todo', 'partial']
+        .filter(function (k) { return counts[k]; })
+        .map(function (k) { return '<span class="gstat tstat-' + k + '">' + counts[k] + ' ' + TSTAT[k] + '</span>'; })
+        .join('');
+      if (!gstat && kinds.length) gstat = '<span class="gstat tstat-done">' + TSTAT.done + '</span>';
 
       tocHtml += '<div class="toc-group collapsed">' +
         '<button type="button" class="toc-group-head" aria-expanded="false">' +
-        '<span class="dot"></span><span class="gname">' + escHtml(mod.group) + '</span>' +
-        gstat + chev + '</button>' +
+        '<span class="dot"></span><span class="gname">' + secOrd + '. ' + escHtml(blk.title) + '</span>' +
+        gstat + CHEV + '</button>' +
         '<ol>' + r.toc.map(function (it) {
           var s = splitNum(it.text);
-          var badge = it.status ? '<span class="tstat tstat-' + it.status + '">' + TSTAT[it.status] + '</span>' : '<span></span>';
-          return '<li class="lvl-' + it.level + '"><a href="#' + it.id + '">' +
+          var badge = it.status
+            ? '<span class="tstat tstat-' + it.status + '">' + TSTAT[it.status] + '</span>'
+            : '<span></span>';
+          return '<li class="lvl-' + it.level + '" data-status="' + (it.status || '') + '"' +
+            ' data-search="' + escAttr(it.search || (s.n + ' ' + s.label).toLowerCase()) + '">' +
+            '<a href="#' + it.id + '">' +
             '<span class="n">' + escHtml(s.n) + '</span>' +
             '<span class="tlabel">' + escHtml(s.label) + '</span>' + badge + '</a></li>';
         }).join('') + '</ol></div>';
@@ -1325,6 +3442,53 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
       '<p class="toc-note">Modul Academy menyusul di dokumen ini.</p></div>';
 
     toc.innerHTML = tocHtml;
+
+    // ---------- pencarian + filter status daftar isi ----------
+    (function () {
+      var input = document.getElementById('tocSearch');
+      var filters = document.getElementById('tocFilters');
+      var emptyMsg = document.getElementById('tocEmpty');
+      var activeStatus = 'all';
+
+      function apply() {
+        var q = (input.value || '').trim().toLowerCase();
+        var anyShown = false;
+        Array.prototype.forEach.call(toc.querySelectorAll('.toc-group'), function (g) {
+          if (g.classList.contains('upcoming')) { g.hidden = !!(q || activeStatus !== 'all'); return; }
+          var items = g.querySelectorAll('li');
+          var groupHas = false;
+          Array.prototype.forEach.call(items, function (li) {
+            var okQ = !q || (li.getAttribute('data-search') || '').indexOf(q) >= 0;
+            var okS = activeStatus === 'all' || li.getAttribute('data-status') === activeStatus;
+            var show = okQ && okS;
+            li.hidden = !show;
+            if (show) groupHas = true;
+          });
+          g.hidden = !groupHas;
+          if (groupHas) {
+            anyShown = true;
+            // buka grup yang punya hasil saat sedang menyaring
+            if (q || activeStatus !== 'all') {
+              g.classList.remove('collapsed');
+              var h = g.querySelector('button.toc-group-head');
+              if (h) h.setAttribute('aria-expanded', 'true');
+            }
+          }
+        });
+        emptyMsg.hidden = anyShown;
+      }
+
+      input.addEventListener('input', apply);
+      filters.addEventListener('click', function (e) {
+        var b = e.target.closest('button.tf');
+        if (!b) return;
+        activeStatus = b.getAttribute('data-f');
+        Array.prototype.forEach.call(filters.querySelectorAll('button.tf'), function (x) {
+          x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+        });
+        apply();
+      });
+    })();
 
     // ---------- accordion (grup default tertutup) ----------
     toc.addEventListener('click', function (e) {

@@ -2,3 +2,6 @@
 # index.html is the committed render of these; regenerate with regen-html.py.
 _viewer.template.html
 regen-html.py
+STYLE_GUIDE.md
+LogoIcon.png
+LogoIcon-gray.png

@@ -2,7 +2,9 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<title>API Contract — Smart Battalion</title>
+<title>API Contract — Smart Battalion Apps</title>
+<link rel="icon" type="image/png" href="@@LOGO_GRAY@@">
+<link rel="apple-touch-icon" href="@@LOGO_GRAY@@">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -102,6 +104,11 @@
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
   }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-logo {
+    width: 30px; height: 30px; flex: none; border-radius: 8px;
+    display: block; object-fit: contain;
+  }
   .wordmark { display: flex; flex-direction: column; line-height: 1.25; }
   .wordmark b { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
   .wordmark span {
@@ -143,22 +150,47 @@
   .toc-title {
     font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
     letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
-    margin: 0 0 16px;
+    margin: 0 0 12px;
   }
-  .toc-group { margin-bottom: 18px; }
+  .toc-tools { margin: 0 0 16px; }
+  .toc-search {
+    width: 100%; box-sizing: border-box; margin-bottom: 8px;
+    padding: 7px 11px; border-radius: 8px; font: inherit; font-size: 12.5px;
+    color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  }
+  .toc-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  .toc-search::placeholder { color: var(--muted); }
+  .toc-filters { display: flex; flex-wrap: wrap; gap: 5px; }
+  .toc-filters .tf {
+    padding: 3px 8px; border-radius: 999px; cursor: pointer;
+    font-family: "IBM Plex Mono", monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--muted); background: var(--surface); border: 1px solid var(--line);
+  }
+  .toc-filters .tf:hover { color: var(--ink); }
+  .toc-filters .tf[aria-pressed="true"] { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .toc-filters .tf-done[aria-pressed="true"] { background: #16A34A; border-color: #16A34A; }
+  .toc-filters .tf-partial[aria-pressed="true"] { background: #D97706; border-color: #D97706; }
+  .toc-filters .tf-bug[aria-pressed="true"] { background: #DC2626; border-color: #DC2626; }
+  .toc-filters .tf-todo[aria-pressed="true"] { background: var(--soon-fg); border-color: var(--soon-fg); }
+  .toc-empty { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); }
+  .toc-group { margin-bottom: 14px; }        /* grup terbuka: beri napas */
+  .toc-group.collapsed { margin-bottom: 1px; } /* grup tertutup: rapat */
   .toc-group-head {
     display: flex; align-items: center; gap: 8px; width: 100%;
-    margin: 0 0 8px; padding: 6px 10px; border-radius: 7px;
+    margin: 0 0 4px; padding: 5px 10px; border-radius: 7px;
     font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
     background: none; border: none; text-align: left; cursor: pointer;
   }
+  .toc-group.collapsed .toc-group-head { margin-bottom: 0; }
   button.toc-group-head:hover { background: var(--surface); }
   .toc-group-head .gname { margin-right: auto; }
   .toc-group-head .gstat {
-    padding: 1px 6px; border-radius: 5px;
+    padding: 1px 6px; border-radius: 5px; white-space: nowrap;
     font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 700;
     letter-spacing: 0.04em; text-transform: uppercase;
   }
+  .toc-group-head .gstat + .gstat { margin-left: -4px; }
   .toc-group-head .chev { flex: none; color: var(--muted); transition: transform .15s; }
   .toc-group.collapsed .toc-group-head .chev { transform: rotate(-90deg); }
   .toc-group.collapsed > ol { display: none; }
@@ -201,6 +233,8 @@
     font-size: clamp(1.7rem, 4vw, 2.15rem); font-weight: 700; letter-spacing: -0.02em;
     line-height: 1.14; text-wrap: balance; margin: 0 0 12px;
   }
+  .intro-title { display: flex; align-items: center; gap: 12px; }
+  .intro-logo { width: 40px; height: 40px; flex: none; border-radius: 9px; object-fit: contain; }
   .intro p { color: var(--ink-soft); max-width: 66ch; margin: 0 0 10px; }
 
   .mod-divider { height: 1px; background: var(--line); margin: 80px 0 0; }
@@ -291,7 +325,10 @@
     position: relative; margin: 14px 0; border-radius: 12px;
     border: 1px solid var(--code-line); background: var(--code-bg); max-width: 100%;
   }
-  .code-scroll { overflow-x: auto; border-radius: 12px; }
+  .code-scroll { overflow: auto; border-radius: 12px; max-height: 340px; overscroll-behavior: contain; }
+  .code-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+  .code-scroll::-webkit-scrollbar-thumb { background: var(--code-line); border-radius: 6px; border: 2px solid var(--code-bg); }
+  .code-scroll::-webkit-scrollbar-track { background: transparent; }
   pre { margin: 0; padding: 16px 18px; font-size: 12.8px; line-height: 1.7; color: var(--code-ink); tab-size: 2; }
   pre code { background: none; border: none; padding: 0; font-size: inherit; color: inherit; }
   .copy-btn {
@@ -376,12 +413,13 @@
   :root[data-theme="dark"] .cx-partial .cx-tag { color: #E7B267; background: #33260F; }
   :root[data-theme="dark"] .cx-bug .cx-tag { color: #F0A9A0; background: #3A1D1A; }
 
-  .toc-checked {
-    margin: -6px 0 16px; padding: 8px 10px; border-radius: 8px;
-    background: var(--surface); border: 1px solid var(--line);
-    font-size: 11.5px; line-height: 1.5; color: var(--muted);
+  .topbar .checked {
+    display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.2;
+    font-family: "IBM Plex Mono", monospace; font-size: 8.5px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: right;
   }
-  .toc-checked b { display: block; color: var(--ink); font-size: 12.5px; font-weight: 600; }
+  .topbar .checked b { color: var(--ink-soft); font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+  @media (max-width: 620px) { .topbar .checked { display: none; } }
 
   .tstat {
     justify-self: end; padding: 1px 5px; border-radius: 5px;
@@ -401,12 +439,16 @@
 <body>
 
 <header class="topbar">
-  <span class="wordmark">
-    <b>API Contract</b>
-    <span>Smart Battalion</span>
+  <span class="brand">
+    <img class="brand-logo" src="@@LOGO@@" alt="Smart Battalion Apps" width="30" height="30">
+    <span class="wordmark">
+      <b>API Contract</b>
+      <span>Smart Battalion Apps</span>
+    </span>
   </span>
   <span class="pill">Draf</span>
   <span class="spacer"></span>
+  <span class="checked">Pengecekan terakhir<b>@@CHECKED@@</b></span>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti tema">
     <span id="themeLabel">Gelap</span>
   </button>
@@ -421,7 +463,7 @@
   <main id="main">
     <div class="intro">
       <p class="eyebrow">Dokumentasi · Draf usulan frontend</p>
-      <h1>API Contract — Smart Battalion</h1>
+      <h1 class="intro-title"><img class="intro-logo" src="@@LOGO@@" alt="" width="40" height="40">API Contract — Smart Battalion Apps</h1>
       <p>
         Kumpulan draf kontrak API untuk surface yang masih memakai data dummy di aplikasi. Semua
         bentuk envelope, pagination, format waktu, dan enum seragam dengan endpoint yang sudah
@@ -429,19 +471,18 @@
         <code>/panic-buttons</code>).
       </p>
       <p>
-        Halaman ini dirender otomatis dari <code>documentation/API_CONTRACT.md</code> dan
-        <code>documentation/API_CONTRACT_ANGGOTA.md</code> — sumber kebenaran tetap kedua berkas
-        markdown itu.
+        Halaman ini dirender otomatis dari <code>documentation/API_CONTRACT.md</code> — sumber
+        kebenaran tetap berkas markdown itu. Aturan penulisannya ada di
+        <code>documentation/STYLE_GUIDE.md</code>.
       </p>
     </div>
     <!-- modul diisi oleh script -->
   </main>
 </div>
 
-<footer id="footer">API Contract — Smart Battalion · draf usulan frontend</footer>
+<footer id="footer">API Contract — Smart Battalion Apps · draf usulan frontend</footer>
 
-<script type="text/markdown" id="src-umum">@@UMUM@@</script>
-<script type="text/markdown" id="src-anggota">@@ANGGOTA@@</script>
+<script type="text/markdown" id="src-doc">@@DOC@@</script>
 
 <script>
   // ---------- theme toggle (default terang) ----------
@@ -466,10 +507,20 @@
 
   // ---------- markdown renderer ----------
   (function () {
-    var MODULES = [
-      { id: 'umum',    srcId: 'src-umum',    group: 'Umum & Komandan', eyebrow: 'Modul 01 — Umum & Komandan' },
-      { id: 'anggota', srcId: 'src-anggota', group: 'Home Anggota',    eyebrow: 'Modul 02 — Home Anggota' }
-    ];
+    // Satu berkas sumber (API_CONTRACT.md). Blok top-level dipisah oleh heading `# `:
+    // blok pertama = judul + intro halaman, blok berikutnya = "bagian" (grup TOC).
+    function splitDoc(md) {
+      md = md.replace(/\r\n?/g, '\n');
+      var lines = md.split('\n'), blocks = [], cur = null;
+      for (var i = 0; i < lines.length; i++) {
+        var hm = lines[i].match(/^#\s+(.*)$/);
+        if (hm) { if (cur) blocks.push(cur); cur = { title: hm[1].trim(), body: [] }; }
+        else if (cur) cur.body.push(lines[i]);
+        else { /* teks sebelum '# ' pertama diabaikan */ }
+      }
+      if (cur) blocks.push(cur);
+      return blocks.map(function (b) { return { title: b.title, body: b.body.join('\n').trim() }; });
+    }
 
     function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
     function escAttr(s) { return escHtml(s).replace(/"/g, '&quot;'); }
@@ -479,6 +530,12 @@
     function splitNum(t) {
       var m = t.match(/^(\d+(?:\.\d+)*)\.?\s+([\s\S]*)$/);
       return m ? { n: m[1], label: m[2] } : { n: '', label: t };
+    }
+    // Sisipkan nomor bagian di depan nomor lokal heading: "4. Judul" (bagian 2) -> "2.4 Judul",
+    // "4.3 Judul" (sub-poin, bagian 2) -> "2.4.3 Judul". Heading tanpa nomor lokal dibiarkan.
+    function renumber(txt, secOrd) {
+      var m = txt.match(/^(\d+(?:\.\d+)*)\.?\s+([\s\S]*)$/);
+      return m ? secOrd + '.' + m[1] + ' ' + m[2] : txt;
     }
 
     function inlineMd(s) {
@@ -577,19 +634,22 @@
       }).join('') + '</' + tag + '>';
     }
 
-    function render(md, docId) {
+    function render(md, docId, secOrd) {
       md = md.replace(/\r\n?/g, '\n');
       var lines = md.split('\n');
       var out = [], toc = [], i = 0, n = lines.length, pendingHead = null, cardOpen = false;
 
       function closeCard() { if (cardOpen) { out.push('</section>'); cardOpen = false; } }
-      function nextContentIsHeading(from) {
+      // Poin payung = ada heading `###`+ sebelum ketemu `##`/`#` berikutnya. Poin payung tidak
+      // pernah dibungkus kartu putih (dan idealnya tidak punya isi apa pun — lihat STYLE_GUIDE).
+      function hasChildHeadings(from) {
         for (var k = from; k < n; k++) {
-          var t = lines[k].trim();
-          if (!t || /^-{3,}$/.test(t)) continue;
-          return /^#{1,6}\s+/.test(t);
+          var hm2 = lines[k].trim().match(/^(#{1,6})\s+/);
+          if (!hm2) continue;
+          if (hm2[1].length >= 3) return true;
+          return false; // ketemu `##` atau `#` dulu
         }
-        return true;
+        return false;
       }
 
       while (i < n) {
@@ -614,19 +674,29 @@
           pendingHead = null;
           closeCard();
           if (lvl === 1) {
-            out.push('<header class="mod-title" id="mod-' + docId + '"><p class="eyebrow">' +
-              escHtml(MOD_EYEBROW[docId] || '') + '</p><h1>' + inlineMd(txt) + '</h1></header>');
+            // heading `# ` sudah dipisah jadi "bagian" oleh splitDoc — tak seharusnya sampai sini
+            out.push('<header class="mod-title"><h1>' + inlineMd(txt) + '</h1></header>');
           } else {
             var id = docId + '-' + slugify(txt);
+            var dispTxt = secOrd ? renumber(txt, secOrd) : txt;
             if (lvl === 2 || lvl === 3) {
-              pendingHead = { level: lvl, text: txt.replace(/`/g, ''), id: id, status: '' };
+              // Indeks pencarian: nomor + judul + endpoint (path) yang muncul beberapa baris di bawah.
+              var eps = '';
+              for (var ei = i + 1; ei < n && ei < i + 8; ei++) {
+                var et = lines[ei].trim();
+                if (/^#{1,6}\s/.test(et)) break;
+                var epm = et.match(/`(?:GET|POST|PUT|PATCH|DELETE)\s+\/[^`]+`/g);
+                if (epm) eps += ' ' + epm.join(' ').replace(/`/g, '');
+              }
+              pendingHead = { level: lvl, text: dispTxt.replace(/`/g, ''), id: id, status: '',
+                search: (dispTxt + eps).replace(/`/g, '').toLowerCase() };
               toc.push(pendingHead);
             }
             // Bungkus tiap "poin" dalam kartu putih: setiap h3, dan setiap h2 yang punya isi
             // sendiri (bukan cuma judul grup untuk h3 di bawahnya).
-            var asCard = lvl === 3 || (lvl === 2 && !nextContentIsHeading(i + 1)) || lvl > 3;
+            var asCard = lvl === 3 || (lvl === 2 && !hasChildHeadings(i + 1)) || lvl > 3;
             if (asCard) { out.push('<section class="pcard">'); cardOpen = true; }
-            out.push('<h' + lvl + ' id="' + id + '" class="hd hd-' + lvl + '">' + inlineMd(txt) + '</h' + lvl + '>');
+            out.push('<h' + lvl + ' id="' + id + '" class="hd hd-' + lvl + '">' + inlineMd(dispTxt) + '</h' + lvl + '>');
           }
           i++;
           continue;
@@ -691,44 +761,67 @@
       return { html: out.join('\n'), toc: toc };
     }
 
-    var MOD_EYEBROW = {};
-    MODULES.forEach(function (m) { MOD_EYEBROW[m.id] = m.eyebrow; });
-
     var main = document.getElementById('main');
     var toc = document.getElementById('toc');
     var tocHtml = '<p class="toc-title">Daftar Isi</p>' +
-      '<p class="toc-checked">Pengecekan frontend terakhir<b>@@CHECKED@@</b></p>';
+      '<div class="toc-tools">' +
+        '<input type="search" id="tocSearch" class="toc-search" placeholder="Cari endpoint / judul / nomor…" autocomplete="off" aria-label="Cari daftar isi">' +
+        '<div class="toc-filters" id="tocFilters" role="group" aria-label="Filter status">' +
+          '<button type="button" class="tf" data-f="all" aria-pressed="true">Semua</button>' +
+          '<button type="button" class="tf tf-done" data-f="done" aria-pressed="false">Selesai</button>' +
+          '<button type="button" class="tf tf-partial" data-f="partial" aria-pressed="false">Catatan</button>' +
+          '<button type="button" class="tf tf-bug" data-f="bug" aria-pressed="false">Error</button>' +
+          '<button type="button" class="tf tf-todo" data-f="todo" aria-pressed="false">Belum</button>' +
+        '</div>' +
+        '<p class="toc-empty" id="tocEmpty" hidden>Tidak ada yang cocok.</p>' +
+      '</div>';
+    var TSTAT = { done: 'Selesai', partial: 'Catatan', bug: 'Error', todo: 'Belum' };
+    var CHEV = '<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 
-    MODULES.forEach(function (mod, idx) {
-      var src = document.getElementById(mod.srcId);
-      var md = src ? src.textContent : '';
-      if (!md || !md.trim() || md.trim().charAt(0) === '@') {
-        tocHtml += '<div class="toc-group"><p class="toc-group-head"><span class="dot"></span>' +
-          escHtml(mod.group) + '</p><p class="toc-note">Sumber markdown belum tersedia.</p></div>';
-        return;
-      }
-      var r = render(md, mod.id);
-      if (idx > 0) main.insertAdjacentHTML('beforeend', '<div class="mod-divider"></div>');
+    var docSrc = document.getElementById('src-doc');
+    var rawMd = docSrc ? docSrc.textContent : '';
+    var blocks = (rawMd && rawMd.trim() && rawMd.trim().charAt(0) !== '@') ? splitDoc(rawMd) : [];
+    // blocks[0] = judul + intro halaman (intro statis di HTML sudah cukup) — blocks[1..] = "bagian".
+    var groups = blocks.slice(1);
+
+    if (!groups.length) {
+      tocHtml += '<div class="toc-group"><p class="toc-group-head"><span class="dot"></span>Dokumen</p>' +
+        '<p class="toc-note">Sumber markdown belum tersedia.</p></div>';
+    }
+
+    groups.forEach(function (blk, gi) {
+      var gid = slugify(blk.title);
+      var secOrd = gi + 1;
+      var r = render(blk.body, gid, secOrd);
+      main.insertAdjacentHTML('beforeend',
+        '<div class="mod-divider"></div>' +
+        '<header class="mod-title" id="mod-' + gid + '"><p class="eyebrow">Bagian ' + secOrd +
+        '</p><h1>' + secOrd + '. ' + inlineMd(blk.title) + '</h1></header>');
       main.insertAdjacentHTML('beforeend', r.html);
 
-      var TSTAT = { done: 'Selesai', partial: 'Catatan', bug: 'Error', todo: 'Belum' };
       var kinds = r.toc.map(function (t) { return t.status; }).filter(Boolean);
-      // Prioritas agregat grup: error > catatan > belum > selesai
-      var agg = kinds.indexOf('bug') >= 0 ? 'bug'
-        : kinds.indexOf('partial') >= 0 ? 'partial'
-        : kinds.indexOf('todo') >= 0 ? 'todo'
-        : kinds.length ? 'done' : '';
-      var chev = '<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-      var gstat = agg ? '<span class="gstat tstat-' + agg + '">' + TSTAT[agg] + '</span>' : '';
+      // Badge bagian: satu pill per status non-selesai dengan jumlahnya ("2 Error", "1 Belum"),
+      // urutan error > belum > catatan. Kalau semua selesai → satu pill "Selesai" tanpa angka.
+      var counts = { bug: 0, todo: 0, partial: 0 };
+      kinds.forEach(function (k) { if (counts[k] != null) counts[k]++; });
+      var gstat = ['bug', 'todo', 'partial']
+        .filter(function (k) { return counts[k]; })
+        .map(function (k) { return '<span class="gstat tstat-' + k + '">' + counts[k] + ' ' + TSTAT[k] + '</span>'; })
+        .join('');
+      if (!gstat && kinds.length) gstat = '<span class="gstat tstat-done">' + TSTAT.done + '</span>';
 
       tocHtml += '<div class="toc-group collapsed">' +
         '<button type="button" class="toc-group-head" aria-expanded="false">' +
-        '<span class="dot"></span><span class="gname">' + escHtml(mod.group) + '</span>' +
-        gstat + chev + '</button>' +
+        '<span class="dot"></span><span class="gname">' + secOrd + '. ' + escHtml(blk.title) + '</span>' +
+        gstat + CHEV + '</button>' +
         '<ol>' + r.toc.map(function (it) {
           var s = splitNum(it.text);
-          var badge = it.status ? '<span class="tstat tstat-' + it.status + '">' + TSTAT[it.status] + '</span>' : '<span></span>';
-          return '<li class="lvl-' + it.level + '"><a href="#' + it.id + '">' +
+          var badge = it.status
+            ? '<span class="tstat tstat-' + it.status + '">' + TSTAT[it.status] + '</span>'
+            : '<span></span>';
+          return '<li class="lvl-' + it.level + '" data-status="' + (it.status || '') + '"' +
+            ' data-search="' + escAttr(it.search || (s.n + ' ' + s.label).toLowerCase()) + '">' +
+            '<a href="#' + it.id + '">' +
             '<span class="n">' + escHtml(s.n) + '</span>' +
             '<span class="tlabel">' + escHtml(s.label) + '</span>' + badge + '</a></li>';
         }).join('') + '</ol></div>';
@@ -739,6 +832,53 @@
       '<p class="toc-note">Modul Academy menyusul di dokumen ini.</p></div>';
 
     toc.innerHTML = tocHtml;
+
+    // ---------- pencarian + filter status daftar isi ----------
+    (function () {
+      var input = document.getElementById('tocSearch');
+      var filters = document.getElementById('tocFilters');
+      var emptyMsg = document.getElementById('tocEmpty');
+      var activeStatus = 'all';
+
+      function apply() {
+        var q = (input.value || '').trim().toLowerCase();
+        var anyShown = false;
+        Array.prototype.forEach.call(toc.querySelectorAll('.toc-group'), function (g) {
+          if (g.classList.contains('upcoming')) { g.hidden = !!(q || activeStatus !== 'all'); return; }
+          var items = g.querySelectorAll('li');
+          var groupHas = false;
+          Array.prototype.forEach.call(items, function (li) {
+            var okQ = !q || (li.getAttribute('data-search') || '').indexOf(q) >= 0;
+            var okS = activeStatus === 'all' || li.getAttribute('data-status') === activeStatus;
+            var show = okQ && okS;
+            li.hidden = !show;
+            if (show) groupHas = true;
+          });
+          g.hidden = !groupHas;
+          if (groupHas) {
+            anyShown = true;
+            // buka grup yang punya hasil saat sedang menyaring
+            if (q || activeStatus !== 'all') {
+              g.classList.remove('collapsed');
+              var h = g.querySelector('button.toc-group-head');
+              if (h) h.setAttribute('aria-expanded', 'true');
+            }
+          }
+        });
+        emptyMsg.hidden = anyShown;
+      }
+
+      input.addEventListener('input', apply);
+      filters.addEventListener('click', function (e) {
+        var b = e.target.closest('button.tf');
+        if (!b) return;
+        activeStatus = b.getAttribute('data-f');
+        Array.prototype.forEach.call(filters.querySelectorAll('button.tf'), function (x) {
+          x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+        });
+        apply();
+      });
+    })();
 
     // ---------- accordion (grup default tertutup) ----------
     toc.addEventListener('click', function (e) {
