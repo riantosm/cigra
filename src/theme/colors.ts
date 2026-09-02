@@ -24,6 +24,8 @@ export const colors = {
   // blue-tinted card shadow. Live on the Auth screens + Komandan/Home/Semua Peran groups.
   heading: '#1E293B',
   placeholder: '#94A3B8',
+  // Teks bantuan paling redup — mis. hint "pilih Lainnya untuk teks bebas" di bawah keterangan absen.
+  textFaint: '#B8C0CC',
   borderSoft: '#E7EDF9',
   chipSurface: '#EEF3FD',
   // Pemisah "•" / garis tipis di atas latar gradient (DESIGN_SYSTEM §1b).

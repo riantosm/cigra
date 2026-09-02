@@ -59,15 +59,14 @@ export interface MeWeaponAsset {
   assigned_at: string | null;
 }
 
-export type StnkStatus = 'active' | 'expiring_soon' | 'expired';
-
 export interface MeVehicleAsset {
   id: number;
   brand_model: string;
   plate_number: string | null;
-  stnk_valid_until: string | null;
-  stnk_status: StnkStatus | string;
-  stnk_status_label: string | null;
+  // Kategori kendaraan (mis. "roda_2" / "roda_4") — enum mentah.
+  category: string | null;
+  condition_status: string;
+  condition_label: string | null;
 }
 
 export interface MeAssets {

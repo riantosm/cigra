@@ -12,6 +12,8 @@ import MemberIdCard from '@/components/organisms/MemberIdCard';
 import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import QrIdentityModal from '@/components/organisms/QrIdentityModal';
 import AssetCard from '@/screens/Home/MemberHome/AssetCard';
+import AssetDetailSheet from '@/screens/Home/MemberHome/AssetDetailSheet';
+import type { AssetDetailSheetData } from '@/screens/Home/MemberHome/AssetDetailSheet';
 import NoticeRow from '@/screens/Home/MemberHome/NoticeRow';
 import ShortcutButton from '@/screens/Home/MemberHome/ShortcutButton';
 import StatusTile from '@/screens/Home/MemberHome/StatusTile';
@@ -77,8 +79,8 @@ type AssetCardData = {
   name: string;
   count: number;
   lines: { label: string; value: string }[];
-  badgeLabel: string;
-  badgeVariant: BadgeVariant;
+  badgeLabel?: string;
+  badgeVariant?: BadgeVariant;
 };
 
 const EMPTY_WEAPON_CARD: AssetCardData = {
@@ -107,11 +109,10 @@ function conditionVariant(status: string): BadgeVariant {
   return 'neutral';
 }
 
-function stnkVariant(status: string): BadgeVariant {
-  if (status === 'active') return 'primary';
-  if (status === 'expiring_soon') return 'warning';
-  if (status === 'expired') return 'danger';
-  return 'neutral';
+// Label kategori kendaraan yang enak dibaca ("roda_2" → "Roda 2").
+function vehicleCategoryLabel(category: string | null): string | null {
+  if (!category) return null;
+  return titleCase(category.replace(/_/g, ' '));
 }
 
 function toWeaponCard(assets: MeAssets | null): AssetCardData {
@@ -133,19 +134,76 @@ function toWeaponCard(assets: MeAssets | null): AssetCardData {
 function toVehicleCard(assets: MeAssets | null): AssetCardData {
   const vehicle = assets?.vehicles?.[0];
   if (!vehicle) return EMPTY_VEHICLE_CARD;
+  const categoryLabel = vehicleCategoryLabel(vehicle.category);
   return {
     category: 'Kendaraan',
     name: vehicle.brand_model,
     count: assets?.vehicles.length ?? 1,
     lines: [
       ...(vehicle.plate_number ? [{ label: 'No. Polisi', value: vehicle.plate_number }] : []),
-      ...(vehicle.stnk_valid_until
-        ? [{ label: 'STNK', value: `s/d ${formatDateShort(vehicle.stnk_valid_until)}` }]
-        : []),
+      ...(categoryLabel ? [{ label: 'Kategori', value: categoryLabel }] : []),
     ],
-    badgeLabel:
-      vehicle.stnk_status_label || titleCase(vehicle.stnk_status) || 'STNK -',
-    badgeVariant: stnkVariant(vehicle.stnk_status),
+    badgeLabel: vehicle.condition_label || titleCase(vehicle.condition_status) || 'Kondisi -',
+    badgeVariant: conditionVariant(vehicle.condition_status),
+  };
+}
+
+// Sheet detail "Aset Saya" — semua nilai dari array `GET /me/assets` yang sudah dimuat, tanpa fetch.
+// `null` kalau kategori itu kosong (kartu tidak bisa di-tap).
+function weaponSheetData(assets: MeAssets | null): AssetDetailSheetData | null {
+  const weapons = assets?.weapons ?? [];
+  if (weapons.length === 0) return null;
+  return {
+    icon: 'weapon',
+    title: weapons.length > 1 ? `Senjata Dinas (${weapons.length})` : 'Senjata Dinas',
+    groups: weapons.map(weapon => ({
+      name: weapon.category || weapon.weapon_number,
+      badgeLabel: weapon.condition_label || titleCase(weapon.condition_status) || 'Kondisi -',
+      badgeVariant: conditionVariant(weapon.condition_status),
+      rows: [
+        { icon: 'weapon' as const, label: 'No. Senjata', value: weapon.weapon_number },
+        ...(weapon.serial_number
+          ? [{ icon: 'id-card' as const, label: 'No. Seri', value: weapon.serial_number }]
+          : []),
+        ...(weapon.category
+          ? [{ icon: 'info' as const, label: 'Kategori', value: weapon.category }]
+          : []),
+        ...(weapon.assigned_at
+          ? [
+              {
+                icon: 'calendar' as const,
+                label: 'Ditugaskan sejak',
+                value: formatDateShort(weapon.assigned_at),
+              },
+            ]
+          : []),
+      ],
+    })),
+  };
+}
+
+function vehicleSheetData(assets: MeAssets | null): AssetDetailSheetData | null {
+  const vehicles = assets?.vehicles ?? [];
+  if (vehicles.length === 0) return null;
+  return {
+    icon: 'car',
+    title: vehicles.length > 1 ? `Kendaraan Dinas (${vehicles.length})` : 'Kendaraan Dinas',
+    groups: vehicles.map(vehicle => {
+      const categoryLabel = vehicleCategoryLabel(vehicle.category);
+      return {
+        name: vehicle.brand_model,
+        badgeLabel: vehicle.condition_label || titleCase(vehicle.condition_status) || 'Kondisi -',
+        badgeVariant: conditionVariant(vehicle.condition_status),
+        rows: [
+          ...(vehicle.plate_number
+            ? [{ icon: 'car' as const, label: 'No. Polisi', value: vehicle.plate_number }]
+            : []),
+          ...(categoryLabel
+            ? [{ icon: 'info' as const, label: 'Kategori', value: categoryLabel }]
+            : []),
+        ],
+      };
+    }),
   };
 }
 
@@ -173,6 +231,7 @@ export default function MemberHome(props: MemberHomeProps) {
   const bottomPadding = useTabScreenBottomPadding();
   const announcements = useAppSelector(state => state.announcements.items);
   const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
+  const [assetSheet, setAssetSheet] = useState<AssetDetailSheetData | null>(null);
   const [isQrModalVisible, setIsQrModalVisible] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
@@ -235,6 +294,8 @@ export default function MemberHome(props: MemberHomeProps) {
 
   const weaponCard = useMemo(() => toWeaponCard(assets), [assets]);
   const vehicleCard = useMemo(() => toVehicleCard(assets), [assets]);
+  const weaponSheet = useMemo(() => weaponSheetData(assets), [assets]);
+  const vehicleSheet = useMemo(() => vehicleSheetData(assets), [assets]);
 
   const statusTiles = useMemo(() => {
     const presence = status?.presence ?? null;
@@ -353,13 +414,13 @@ export default function MemberHome(props: MemberHomeProps) {
               icon="weapon"
               style={styles.assetCard}
               {...weaponCard}
-              onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
+              onPress={weaponSheet ? () => setAssetSheet(weaponSheet) : undefined}
             />
             <AssetCard
               icon="car"
               style={styles.assetCard}
               {...vehicleCard}
-              onPress={() => navigation.navigate(ROUTES.comingSoon, { title: 'Aset Saya' })}
+              onPress={vehicleSheet ? () => setAssetSheet(vehicleSheet) : undefined}
             />
           </View>
 
@@ -441,6 +502,8 @@ export default function MemberHome(props: MemberHomeProps) {
         subtitle={`NRP ${serviceNumber ?? '-'}`}
         onRequestClose={() => setIsQrModalVisible(false)}
       />
+
+      <AssetDetailSheet data={assetSheet} onClose={() => setAssetSheet(null)} />
 
       <MessageDetailSheet
         visible={selectedNotice !== null}

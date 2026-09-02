@@ -17,8 +17,9 @@ export interface AssetCardProps {
   // Nama aset menonjol, mis. "SS2-V1" / "Toyota Hilux Double Cabin".
   name: string;
   lines: { label: string; value: string }[];
-  badgeLabel: string;
-  badgeVariant: BadgeVariant;
+  // Badge opsional (mis. kondisi aset) — kartu tanpa data badge tidak menampilkannya.
+  badgeLabel?: string;
+  badgeVariant?: BadgeVariant;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }
@@ -40,7 +41,7 @@ export default function AssetCard(props: AssetCardProps) {
           <View style={styles.countPill}>
             <Text style={styles.countText}>{count}</Text>
           </View>
-          <Icon name="chevron-right" size={14} color={colors.placeholder} />
+          {onPress ? <Icon name="chevron-right" size={14} color={colors.placeholder} /> : null}
         </View>
       </View>
 
@@ -57,7 +58,9 @@ export default function AssetCard(props: AssetCardProps) {
         ))}
       </View>
 
-      <Badge label={badgeLabel} variant={badgeVariant} style={styles.badge} />
+      {badgeLabel ? (
+        <Badge label={badgeLabel} variant={badgeVariant} style={styles.badge} />
+      ) : null}
     </PressableScale>
   );
 }

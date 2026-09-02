@@ -179,22 +179,30 @@ export default function RollCallEntryScreen(props: Props) {
                   {reasons.length === 0 ? (
                     <Text style={styles.reasonEmpty}>Daftar keterangan belum tersedia.</Text>
                   ) : (
-                    <View style={styles.chipRow}>
-                      {reasons.map(reason => {
-                        const active = reason.id === reasonId;
-                        return (
-                          <PressableScale
-                            key={reason.id}
-                            scaleTo={0.96}
-                            onPress={() => setReasonId(reason.id)}
-                            contentStyle={[styles.reasonChip, active && styles.reasonChipActive]}>
-                            <Text style={[styles.reasonChipText, active && styles.reasonChipTextActive]}>
-                              {reason.name}
-                            </Text>
-                          </PressableScale>
-                        );
-                      })}
-                    </View>
+                    <>
+                      <View style={styles.chipRow}>
+                        {reasons.map(reason => {
+                          const active = reason.id === reasonId;
+                          return (
+                            <PressableScale
+                              key={reason.id}
+                              scaleTo={0.96}
+                              onPress={() => setReasonId(reason.id)}
+                              contentStyle={[styles.reasonChip, active && styles.reasonChipActive]}>
+                              <Text style={[styles.reasonChipText, active && styles.reasonChipTextActive]}>
+                                {reason.name}
+                              </Text>
+                            </PressableScale>
+                          );
+                        })}
+                      </View>
+                      {selectedReason?.description ? (
+                        <Text style={styles.reasonDescription}>{selectedReason.description}</Text>
+                      ) : null}
+                      <Text style={styles.reasonHint}>
+                        Memilih “Lainnya” memunculkan kolom teks keterangan bebas.
+                      </Text>
+                    </>
                   )}
 
                   {showNote ? (
@@ -320,6 +328,8 @@ const styles = StyleSheet.create({
   reasonChipText: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
   reasonChipTextActive: { color: colors.primary },
   reasonEmpty: { fontSize: 13, color: colors.textMuted },
+  reasonDescription: { fontSize: 12, lineHeight: 17, color: colors.placeholder, marginTop: 10 },
+  reasonHint: { fontSize: 11, lineHeight: 16, color: colors.textFaint, marginTop: 10 },
   noteBlock: { gap: 6, marginTop: 4 },
   noteLabel: { fontSize: 12, fontWeight: '500', color: colors.textMuted },
   noteInput: {
