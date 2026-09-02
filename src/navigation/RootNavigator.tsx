@@ -31,6 +31,12 @@ import NotificationsScreen from '@/screens/Notifications';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
 import PersonnelTrackingScreen from '@/screens/PersonnelTracking';
 import ProfileScreen from '@/screens/Profile';
+import RollCallCreateScreen from '@/screens/RollCallCreate';
+import RollCallDetailScreen from '@/screens/RollCallDetail';
+import RollCallEntryScreen from '@/screens/RollCallEntry';
+import RollCallListScreen from '@/screens/RollCallList';
+import RollCallScanScreen from '@/screens/RollCallScan';
+import RollCallSearchScreen from '@/screens/RollCallSearch';
 import SendAnnouncementScreen from '@/screens/SendAnnouncement';
 import SettingsScreen from '@/screens/Settings';
 import { getAuthToken, setAuthToken } from '@/services/api/axiosInstance';
@@ -136,6 +142,12 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.healthRecordInput} component={HealthRecordInputScreen} />
         <Stack.Screen name={ROUTES.healthRecordDetail} component={HealthRecordDetailScreen} />
         <Stack.Screen name={ROUTES.healthMyHistory} component={HealthMyHistoryScreen} />
+        <Stack.Screen name={ROUTES.rollCallList} component={RollCallListScreen} />
+        <Stack.Screen name={ROUTES.rollCallCreate} component={RollCallCreateScreen} />
+        <Stack.Screen name={ROUTES.rollCallDetail} component={RollCallDetailScreen} />
+        <Stack.Screen name={ROUTES.rollCallSearch} component={RollCallSearchScreen} />
+        <Stack.Screen name={ROUTES.rollCallScan} component={RollCallScanScreen} />
+        <Stack.Screen name={ROUTES.rollCallEntry} component={RollCallEntryScreen} />
       </Stack.Navigator>
     </>
   );

@@ -30,4 +30,10 @@ export const ROUTES = {
   healthRecordInput: 'HealthRecordInput',
   healthRecordDetail: 'HealthRecordDetail',
   healthMyHistory: 'HealthMyHistory',
+  rollCallList: 'RollCallList',
+  rollCallCreate: 'RollCallCreate',
+  rollCallDetail: 'RollCallDetail',
+  rollCallSearch: 'RollCallSearch',
+  rollCallScan: 'RollCallScan',
+  rollCallEntry: 'RollCallEntry',
 } as const;
