@@ -51,6 +51,7 @@ export type IconName =
   | 'layers'
   | 'globe'
   | 'lock'
+  | 'qr-code'
   | 'check';
 
 export interface IconProps {
@@ -129,6 +130,8 @@ const pathByName: Record<IconName, string> = {
   globe:
     'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20',
   lock: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z',
+  'qr-code':
+    'M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h2.5v2.5H14ZM17.5 17.5H20V20h-2.5ZM14 17.5V20M20 14v2.5',
   check: 'M5 13l4 4L19 7',
 };
 

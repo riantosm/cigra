@@ -107,8 +107,9 @@ function movementDetail(item: ActivityMovement): string {
   return joinFields(head, item.purpose, item.location_label);
 }
 
-// Jumlah quick action yang tampil langsung di grid Home (2 baris x 4, termasuk kartu "Lainnya" di
-// slot ke-8). Sisanya (Alarm Satuan, Buku Saku, Laporan Cepat) ada di bottom sheet "Lainnya".
+// Grid Home = 2 baris x 4 kartu: 7 quick action pertama + kartu "Lainnya" (bottom sheet berisi
+// sisanya). "Kekuatan Apel" (index 3, role instruktur apel saja) menggeser "Distribusi Senjata"
+// ke dalam sheet "Lainnya" saat tampil.
 const VISIBLE_QUICK_ACTION_COUNT = 7;
 
 export default function CommanderHome(props: CommanderHomeProps) {
@@ -170,7 +171,12 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const bottomPadding = useTabScreenBottomPadding();
 
-  // Urutan tetap: 4 direktori katalog dulu, lalu aksi lain.
+  // "Kekuatan Apel" hanya untuk user dengan role instruktur apel (backend juga menegakkan 403).
+  const canManageRollCall = (user?.roles ?? []).includes('instruktur_apel');
+
+  // Urutan grid (7 pertama tampil + kartu "Lainnya" untuk sisanya). "Kekuatan Apel" hanya
+  // disisipkan (slot ke-4) untuk role instruktur apel — saat tampil, "Distribusi Senjata"
+  // bergeser ke dalam sheet "Lainnya".
   const quickActions: QuickActionButtonProps[] = [
     {
       icon: 'profile',
@@ -185,9 +191,31 @@ export default function CommanderHome(props: CommanderHomeProps) {
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'persit' }),
     },
     {
+      icon: 'megaphone',
+      label: 'Kirim Pengumuman',
+      color: colors.warning,
+      onPress: () => navigation.navigate(ROUTES.sendAnnouncement),
+    },
+    ...(canManageRollCall
+      ? [
+          {
+            icon: 'clipboard-check' as const,
+            label: 'Kekuatan Apel',
+            color: colors.primary,
+            onPress: () => navigation.navigate(ROUTES.rollCallList),
+          },
+        ]
+      : []),
+    {
+      icon: 'map-pin',
+      label: 'Peta Personel',
+      color: colors.success,
+      onPress: () => navigation.navigate(ROUTES.personnelTracking),
+    },
+    {
       icon: 'car',
       label: 'Kendaraan',
-      color: colors.gradientHealthStart,
+      color: colors.gradientEntryStart,
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'vehicles' }),
     },
     {
@@ -199,20 +227,8 @@ export default function CommanderHome(props: CommanderHomeProps) {
     {
       icon: 'weapon',
       label: 'Distribusi Senjata',
-      color: colors.gradientEntryStart,
+      color: colors.gradientHealthStart,
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'weapon-assignments' }),
-    },
-    {
-      icon: 'map-pin',
-      label: 'Peta Personel',
-      color: colors.success,
-      onPress: () => navigation.navigate(ROUTES.personnelTracking),
-    },
-    {
-      icon: 'megaphone',
-      label: 'Kirim Pengumuman',
-      color: colors.warning,
-      onPress: () => navigation.navigate(ROUTES.sendAnnouncement),
     },
     {
       icon: 'emergency',
@@ -237,7 +253,10 @@ export default function CommanderHome(props: CommanderHomeProps) {
     ...quickActions.slice(0, VISIBLE_QUICK_ACTION_COUNT),
     { icon: 'grid', label: 'Lainnya', color: colors.primary, onPress: () => setIsQuickActionSheetVisible(true) },
   ];
-  const quickActionRows = [gridActions.slice(0, 4), gridActions.slice(4, 8)];
+  const quickActionRows: QuickActionButtonProps[][] = [];
+  for (let i = 0; i < gridActions.length; i += 4) {
+    quickActionRows.push(gridActions.slice(i, i + 4));
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -272,6 +291,9 @@ export default function CommanderHome(props: CommanderHomeProps) {
                     onPress={action.onPress}
                     style={styles.quickActionCell}
                   />
+                ))}
+                {Array.from({ length: 4 - row.length }).map((_, spacerIndex) => (
+                  <View key={`spacer-${spacerIndex}`} style={styles.quickActionCell} />
                 ))}
               </View>
             ))}

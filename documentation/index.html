@@ -760,6 +760,109 @@ Semua layar di bawah belum ada endpoint.
 **Payload:** `{ type, title, body, location: { latitude, longitude, accuracy }, attachments: [] }`
 
 **Response `201`** — `data`: `{ id, type, title, status: "submitted", reported_by, created_at }`
+
+---
+
+## 6. Kekuatan Apel
+
+> [!DONE] Fitur roll-call/apel. Entry point: quick action "Kekuatan Apel" di Home Komandan — **hanya
+> tampil untuk user dengan role `instruktur_apel`** (backend juga menegakkan izinnya) → daftar sesi.
+> Semua endpoint di bawah sudah diintegrasikan (`services/api/rollCall.service.ts`,
+> `types/rollCall.types.ts`, 6 layar `RollCall*`) & diuji di device (input Hadir & Tidak Hadir + Tutup
+> Sesi jalan). `{session}` = id numerik sesi. Alur input: Detail → Input Absen (Hadir / Tidak Hadir) →
+> **langsung** ke layar Cari Personel (Scan QR lewat ikon di header layar itu; `react-native-vision-camera`,
+> minta izin kamera, kalau ditolak permanen muncul popup ke Pengaturan).
+>
+> **Catatan data:** pada sebagian sesi uji, `recap.present` tidak konsisten dengan panjang array `present[]`
+> di response detail (mis. recap present 7 tapi `present: []`). FE menampilkan apa adanya dari masing-masing
+> field — perlu backend menyamakan `recap` dengan isi array.
+
+### 6.1 Daftar Sesi Apel
+
+`GET /roll-calls` — paginated (Laravel paginator di dalam `data`).
+
+**Query:** `page`, `per_page`
+
+**Response `200`:**
+```json
+{ "success": true, "data": {
+  "current_page": 1,
+  "data": [ { "id": 1, "tenant_id": 1, "date": "2026-08-28", "time": "07:00:00",
+    "name": "Apel Pagi Satuan", "status": "open", "created_by": 2, "closed_by": null,
+    "closed_at": null, "created_at": "...", "updated_at": "...",
+    "recap": { "total": 41, "present": 0, "absent": 2, "unmarked": 39, "percentage": 0 } } ],
+  "total": 1
+} }
+```
+FE menormalkan jadi `{ items, meta: { current_page, last_page, per_page, total } }` — `last_page`/`per_page`
+dihitung sendiri kalau backend tidak mengirimnya. Sejak 2026-09-02 tiap item punya `recap` (bentuk sama
+seperti 6.3) — dipakai kartu daftar untuk menampilkan "N hadir · N tidak hadir · N belum" tanpa buka detail
+(FE menganggapnya opsional).
+
+### 6.2 Buka Sesi Apel Baru
+
+> [!BUG] Diuji di device 2026-09-02: `POST /roll-calls` mengembalikan **500 "Server Error"** untuk
+> payload yang sesuai kontrak (`{date:"2026-09-03","time":"07:00","name":"Apel Pagi Satuan"}`). FE
+> sudah benar & menampilkan modal error; menunggu perbaikan backend. `GET /roll-calls` sudah jalan
+> (mengembalikan list kosong).
+
+`POST /roll-calls`
+
+**Payload:** `{ "date": "2026-08-28", "time": "13:30", "name": "Apel Siang Satuan" }` — `date` = `YYYY-MM-DD`
+(wajib), `time` = `HH:MM` (wajib), `name` opsional.
+
+**Response `200/201`** — `data`: objek sesi (bentuk = 6.1) dengan `status: "open"`.
+
+### 6.3 Detail & Rekap Sesi
+
+`GET /roll-calls/{session}`
+
+**Response `200`:**
+```json
+{ "success": true, "data": {
+  "session": { "id": 1, "tenant_id": 1, "date": "2026-08-28", "time": "07:00:00", "name": "Apel Pagi Satuan", "status": "open" },
+  "recap": { "total": 120, "present": 115, "absent": 3, "unmarked": 2, "percentage": 95.8 },
+  "breakdown": [ { "name": "Sakit", "count": 2 } ],
+  "present": [ { "id": 10, "personnel_id": 45, "status": "present", "personnel": { "id": 45, "full_name": "Andi Pratama", "service_number": "123456" } } ],
+  "absent": [ { "id": 11, "personnel_id": 46, "status": "absent", "absence_reason_id": 2, "note": "Sakit flu berat", "absence_reason": { "id": 2, "name": "Sakit" }, "personnel": { "id": 46, "full_name": "Budi Santoso", "service_number": "123457" } } ],
+  "unmarked": [ { "id": 47, "full_name": "Candra Wijaya", "service_number": "123458" } ]
+} }
+```
+`unmarked[]` = objek Personnel langsung (`id` = personnel_id), bukan objek entry.
+
+### 6.4 Input Kehadiran Anggota
+
+`POST /roll-calls/{session}/entries`
+
+**Payload:**
+| Field | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `personnel_id` | integer | Ya | ID internal Personnel |
+| `status` | string | Ya | `present` atau `absent` |
+| `absence_reason_id` | integer | Wajib jika `absent` | id dari 6.6 |
+| `note` | string | Tidak | catatan; FE mengisinya saat keterangan = "Lainnya" |
+
+**Response `200/201`** — `data`: `{ id, roll_call_session_id, personnel_id, status, absence_reason_id, note, input_by_user_id, updated_at }`
+
+### 6.5 Tutup Sesi Apel
+
+`POST /roll-calls/{session}/close` — mengunci sesi.
+
+**Response `200/201`** — `data`: `{ id, status: "closed", closed_by, closed_at }`
+
+### 6.6 Daftar Keterangan Absen
+
+`GET /roll-calls/absence-reasons`
+
+**Response `200`** — `data[]`: `{ id, name, description, sort_order }`. FE menampilkan tiap `name` sebagai chip;
+`name` yang mengandung "lain" (mis. "Lainnya") memunculkan kolom teks bebas → dikirim sebagai `note`.
+
+### 6.7 Smart Search Personnel
+
+`GET /roll-calls/personnel/search?q={keyword}` — cari anggota aktif dalam satuan (nama/NRP), real-time.
+
+**Response `200`** — `data[]`: `{ id, full_name, service_number }`. FE memakai `id` sebagai `personnel_id`
+saat input kehadiran / setelah scan QR (cocokkan `service_number` dengan payload QR).
 </script>
 <script type="text/markdown" id="src-anggota"># API Contract — Home Anggota
 
@@ -1180,7 +1283,7 @@ Legenda badge: **Sudah diintegrasikan** · **Ada catatan** · **Error backend** 
     var main = document.getElementById('main');
     var toc = document.getElementById('toc');
     var tocHtml = '<p class="toc-title">Daftar Isi</p>' +
-      '<p class="toc-checked">Pengecekan frontend terakhir<b>1 September 2026, 18.59 WIB</b></p>';
+      '<p class="toc-checked">Pengecekan frontend terakhir<b>2 September 2026, 09.30 WIB</b></p>';
 
     MODULES.forEach(function (mod, idx) {
       var src = document.getElementById(mod.srcId);

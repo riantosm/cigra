@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { ROUTES } from '@/navigation/paths';
-import type { HealthRecordDetail } from '@/types';
+import type { HealthRecordDetail, RollCallEntryStatus } from '@/types';
 
 export type CatalogResourceKey =
   | 'personnel'
@@ -43,6 +43,21 @@ export type RootStackParamList = {
   // ubah + pull-to-refresh (anggota tidak boleh mengedit / tidak bisa re-fetch endpoint itu).
   [ROUTES.healthRecordDetail]: { recordId: number; record?: HealthRecordDetail; readOnly?: boolean };
   [ROUTES.healthMyHistory]: undefined;
+  // --- Kekuatan Apel ---
+  [ROUTES.rollCallList]: undefined;
+  [ROUTES.rollCallCreate]: undefined;
+  [ROUTES.rollCallDetail]: { id: number };
+  // `status` menentukan alur setelah pilih personel: 'present' → langsung dicatat hadir,
+  // 'absent' → menuju form keterangan.
+  [ROUTES.rollCallSearch]: { sessionId: number; status: RollCallEntryStatus };
+  [ROUTES.rollCallScan]: { sessionId: number; status: RollCallEntryStatus };
+  [ROUTES.rollCallEntry]: {
+    sessionId: number;
+    personnelId: number;
+    personnelName: string;
+    serviceNumber?: string;
+    status: RollCallEntryStatus;
+  };
 };
 
 export type MainTabParamList = {
