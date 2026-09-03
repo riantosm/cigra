@@ -8,10 +8,11 @@ import { ROUTES } from '@/navigation/paths';
 import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
 import CustomTabBar from '@/navigation/CustomTabBar';
 import type { MainTabParamList } from '@/navigation/types';
+import StatusModal from '@/components/organisms/StatusModal';
+import AcademyScreen from '@/screens/Academy';
 import BukuSakuScreen from '@/screens/BukuSaku';
 import EmergencyScreen from '@/screens/Emergency';
 import HomeScreen from '@/screens/Home';
-import LainnyaScreen from '@/screens/Lainnya';
 import RiwayatScreen from '@/screens/Riwayat';
 import { colors } from '@/theme/colors';
 import { pressTransition } from '@/utils/motion';
@@ -28,6 +29,8 @@ export default function MainTabNavigator() {
   // Dialogs intercept touches for the whole screen while visible, blocking further taps on the
   // button underneath — a plain absolutely positioned, pointerEvents="none" view doesn't.)
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Tab "Academy" belum aktif — tap-nya memunculkan popup ini alih-alih pindah tab.
+  const [isAcademyComingSoon, setIsAcademyComingSoon] = useState(false);
 
   return (
     <View style={styles.root}>
@@ -35,12 +38,18 @@ export default function MainTabNavigator() {
         screenOptions={{ headerShown: false }}
         // react-navigation's documented `tabBar` render-prop — not a component defined during render.
         // eslint-disable-next-line react/no-unstable-nested-components
-        tabBar={props => <CustomTabBar {...props} onEmergencyToastChange={setToastMessage} />}>
+        tabBar={props => (
+          <CustomTabBar
+            {...props}
+            onEmergencyToastChange={setToastMessage}
+            onAcademyPress={() => setIsAcademyComingSoon(true)}
+          />
+        )}>
         <Tab.Screen name={ROUTES.home} component={HomeScreen} options={{ title: 'Home' }} />
         <Tab.Screen name={ROUTES.riwayat} component={RiwayatScreen} options={{ title: 'Riwayat' }} />
         <Tab.Screen name={ROUTES.emergency} component={EmergencyScreen} options={{ title: 'Emergency' }} />
         <Tab.Screen name={ROUTES.bukuSaku} component={BukuSakuScreen} options={{ title: 'Buku Saku' }} />
-        <Tab.Screen name={ROUTES.lainnya} component={LainnyaScreen} options={{ title: 'Lainnya' }} />
+        <Tab.Screen name={ROUTES.academy} component={AcademyScreen} options={{ title: 'Academy' }} />
       </Tab.Navigator>
 
       {toastMessage ? (
@@ -59,6 +68,16 @@ export default function MainTabNavigator() {
           </MotiView>
         </View>
       ) : null}
+
+      <StatusModal
+        visible={isAcademyComingSoon}
+        variant="success"
+        icon="clock"
+        title="Segera Hadir"
+        message="Fitur Academy sedang kami siapkan dan akan tersedia dalam waktu dekat."
+        primaryAction={{ label: 'Mengerti', onPress: () => setIsAcademyComingSoon(false) }}
+        onRequestClose={() => setIsAcademyComingSoon(false)}
+      />
     </View>
   );
 }

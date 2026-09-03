@@ -14,6 +14,7 @@ import ChangePasswordScreen from '@/screens/ChangePassword';
 import ActivityMovementsScreen from '@/screens/ActivityMovements';
 import AlarmSatuanScreen from '@/screens/AlarmSatuan';
 import AnnouncementsScreen from '@/screens/Announcements';
+import BukuSakuDetailScreen from '@/screens/BukuSakuDetail';
 import ComingSoonScreen from '@/screens/ComingSoon';
 import EmergencyContactsScreen from '@/screens/EmergencyContacts';
 import EmergencyDetailScreen from '@/screens/EmergencyDetail';
@@ -125,6 +126,7 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />
         <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
         <Stack.Screen name={ROUTES.comingSoon} component={ComingSoonScreen} />
+        <Stack.Screen name={ROUTES.bukuSakuDetail} component={BukuSakuDetailScreen} />
         <Stack.Screen name={ROUTES.personnelMap} component={PersonnelMapScreen} />
         <Stack.Screen name={ROUTES.personnelTracking} component={PersonnelTrackingScreen} />
         <Stack.Screen name={ROUTES.notifications} component={NotificationsScreen} />

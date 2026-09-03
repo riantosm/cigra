@@ -21,6 +21,7 @@ export type RootStackParamList = {
   [ROUTES.profile]: undefined;
   [ROUTES.settings]: undefined;
   [ROUTES.comingSoon]: { title: string };
+  [ROUTES.bukuSakuDetail]: { id: string };
   [ROUTES.personnelMap]: undefined;
   [ROUTES.personnelTracking]: undefined;
   [ROUTES.notifications]: undefined;
@@ -65,7 +66,7 @@ export type MainTabParamList = {
   [ROUTES.riwayat]: undefined;
   [ROUTES.emergency]: undefined;
   [ROUTES.bukuSaku]: undefined;
-  [ROUTES.lainnya]: undefined;
+  [ROUTES.academy]: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =

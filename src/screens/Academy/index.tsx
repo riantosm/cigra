@@ -14,16 +14,19 @@ import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
 
-type LainnyaNavigationProp = CompositeNavigationProp<
-  MainTabScreenProps<'Lainnya'>['navigation'],
+type AcademyNavigationProp = CompositeNavigationProp<
+  MainTabScreenProps<'Academy'>['navigation'],
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-export interface LainnyaScreenProps {
-  navigation: LainnyaNavigationProp;
+export interface AcademyScreenProps {
+  navigation: AcademyNavigationProp;
 }
 
-export default function LainnyaScreen(props: LainnyaScreenProps) {
+// Tab "Academy" belum bisa dibuka — CustomTabBar menahan tap-nya dan memunculkan popup
+// "Segera Hadir" (lihat MainTabNavigator), jadi layar ini praktis tidak pernah tampil.
+// Tetap dipertahankan sebagai komponen Tab.Screen + placeholder kalau nanti dibuka lagi.
+export default function AcademyScreen(props: AcademyScreenProps) {
   const { navigation } = props;
   const user = useAppSelector(state => state.auth.user);
   const bottomPadding = useTabScreenBottomPadding();
@@ -42,9 +45,9 @@ export default function LainnyaScreen(props: LainnyaScreenProps) {
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}>
           <EmptyState
-            icon="grid"
-            title="Lainnya"
-            message="Belum ada konten lainnya saat ini"
+            icon="academy"
+            title="Academy"
+            message="Fitur Academy segera hadir"
           />
         </MotiView>
       </View>

@@ -11,3 +11,4 @@ export * from './activity.types';
 export * from './announcement.types';
 export * from './notification.types';
 export * from './rollCall.types';
+export * from './bukuSaku.types';

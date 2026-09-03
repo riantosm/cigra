@@ -42,6 +42,7 @@ export type IconName =
   | 'clock'
   | 'bar-chart'
   | 'grid'
+  | 'academy'
   | 'search'
   | 'close'
   | 'filter'
@@ -52,6 +53,9 @@ export type IconName =
   | 'globe'
   | 'lock'
   | 'qr-code'
+  | 'paperclip'
+  | 'file'
+  | 'download'
   | 'check';
 
 export interface IconProps {
@@ -118,6 +122,7 @@ const pathByName: Record<IconName, string> = {
   clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 6v6l4 2',
   'bar-chart': 'M4 20V10M12 20V4M20 20v-7',
   grid: 'M4 4h7v7H4Z M13 4h7v7h-7Z M4 13h7v7H4Z M13 13h7v7h-7Z',
+  academy: 'M2 9l10-4 10 4-10 4L2 9ZM6 11v5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5M22 9v5',
   search: 'M3 11a8 8 0 1 0 16 0 8 8 0 1 0 -16 0 M21 21l-4.35-4.35',
   close: 'M18 6 6 18 M6 6l12 12',
   filter: 'M4 5h16M7 12h10M10 19h4',
@@ -132,6 +137,10 @@ const pathByName: Record<IconName, string> = {
   lock: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z',
   'qr-code':
     'M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h2.5v2.5H14ZM17.5 17.5H20V20h-2.5ZM14 17.5V20M20 14v2.5',
+  paperclip:
+    'm21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48',
+  file: 'M14 3v5h5M8 3h7l5 5v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z',
+  download: 'M12 4v11M7 11l5 5 5-5M5 20h14',
   check: 'M5 13l4 4L19 7',
 };
 

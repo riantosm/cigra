@@ -13,7 +13,7 @@ export type StatusModalVariant = 'success' | 'error';
 // Glyph di badge ikon. Default mengikuti `variant` (success → centang, error → segitiga).
 // `download` dipakai layar cek versi (AppVersionGate) supaya modal "Update" tetap bertema
 // primary/biru tapi ikonnya tetap bermakna "unduh pembaruan", bukan centang "selesai".
-export type StatusModalIcon = StatusModalVariant | 'download';
+export type StatusModalIcon = StatusModalVariant | 'download' | 'clock';
 
 export interface StatusModalAction {
   label: string;
@@ -54,6 +54,7 @@ const glyphByIcon: Record<StatusModalIcon, { d: string; strokeWidth: number }> =
   success: { d: 'M5 13l4 4L19 7', strokeWidth: 2.4 },
   error: { d: 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z M12 9v4M12 17h.01', strokeWidth: 2 },
   download: { d: 'M12 3v11M7 10l5 5 5-5M5 20h14', strokeWidth: 2 },
+  clock: { d: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 6v6l4 2', strokeWidth: 2 },
 };
 
 // Popup konfirmasi / hasil aksi (DESIGN_SYSTEM §5.15) — dipakai untuk SEMUA feedback aksi

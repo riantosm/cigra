@@ -97,4 +97,13 @@ export const colors = {
   // blue wash + border than `primarySurface`, which is reserved for chips/badges.
   notifUnreadSurface: '#EEF4FF',
   notifUnreadBorder: '#BFD3FB',
+  // Sky-tinted chip (Buku Saku kategori "Operasional") — sits alongside the primary/warning/danger
+  // chip washes for the other categories.
+  skySurface: '#E0F2FE',
+  skyText: '#0284C7',
+  // Buku Saku detail — baris lampiran (latar sangat pucat kebiruan) + pill "Unduh"
+  // (isian & garis biru transparan).
+  attachmentRowSurface: '#F6F8FE',
+  primaryTintSurface: 'rgba(37, 99, 235, 0.08)',
+  primaryTintBorder: 'rgba(37, 99, 235, 0.16)',
 } as const;

@@ -16,20 +16,23 @@ const iconByRoute: Partial<Record<string, IconName>> = {
   [ROUTES.home]: 'home',
   [ROUTES.riwayat]: 'history',
   [ROUTES.bukuSaku]: 'handbook',
-  [ROUTES.lainnya]: 'grid',
+  [ROUTES.academy]: 'academy',
 };
 
 export interface CustomTabBarProps extends BottomTabBarProps {
   // Pesan "ketuk N kali lagi" dari EmergencyTabButton — di-render sebagai sibling di MainTabNavigator
   // (bukan di dalam tab bar) supaya lebar teksnya tidak terjepit slot tab. Lihat MainTabNavigator.
   onEmergencyToastChange: (message: string | null) => void;
+  // Tab "Academy" belum aktif — tap-nya tidak menavigasi, hanya memunculkan popup "Segera Hadir"
+  // yang di-render oleh MainTabNavigator.
+  onAcademyPress: () => void;
 }
 
 // Tab bar bawah kustom (DESIGN_SYSTEM.md §5.10) — menggantikan tab bar bawaan react-navigation
 // supaya item aktif benar-benar berupa pill gradient primary dan tombol Emergency di tengah
 // berupa lingkaran gradient danger yang terangkat, persis artboard.
 export default function CustomTabBar(props: CustomTabBarProps) {
-  const { state, navigation, descriptors, onEmergencyToastChange } = props;
+  const { state, navigation, descriptors, onEmergencyToastChange, onAcademyPress } = props;
   const insets = useSafeAreaInsets();
 
   return (
@@ -57,7 +60,15 @@ export default function CustomTabBar(props: CustomTabBarProps) {
 
         function onPress() {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!focused && !event.defaultPrevented) {
+          if (event.defaultPrevented) {
+            return;
+          }
+          // Academy belum aktif — jangan pindah tab, cukup munculkan popup "Segera Hadir".
+          if (route.name === ROUTES.academy) {
+            onAcademyPress();
+            return;
+          }
+          if (!focused) {
             navigation.navigate(route.name);
           }
         }
