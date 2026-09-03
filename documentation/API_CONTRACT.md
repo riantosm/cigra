@@ -2036,18 +2036,6 @@ Catatan: backend kirim objek Personnel penuh; FE hanya baca `id` (dipakai sebaga
 }
 ```
 
-### 9.3 Layar Dummy Lainnya
-
-> [!TODO] Belum ada endpoint — daftar usulan.
-
-| Layar | Usulan endpoint |
-|---|---|
-| Jadwal Piket | `GET /duty-roster?week=` |
-| Cuti & Izin | `GET /leaves?status=` + `POST /leaves` |
-| Statistik Unit | `GET /dashboard/stats?range=` |
-| Riwayat (tab) | agregat `/activities/movements` + `/leaves` + `/quick-reports` milik user login |
-| Lainnya (tab) | menu statis di client — tanpa API |
-
 ---
 
 # Anggota
