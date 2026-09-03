@@ -23,6 +23,9 @@ export const colors = {
   // --- "Canvas theme" tokens (DESIGN_SYSTEM.md §1b) — near-white page ground, soft borders,
   // blue-tinted card shadow. Live on the Auth screens + Komandan/Home/Semua Peran groups.
   heading: '#1E293B',
+  // Teks isi paragraf/butir yang lebih tegas dari `textMuted` tapi tidak sekelam `text`
+  // (mis. butir catatan rilis di StatusModal). Slate-700.
+  textBody: '#334155',
   placeholder: '#94A3B8',
   // Teks bantuan paling redup — mis. hint "pilih Lainnya untuk teks bebas" di bawah keterangan absen.
   textFaint: '#B8C0CC',

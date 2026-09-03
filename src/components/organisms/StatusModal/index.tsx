@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
@@ -7,6 +7,7 @@ import PressableScale from '@/components/atoms/PressableScale';
 import type { ButtonVariant } from '@/components/atoms/Button';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
+import { parseReleaseNotes } from '@/utils/releaseNotes';
 
 export type StatusModalVariant = 'success' | 'error';
 
@@ -28,6 +29,12 @@ export interface StatusModalProps {
   icon?: StatusModalIcon;
   title: string;
   message: string;
+  /**
+   * Teks panjang tambahan (mis. `release_notes` dari GET /app-version) — dirender rata-kiri di
+   * dalam blok yang bisa di-scroll (maks. tinggi terbatas) di bawah `message`, dengan heading &
+   * bullet dari `parseReleaseNotes`. Tombol aksi tetap kelihatan seberapa pun panjang teksnya.
+   */
+  details?: string;
   primaryAction: StatusModalAction;
   secondaryAction?: StatusModalAction;
   onRequestClose: () => void;
@@ -61,8 +68,9 @@ const glyphByIcon: Record<StatusModalIcon, { d: string; strokeWidth: number }> =
 // (sukses/gagal) & konfirmasi destruktif, bukan `Alert.alert`. Artboard: "Emergency Popup"
 // (success, 1 tombol) & "Settings Popup" (error, 2 tombol).
 export default function StatusModal(props: StatusModalProps) {
-  const { visible, variant, icon, title, message, primaryAction, secondaryAction, onRequestClose } =
+  const { visible, variant, icon, title, message, details, primaryAction, secondaryAction, onRequestClose } =
     props;
+  const detailBlocks = details ? parseReleaseNotes(details) : [];
   const accent = accentByVariant[variant];
   const [from, to] = gradientStops[variant];
   const glyph = glyphByIcon[icon ?? variant];
@@ -101,6 +109,38 @@ export default function StatusModal(props: StatusModalProps) {
 
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
+
+          {detailBlocks.length > 0 ? (
+            <ScrollView
+              style={styles.details}
+              contentContainerStyle={styles.detailsContent}
+              nestedScrollEnabled>
+              {detailBlocks.map((block, index) => {
+                if (block.kind === 'heading') {
+                  return (
+                    <Text
+                      key={index}
+                      style={[styles.detailHeading, index > 0 && styles.detailHeadingSpaced]}>
+                      {block.text}
+                    </Text>
+                  );
+                }
+                if (block.kind === 'bullet') {
+                  return (
+                    <View key={index} style={styles.detailBullet}>
+                      <View style={styles.detailDot} />
+                      <Text style={styles.detailBulletText}>{block.text}</Text>
+                    </View>
+                  );
+                }
+                return (
+                  <Text key={index} style={styles.detailText}>
+                    {block.text}
+                  </Text>
+                );
+              })}
+            </ScrollView>
+          ) : null}
 
           <View style={styles.actions}>
             {secondaryAction ? (
@@ -179,6 +219,49 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  details: {
+    width: '100%',
+    maxHeight: 200,
+    marginTop: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.attachmentRowSurface,
+  },
+  detailsContent: {
+    padding: 14,
+    gap: 8,
+  },
+  detailHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.heading,
+  },
+  detailHeadingSpaced: {
+    marginTop: 4,
+  },
+  detailText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 17,
+  },
+  detailBullet: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  detailDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 7,
+    backgroundColor: colors.primary,
+  },
+  detailBulletText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.textBody,
   },
   actions: {
     flexDirection: 'row',

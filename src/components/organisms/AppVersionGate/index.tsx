@@ -25,20 +25,17 @@ export default function AppVersionGate() {
     else recheck();
   };
 
-  const releaseNotes = info.release_notes?.trim();
+  const releaseNotes = info.release_notes?.trim() || undefined;
   const isRequired = status === 'required';
 
   const versionLabel = `versi ${info.latest_version}${
     typeof info.latest_build === 'number' ? ` (build ${info.latest_build})` : ''
   }`;
-  const message = [
-    isRequired
-      ? `Aplikasi yang terpasang sudah usang. Perbarui ke ${versionLabel} untuk melanjutkan.`
-      : `Pembaruan ${versionLabel} sudah tersedia.`,
-    releaseNotes,
-  ]
-    .filter(Boolean)
-    .join('\n\n');
+  // Kalimat wajib/disarankan saja di `message` (rata-tengah); `release_notes` dikirim lewat
+  // `details` supaya dirender rata-kiri + bisa di-scroll, bukan digabung jadi satu blok.
+  const message = isRequired
+    ? `Aplikasi yang terpasang sudah usang. Perbarui ke ${versionLabel} untuk melanjutkan.`
+    : `Pembaruan ${versionLabel} sudah tersedia.`;
 
   return (
     <StatusModal
@@ -47,6 +44,7 @@ export default function AppVersionGate() {
       icon="download"
       title={isRequired ? 'Update Wajib' : 'Update Tersedia'}
       message={message}
+      details={releaseNotes}
       onRequestClose={isRequired ? () => {} : dismissSuggested}
       primaryAction={{ label: 'Update', onPress: openUpdate }}
       secondaryAction={
