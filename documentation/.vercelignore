@@ -1,7 +1,12 @@
 # Build-only files — not part of the deployed static site.
-# index.html is the committed render of these; regenerate with regen-html.py.
+# index.html / changelog.html are the committed renders of these; regenerate with regen-html.py.
 _viewer.template.html
+_changelog.template.html
 regen-html.py
 STYLE_GUIDE.md
 LogoIcon.png
 LogoIcon-gray.png
+
+# release APKs auto-copied here by `assembleRelease` — never deploy the binaries
+*.apk
+output-metadata.json

@@ -84,7 +84,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 4
-        versionName "0.4"
+        versionName "0.4.0"
     }
     signingConfigs {
         debug {
@@ -111,6 +111,28 @@ android {
         variant.outputs.all { output ->
             outputFileName = "SmartBattalion-v${variant.versionName}(${variant.versionCode})-${variant.buildType.name}.apk"
         }
+    }
+}
+
+/**
+ * Setiap kali `assembleRelease` selesai, salin APK release ke folder `documentation/`
+ * di root repo (sebelah CHANGELOG.md). File .apk-nya di-gitignore (`documentation/*.apk`)
+ * dan tidak ikut ter-deploy ke Vercel (`documentation/.vercelignore`) — yang di-commit
+ * cukup documentation/CHANGELOG.md. Tulis entri rilis baru di file itu, lalu jalankan
+ * `python3 documentation/regen-html.py` untuk memperbarui changelog.html.
+ */
+def changelogDir = new File(rootProject.projectDir.parentFile, "documentation")
+
+tasks.register("copyReleaseApkToChangelog", Copy) {
+    from(layout.buildDirectory.dir("outputs/apk/release")) {
+        include "*.apk"
+    }
+    into changelogDir
+}
+
+tasks.configureEach { task ->
+    if (task.name == "assembleRelease") {
+        task.finalizedBy("copyReleaseApkToChangelog")
     }
 }
 

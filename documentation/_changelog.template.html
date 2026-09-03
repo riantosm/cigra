@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Changelog — Smart Battalion Apps</title>
+<link rel="icon" type="image/png" href="@@LOGO_GRAY@@">
+<link rel="apple-touch-icon" href="@@LOGO_GRAY@@">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root {
+    --ground: #F6F8FC;
+    --surface: #FFFFFF;
+    --surface-2: #FBFCFE;
+    --ink: #131A26;
+    --ink-soft: #3D4A5C;
+    --muted: #62718A;
+    --line: #E3E9F3;
+    --line-soft: #EDF1F8;
+    --accent: #2563EB;
+    --accent-ink: #1D4ED8;
+    --accent-wash: #EAF0FE;
+    --new-fg: #0C7A4E;   --new-bg: #E4F5EC;   --new-line: #BFE7D2;
+    --imp-fg: #1D4ED8;   --imp-bg: #EAF0FE;   --imp-line: #C9DBFB;
+    --fix-fg: #9A5B12;   --fix-bg: #FBEFD9;   --fix-line: #F0DCB8;
+    --code-bg: #F0F3FA;  --code-line: #E1E7F2; --code-ink: #35404F;
+    --shadow: 0 1px 2px rgba(19, 26, 38, .04), 0 6px 20px rgba(19, 26, 38, .05);
+  }
+  :root[data-theme="dark"] {
+    --ground: #0C111B;
+    --surface: #141B28;
+    --surface-2: #111825;
+    --ink: #E6EBF4;
+    --ink-soft: #B7C1D2;
+    --muted: #8593A9;
+    --line: #26303F;
+    --line-soft: #1E2733;
+    --accent: #5C9BFF;
+    --accent-ink: #8FB8FF;
+    --accent-wash: #17233A;
+    --new-fg: #62D3A0;   --new-bg: #123026;   --new-line: #1E4437;
+    --imp-fg: #7FB0FF;   --imp-bg: #17233A;   --imp-line: #274063;
+    --fix-fg: #E7B267;   --fix-bg: #33260F;   --fix-line: #4A3818;
+    --code-bg: #0E1522;  --code-line: #232E3D; --code-ink: #AEBACD;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 26px rgba(0, 0, 0, .32);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15.5px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px clamp(16px, 4vw, 40px);
+    background: color-mix(in srgb, var(--ground) 88%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-logo { width: 30px; height: 30px; flex: none; border-radius: 8px; display: block; object-fit: contain; }
+  .wordmark { display: flex; flex-direction: column; line-height: 1.25; }
+  .wordmark b { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+  .wordmark span {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  .spacer { flex: 1; }
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft);
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+  /* nav antar-halaman dokumentasi (API Contract / Changelog) — sama di kedua halaman */
+  .navlinks {
+    display: inline-flex; gap: 3px; padding: 3px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .navlinks a {
+    padding: 5px 13px; border-radius: 999px;
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap;
+  }
+  .navlinks a:hover { color: var(--ink); text-decoration: none; }
+  .navlinks a[aria-current="page"] { color: #fff; background: var(--accent); }
+  @media (max-width: 620px) { .navlinks a { padding: 5px 10px; font-size: 10px; } }
+
+  .shell { max-width: 900px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 120px; }
+
+  .intro { margin: 34px 0 8px; }
+  .intro .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px;
+  }
+  .intro-title { display: flex; align-items: center; gap: 12px; }
+  .intro-logo { width: 40px; height: 40px; flex: none; border-radius: 9px; object-fit: contain; }
+  .intro h1 {
+    font-size: clamp(1.7rem, 4vw, 2.15rem); font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.14; margin: 0;
+  }
+  .intro p { color: var(--ink-soft); max-width: 66ch; margin: 12px 0 0; }
+  .intro p code {
+    font-size: 0.86em; padding: 1.5px 5px; border-radius: 5px;
+    background: var(--code-bg); border: 1px solid var(--code-line); color: var(--code-ink);
+  }
+
+  .latest-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+    margin: 24px 0 8px; padding: 14px 18px; border-radius: 14px;
+    background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .latest-bar .lb-label {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  .latest-bar .lb-ver { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
+  .latest-bar .lb-apk {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  .btn-copy {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;
+  }
+  .btn-copy:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+  .btn-copy.ghost { background: var(--surface); color: var(--accent-ink); }
+  .btn-copy.ghost:hover { background: var(--accent-wash); }
+  .btn-copy.copied, .btn-copy.copied:hover { background: #15A34A; border-color: #15A34A; color: #fff; }
+  .btn-copy svg { width: 13px; height: 13px; }
+
+  .rel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 22px clamp(16px, 3vw, 28px); margin: 20px 0; box-shadow: var(--shadow);
+  }
+  .rel-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px;
+  }
+  .rel-head-l { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; }
+  .rel-head h2 {
+    font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; margin: 0;
+    scroll-margin-top: 76px;
+  }
+  .rel-head .rel-meta {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+  .rel-head .btn-copy { flex: none; }
+  .rel.unreleased { border-style: dashed; background: var(--surface-2); }
+
+  .rel-sec { margin-top: 18px; }
+  .rel-sec:first-of-type { margin-top: 14px; }
+  .rel-sec h3 {
+    display: inline-flex; align-items: center; gap: 7px; margin: 0 0 10px;
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .rel-sec.k-baru h3         { color: var(--new-fg); background: var(--new-bg); border: 1px solid var(--new-line); }
+  .rel-sec.k-ditingkatkan h3 { color: var(--imp-fg); background: var(--imp-bg); border: 1px solid var(--imp-line); }
+  .rel-sec.k-perbaikan h3    { color: var(--fix-fg); background: var(--fix-bg); border: 1px solid var(--fix-line); }
+  .rel-sec ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px; }
+  .rel-sec li { color: var(--ink-soft); }
+  .rel-sec li::marker { color: var(--muted); }
+  .rel-sec strong { color: var(--ink); font-weight: 600; }
+  .rel-sec em { font-style: italic; }
+  .rel-sec li code {
+    font-size: 0.84em; padding: 1px 5px; border-radius: 5px;
+    background: var(--code-bg); border: 1px solid var(--code-line); color: var(--code-ink);
+    overflow-wrap: anywhere;
+  }
+  .rel-empty { color: var(--muted); font-style: italic; margin: 10px 0 0; }
+
+  footer {
+    max-width: 900px; margin: 0 auto;
+    padding: 32px clamp(16px, 4vw, 40px) 64px;
+    border-top: 1px solid var(--line); color: var(--muted);
+    font-size: 12.5px; font-family: "IBM Plex Mono", monospace;
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <span class="brand">
+    <img class="brand-logo" src="@@LOGO@@" alt="Smart Battalion Apps" width="30" height="30">
+    <span class="wordmark">
+      <b>Smart Battalion</b>
+      <span>Dokumentasi</span>
+    </span>
+  </span>
+  <nav class="navlinks" aria-label="Navigasi dokumentasi">
+    <a href="./index.html">API Contract</a>
+    <a href="./changelog.html" aria-current="page">Changelog</a>
+  </nav>
+  <span class="spacer"></span>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti tema"><span id="themeLabel">Gelap</span></button>
+</header>
+
+<div class="shell">
+  <div class="intro">
+    <p class="eyebrow">Dokumentasi · Catatan rilis</p>
+    <h1 class="intro-title"><img class="intro-logo" src="@@LOGO@@" alt="" width="40" height="40">Changelog</h1>
+    <p id="introText"></p>
+  </div>
+  <main id="main"><!-- diisi oleh script --></main>
+</div>
+
+<footer>Changelog — Smart Battalion Apps &middot; dirender dari <code>documentation/CHANGELOG.md</code></footer>
+
+<script type="text/markdown" id="src-doc">@@DOC@@</script>
+<script>
+  var APK_NAME = "@@APK_NAME@@";
+
+  // ---------- theme toggle (default terang, sinkron dgn viewer API Contract) ----------
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeToggle'),
+        label = document.getElementById('themeLabel'), KEY = 'sb-contract-theme';
+    function apply(t) {
+      if (t === 'dark') root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme');
+      label.textContent = t === 'dark' ? 'Terang' : 'Gelap';
+    }
+    function current() { return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+    try { apply(localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light'); } catch (e) { apply('light'); }
+    btn.addEventListener('click', function () {
+      var next = current() === 'dark' ? 'light' : 'dark';
+      apply(next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+    });
+  })();
+
+  (function () {
+    function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function slugify(s) { return s.toLowerCase().replace(/[`*_()]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+
+    function applyEmphasis(escaped) {
+      return escaped
+        .replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[\s(])_([^_\s][^_]*?)_(?=$|[\s.,;:)])/g, '$1<em>$2</em>');
+    }
+    // inline markdown untuk tampilan: `code`, **tebal**, _miring_
+    function inlineMd(s) {
+      return s.split(/(`[^`]+`)/).map(function (p) {
+        if (p.charAt(0) === '`' && p.charAt(p.length - 1) === '`') return '<code>' + escHtml(p.slice(1, -1)) + '</code>';
+        return applyEmphasis(escHtml(p));
+      }).join('');
+    }
+    // teks polos untuk disalin: buang semua penanda markdown
+    function plain(s) {
+      return s.replace(/`([^`]+)`/g, '$1')
+        .replace(/\*\*([^*]+?)\*\*/g, '$1')
+        .replace(/(^|[\s(])_([^_\s][^_]*?)_(?=$|[\s.,;:)])/g, '$1$2');
+    }
+
+    var KIND = { 'baru': 'k-baru', 'ditingkatkan': 'k-ditingkatkan', 'perbaikan': 'k-perbaikan' };
+
+    // ---------- parse CHANGELOG.md ----------
+    var raw = document.getElementById('src-doc').textContent.replace(/\r\n?/g, '\n');
+    var lines = raw.split('\n');
+    var intro = [], releases = [], rel = null, sec = null, seenH1 = false, item = null;
+
+    function flushItem() {                       // selesaikan item daftar yang sedang dikumpulkan
+      if (item != null) {
+        if (rel && sec) sec.items.push(item.trim());
+        item = null;
+      }
+    }
+    function flushSec() { flushItem(); if (rel && sec) { rel.sections.push(sec); sec = null; } }
+    function flushRel() { flushSec(); if (rel) releases.push(rel); rel = null; }
+
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i], t = ln.trim();
+      var h1 = t.match(/^#\s+(.*)$/), h2 = t.match(/^##\s+(.*)$/), h3 = t.match(/^###\s+(.*)$/);
+      if (h1) { seenH1 = true; flushRel(); continue; }
+      if (h2) { flushRel(); rel = { title: h2[1].trim(), sections: [] }; continue; }
+      if (h3) { flushSec(); sec = { name: h3[1].trim(), items: [] }; continue; }
+      if (/^-{3,}$/.test(t)) { flushItem(); continue; }
+      var li = ln.match(/^\s*[-*]\s+(.*)$/);
+      if (li) { flushItem(); item = li[1]; continue; }
+      if (item != null && /^\s{2,}\S/.test(ln)) { item += ' ' + t; continue; }   // lanjutan item multi-baris
+      if (!t) { flushItem(); continue; }
+      if (!seenH1 || !rel) { intro.push(t); continue; }                          // paragraf intro halaman
+      // subjudul tanggal tepat di bawah "## <versi>" (mis. "_2 September 2026_")
+      if (rel && !sec && !rel.date) { var dm = t.match(/^_(.+?)_$/); if (dm && /\d/.test(dm[1])) { rel.date = dm[1].trim(); continue; } }
+      /* teks bebas lain di bawah judul rilis tanpa ### — diabaikan */
+    }
+    flushRel();
+
+    // intro halaman: paragraf pertama yang relevan dari CHANGELOG.md
+    document.getElementById('introText').innerHTML = inlineMd(
+      intro.filter(function (p) { return /dicatat di sini/i.test(p); })[0] || intro[0] || ''
+    );
+
+    function verLabel(title) {                   // "v0.4.0 (versionCode 4)" -> "v0.4.0"
+      var m = title.match(/^v?([0-9][0-9.]*)/i);
+      return m ? 'v' + m[1] : title;
+    }
+    function isUnreleased(title) { return /belum dirilis|unreleased/i.test(title); }
+
+    function copyTextFor(r) {
+      var out = ['SmartBattalion ' + verLabel(r.title) + (r.date ? ' — ' + r.date : ''), ''];
+      r.sections.forEach(function (s) {
+        var its = s.items.filter(Boolean);
+        if (!its.length) return;
+        out.push(s.name);
+        its.forEach(function (it) { out.push('- ' + plain(it)); });
+        out.push('');
+      });
+      return out.join('\n').trim() + '\n';
+    }
+
+    function copyToClipboard(text, done) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+          document.body.removeChild(ta); done();
+        } catch (e) { done(); }
+      }
+    }
+
+    var COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    var payloads = {};   // id -> teks salinan
+
+    function relHtml(r) {
+      var id = 'v-' + slugify(r.title);
+      var hasItems = r.sections.some(function (s) { return s.items.filter(Boolean).length; });
+      var unrel = isUnreleased(r.title);
+      payloads[id] = copyTextFor(r);
+      var h = '<article class="rel' + (unrel ? ' unreleased' : '') + '" id="' + id + '">';
+      h += '<div class="rel-head"><div class="rel-head-l"><h2>' + escHtml(r.title) + '</h2>' +
+        (r.date ? '<span class="rel-meta">' + escHtml(r.date) + '</span>' : '') + '</div>';
+      if (hasItems) h += '<button class="btn-copy ghost" type="button" data-copy="' + id + '">' + COPY_ICON + '<span>Salin</span></button>';
+      h += '</div>';
+      if (!hasItems) {
+        h += '<p class="rel-empty">Belum ada perubahan.</p>';
+      } else {
+        r.sections.forEach(function (s) {
+          var its = s.items.filter(Boolean);
+          if (!its.length) return;
+          var cls = KIND[s.name.toLowerCase()] || '';
+          h += '<div class="rel-sec ' + cls + '"><h3>' + escHtml(s.name) + '</h3><ul>' +
+            its.map(function (it) { return '<li>' + inlineMd(it) + '</li>'; }).join('') + '</ul></div>';
+        });
+      }
+      return h + '</article>';
+    }
+
+    var main = document.getElementById('main');
+    main.innerHTML = releases.map(relHtml).join('');
+
+    // ---------- bar "rilis terbaru" ----------
+    var latest = releases.filter(function (r) {
+      return !isUnreleased(r.title) && r.sections.some(function (s) { return s.items.filter(Boolean).length; });
+    })[0];
+    if (latest) {
+      var lid = 'v-' + slugify(latest.title);
+      var bar = document.createElement('div');
+      bar.className = 'latest-bar';
+      bar.innerHTML =
+        '<span class="lb-label">Rilis terbaru</span>' +
+        '<span class="lb-ver">' + escHtml(verLabel(latest.title)) + '</span>' +
+        (APK_NAME && APK_NAME.charAt(0) !== '@' ? '<span class="lb-apk">' + escHtml(APK_NAME) + '</span>' : '') +
+        '<span class="spacer"></span>' +
+        '<button class="btn-copy" type="button" data-copy="' + lid + '">' + COPY_ICON + '<span>Salin catatan rilis</span></button>';
+      main.parentNode.insertBefore(bar, main);
+    }
+
+    // ---------- klik tombol = salin ----------
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('.btn-copy[data-copy]');
+      if (!btn) return;
+      var text = payloads[btn.getAttribute('data-copy')];
+      if (!text) return;
+      copyToClipboard(text, function () {
+        var span = btn.querySelector('span'), old = span ? span.textContent : '';
+        btn.classList.add('copied');
+        if (span) span.textContent = 'Tersalin';
+        setTimeout(function () { btn.classList.remove('copied'); if (span) span.textContent = old; }, 1500);
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

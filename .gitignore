@@ -73,6 +73,10 @@ yarn-error.log
 CLAUDE.md
 .claude
 
+# release APKs auto-copied into documentation/ by `assembleRelease` — keep the .md/.html, ignore the binaries
+documentation/*.apk
+documentation/output-metadata.json
+
 # Yarn
 .yarn/*
 !.yarn/patches
