@@ -1,235 +1,301 @@
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import GradientAvatar from '@/components/atoms/GradientAvatar';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import StatusModal from '@/components/organisms/StatusModal';
+import RichTextContent from '@/components/molecules/RichTextContent';
 import MainLayout from '@/components/templates/MainLayout';
-import { categoryMeta } from '@/screens/BukuSaku/categoryMeta';
-import { findBukuSakuGuide } from '@/data/bukuSakuGuides';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
+import { getHandbookArticleApi } from '@/services/api/handbook.service';
 import { colors } from '@/theme/colors';
-import { cardShadow } from '@/theme/shadows';
-import type { BukuSakuAttachment } from '@/types';
-import { formatDateShort } from '@/utils/format';
+import { tabBarShadow } from '@/theme/shadows';
+import type { HandbookArticleDetail } from '@/types';
+import { extractErrorMessage } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.bukuSakuDetail>;
 
-// Detail panduan Buku Saku — isinya hanya lampiran (tanpa badan artikel), sesuai revisi desain.
-// Data masih dummy; tombol "Unduh" belum benar-benar mengunduh (lihat StatusModal di bawah).
+// Detail Buku Saku — satu Bab dibaca sebagai E-Book: satu halaman/materi per layar, navigasi
+// next/back di antara `chapter.articles`. Isi tiap halaman diambil dari `GET /handbook/articles/{id}`.
+// Halaman `record_display` hanya menampilkan penanda (tampilan datanya belum ada di app).
 export default function BukuSakuDetailScreen(props: Props) {
   const { navigation, route } = props;
-  const guide = findBukuSakuGuide(route.params.id);
+  const { chapter, initialArticleId } = route.params;
 
-  const [downloadTarget, setDownloadTarget] = useState<BukuSakuAttachment | null>(null);
+  const pages = useMemo(
+    () => [...chapter.articles].sort((a, b) => a.page_number - b.page_number),
+    [chapter.articles],
+  );
 
-  if (!guide) {
+  const [index, setIndex] = useState(() => {
+    const found = pages.findIndex(p => p.id === initialArticleId);
+    return found >= 0 ? found : 0;
+  });
+
+  const current = pages[index];
+
+  const [article, setArticle] = useState<HandbookArticleDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+
+  const load = useCallback(async () => {
+    if (!current) return;
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const result = await getHandbookArticleApi(current.id);
+      setArticle(result);
+    } catch (error) {
+      setArticle(null);
+      setErrorMessage(extractErrorMessage(error, 'Gagal memuat halaman.'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [current]);
+
+  useEffect(() => {
+    load();
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [load]);
+
+  const goTo = (next: number) => {
+    if (next < 0 || next >= pages.length) return;
+    setIndex(next);
+  };
+
+  if (!current) {
     return (
-      <MainLayout title="Buku Saku" variant="canvas" onBack={() => navigation.goBack()}>
-        <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Panduan tidak ditemukan.</Text>
+      <MainLayout title={chapter.title} variant="canvas" onBack={() => navigation.goBack()}>
+        <View style={styles.centered}>
+          <Text style={styles.mutedText}>Bab ini belum memiliki halaman.</Text>
         </View>
       </MainLayout>
     );
   }
 
-  const meta = categoryMeta(guide.category);
-  const updatedLabel = formatDateShort(guide.updatedAt);
+  const hasPrev = index > 0;
+  const hasNext = index < pages.length - 1;
 
   return (
     <MainLayout
-      title={guide.title}
-      subtitle={`${guide.category} · ${guide.readMinutes} menit baca`}
+      title={chapter.title}
+      subtitle={`Halaman ${index + 1} dari ${pages.length}`}
       variant="canvas"
       onBack={() => navigation.goBack()}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.chips}>
-          <View style={[styles.chip, { backgroundColor: meta.surface }]}>
-            <Icon name={guide.icon} size={12} color={meta.content} />
-            <Text style={[styles.chipLabel, { color: meta.content }]}>{guide.category}</Text>
-          </View>
-          <View style={[styles.chip, { backgroundColor: colors.chipSurface }]}>
-            <Icon name="clock" size={12} color={colors.textMuted} />
-            <Text style={[styles.chipLabel, styles.chipLabelMuted]}>Diperbarui {updatedLabel}</Text>
-          </View>
-        </View>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}>
+        <Text style={styles.pageKicker}>HALAMAN {current.page_number}</Text>
+        <Text style={styles.title}>{article?.title ?? current.title}</Text>
+        <View style={styles.divider} />
 
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="paperclip" size={18} color={colors.primary} />
-            <Text style={styles.cardTitle}>Lampiran</Text>
+        {isLoading ? (
+          <ActivityIndicator style={styles.loader} color={colors.primary} />
+        ) : errorMessage ? (
+          <View style={styles.stateBox}>
+            <Icon name="info" size={22} color={colors.textMuted} />
+            <Text style={styles.mutedText}>{errorMessage}</Text>
+            <PressableScale contentStyle={styles.retryButton} onPress={load}>
+              <Icon name="refresh" size={14} color={colors.primary} />
+              <Text style={styles.retryLabel}>Coba lagi</Text>
+            </PressableScale>
           </View>
-
-          {guide.attachments.map(attachment => (
-            <View key={attachment.id} style={styles.attachment}>
-              <View style={styles.attachmentIcon}>
-                <Icon name="file" size={18} color={colors.primary} />
-              </View>
-              <View style={styles.attachmentBody}>
-                <Text style={styles.attachmentName} numberOfLines={1}>
-                  {attachment.fileName}
-                </Text>
-                <Text style={styles.attachmentMeta}>
-                  {attachment.fileType} • {attachment.fileSize}
-                </Text>
-              </View>
-              <PressableScale
-                scaleTo={0.94}
-                contentStyle={styles.downloadButton}
-                onPress={() => setDownloadTarget(attachment)}
-                accessibilityRole="button"
-                accessibilityLabel={`Unduh ${attachment.fileName}`}>
-                <Icon name="download" size={14} color={colors.primary} />
-                <Text style={styles.downloadLabel}>Unduh</Text>
-              </PressableScale>
+        ) : article?.type === 'record_display' ? (
+          <View style={styles.recordCard}>
+            <View style={styles.recordIcon}>
+              <Icon name="id-card" size={20} color={colors.primary} />
             </View>
-          ))}
-        </View>
-
-        <View style={styles.author}>
-          <GradientAvatar
-            label={guide.authorName.charAt(0).toUpperCase()}
-            gradientStart={colors.gradientPrimaryStart}
-            gradientEnd={colors.gradientPrimaryEnd}
-            size={32}
-          />
-          <View style={styles.authorText}>
-            <Text style={styles.authorName}>Disusun oleh {guide.authorName}</Text>
-            <Text style={styles.authorMeta}>Terakhir diperbarui {updatedLabel}</Text>
+            <Text style={styles.recordTitle}>Rekam nilai prajurit</Text>
+            <Text style={styles.recordMeta}>
+              {article.record_type
+                ? `Jenis: ${article.record_type}`
+                : 'Halaman ini menampilkan data pribadi prajurit.'}
+            </Text>
+            <Text style={styles.recordNote}>
+              Tampilan data untuk halaman ini belum tersedia di aplikasi.
+            </Text>
           </View>
-        </View>
+        ) : article?.content ? (
+          <RichTextContent html={article.content} />
+        ) : (
+          <Text style={styles.mutedText}>Halaman ini belum memiliki isi.</Text>
+        )}
       </ScrollView>
 
-      <StatusModal
-        visible={downloadTarget !== null}
-        variant="success"
-        icon="download"
-        title="Segera Hadir"
-        message={
-          downloadTarget
-            ? `Unduhan "${downloadTarget.fileName}" akan tersedia setelah Buku Saku terhubung ke server.`
-            : ''
-        }
-        primaryAction={{ label: 'Mengerti', onPress: () => setDownloadTarget(null) }}
-        onRequestClose={() => setDownloadTarget(null)}
-      />
+      <View style={styles.footer}>
+        <PressableScale
+          scaleTo={0.96}
+          style={styles.navSlot}
+          contentStyle={[styles.navButton, styles.navButtonGhost, !hasPrev && styles.navDisabled]}
+          disabled={!hasPrev}
+          onPress={() => goTo(index - 1)}>
+          <Icon
+            name="arrow-left"
+            size={16}
+            color={hasPrev ? colors.primary : colors.placeholder}
+          />
+          <Text style={[styles.navLabel, styles.navLabelGhost, !hasPrev && styles.navLabelDisabled]}>
+            Sebelumnya
+          </Text>
+        </PressableScale>
+
+        <PressableScale
+          scaleTo={0.96}
+          style={styles.navSlot}
+          contentStyle={[styles.navButton, styles.navButtonPrimary, !hasNext && styles.navDisabled]}
+          disabled={!hasNext}
+          onPress={() => goTo(index + 1)}>
+          <Text style={[styles.navLabel, styles.navLabelPrimary]}>Selanjutnya</Text>
+          <Icon name="chevron-right" size={16} color={colors.primaryForeground} />
+        </PressableScale>
+      </View>
     </MainLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 20, paddingBottom: 48 },
-  notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  notFoundText: { fontSize: 14, color: colors.textMuted },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
+  scroll: {
+    flex: 1,
   },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 11,
-    borderRadius: 999,
+  content: {
+    padding: 20,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
-  chipLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  chipLabelMuted: {
-    color: colors.textMuted,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-    ...cardShadow,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.heading,
-  },
-  attachment: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.attachmentRowSurface,
-  },
-  attachmentIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  centered: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.chipSurface,
+    padding: 24,
   },
-  attachmentBody: {
-    flex: 1,
-    gap: 2,
+  loader: {
+    marginTop: 40,
   },
-  attachmentName: {
-    fontSize: 13,
-    fontWeight: '600',
+  pageKicker: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    color: colors.primary,
+    marginBottom: 6,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
     color: colors.heading,
+    lineHeight: 27,
   },
-  attachmentMeta: {
-    fontSize: 12,
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderSoft,
+    marginTop: 14,
+    marginBottom: 16,
+  },
+  mutedText: {
+    fontSize: 14,
     color: colors.textMuted,
+    textAlign: 'center',
   },
-  downloadButton: {
+  stateBox: {
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 32,
+  },
+  retryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 999,
     borderWidth: 1,
-    backgroundColor: colors.primaryTintSurface,
     borderColor: colors.primaryTintBorder,
+    backgroundColor: colors.primaryTintSurface,
   },
-  downloadLabel: {
+  retryLabel: {
     fontSize: 13,
     fontWeight: '600',
     color: colors.primary,
   },
-  author: {
-    flexDirection: 'row',
+  recordCard: {
     alignItems: 'center',
-    gap: 10,
-    marginTop: 16,
-    paddingHorizontal: 4,
+    gap: 6,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
   },
-  authorText: {
-    flex: 1,
-    gap: 2,
+  recordIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.chipSurface,
+    marginBottom: 4,
   },
-  authorName: {
-    fontSize: 12,
-    fontWeight: '600',
+  recordTitle: {
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.heading,
   },
-  authorMeta: {
-    fontSize: 11,
-    color: colors.textFaint,
+  recordMeta: {
+    fontSize: 13,
+    color: colors.textBody,
+    textAlign: 'center',
+  },
+  recordNote: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    backgroundColor: colors.floatingSurface,
+    ...tabBarShadow,
+  },
+  navSlot: {
+    flex: 1,
+  },
+  navButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 999,
+  },
+  navButtonGhost: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  navButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  navDisabled: {
+    opacity: 0.45,
+  },
+  navLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  navLabelGhost: {
+    color: colors.primary,
+  },
+  navLabelPrimary: {
+    color: colors.primaryForeground,
+  },
+  navLabelDisabled: {
+    color: colors.placeholder,
   },
 });

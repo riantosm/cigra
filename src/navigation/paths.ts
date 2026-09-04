@@ -22,6 +22,7 @@ export const ROUTES = {
   emergencyContacts: 'EmergencyContacts',
   announcements: 'Announcements',
   myMovements: 'MyMovements',
+  meFamilyDetail: 'MeFamilyDetail',
   activityMovements: 'ActivityMovements',
   sendAnnouncement: 'SendAnnouncement',
   alarmSatuan: 'AlarmSatuan',

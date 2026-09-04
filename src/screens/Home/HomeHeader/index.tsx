@@ -10,7 +10,7 @@ import { colors } from '@/theme/colors';
 import { headerShadow, smallButtonShadow } from '@/theme/shadows';
 import type { AuthUser } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
-import { titleCase } from '@/utils/format';
+import { cleanValue, titleCase } from '@/utils/format';
 
 export interface HomeHeaderProps {
   user: AuthUser | null;
@@ -32,8 +32,10 @@ export default function HomeHeader(props: HomeHeaderProps) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const unreadCount = useAppSelector(state => state.notifications.unreadTotal);
   const personnel = user?.personnel;
-  const displayName = personnel ? [personnel.rank, personnel.full_name].filter(Boolean).join(' ') : (user?.name ?? '-');
-  const unitLabel = personnel?.current_assignment?.unit ?? '-';
+  const displayName = personnel
+    ? [cleanValue(personnel.rank), cleanValue(personnel.full_name)].filter(Boolean).join(' ') || (user?.name ?? '-')
+    : (user?.name ?? '-');
+  const unitLabel = cleanValue(personnel?.current_assignment?.unit) ?? '-';
   const roleLabel = titleCase(user?.roles?.[0]) ?? 'Prajurit';
   const photoPath = personnel?.photo;
 

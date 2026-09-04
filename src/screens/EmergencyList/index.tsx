@@ -188,7 +188,7 @@ export default function EmergencyListScreen(props: Props) {
                 <View style={styles.detailRow}>
                   <Icon name="clock" size={14} color={colors.textMuted} />
                   <Text style={styles.detailText} numberOfLines={1}>
-                    {formatRelativeTime(item.created_at) ?? '-'} · {formatDateTime(item.created_at) ?? '-'}
+                    {joinFields(formatRelativeTime(item.created_at), formatDateTime(item.created_at)) || '-'}
                   </Text>
                 </View>
 

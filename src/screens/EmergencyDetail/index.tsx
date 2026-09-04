@@ -40,6 +40,15 @@ const emergencyStatusBadgeVariant: Record<string, BadgeVariant> = {
   resolved: 'success',
 };
 
+// "12 Sep 2026, 09.00 (3 jam lalu)" — tapi kalau waktu absolut tidak ada tampilkan '-', dan
+// kalau relatifnya tidak ada jangan tampilkan tanda kurung kosong.
+function formatWaktu(iso: string | null | undefined): string {
+  const absolute = formatDateTime(iso);
+  if (!absolute) return '-';
+  const relative = formatRelativeTime(iso);
+  return relative ? `${absolute} (${relative})` : absolute;
+}
+
 function handledByName(handledBy: PanicButtonDetail['handled_by']): string | null {
   if (!handledBy) return null;
   return typeof handledBy === 'string' ? handledBy : handledBy.name;
@@ -185,7 +194,7 @@ export default function EmergencyDetailScreen(props: Props) {
           </Card>
 
           <Card style={styles.card}>
-            <InfoRow icon="clock" label="Waktu" value={`${formatDateTime(detail.created_at) ?? '-'} (${formatRelativeTime(detail.created_at) ?? '-'})`} />
+            <InfoRow icon="clock" label="Waktu" value={formatWaktu(detail.created_at)} />
             {hasCoords ? (
               <InfoRow
                 icon="map-pin"

@@ -12,13 +12,12 @@ export interface StellingAlarmActivation {
   broadcast_status: StellingBroadcastStatus;
 }
 
-// GET /stelling-alarms — daftar kode alarm yang tersedia (referensi + warna + audio).
+// GET /stelling-alarms — daftar kode alarm yang tersedia (referensi + audio).
 export interface StellingAlarmCode {
   id: number;
   code: string;
   name: string;
   condition: string;
-  color: string;
   is_active: boolean;
   audio_url: string | null;
 }

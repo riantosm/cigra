@@ -3,6 +3,8 @@ import type {
   ApiResponse,
   EmergencyContact,
   MeAssets,
+  MeFamilyMemberDetail,
+  MeFamilyMemberLocation,
   MeIdCard,
   MeMovement,
   MeStatus,
@@ -43,6 +45,22 @@ export async function getMyMovementsApi(params: MyMovementsParams = {}): Promise
     { params },
   );
   return { items: data.data, meta: data.meta ?? null };
+}
+
+// Detail + lokasi anggota keluarga (Persit) — versi berskup anggota, tidak butuh akses katalog
+// Komandan. `{id}` = id rekam Persit (dari `AuthUser.family[].id`).
+export async function getMyFamilyMemberApi(id: number | string): Promise<MeFamilyMemberDetail> {
+  const { data } = await axiosInstance.get<ApiResponse<MeFamilyMemberDetail>>(`/me/family/${id}`);
+  return data.data;
+}
+
+export async function getMyFamilyMemberLocationApi(
+  id: number | string,
+): Promise<MeFamilyMemberLocation> {
+  const { data } = await axiosInstance.get<ApiResponse<MeFamilyMemberLocation>>(
+    `/me/family/${id}/location`,
+  );
+  return data.data;
 }
 
 export async function getEmergencyContactsApi(): Promise<EmergencyContact[]> {

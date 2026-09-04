@@ -19,6 +19,7 @@ import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types'
 import { getHealthDashboardApi } from '@/services/api/health.service';
 import { colors } from '@/theme/colors';
 import type { AuthUser, HealthDashboard } from '@/types';
+import { cleanValue } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 
 export type HealthOfficerHomeNavigationProp = CompositeNavigationProp<
@@ -82,7 +83,9 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
 
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const displayName =
-    [user?.personnel?.rank, user?.personnel?.full_name].filter(Boolean).join(' ') || user?.name || 'Petugas';
+    [cleanValue(user?.personnel?.rank), cleanValue(user?.personnel?.full_name)].filter(Boolean).join(' ') ||
+    user?.name ||
+    'Petugas';
 
   const quickActions = [
     {

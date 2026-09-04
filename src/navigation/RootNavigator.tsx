@@ -27,6 +27,7 @@ import HealthPersonnelSearchScreen from '@/screens/HealthPersonnelSearch';
 import HealthRecordDetailScreen from '@/screens/HealthRecordDetail';
 import HealthRecordInputScreen from '@/screens/HealthRecordInput';
 import LoginScreen from '@/screens/Login';
+import MeFamilyDetailScreen from '@/screens/MeFamilyDetail';
 import MyMovementsScreen from '@/screens/MyMovements';
 import NotificationsScreen from '@/screens/Notifications';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
@@ -135,6 +136,7 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.emergencyContacts} component={EmergencyContactsScreen} />
         <Stack.Screen name={ROUTES.announcements} component={AnnouncementsScreen} />
         <Stack.Screen name={ROUTES.myMovements} component={MyMovementsScreen} />
+        <Stack.Screen name={ROUTES.meFamilyDetail} component={MeFamilyDetailScreen} />
         <Stack.Screen name={ROUTES.activityMovements} component={ActivityMovementsScreen} />
         <Stack.Screen name={ROUTES.sendAnnouncement} component={SendAnnouncementScreen} />
         <Stack.Screen name={ROUTES.alarmSatuan} component={AlarmSatuanScreen} />

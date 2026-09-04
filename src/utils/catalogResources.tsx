@@ -362,7 +362,7 @@ export const catalogResourceConfigs: Record<
     toListItem: (c: WeaponCategoryListItem) => ({
       id: String(c.id),
       title: c.name,
-      subtitle: `${c.code} · ${c.weapon_type}`,
+      subtitle: joinFields(c.code, c.weapon_type),
       metaSegments: metaSegments(['id-card', c.code], ['weapon', c.weapon_type]),
       badgeLabel: `${c.total_weapons} unit`,
       badgeVariant: c.is_active ? 'primary' : 'neutral',

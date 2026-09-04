@@ -9,15 +9,14 @@ import { getMyMovementsApi } from '@/services/api/me.service';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
 import type { MeMovement, PaginationMeta } from '@/types';
-import { extractErrorMessage, formatRelativeTime, joinFields } from '@/utils/format';
+import { cleanValue, extractErrorMessage, formatRelativeTime, joinFields } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.myMovements>;
 
 const PER_PAGE = 20;
 
 function movementTitle(item: MeMovement): string {
-  if (item.note) return item.note;
-  return item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas';
+  return cleanValue(item.note) ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
 }
 
 function clockLabel(iso: string | null | undefined): string {

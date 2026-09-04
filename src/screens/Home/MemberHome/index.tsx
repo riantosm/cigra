@@ -12,6 +12,7 @@ import MemberIdCard from '@/components/organisms/MemberIdCard';
 import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import QrIdentityModal from '@/components/organisms/QrIdentityModal';
 import AssetCard from '@/screens/Home/MemberHome/AssetCard';
+import FamilyMemberRow from '@/components/molecules/FamilyMemberRow';
 import AssetDetailSheet from '@/screens/Home/MemberHome/AssetDetailSheet';
 import type { AssetDetailSheetData } from '@/screens/Home/MemberHome/AssetDetailSheet';
 import NoticeRow from '@/screens/Home/MemberHome/NoticeRow';
@@ -43,7 +44,7 @@ import type {
 } from '@/types';
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import type { IconName } from '@/components/atoms/Icon';
-import { formatDateShort, formatDateTime, formatRelativeTime, joinFields, titleCase } from '@/utils/format';
+import { cleanValue, formatDateShort, formatDateTime, formatRelativeTime, joinFields, titleCase } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 
 export type MemberHomeNavigationProp = CompositeNavigationProp<
@@ -208,8 +209,7 @@ function vehicleSheetData(assets: MeAssets | null): AssetDetailSheetData | null 
 }
 
 function movementTitle(movement: MeMovement): string {
-  if (movement.note) return movement.note;
-  return movement.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas';
+  return cleanValue(movement.note) ?? (movement.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
 }
 
 function accuracyLabel(accuracy: number | null | undefined): string {
@@ -281,8 +281,9 @@ export default function MemberHome(props: MemberHomeProps) {
   }
 
   const personnel = user?.personnel;
+  const family = user?.family ?? [];
   const displayName =
-    [personnel?.rank, personnel?.full_name].filter(Boolean).join(' ') || user?.name || '-';
+    [cleanValue(personnel?.rank), cleanValue(personnel?.full_name)].filter(Boolean).join(' ') || user?.name || '-';
   const serviceNumber = personnel?.service_number ?? null;
   const isActive = personnel ? personnel.status === 'active' : (user?.is_active ?? true);
 
@@ -424,6 +425,35 @@ export default function MemberHome(props: MemberHomeProps) {
             />
           </View>
 
+          {family.length > 0 ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Keluarga (Persit)</Text>
+              </View>
+              <View style={styles.listCard}>
+                {family.map((member, index) => (
+                  <FamilyMemberRow
+                    key={member.id}
+                    style={index < family.length - 1 ? styles.listRowDivider : undefined}
+                    name={member.full_name}
+                    photo={member.photo_url ?? member.photo}
+                    subtitle={joinFields(
+                      member.family_relation ? titleCase(member.family_relation) : undefined,
+                      member.membership_number ?? undefined,
+                      member.occupation && member.occupation !== '-' ? member.occupation : undefined,
+                    )}
+                    onPress={() =>
+                      navigation.navigate(ROUTES.meFamilyDetail, {
+                        id: member.id,
+                        name: member.full_name,
+                      })
+                    }
+                  />
+                ))}
+              </View>
+            </>
+          ) : null}
+
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
             <PressableScale onPress={openMyMovements}>
@@ -441,7 +471,7 @@ export default function MemberHome(props: MemberHomeProps) {
                   <TimelineRow
                     direction={item.direction === 'out' ? 'out' : 'in'}
                     title={movementTitle(item)}
-                    detail={item.location_label ?? item.purpose ?? '-'}
+                    detail={cleanValue(item.location_label) ?? cleanValue(item.purpose) ?? '-'}
                     time={formatRelativeTime(item.occurred_at) ?? clockLabel(item.occurred_at)}
                   />
                 </View>

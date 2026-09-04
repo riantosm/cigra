@@ -10,14 +10,14 @@ import { getActivityMovementsApi } from '@/services/api/activity.service';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
 import type { ActivityMovement, PaginationMeta } from '@/types';
-import { extractErrorMessage, formatRelativeTime, joinFields } from '@/utils/format';
+import { cleanValue, extractErrorMessage, formatRelativeTime, joinFields } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.activityMovements>;
 
 const PER_PAGE = 20;
 
 function movementDetail(item: ActivityMovement): string {
-  const head = item.note ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
+  const head = cleanValue(item.note) ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
   return joinFields(head, item.purpose, item.location_label);
 }
 

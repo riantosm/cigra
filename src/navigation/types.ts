@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { ROUTES } from '@/navigation/paths';
-import type { HealthRecordDetail, RollCallEntryStatus } from '@/types';
+import type { HandbookChapter, HealthRecordDetail, RollCallEntryStatus } from '@/types';
 
 export type CatalogResourceKey =
   | 'personnel'
@@ -21,7 +21,9 @@ export type RootStackParamList = {
   [ROUTES.profile]: undefined;
   [ROUTES.settings]: undefined;
   [ROUTES.comingSoon]: { title: string };
-  [ROUTES.bukuSakuDetail]: { id: string };
+  // Buka satu Bab Buku Saku sebagai E-Book; navigasi antar halaman (next/back) pakai
+  // `chapter.articles`. `initialArticleId` → mulai dari halaman itu (default: halaman pertama).
+  [ROUTES.bukuSakuDetail]: { chapter: HandbookChapter; initialArticleId?: number };
   [ROUTES.personnelMap]: undefined;
   [ROUTES.personnelTracking]: undefined;
   [ROUTES.notifications]: undefined;
@@ -30,6 +32,8 @@ export type RootStackParamList = {
   [ROUTES.emergencyContacts]: undefined;
   [ROUTES.announcements]: undefined;
   [ROUTES.myMovements]: undefined;
+  // Detail anggota keluarga (Persit) versi anggota — `id` = `MeFamilyMember.id`.
+  [ROUTES.meFamilyDetail]: { id: number; name?: string };
   [ROUTES.activityMovements]: undefined;
   [ROUTES.sendAnnouncement]: undefined;
   [ROUTES.alarmSatuan]: undefined;

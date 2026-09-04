@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+// Normalisasi "tidak ada isi": null / undefined / string kosong / whitespace / placeholder "-"
+// (backend kerap mengirim "-" atau "–" untuk field kosong) → null. Semua helper format lain
+// dibangun di atas ini supaya "-" tidak pernah ikut tampil sebagai data.
+export function cleanValue(value: string | null | undefined): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed === '-' || trimmed === '–' || trimmed === '—') return null;
+  return trimmed;
+}
+
 export function orDash(value: string | null | undefined): string {
-  return value && value.trim().length > 0 ? value : '-';
+  return cleanValue(value) ?? '-';
 }
 
 export function genderLabel(gender: string | null | undefined): string {
@@ -28,12 +38,17 @@ export function titleCase(value: string | null | undefined): string | null {
 // dipakai di subtitle list (mis. "Pangkat · Satuan") supaya field yang null tidak muncul sebagai
 // "-" dan pemisah "·" cuma tampil kalau kedua sisinya benar-benar ada isinya.
 export function joinFields(...values: (string | null | undefined)[]): string {
-  return values.filter((value): value is string => Boolean(value && value.trim().length > 0)).join(' · ');
+  return values
+    .map(cleanValue)
+    .filter((value): value is string => value !== null)
+    .join(' · ');
 }
 
 export function formatBirth(place: string | null | undefined, dateFormatted: string | null | undefined): string {
-  if (place && dateFormatted) return `${place}, ${dateFormatted}`;
-  return orDash(place || dateFormatted);
+  const cleanPlace = cleanValue(place);
+  const cleanDate = cleanValue(dateFormatted);
+  if (cleanPlace && cleanDate) return `${cleanPlace}, ${cleanDate}`;
+  return cleanPlace ?? cleanDate ?? '-';
 }
 
 export function formatDateShort(date: string | null | undefined): string {

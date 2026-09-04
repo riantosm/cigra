@@ -28,7 +28,7 @@ import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
 import { contentEnterTransition } from '@/utils/motion';
-import { formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
+import { cleanValue, formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 import type {
   ActivityMovement,
   Announcement,
@@ -103,7 +103,7 @@ function announcementMeta(type: string) {
 }
 
 function movementDetail(item: ActivityMovement): string {
-  const head = item.note ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
+  const head = cleanValue(item.note) ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
   return joinFields(head, item.purpose, item.location_label);
 }
 

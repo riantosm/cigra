@@ -22,3 +22,15 @@ export async function getStellingAlarmHistoryApi(): Promise<StellingAlarmActivat
   );
   return data.data;
 }
+
+// Aktifkan / siarkan sebuah kode stelling ke satuan (memicu broadcast FCM + membuat record
+// aktivasi baru). `{alarm}` = id kode dari `getStellingAlarmsApi`. Khusus role komandan (backend
+// menegakkan). Tanpa body.
+export async function activateStellingAlarmApi(
+  alarmId: number,
+): Promise<StellingAlarmActivation> {
+  const { data } = await axiosInstance.post<ApiResponse<StellingAlarmActivation>>(
+    `/stelling-alarms/${alarmId}/activate`,
+  );
+  return data.data;
+}

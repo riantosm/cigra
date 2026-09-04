@@ -5,18 +5,21 @@ import { MotiView } from 'moti';
 import Badge from '@/components/atoms/Badge';
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
+import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import {
+  activateStellingAlarmApi,
   getCurrentStellingAlarmApi,
   getStellingAlarmHistoryApi,
   getStellingAlarmsApi,
 } from '@/services/api/stellingAlarm.service';
 import { colors } from '@/theme/colors';
 import type { StellingAlarmActivation, StellingAlarmCode, StellingBroadcastStatus } from '@/types';
-import { extractErrorMessage, formatDateTime, formatRelativeTime } from '@/utils/format';
+import { extractErrorMessage, formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 
 type Props = RootStackScreenProps<typeof ROUTES.alarmSatuan>;
@@ -46,6 +49,13 @@ export default function AlarmSatuanScreen(props: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Kode yang menunggu konfirmasi aktivasi; `isActivating` selama request berjalan.
+  const [pendingCode, setPendingCode] = useState<StellingAlarmCode | null>(null);
+  const [isActivating, setIsActivating] = useState(false);
+  const [resultModal, setResultModal] = useState<
+    { variant: 'success' | 'error'; title: string; message: string } | null
+  >(null);
+
   const load = useCallback(async (mode: 'initial' | 'refresh') => {
     if (mode === 'initial') setIsLoading(true);
     if (mode === 'refresh') setIsRefreshing(true);
@@ -71,7 +81,31 @@ export default function AlarmSatuanScreen(props: Props) {
     load('initial');
   }, [load]);
 
-  const currentColor = codes.find(code => code.code === current?.code)?.color ?? colors.danger;
+  async function confirmActivate() {
+    if (!pendingCode || isActivating) return;
+    setIsActivating(true);
+    try {
+      await activateStellingAlarmApi(pendingCode.id);
+      setResultModal({
+        variant: 'success',
+        title: 'Alarm Diaktifkan',
+        message: `Kode ${pendingCode.code} disiarkan ke satuan.`,
+      });
+      setPendingCode(null);
+      await load('refresh');
+    } catch (error) {
+      setResultModal({
+        variant: 'error',
+        title: 'Gagal Mengaktifkan',
+        message: extractErrorMessage(error, 'Alarm stelling gagal diaktifkan.'),
+      });
+      setPendingCode(null);
+    } finally {
+      setIsActivating(false);
+    }
+  }
+
+  const currentColor = colors.danger;
 
   return (
     <MainLayout
@@ -102,8 +136,11 @@ export default function AlarmSatuanScreen(props: Props) {
                 <View style={styles.currentMetaRow}>
                   <Icon name="clock" size={14} color={colors.textMuted} />
                   <Text style={styles.currentMeta}>
-                    Diaktifkan {formatRelativeTime(current.activated_at) ?? '-'} ·{' '}
-                    {formatDateTime(current.activated_at) ?? '-'}
+                    Diaktifkan{' '}
+                    {joinFields(
+                      formatRelativeTime(current.activated_at),
+                      formatDateTime(current.activated_at),
+                    ) || '-'}
                   </Text>
                 </View>
               </Card>
@@ -115,23 +152,35 @@ export default function AlarmSatuanScreen(props: Props) {
             )}
 
             <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Kode Alarm Stelling</Text>
+            <Text style={styles.sectionHint}>Ketuk sebuah kode untuk menyiarkannya ke satuan.</Text>
             <Card style={styles.listCard}>
               {codes.length === 0 ? (
                 <Text style={styles.rowEmpty}>Belum ada kode alarm.</Text>
               ) : (
                 codes.map((code, index) => (
-                  <View
+                  <PressableScale
                     key={code.id}
-                    style={[styles.codeRow, index === codes.length - 1 && styles.rowLast]}>
-                    <View style={[styles.codeDot, { backgroundColor: code.color }]} />
+                    scaleTo={0.98}
+                    disabled={!code.is_active}
+                    onPress={() => setPendingCode(code)}
+                    contentStyle={[
+                      styles.codeRow,
+                      index === codes.length - 1 && styles.rowLast,
+                      !code.is_active && styles.codeRowDisabled,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Aktifkan alarm ${code.code}`}>
+                    <View style={[styles.codeDot, { backgroundColor: colors.danger }]} />
                     <View style={styles.codeText}>
                       <Text style={styles.codeName}>{code.code}</Text>
                       <Text style={styles.codeCondition}>{code.condition}</Text>
                     </View>
-                    <Text style={[styles.codeStatus, { color: code.is_active ? colors.success : colors.textMuted }]}>
-                      {code.is_active ? 'Aktif' : 'Nonaktif'}
-                    </Text>
-                  </View>
+                    {code.is_active ? (
+                      <Icon name="chevron-right" size={18} color={colors.placeholder} />
+                    ) : (
+                      <Text style={[styles.codeStatus, { color: colors.textMuted }]}>Nonaktif</Text>
+                    )}
+                  </PressableScale>
                 ))
               )}
             </Card>
@@ -149,8 +198,10 @@ export default function AlarmSatuanScreen(props: Props) {
                       <Text style={styles.historyCode}>{item.code}</Text>
                       <Text style={styles.historyCondition}>{item.condition}</Text>
                       <Text style={styles.historyTime}>
-                        {formatRelativeTime(item.activated_at) ?? '-'} ·{' '}
-                        {formatDateTime(item.activated_at) ?? '-'}
+                        {joinFields(
+                          formatRelativeTime(item.activated_at),
+                          formatDateTime(item.activated_at),
+                        ) || '-'}
                       </Text>
                     </View>
                     <BroadcastPill status={item.broadcast_status} />
@@ -161,6 +212,32 @@ export default function AlarmSatuanScreen(props: Props) {
           </MotiView>
         </ScrollView>
       )}
+
+      <StatusModal
+        visible={pendingCode !== null}
+        variant="error"
+        title={pendingCode ? `Aktifkan ${pendingCode.code}?` : ''}
+        message={
+          pendingCode
+            ? `"${pendingCode.condition}" akan disiarkan ke seluruh satuan sebagai notifikasi darurat.`
+            : ''
+        }
+        primaryAction={{
+          label: isActivating ? 'Mengaktifkan...' : 'Aktifkan',
+          onPress: confirmActivate,
+        }}
+        secondaryAction={{ label: 'Batal', onPress: () => setPendingCode(null) }}
+        onRequestClose={() => (isActivating ? undefined : setPendingCode(null))}
+      />
+
+      <StatusModal
+        visible={resultModal !== null}
+        variant={resultModal?.variant ?? 'success'}
+        title={resultModal?.title ?? ''}
+        message={resultModal?.message ?? ''}
+        primaryAction={{ label: 'Mengerti', onPress: () => setResultModal(null) }}
+        onRequestClose={() => setResultModal(null)}
+      />
     </MainLayout>
   );
 }
@@ -186,6 +263,15 @@ const styles = StyleSheet.create({
   },
   sectionSpacing: {
     marginTop: 24,
+  },
+  sectionHint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: -6,
+    marginBottom: 12,
+  },
+  codeRowDisabled: {
+    opacity: 0.5,
   },
   currentCard: {
     gap: 10,

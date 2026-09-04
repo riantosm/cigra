@@ -8,6 +8,7 @@ import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
 import Card from '@/components/molecules/Card';
+import FamilyMemberRow from '@/components/molecules/FamilyMemberRow';
 import InfoRow from '@/components/molecules/InfoRow';
 import LocationStatusBadge from '@/components/molecules/LocationStatusBadge';
 import SectionCard from '@/components/molecules/SectionCard';
@@ -23,7 +24,7 @@ import { colors } from '@/theme/colors';
 import { smallButtonShadow } from '@/theme/shadows';
 import type { MyLocationResult } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
-import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, genderLabel, orDash } from '@/utils/format';
+import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, genderLabel, joinFields, orDash, titleCase } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
 
@@ -61,6 +62,7 @@ export default function ProfileScreen(props: ProfileScreenProps) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const coords = myLocation?.location ?? null;
   const personnel = user?.personnel;
+  const family = user?.family ?? [];
   const photoPath = personnel?.photo;
   const isActive = personnel ? personnel.status === 'active' : (user?.is_active ?? true);
 
@@ -220,6 +222,30 @@ export default function ProfileScreen(props: ProfileScreenProps) {
             </SectionCard>
           ) : null}
 
+          {family.length ? (
+            <SectionCard icon="users" title="Keluarga (Persit)">
+              {family.map(member => (
+                <FamilyMemberRow
+                  key={member.id}
+                  style={styles.familyRow}
+                  name={member.full_name}
+                  photo={member.photo_url ?? member.photo}
+                  subtitle={joinFields(
+                    member.family_relation ? titleCase(member.family_relation) : undefined,
+                    member.membership_number ?? undefined,
+                    member.occupation && member.occupation !== '-' ? member.occupation : undefined,
+                  )}
+                  onPress={() =>
+                    navigation.navigate(ROUTES.meFamilyDetail, {
+                      id: member.id,
+                      name: member.full_name,
+                    })
+                  }
+                />
+              ))}
+            </SectionCard>
+          ) : null}
+
           {user?.roles?.length ? (
             <SectionCard icon="shield-check" title="Peran & Akses">
               <View style={styles.accessBlock}>
@@ -351,6 +377,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSoft,
     gap: 8,
+  },
+  familyRow: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSoft,
   },
   accessLabel: {
     fontSize: 14,

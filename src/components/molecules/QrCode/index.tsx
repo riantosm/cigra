@@ -1,42 +1,55 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
-import QRCodeSvg from 'react-native-qrcode-svg';
 
 import { colors } from '@/theme/colors';
+import { buildIdentityQrUrl } from '@/utils/qr';
 
 export interface QrCodeProps {
-  // Isi yang di-encode ke QR. Untuk Kartu Anggota ini adalah NRP (service_number).
+  // Isi yang di-encode ke QR — untuk Kartu Anggota ini NRP (service_number).
   value: string | null | undefined;
   size?: number;
-  // Warna modul QR — default text (nyaris hitam) supaya kontras & mudah dipindai.
-  color?: string;
-  backgroundColor?: string;
   style?: StyleProp<ViewStyle>;
 }
 
-// Pembungkus tipis di atas `react-native-qrcode-svg` (murni JS, jalan di atas react-native-svg yang
-// sudah terpasang — tidak perlu rebuild native). Menangani kasus value kosong dengan placeholder,
-// bukan crash, karena datanya bisa saja belum termuat saat render pertama.
+// QR Kartu Anggota. Gambarnya dari layanan generator (`utils/qr.ts` → qr.sakaraguna.com) supaya
+// logo satuan bisa disematkan di tengah kode — bukan lagi di-encode di device. Value kosong /
+// gagal muat → placeholder, bukan crash (data bisa belum termuat saat render pertama).
 export default function QrCode(props: QrCodeProps) {
-  const { value, size = 132, color = colors.text, backgroundColor = colors.surface, style } = props;
+  const { value, size = 132, style } = props;
   const trimmed = value?.trim();
+  const [failed, setFailed] = useState(false);
 
-  if (!trimmed) {
+  if (!trimmed || failed) {
     return (
       <View style={[styles.placeholder, { height: size, width: size }, style]}>
-        <Text style={styles.placeholderText}>QR belum tersedia</Text>
+        <Text style={styles.placeholderText}>
+          {failed ? 'QR gagal dimuat' : 'QR belum tersedia'}
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={style}>
-      <QRCodeSvg value={trimmed} size={size} color={color} backgroundColor={backgroundColor} />
+    <View style={[{ height: size, width: size }, style]}>
+      <Image
+        source={{ uri: buildIdentityQrUrl(trimmed) }}
+        style={styles.image}
+        resizeMode="contain"
+        onError={() => setFailed(true)}
+        accessibilityRole="image"
+        accessibilityLabel="QR identitas anggota"
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  image: {
+    height: '100%',
+    width: '100%',
+    backgroundColor: colors.surface,
+  },
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',

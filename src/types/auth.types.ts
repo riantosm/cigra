@@ -1,3 +1,5 @@
+import type { MeFamilyMember } from '@/types/me.types';
+
 export interface PersonnelAssignment {
   position?: string;
   unit?: string;
@@ -31,7 +33,8 @@ export interface AuthUser {
   must_change_password: boolean;
   is_active?: boolean;
   personnel?: Personnel | null;
-  family?: unknown;
+  // Anggota keluarga (Persit) — dipakai di section "Keluarga (Persit)" MemberHome.
+  family?: MeFamilyMember[] | null;
   roles?: string[];
   permissions?: string[];
 }

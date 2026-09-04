@@ -1,37 +1,43 @@
-import type { IconName } from '@/components/atoms/Icon';
+// Buku Saku (E-Book) — data nyata dari endpoint `/handbook/*` (lihat
+// `src/services/api/handbook.service.ts`). Terdiri dari Bab (`HandbookChapter`) yang berisi
+// daftar materi/halaman terurut (`HandbookArticleRef`); isi tiap halaman diambil terpisah
+// lewat `GET /handbook/articles/{id}` → `HandbookArticleDetail`.
 
-// Buku Saku — panduan & ketentuan satuan untuk prajurit. Data masih dummy (lihat
-// `src/data/bukuSakuGuides.ts`); nanti diganti endpoint `/buku-saku` begitu backend siap.
+// `article`       → halaman berisi Rich Text HTML (`content`).
+// `record_display`→ halaman penanda tampilan rekam nilai prajurit (mis. biodata) — `record_type`
+//                    menyebut jenisnya; belum ada tampilan datanya di app.
+export type HandbookArticleType = 'article' | 'record_display';
 
-export type BukuSakuCategory =
-  | 'Ketentuan Dasar'
-  | 'Administrasi'
-  | 'Operasional'
-  | 'Kesehatan & Keselamatan';
-
-export interface BukuSakuAttachment {
-  id: string;
-  // Nama berkas apa adanya (dengan ekstensi) — ditampilkan sebagai judul baris lampiran.
-  fileName: string;
-  // Label tipe berkas, mis. "PDF".
-  fileType: string;
-  // Ukuran berkas yang sudah diformat, mis. "1,2 MB".
-  fileSize: string;
-  // URL unduhan. Masih dummy — tombol "Unduh" belum benar-benar mengunduh apa pun.
-  url: string;
+// Entri ringkas satu halaman di dalam daftar isi Bab (`GET /handbook/chapters`).
+export interface HandbookArticleRef {
+  id: number;
+  title: string;
+  page_number: number;
+  type: HandbookArticleType;
+  record_type: string | null;
 }
 
-export interface BukuSakuGuide {
-  id: string;
+export interface HandbookChapter {
+  id: number;
   title: string;
-  category: BukuSakuCategory;
-  // Ikon yang mewakili panduan di baris daftar (chip warnanya dari `category`).
-  icon: IconName;
-  // Estimasi lama baca dalam menit — dipakai di baris meta ("6 menit baca").
-  readMinutes: number;
-  // Tanggal pembaruan terakhir (ISO-8601, tanggal saja).
-  updatedAt: string;
-  // Penyusun panduan — ditampilkan di kaki halaman detail.
-  authorName: string;
-  attachments: BukuSakuAttachment[];
+  // Nama ikon dari backend (string bebas, mis. "shield") — dipetakan ke `IconName` lewat
+  // `handbookIcon()` di `src/screens/BukuSaku/chapterIcon.ts`.
+  icon: string;
+  sort_order: number;
+  articles_count: number;
+  articles: HandbookArticleRef[];
+}
+
+// Isi lengkap satu halaman (`GET /handbook/articles/{id}`).
+export interface HandbookArticleDetail {
+  id: number;
+  chapter_id: number;
+  chapter_title: string;
+  title: string;
+  page_number: number;
+  type: HandbookArticleType;
+  record_type: string | null;
+  // Rich Text HTML untuk `type === 'article'` (URL gambar mengarah ke `/api/secure-files/...`).
+  // null untuk `record_display`.
+  content: string | null;
 }

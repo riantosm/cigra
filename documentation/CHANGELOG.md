@@ -24,7 +24,29 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
-Belum ada perubahan.
+### Baru
+
+- Buku Saku kini terhubung ke server sebagai E-Book: daftar Bab beserta halaman-halamannya,
+  isi materi ditampilkan langsung (teks & gambar) dengan navigasi Sebelumnya/Selanjutnya
+  antar halaman.
+- Anggota: daftar "Keluarga (Persit)" di Home & Profile — tiap anggota keluarga bisa dibuka ke
+  halaman detail (data pribadi, prajurit terkait, dan lokasi bila tersedia).
+
+- Komandan: kode alarm stelling di layar "Alarm Satuan" kini bisa diketuk untuk mengaktifkan &
+  menyiarkannya ke satuan (dengan konfirmasi).
+
+### Ditingkatkan
+
+- Halaman detail Buku Saku menampilkan isi materi, bukan lagi lampiran PDF.
+- QR Kartu Anggota kini dibuat dari layanan generator sehingga logo satuan bisa tampil di
+  tengah kode.
+- Layar "Alarm Satuan": indikator warna pada daftar kode alarm kini seragam merah.
+
+### Perbaikan
+
+- Field kosong dari server (dikirim sebagai "-") tidak lagi bocor ke tampilan: pemisah "·"
+  yang menggantung, teks "- · data", dan tanggal lahir "-, ..." kini hilang di seluruh layar
+  (Aktivitas Terbaru di Home, Alarm Satuan, Sinyal Darurat, detail personel, dll).
 
 ---
 

@@ -86,6 +86,79 @@ export interface MeMovement {
   note: string | null;
 }
 
+// --- GET /auth/me → data.family[] (anggota) ---
+// Anggota keluarga (Persit) milik prajurit yang login. `id` = id rekam Persit yang diterima
+// `GET /catalog/persit/{id}`, jadi tiap baris bisa dibuka ke detail Persit. `photo` biasanya
+// placeholder SVG (data URI) → `isDisplayablePhoto` menolaknya → avatar inisial.
+export interface MeFamilyMember {
+  id: number;
+  full_name: string;
+  membership_number: string | null;
+  // Hubungan keluarga ("Istri" / "Anak" / …) — tidak selalu ada di payload.
+  family_relation?: string | null;
+  spouse_personnel_id: number | null;
+  phone: string | null;
+  birth_place: string | null;
+  birth_date: string | null;
+  birth_date_formatted: string | null;
+  blood_type: string | null;
+  address: string | null;
+  occupation: string | null;
+  photo: string | null;
+  photo_url: string | null;
+  status: string;
+}
+
+// --- GET /me/family/{id} + /me/family/{id}/location (anggota) ---
+// Versi berskup anggota untuk membuka anggota keluarga sendiri tanpa akses katalog Komandan
+// (yang 403 untuk prajurit biasa). `{id}` = `MeFamilyMember.id`.
+
+export interface MeFamilyLinkedSpouse {
+  id: number;
+  full_name: string;
+  service_number: string;
+  rank: string | null;
+}
+
+// Titik lokasi keluarga — dibuat longgar (semua opsional kecuali koordinat) karena payload
+// contoh masih `null`; nama field mengikuti konvensi lokasi API lain.
+export interface MeFamilyLocationPoint {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  captured_at?: string | null;
+  source?: string | null;
+}
+
+export interface MeFamilyMemberDetail {
+  id: number;
+  full_name: string;
+  membership_number: string | null;
+  phone: string | null;
+  birth_place: string | null;
+  birth_date: string | null;
+  birth_date_formatted?: string | null;
+  blood_type: string | null;
+  address: string | null;
+  occupation: string | null;
+  status: string;
+  notes: string | null;
+  photo_url: string | null;
+  // Prajurit terkait — `husband` atau `wife` tergantung gender anggota.
+  husband?: MeFamilyLinkedSpouse | null;
+  wife?: MeFamilyLinkedSpouse | null;
+  last_location: MeFamilyLocationPoint | null;
+}
+
+export interface MeFamilyMemberLocation {
+  id: number;
+  full_name: string;
+  membership_number: string | null;
+  photo_url: string | null;
+  current_location: MeFamilyLocationPoint | null;
+  location_history: MeFamilyLocationPoint[];
+}
+
 // --- GET /emergency-contacts (§6) ---
 export type EmergencyContactCategory = 'command' | 'medical' | 'security' | 'general';
 
