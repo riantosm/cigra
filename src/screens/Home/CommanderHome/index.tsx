@@ -242,12 +242,6 @@ export default function CommanderHome(props: CommanderHomeProps) {
       color: colors.primary,
       onPress: () => navigation.navigate(ROUTES.bukuSaku),
     },
-    {
-      icon: 'clipboard-check',
-      label: 'Laporan Cepat',
-      color: colors.gradientHealthStart,
-      onPress: () => navigation.navigate(ROUTES.comingSoon, { title: 'Laporan Cepat' }),
-    },
   ];
   const gridActions: QuickActionButtonProps[] = [
     ...quickActions.slice(0, VISIBLE_QUICK_ACTION_COUNT),

@@ -5,7 +5,7 @@ import axios from 'axios';
 import { getMeApi, loginApi, logoutApi, verifyLoginOtpApi } from '@/services/api/auth.service';
 import { setAuthToken } from '@/services/api/axiosInstance';
 import type { AuthState, AuthUser, LoginPayload, OtpVerifyPayload, OtpVerifyResult } from '@/types';
-import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '@/utils/location';
+import { stopBackgroundLocationTracking } from '@/utils/location';
 import { teardownPushNotifications } from '@/utils/pushNotifications';
 
 const initialState: AuthState = {
@@ -16,6 +16,7 @@ const initialState: AuthState = {
   error: null,
   requiresPasswordChange: false,
   resetToken: null,
+  appChecked: false,
 };
 
 function extractErrorMessage(error: unknown, fallback: string): string {
@@ -45,22 +46,12 @@ export const login = createAsyncThunk<LoginThunkResult, LoginPayload, { rejectVa
 
     await setAuthToken(result.access_token);
 
-    let user: AuthUser = result.user;
-    try {
-      user = await getMeApi();
-    } catch {
-      // /auth/me gagal diambil — tetap lanjut pakai data user dari response login.
-    }
-
-    try {
-      await startBackgroundLocationTracking();
-    } catch {
-      // Izin lokasi latar belakang gagal/ditolak — tidak menggagalkan login, tracking cukup
-      // dicoba lagi nanti (mis. dari layar Profile) daripada memblokir user masuk aplikasi.
-    }
-
+    // /auth/me lengkap + permintaan izin lokasi + start tracking sengaja TIDAK dilakukan di sini —
+    // dulu semuanya di-await sebelum thunk fulfilled, jadi ada jeda beberapa detik antara "API
+    // login sukses" dan pindah ke Home. Sekarang layar AppBootstrap yang menanganinya (dengan
+    // spinner + tombol "Coba Lagi" kalau izin ditolak); di sini cukup data user dari response login.
     return {
-      user,
+      user: result.user,
       token: result.access_token,
       requiresPasswordChange: result.requires_password_change,
       resetToken: result.reset_token,
@@ -120,22 +111,11 @@ export const loginWithOtp = createAsyncThunk<LoginThunkResult, OtpVerifyPayload,
 
     await setAuthToken(result.access_token);
 
-    let user: AuthUser = minimalAuthUser(result.user, result.requires_password_change);
-    try {
-      user = await getMeApi();
-    } catch {
-      // /auth/me gagal diambil — tetap lanjut pakai data user minimal dari response OTP.
-    }
-
-    try {
-      await startBackgroundLocationTracking();
-    } catch {
-      // Izin lokasi latar belakang gagal/ditolak — tidak menggagalkan login, sama seperti alur
-      // login password.
-    }
-
+    // Sama seperti thunk `login`: /auth/me lengkap + izin lokasi + start tracking ditangani layar
+    // AppBootstrap, bukan di sini. Data user minimal dari response OTP cukup untuk sementara
+    // (AppBootstrap akan refreshUser() untuk mengisi role dsb. sebelum Home dirender).
     return {
-      user,
+      user: minimalAuthUser(result.user, result.requires_password_change),
       token: result.access_token,
       requiresPasswordChange: result.requires_password_change,
       resetToken: result.reset_token,
@@ -168,11 +148,17 @@ const authSlice = createSlice({
       state.token = null;
       state.requiresPasswordChange = false;
       state.resetToken = null;
+      state.appChecked = false;
     },
     passwordChanged(state) {
       state.requiresPasswordChange = false;
       state.resetToken = null;
       if (state.user) state.user.must_change_password = false;
+    },
+    // Dipanggil AppBootstrap setelah /auth/me + izin lokasi + start tracking selesai — melepas
+    // gate AppBootstrap sehingga RequireAuth mengizinkan render Main.
+    appCheckCompleted(state) {
+      state.appChecked = true;
     },
   },
   extraReducers: builder => {
@@ -183,6 +169,7 @@ const authSlice = createSlice({
         state.token = null;
         state.requiresPasswordChange = false;
         state.resetToken = null;
+        state.appChecked = false;
       })
       .addCase(refreshUser.fulfilled, (state, action: PayloadAction<AuthUser>) => {
         state.user = action.payload;
@@ -204,6 +191,9 @@ const authSlice = createSlice({
           state.token = action.payload.token;
           state.requiresPasswordChange = action.payload.requiresPasswordChange;
           state.resetToken = action.payload.resetToken;
+          // Login baru → wajib lewat AppBootstrap lagi (izin bisa berubah, sesi OTP butuh
+          // /auth/me untuk role).
+          state.appChecked = false;
         },
       )
       .addMatcher(isAnyOf(login.rejected, loginWithOtp.rejected), (state, action) => {
@@ -213,5 +203,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuthError, logoutLocal, passwordChanged } = authSlice.actions;
+export const { clearAuthError, logoutLocal, passwordChanged, appCheckCompleted } = authSlice.actions;
 export default authSlice.reducer;

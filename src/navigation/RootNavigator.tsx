@@ -13,6 +13,7 @@ import CatalogListScreen from '@/screens/CatalogList';
 import ChangePasswordScreen from '@/screens/ChangePassword';
 import ActivityMovementsScreen from '@/screens/ActivityMovements';
 import AlarmSatuanScreen from '@/screens/AlarmSatuan';
+import AppBootstrapScreen from '@/screens/AppBootstrap';
 import AnnouncementsScreen from '@/screens/Announcements';
 import BukuSakuDetailScreen from '@/screens/BukuSakuDetail';
 import ComingSoonScreen from '@/screens/ComingSoon';
@@ -52,13 +53,18 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function RootNavigator() {
   const dispatch = useAppDispatch();
   const isLogin = useAppSelector(state => state.auth.isLogin);
+  const appChecked = useAppSelector(state => state.auth.appChecked);
   const roles = useAppSelector(state => state.auth.user?.roles);
 
   useEffect(() => {
     // Sesi yang sudah login dipulihkan dari redux-persist (bukan lewat thunk `login`) tidak pernah
     // memanggil setAuthToken(), jadi TrackingPrefs di sisi native belum punya salinan token —
     // sinkronkan dulu di sini setiap kali app dibuka dengan sesi aktif, sebelum menyalakan tracking.
-    if (isLogin) {
+    //
+    // Digate ke `appChecked` supaya untuk login baru pekerjaan ini (khususnya permintaan izin)
+    // TIDAK balapan dengan layar AppBootstrap yang juga memintanya — untuk warm start (sesi
+    // dipulihkan, appChecked sudah true) efek ini jalan seperti biasa tanpa layar bootstrap.
+    if (isLogin && appChecked) {
       (async () => {
         // LocationForegroundService.kt bisa refresh token-nya sendiri saat app di background —
         // kalau itu terjadi, TrackingPrefs (native) punya token lebih baru daripada AsyncStorage
@@ -78,7 +84,7 @@ export default function RootNavigator() {
         dispatch(refreshUser());
       })().catch(() => {});
     }
-  }, [dispatch, isLogin]);
+  }, [dispatch, isLogin, appChecked]);
 
   useEffect(() => {
     // Effect terpisah dari location tracking di atas — sengaja depend ke `roles` juga (bukan cuma
@@ -112,6 +118,13 @@ export default function RootNavigator() {
           {screenProps => (
             <RequireAuth navigation={screenProps.navigation} skipPasswordChangeGate>
               <ChangePasswordScreen {...screenProps} />
+            </RequireAuth>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name={ROUTES.appBootstrap} options={{ gestureEnabled: false }}>
+          {screenProps => (
+            <RequireAuth navigation={screenProps.navigation} skipAppCheckGate>
+              <AppBootstrapScreen {...screenProps} />
             </RequireAuth>
           )}
         </Stack.Screen>

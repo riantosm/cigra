@@ -2,6 +2,7 @@ export const ROUTES = {
   login: 'Login',
   forgotPassword: 'ForgotPassword',
   changePassword: 'ChangePassword',
+  appBootstrap: 'AppBootstrap',
   main: 'Main',
   home: 'Home',
   riwayat: 'Riwayat',

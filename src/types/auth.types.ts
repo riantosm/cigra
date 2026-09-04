@@ -51,6 +51,11 @@ export interface AuthState {
   // Token sekali-pakai dari response login pertama — dipakai ChangePassword untuk verifikasi
   // tanpa perlu current_password. Null kalau user harus verifikasi pakai current_password.
   resetToken: string | null;
+  // false tepat setelah login/verifikasi OTP sukses — RequireGuest/RequireAuth memaksa ke layar
+  // AppBootstrap (sinkronisasi /auth/me + permintaan izin lokasi) sebelum Main. Di-set true oleh
+  // AppBootstrap setelah semua pemeriksaan lolos. Dipersist, jadi buka-app dengan sesi tersimpan
+  // (warm start) langsung ke Main tanpa layar bootstrap lagi.
+  appChecked: boolean;
 }
 
 export interface LoginPayload {

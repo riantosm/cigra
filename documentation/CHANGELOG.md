@@ -41,6 +41,11 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 - QR Kartu Anggota kini dibuat dari layanan generator sehingga logo satuan bisa tampil di
   tengah kode.
 - Layar "Alarm Satuan": indikator warna pada daftar kode alarm kini seragam merah.
+- Setelah login berhasil, aplikasi langsung pindah dari layar masuk ke layar "Memeriksa
+  aplikasi…" — sinkronisasi data akun dan permintaan izin lokasi dipindah ke sana, jadi
+  tidak ada lagi jeda diam beberapa detik di tombol "Masuk". Bila izin lokasi ditolak,
+  layar itu menampilkan tombol "Coba Lagi".
+- Komandan: menu "Laporan Cepat" (yang belum berfungsi) dihapus dari Akses Cepat.
 
 ### Perbaikan
 

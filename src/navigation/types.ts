@@ -15,6 +15,7 @@ export type RootStackParamList = {
   [ROUTES.login]: undefined;
   [ROUTES.forgotPassword]: undefined;
   [ROUTES.changePassword]: undefined;
+  [ROUTES.appBootstrap]: undefined;
   [ROUTES.main]: undefined;
   [ROUTES.catalogList]: { resource: CatalogResourceKey };
   [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string; initialTab?: string };
