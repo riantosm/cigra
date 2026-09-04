@@ -465,7 +465,7 @@
     <a href="./changelog.html">Changelog</a>
   </nav>
   <span class="spacer"></span>
-  <span class="checked">Pengecekan terakhir<b>3 September 2026</b></span>
+  <span class="checked">Pengecekan terakhir<b>4 September 2026</b></span>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti tema">
     <span id="themeLabel">Gelap</span>
   </button>
@@ -501,7 +501,7 @@
 
 <script type="text/markdown" id="src-doc"># API Contract — Smart Battalion Apps
 
-**Pengecekan terakhir: 3 September 2026**
+**Pengecekan terakhir: 4 September 2026**
 
 Dokumentasi **semua endpoint** yang dipanggil aplikasi (yang sudah jalan maupun yang masih
 dummy) beserta status integrasinya. Dibagi per **peran**: Umum (semua role), Komandan,
@@ -720,10 +720,32 @@ Selain 2xx / `success: false` → dianggap gagal permanen → logout.
       "rank": "SERKA",
       "…": "lihat 1.1"
     },
-    "family": null
+    "family": [
+      {
+        "id": 8,
+        "full_name": "Sri Wahyuni",
+        "membership_number": "P-000812",
+        "family_relation": "Istri",
+        "spouse_personnel_id": 45,
+        "phone": "081234567890",
+        "birth_place": "Malang",
+        "birth_date": "1990-04-12",
+        "birth_date_formatted": "12 April 1990",
+        "blood_type": "O",
+        "address": "Asrama Blok C No. 4",
+        "occupation": "-",
+        "photo": null,
+        "photo_url": null,
+        "status": "active"
+      }
+    ]
   }
 }
 ```
+
+Catatan:
+- `family[]` = anggota keluarga (Persit) milik prajurit yang login (`null` / `[]` untuk non-prajurit). Dipakai `MemberHome` & `Profile` (section "Keluarga (Persit)"); tiap baris → detail berskup anggota (lihat bagian Anggota 5).
+- `family[].id` = id rekam Persit; `photo` biasanya placeholder SVG (data URI) → FE menolaknya → avatar inisial.
 
 ### 1.6 Lupa Password
 
@@ -2461,81 +2483,85 @@ Catatan: (FE cuma pakai `id`, `name`, `description`). 8 keterangan: Izin, Sakit,
 
 Catatan: backend kirim objek Personnel penuh; FE hanya baca `id` (dipakai sebagai `personnel_id`), `full_name`, `service_number`.
 
-## 9. Layar Lain yang Masih Dummy
+## 9. Buku Saku (E-Book)
 
-### 9.1 Buku Saku
+### 9.1 Daftar Bab & Daftar Isi
 
-> [!TODO] Belum ada endpoint — usulan.
+> [!DONE] Dipakai di tab `BukuSaku` (`getHandbookChaptersApi`) — daftar "DAFTAR BAB" + pencarian judul bab/materi. Seluruh daftar isi (materi tiap bab) sudah ikut di response ini, jadi `BukuSakuDetail` tidak perlu request tambahan untuk navigasi antar-halaman.
 
-`GET /handbook` · `GET /handbook/{slug}`
+`GET /handbook/chapters`
 
-**Tanpa parameter.**
+**Tanpa parameter.** Endpoint sudah terfilter per tenant di backend.
 
-**Response list `200` (usulan):**
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": [
     {
-      "slug": "sop-piket",
-      "title": "SOP Piket",
+      "id": 3,
+      "title": "SOP Piket & Jaga",
       "icon": "shield",
-      "updated_at": "2026-08-01T00:00:00+07:00"
+      "sort_order": 1,
+      "articles_count": 4,
+      "articles": [
+        {
+          "id": 12,
+          "title": "Ketentuan Umum Piket",
+          "page_number": 1,
+          "type": "article",
+          "record_type": null
+        },
+        {
+          "id": 13,
+          "title": "Biodata Prajurit",
+          "page_number": 2,
+          "type": "record_display",
+          "record_type": "personnel_biodata"
+        }
+      ]
     }
   ]
 }
 ```
 
-**Response detail `200` (usulan):**
+Catatan:
+- FE mengurutkan `data[]` berdasarkan `sort_order`, dan `articles[]` berdasarkan `page_number`.
+- `icon` string bebas dari backend (mis. `shield`) — FE memetakannya ke ikon lewat `handbookIcon()` (fallback ikon `handbook`).
+- `type`: `article` = halaman Rich Text (isi HTML diambil di 9.2) · `record_display` = halaman penanda tampilan rekam nilai prajurit; `record_type` menyebut jenisnya, belum ada tampilan datanya di app.
+
+### 9.2 Detail Halaman / Materi
+
+> [!DONE] Dipakai di `BukuSakuDetail` (`getHandbookArticleApi`) — dibaca satu halaman per layar (gaya E-Book), di-fetch ulang tiap pindah halaman.
+
+`GET /handbook/articles/{id}`
+
+`{id}` = `articles[].id` dari 9.1.
+
+**Tanpa parameter.**
+
+**Response `200`:**
 
 ```json
 {
   "success": true,
   "data": {
-    "slug": "sop-piket",
-    "title": "SOP Piket",
-    "content_format": "markdown",
-    "content": "# SOP …",
-    "updated_at": "2026-08-01T00:00:00+07:00"
+    "id": 12,
+    "chapter_id": 3,
+    "chapter_title": "SOP Piket & Jaga",
+    "title": "Ketentuan Umum Piket",
+    "page_number": 1,
+    "type": "article",
+    "record_type": null,
+    "content": "<h2>Ketentuan Umum</h2><p>Setiap prajurit ...</p>"
   }
 }
 ```
 
-### 9.2 Laporan Cepat
-
-> [!TODO] Belum ada endpoint.
-
-`POST /quick-reports`
-
-**Payload (body):**
-
-| Parameter | Tipe | Wajib | Keterangan |
-|---|---|---|---|
-| `type` | string | Wajib | jenis laporan |
-| `title` | string | Wajib | — |
-| `body` | string | Wajib | isi laporan |
-| `location` | object | Opsional | `{ latitude, longitude, accuracy }` |
-| `attachments` | array | Opsional | — |
-
-**Response `201` (usulan):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "type": "kejadian",
-    "title": "Contoh",
-    "status": "submitted",
-    "reported_by": {
-      "id": 45,
-      "name": "Andi"
-    },
-    "created_at": "2026-09-02T10:00:00+07:00"
-  }
-}
-```
+Catatan:
+- `content` = Rich Text HTML untuk `type === 'article'`, `null` untuk `record_display`. FE merender HTML lewat `RichTextContent` (tanpa WebView / lib tambahan).
+- URL gambar di dalam `content` mengarah ke `/api/secure-files/...` (contoh backend `http://localhost:8000`) — FE menormalkan ke base URL API lalu merender lewat `SecureImage` (dengan header `Authorization`).
 
 ---
 
@@ -2704,7 +2730,97 @@ path. Dipakai `MemberHome` + turunannya.
 - `direction`: `in` (masuk markas) | `out` (keluar markas).
 - Client: `note` sebagai judul, `location_label` / `purpose` sebagai detail, `occurred_at` diformat relatif.
 
-## 5. Kontak Darurat
+## 5. Keluarga (Persit)
+
+### 5.1 Detail Anggota Keluarga
+
+> [!DONE] Layar `MeFamilyDetail` (`getMyFamilyMemberApi`), dibuka dari baris "Keluarga (Persit)" di `MemberHome` & `Profile`. Versi **berskup anggota** — dipakai karena `GET /catalog/persit/{id}` (Komandan) 403 untuk prajurit biasa. Kartu identitas + "Data Keluarga" + "Prajurit Terkait".
+
+`GET /me/family/{id}`
+
+`{id}` = `family[].id` dari `GET /auth/me` (id rekam Persit).
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 8,
+    "full_name": "Sri Wahyuni",
+    "membership_number": "P-000812",
+    "phone": "081234567890",
+    "birth_place": "Malang",
+    "birth_date": "1990-04-12",
+    "birth_date_formatted": "12 April 1990",
+    "blood_type": "O",
+    "address": "Asrama Blok C No. 4",
+    "occupation": "-",
+    "status": "active",
+    "notes": null,
+    "photo_url": null,
+    "husband": {
+      "id": 45,
+      "full_name": "Andi Pratama",
+      "service_number": "3101050010",
+      "rank": "SERKA"
+    },
+    "wife": null,
+    "last_location": null
+  }
+}
+```
+
+Catatan:
+- Prajurit terkait ada di `husband` **atau** `wife` (tergantung gender anggota) — yang lain `null`.
+- `last_location` = titik lokasi terakhir (bentuk = 5.2 `current_location`), `null` bila belum ada.
+- FE membersihkan field placeholder `"-"` sebelum tampil (`occupation` di atas dianggap kosong).
+
+### 5.2 Lokasi Anggota Keluarga
+
+> [!PARTIAL] Layar `MeFamilyDetail` tab/section "Lokasi" (`getMyFamilyMemberLocationApi`, di-guard `Promise.allSettled` bareng 5.1) → `PersonnelMap` + "Buka di Google Maps". Di data uji `current_location` masih `null`; nama field titik lokasi (`latitude`/`longitude`/`accuracy`/`captured_at`) mengikuti konvensi endpoint lokasi lain — **konfirmasi saat payload terisi**.
+
+`GET /me/family/{id}/location`
+
+`{id}` = sama dengan 5.1.
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 8,
+    "full_name": "Sri Wahyuni",
+    "membership_number": "P-000812",
+    "photo_url": null,
+    "current_location": {
+      "latitude": -7.9783,
+      "longitude": 112.6265,
+      "accuracy": 25,
+      "captured_at": "2026-09-03T14:20:00+07:00",
+      "source": "mobile"
+    },
+    "location_history": [
+      {
+        "latitude": -7.9783,
+        "longitude": 112.6265,
+        "accuracy": 25,
+        "captured_at": "2026-09-03T14:20:00+07:00",
+        "source": "mobile"
+      }
+    ]
+  }
+}
+```
+
+Catatan: `current_location` / entri `location_history[]` bisa `null` / `[]` bila anggota belum pernah terpantau lokasinya.
+
+## 6. Kontak Darurat
 
 > [!DONE] Layar `EmergencyContacts` (`getEmergencyContactsApi`), daftar tombol tap-to-call (`tel:`), dikelompokkan per `category`.
 
@@ -2740,7 +2856,7 @@ path. Dipakai `MemberHome` + turunannya.
 }
 ```
 
-## 6. Riwayat Kesehatan Saya
+## 7. Riwayat Kesehatan Saya
 
 > [!DONE] Layar `HealthMyHistory` (dibuka dari tab Riwayat → menu Kesehatan). Header identitas + list `HealthRecordCard` + "muat lebih banyak" + tarik-untuk-refresh; tiap baris → `HealthRecordDetail` (mode **read-only**, record dioper lewat param — endpoint detail petugas 403 untuk anggota).
 

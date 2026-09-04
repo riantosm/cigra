@@ -15,6 +15,11 @@ Berkas ini dirender jadi `documentation/changelog.html` (jalankan
 `python3 documentation/regen-html.py` setelah mengedit) — di halaman itu tiap rilis
 punya tombol **Salin** untuk menyalin catatan rilisnya sebagai teks siap-tempel.
 
+**Batas panjang:** teks yang tersalin oleh tombol **Salin** tiap rilis harus **< 1500
+karakter** (termasuk baris-baru & tanda titik). `regen-html.py` menolak build kalau ada
+rilis yang lewat — ringkas dulu bulletnya. Yang dihitung = judul rilis + nama kategori +
+bullet dengan penanda markdown dibuang & baris sambungan digabung jadi satu spasi.
+
 APK release setiap build otomatis disalin ke `documentation/`
 (`SmartBattalion-v<versionName>(<versionCode>)-release.apk`) tapi file `.apk`-nya
 tidak ikut di-commit (`documentation/*.apk` di `.gitignore`) dan tidak ikut
@@ -30,46 +35,29 @@ _4 September 2026_
 
 ### Baru
 
-- Academy: menu "Academy" di tab bawah kini membuka bagian tersendiri dengan navigasi bawahnya
-  sendiri (Beranda / Akademik / Psikologi / Jasmani / Riwayat). Untuk keluar dari Academy, tekan
-  tombol kembali dua kali (sama seperti keluar aplikasi dari Home).
-- Academy › Akademik: alur latihan TKD lengkap (data contoh) — daftar program, daftar & pengantar
-  modul, mengerjakan soal (TWK/TIU pilihan ganda + TKP skala 1–5) dengan timer, tandai ragu-ragu,
-  Navigasi Soal per subkategori, lalu Hasil Tryout (skor & kelulusan per subkategori) dan Pembahasan
-  (kunci + penjelasan tiap soal, filter Semua/Salah/Ragu). Soal masih 10 butir contoh statis.
-- Academy › Psikologi: halaman daftar kelompok tes (Inteligensi, Kepribadian, Sikap Kerja, Rapor
-  Psikologi). Semua kelompok masih "0 tes tersedia" — bank soalnya menyusul.
-- Academy › Jasmani: halaman daftar alat ukur & perencana latihan (Hitung Garjas/Renang, IMT &
-  Postur, Target Garjas/Lari/Push Up/Pull Up, Zona Lari, Rapor Jasmani). Kalkulatornya menyusul —
-  tiap kartu menampilkan info "Segera Hadir".
-- Academy › Riwayat: halaman ringkasan riwayat belajar dengan pemfilah Akademik / Psikologi /
-  Jasmani. Semuanya masih kosong ("0") — begitu ada pengerjaan tes, hasilnya otomatis muncul.
-- Buku Saku kini terhubung ke server sebagai E-Book: daftar Bab beserta halaman-halamannya,
-  isi materi ditampilkan langsung (teks & gambar) dengan navigasi Sebelumnya/Selanjutnya
-  antar halaman.
-- Anggota: daftar "Keluarga (Persit)" di Home & Profile — tiap anggota keluarga bisa dibuka ke
-  halaman detail (data pribadi, prajurit terkait, dan lokasi bila tersedia).
-
-- Komandan: kode alarm stelling di layar "Alarm Satuan" kini bisa diketuk untuk mengaktifkan &
-  menyiarkannya ke satuan (dengan konfirmasi).
+- Academy kini jadi bagian tersendiri dengan lima sub-menu: Beranda, Akademik, Psikologi, Jasmani,
+  Riwayat.
+- Academy › Akademik: alur latihan TKD lengkap (data contoh) — kerjakan soal TWK/TIU/TKP dengan
+  timer & tanda ragu, Navigasi Soal, lalu Hasil Tryout dan Pembahasan. Psikologi, Jasmani, dan
+  Riwayat sudah punya halamannya; bank soal & kalkulatornya menyusul.
+- Buku Saku kini terhubung ke server sebagai E-Book: daftar Bab & halamannya, isi materi (teks &
+  gambar) tampil langsung.
+- Anggota: daftar "Keluarga (Persit)" di Home & Profil, bisa dibuka ke halaman detail.
+- Komandan: kode alarm stelling di "Alarm Satuan" kini bisa diketuk untuk mengaktifkan &
+  menyiarkannya (dengan konfirmasi).
 
 ### Ditingkatkan
 
-- Halaman detail Buku Saku menampilkan isi materi, bukan lagi lampiran PDF.
-- QR Kartu Anggota kini dibuat dari layanan generator sehingga logo satuan bisa tampil di
-  tengah kode.
-- Layar "Alarm Satuan": indikator warna pada daftar kode alarm kini seragam merah.
-- Setelah login berhasil, aplikasi langsung pindah dari layar masuk ke layar "Memeriksa
-  aplikasi…" — sinkronisasi data akun dan permintaan izin lokasi dipindah ke sana, jadi
-  tidak ada lagi jeda diam beberapa detik di tombol "Masuk". Bila izin lokasi ditolak,
-  layar itu menampilkan tombol "Coba Lagi".
-- Komandan: menu "Laporan Cepat" (yang belum berfungsi) dihapus dari Akses Cepat.
+- Setelah login, sinkronisasi akun & izin lokasi pindah ke layar "Memeriksa aplikasi…", jadi tidak
+  ada lagi jeda diam di tombol "Masuk".
+- QR Kartu Anggota kini dari layanan generator sehingga logo satuan bisa tampil di tengah kode.
+- "Alarm Satuan": indikator warna pada daftar kode alarm kini seragam merah.
+- Menu "Laporan Cepat" (belum berfungsi) dihapus dari Akses Cepat Komandan.
 
 ### Perbaikan
 
-- Field kosong dari server (dikirim sebagai "-") tidak lagi bocor ke tampilan: pemisah "·"
-  yang menggantung, teks "- · data", dan tanggal lahir "-, ..." kini hilang di seluruh layar
-  (Aktivitas Terbaru di Home, Alarm Satuan, Sinyal Darurat, detail personel, dll).
+- Field kosong dari server (dikirim sebagai "-") tidak lagi bocor ke tampilan (pemisah "·"
+  menggantung, "- · data", tanggal lahir "-, ...").
 
 ---
 
