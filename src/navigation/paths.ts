@@ -10,6 +10,20 @@ export const ROUTES = {
   bukuSaku: 'BukuSaku',
   bukuSakuDetail: 'BukuSakuDetail',
   academy: 'Academy',
+  // Academy = "sub-app" sendiri: tab "Academy" di bar utama push root-stack screen `academyRoot`
+  // yang isinya bottom-tab navigator Academy (5 tab di bawah).
+  academyRoot: 'AcademyRoot',
+  academyBeranda: 'AcademyBeranda',
+  academyAkademik: 'AcademyAkademik',
+  academyPsikologi: 'AcademyPsikologi',
+  academyJasmani: 'AcademyJasmani',
+  academyRiwayat: 'AcademyRiwayat',
+  // Alur Akademik › TKD (Tes Kompetensi Dasar) — root-stack, di atas AcademyRoot (tanpa bottom tab).
+  academyTkdList: 'AcademyTkdList',
+  academyTkdModule: 'AcademyTkdModule',
+  academyTkdExam: 'AcademyTkdExam',
+  academyTkdResult: 'AcademyTkdResult',
+  academyTkdReview: 'AcademyTkdReview',
   profile: 'Profile',
   catalogList: 'CatalogList',
   catalogDetail: 'CatalogDetail',

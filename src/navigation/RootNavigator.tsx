@@ -2,7 +2,13 @@ import { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import AppVersionGate from '@/components/organisms/AppVersionGate';
+import AcademyTabNavigator from '@/navigation/AcademyTabNavigator';
 import MainTabNavigator from '@/navigation/MainTabNavigator';
+import TkdExamScreen from '@/screens/Academy/TkdExam';
+import TkdListScreen from '@/screens/Academy/TkdList';
+import TkdModuleScreen from '@/screens/Academy/TkdModule';
+import TkdResultScreen from '@/screens/Academy/TkdResult';
+import TkdReviewScreen from '@/screens/Academy/TkdReview';
 import { ROUTES } from '@/navigation/paths';
 import RequireAuth from '@/navigation/RequireAuth';
 import RequireGuest from '@/navigation/RequireGuest';
@@ -135,6 +141,20 @@ export default function RootNavigator() {
             </RequireAuth>
           )}
         </Stack.Screen>
+        <Stack.Screen name={ROUTES.academyRoot} component={AcademyTabNavigator} />
+        <Stack.Screen name={ROUTES.academyTkdList} component={TkdListScreen} />
+        <Stack.Screen name={ROUTES.academyTkdModule} component={TkdModuleScreen} />
+        <Stack.Screen
+          name={ROUTES.academyTkdExam}
+          component={TkdExamScreen}
+          options={{ gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name={ROUTES.academyTkdResult}
+          component={TkdResultScreen}
+          options={{ gestureEnabled: false }}
+        />
+        <Stack.Screen name={ROUTES.academyTkdReview} component={TkdReviewScreen} />
         <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
         <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
         <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />

@@ -4,6 +4,14 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { ROUTES } from '@/navigation/paths';
 import type { HandbookChapter, HealthRecordDetail, RollCallEntryStatus } from '@/types';
 
+/** Payload hasil satu sesi tryout TKD — cukup untuk merekonstruksi skor & pembahasan (data dummy). */
+export type TkdAttemptParams = {
+  moduleId: string;
+  answers: Record<string, string>;
+  raguIds: string[];
+  elapsedSeconds: number;
+};
+
 export type CatalogResourceKey =
   | 'personnel'
   | 'persit'
@@ -17,6 +25,14 @@ export type RootStackParamList = {
   [ROUTES.changePassword]: undefined;
   [ROUTES.appBootstrap]: undefined;
   [ROUTES.main]: undefined;
+  // Academy sub-app (bottom-tab navigator sendiri) — di-push dari tab "Academy" bar utama.
+  [ROUTES.academyRoot]: undefined;
+  // Alur Akademik › TKD (data dummy).
+  [ROUTES.academyTkdList]: undefined;
+  [ROUTES.academyTkdModule]: { moduleId: string };
+  [ROUTES.academyTkdExam]: { moduleId: string };
+  [ROUTES.academyTkdResult]: TkdAttemptParams;
+  [ROUTES.academyTkdReview]: TkdAttemptParams;
   [ROUTES.catalogList]: { resource: CatalogResourceKey };
   [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string; initialTab?: string };
   [ROUTES.profile]: undefined;
@@ -74,11 +90,24 @@ export type MainTabParamList = {
   [ROUTES.academy]: undefined;
 };
 
+export type AcademyTabParamList = {
+  [ROUTES.academyBeranda]: undefined;
+  [ROUTES.academyAkademik]: undefined;
+  [ROUTES.academyPsikologi]: undefined;
+  [ROUTES.academyJasmani]: undefined;
+  [ROUTES.academyRiwayat]: undefined;
+};
+
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
   NativeStackScreenProps<RootStackParamList, RouteName>;
 
 export type MainTabScreenProps<RouteName extends keyof MainTabParamList> = BottomTabScreenProps<
   MainTabParamList,
+  RouteName
+>;
+
+export type AcademyTabScreenProps<RouteName extends keyof AcademyTabParamList> = BottomTabScreenProps<
+  AcademyTabParamList,
   RouteName
 >;
 

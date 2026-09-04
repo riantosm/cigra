@@ -109,4 +109,59 @@ export const colors = {
   attachmentRowSurface: '#F6F8FE',
   primaryTintSurface: 'rgba(37, 99, 235, 0.08)',
   primaryTintBorder: 'rgba(37, 99, 235, 0.16)',
+  // Academy — kartu "hero" gelap di Beranda Academy (artboard "Academy — Beranda"). Satu-satunya
+  // permukaan gelap di aplikasi: ungu nyaris hitam dengan semburat ungu di pojok atas. Teks/tile
+  // di atasnya pakai putih transparan bertingkat (tak ada di token lain, hanya dipakai di sini).
+  academyHeroSurface: '#191527',
+  academyHeroGlow: 'rgba(139, 92, 246, 0.30)',
+  academyHeroLabel: 'rgba(255, 255, 255, 0.5)',
+  academyHeroBody: 'rgba(255, 255, 255, 0.6)',
+  academyHeroTileSurface: 'rgba(255, 255, 255, 0.07)',
+  academyHeroTileLabel: 'rgba(255, 255, 255, 0.55)',
+  // Warna ikon aksen di tiga tile ringkasan hero (Aktivitas / Avg Skor / Tryout).
+  academyStatActivity: '#FB923C',
+  academyStatScore: '#38BDF8',
+  academyStatTryout: '#F472B6',
+  // --- Academy · Akademik (alur TKD tryout) — artboard "Academy — Akademik" / "TKD ...".
+  // Aksen modul ini jingga→pink (bukan biru primary app). Hero gelap pakai ulang `academyHeroSurface`
+  // dgn semburat merah `academyAkademikGlow`. Wash hijau/merah untuk hasil & pembahasan pakai ulang
+  // successSurfaceSubtle / (baru di bawah) dangerSurfaceSoft.
+  academyAkademikStart: '#F97316',
+  academyAkademikEnd: '#EC4899',
+  academyAkademikGlow: 'rgba(244, 114, 114, 0.24)',
+  academyAkademikSurface: '#FDF0F5', // opsi terpilih / cell grid "terjawab"
+  academyAkademikBorder: '#F7C6DC',
+  academyAkademikText: '#BE185D',
+  academyExamBarSurface: '#17141F', // bar subkategori gelap di layar Kerjakan
+  academyWarnSurface: '#FEFBEB', // kartu "ragu-ragu" / "aturan integritas" (lebih pucat dari warningSurface)
+  academyWarnBorder: '#FCE7A8',
+  // Kartu "Pengantar & Petunjuk Tes" (tint ungu lembut) di layar intro modul TKD.
+  academyInfoSurface: '#F7F5FE',
+  academyInfoBorder: '#E9E4FA',
+  academyInfoText: '#6D28D9',
+  // Red-50 wash + border — dipakai timer "kritis", badge "TIDAK LULUS", opsi "PILIHANMU" (pembahasan).
+  dangerSurfaceSoft: '#FEF2F2',
+  dangerBorderSoft: '#FECACA',
+  // Badge LULUS / BELUM LULUS di atas hero gelap layar Hasil Tryout (butuh alfa agar menyatu).
+  academyVerdictPassSurface: 'rgba(22, 163, 74, 0.22)',
+  academyVerdictFailSurface: 'rgba(220, 38, 38, 0.22)',
+  // --- Academy · Psikologi — gradient identitas tiap kelompok tes (artboard "Academy — Psikologi").
+  // (Inteligensi jingga & Kepribadian pink memakai ulang warning/academyAkademik* di start-nya.)
+  academyPsiKepribadianEnd: '#A855F7',
+  academyPsiSikapStart: '#14B8A6',
+  academyPsiSikapEnd: '#0D9488',
+  academyPsiRaporStart: '#A9B4C4',
+  academyPsiRaporEnd: '#7C8AA0',
+  // --- Academy · Jasmani (artboard "Academy — Jasmani"). Hero teal-gelap + semburat hijau; kartu
+  // memakai palet aksen di bawah (sebagian pakai ulang gradient* / academyAkademik* yang sudah ada).
+  academyJasmaniHeroSurface: '#15202A',
+  academyJasmaniGlow: 'rgba(16, 185, 129, 0.24)',
+  academyAccentRose: '#F43F5E',
+  academyAccentCyan: '#06B6D4',
+  academyAccentIndigo: '#6366F1',
+  academyAccentGreen: '#22C55E',
+  academyAccentOrangeDeep: '#EA580C',
+  // --- Academy · Riwayat — hero ungu-gelap + semburat pink (artboard "Academy — Riwayat").
+  academyRiwayatHeroSurface: '#1E1826',
+  academyRiwayatGlow: 'rgba(236, 72, 153, 0.24)',
 } as const;

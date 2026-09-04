@@ -4,15 +4,19 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
+import Icon from '@/components/atoms/Icon';
+import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
 
-export type GradientButtonTone = 'primary' | 'danger';
+export type GradientButtonTone = 'primary' | 'danger' | 'akademik';
 
 export interface GradientButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
   tone?: GradientButtonTone;
   loading?: boolean;
+  /** Optional icon shown before the label (18px, white). */
+  icon?: IconName;
   /** Pill height. Defaults to `56` (DESIGN_SYSTEM §5.6); StatusModal passes `52` (§5.15). */
   height?: number;
   style?: StyleProp<ViewStyle>;
@@ -21,18 +25,20 @@ export interface GradientButtonProps extends Omit<PressableProps, 'children' | '
 const toneStops: Record<GradientButtonTone, [string, string]> = {
   primary: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
   danger: [colors.gradientDangerCtaStart, colors.danger],
+  akademik: [colors.academyAkademikStart, colors.academyAkademikEnd],
 };
 
 const toneShadow: Record<GradientButtonTone, string> = {
   primary: colors.primary,
   danger: colors.danger,
+  akademik: colors.academyAkademikEnd,
 };
 
 // Canvas-theme primary CTA (DESIGN_SYSTEM.md §5.6): pill, gradient fill, blue/red glow shadow,
 // 16/700 white label. The plain `Button` atom stays for the not-yet-migrated screens.
 const GradientButton = forwardRef<ComponentRef<typeof Pressable>, GradientButtonProps>(
   function GradientButtonImpl(props, ref) {
-    const { label, tone = 'primary', loading = false, disabled = false, height, style, ...rest } = props;
+    const { label, tone = 'primary', loading = false, disabled = false, icon, height, style, ...rest } = props;
     const isDisabled = disabled || loading;
     const [from, to] = toneStops[tone];
 
@@ -56,7 +62,10 @@ const GradientButton = forwardRef<ComponentRef<typeof Pressable>, GradientButton
         {loading ? (
           <ActivityIndicator color={colors.primaryForeground} />
         ) : (
-          <Text style={styles.label}>{label}</Text>
+          <>
+            {icon ? <Icon name={icon} size={18} color={colors.primaryForeground} /> : null}
+            <Text style={styles.label}>{label}</Text>
+          </>
         )}
       </PressableScale>
     );
@@ -77,6 +86,8 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 999,
     overflow: 'hidden',
+    flexDirection: 'row',
+    gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },

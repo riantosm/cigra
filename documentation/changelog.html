@@ -254,8 +254,26 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v0.5.0 (versionCode 5)
+
+_4 September 2026_
+
 ### Baru
 
+- Academy: menu "Academy" di tab bawah kini membuka bagian tersendiri dengan navigasi bawahnya
+  sendiri (Beranda / Akademik / Psikologi / Jasmani / Riwayat). Untuk keluar dari Academy, tekan
+  tombol kembali dua kali (sama seperti keluar aplikasi dari Home).
+- Academy › Akademik: alur latihan TKD lengkap (data contoh) — daftar program, daftar & pengantar
+  modul, mengerjakan soal (TWK/TIU pilihan ganda + TKP skala 1–5) dengan timer, tandai ragu-ragu,
+  Navigasi Soal per subkategori, lalu Hasil Tryout (skor & kelulusan per subkategori) dan Pembahasan
+  (kunci + penjelasan tiap soal, filter Semua/Salah/Ragu). Soal masih 10 butir contoh statis.
+- Academy › Psikologi: halaman daftar kelompok tes (Inteligensi, Kepribadian, Sikap Kerja, Rapor
+  Psikologi). Semua kelompok masih "0 tes tersedia" — bank soalnya menyusul.
+- Academy › Jasmani: halaman daftar alat ukur & perencana latihan (Hitung Garjas/Renang, IMT &
+  Postur, Target Garjas/Lari/Push Up/Pull Up, Zona Lari, Rapor Jasmani). Kalkulatornya menyusul —
+  tiap kartu menampilkan info "Segera Hadir".
+- Academy › Riwayat: halaman ringkasan riwayat belajar dengan pemfilah Akademik / Psikologi /
+  Jasmani. Semuanya masih kosong ("0") — begitu ada pengerjaan tes, hasilnya otomatis muncul.
 - Buku Saku kini terhubung ke server sebagai E-Book: daftar Bab beserta halaman-halamannya,
   isi materi ditampilkan langsung (teks & gambar) dengan navigasi Sebelumnya/Selanjutnya
   antar halaman.
@@ -367,7 +385,7 @@ _27 – 30 Agustus 2026_
 - Gap pada bottom tab bar; timing spinner pull-to-refresh di Home.
 </script>
 <script>
-  var APK_NAME = "SmartBattalion-v0.4.0(4)-release.apk";
+  var APK_NAME = "SmartBattalion-v0.5.0(5)-release.apk";
 
   // ---------- theme toggle (default terang, sinkron dgn viewer API Contract) ----------
   (function () {
