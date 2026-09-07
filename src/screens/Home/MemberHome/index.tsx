@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
+import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import ScreenBackground from '@/components/atoms/ScreenBackground';
 import SyncStrip from '@/components/molecules/SyncStrip';
@@ -22,6 +24,7 @@ import TimelineRow from '@/screens/Home/MemberHome/TimelineRow';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
+import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { useAppSelector } from '@/store/hooks';
 import { getMyLocationApi } from '@/services/api/location.service';
@@ -31,8 +34,9 @@ import {
   getMyMovementsApi,
   getMyStatusApi,
 } from '@/services/api/me.service';
+import { getActivePatrolSessionApi } from '@/services/api/patrol.service';
 import { colors } from '@/theme/colors';
-import { cardShadow } from '@/theme/shadows';
+import { cardShadow, cardShadowRaised } from '@/theme/shadows';
 import type {
   Announcement,
   AuthUser,
@@ -41,11 +45,14 @@ import type {
   MeMovement,
   MeStatus,
   MyLocationResult,
+  PatrolSession,
 } from '@/types';
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import type { IconName } from '@/components/atoms/Icon';
 import { cleanValue, formatDateShort, formatDateTime, formatRelativeTime, joinFields, titleCase } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
+import { patrolDurationLabel, patrolProgressPercent } from '@/utils/patrol';
+import { syncPatrolOngoingNotification } from '@/utils/patrolNotification';
 
 export type MemberHomeNavigationProp = CompositeNavigationProp<
   MainTabScreenProps<'Home'>['navigation'],
@@ -228,7 +235,7 @@ function clockLabel(iso: string | null | undefined): string {
 
 export default function MemberHome(props: MemberHomeProps) {
   const { user, navigation, onRefresh } = props;
-  const bottomPadding = useTabScreenBottomPadding();
+  const baseBottomPadding = useTabScreenBottomPadding();
   const announcements = useAppSelector(state => state.announcements.items);
   const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
   const [assetSheet, setAssetSheet] = useState<AssetDetailSheetData | null>(null);
@@ -239,7 +246,19 @@ export default function MemberHome(props: MemberHomeProps) {
   const [status, setStatus] = useState<MeStatus | null>(null);
   const [assets, setAssets] = useState<MeAssets | null>(null);
   const [movements, setMovements] = useState<MeMovement[]>([]);
+  const [activePatrol, setActivePatrol] = useState<PatrolSession | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  const loadActivePatrol = useCallback(async () => {
+    try {
+      const session = await getActivePatrolSessionApi();
+      setActivePatrol(session);
+      syncPatrolOngoingNotification(session);
+    } catch {
+      // Best-effort: chip "Patroli berjalan" bukan alur kritis Home.
+    }
+  }, []);
 
   const loadMyLocation = useCallback(async () => {
     try {
@@ -269,11 +288,18 @@ export default function MemberHome(props: MemberHomeProps) {
     loadMe();
   }, [loadMyLocation, loadMe]);
 
+  // Refetch tiap kali Home difokuskan (mis. kembali dari layar Sesi Berjalan / setelah selesai).
+  useFocusEffect(
+    useCallback(() => {
+      loadActivePatrol();
+    }, [loadActivePatrol]),
+  );
+
   async function handleRefresh() {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      await Promise.all([onRefresh(), loadMyLocation(), loadMe()]);
+      await Promise.all([onRefresh(), loadMyLocation(), loadMe(), loadActivePatrol()]);
       setLastSyncedAt(new Date());
     } finally {
       setIsRefreshing(false);
@@ -289,6 +315,14 @@ export default function MemberHome(props: MemberHomeProps) {
 
   const coords = myLocation?.location ?? null;
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+  // Chip "Patroli berjalan" mengambang di atas tab bar — sisakan ruang ekstra supaya konten
+  // paling bawah tetap bisa di-scroll melewatinya.
+  const bottomPadding = baseBottomPadding + (activePatrol ? 76 : 0);
+  const patrolChipBottom = TAB_BAR_HEIGHT + insets.bottom + 12;
+  const patrolPercent = activePatrol
+    ? patrolProgressPercent(activePatrol.completed_checkpoints, activePatrol.total_checkpoints)
+    : 0;
 
   const idCardVerified = (idCard?.verification_status ?? '') === 'verified';
   const qrPayload = idCard?.qr_payload ?? serviceNumber;
@@ -346,6 +380,12 @@ export default function MemberHome(props: MemberHomeProps) {
       color: colors.success,
       label: 'Buku Saku',
       onPress: () => navigation.navigate(ROUTES.bukuSaku),
+    },
+    {
+      icon: 'route' as const,
+      color: colors.primary,
+      label: 'Patroli',
+      onPress: () => navigation.navigate(ROUTES.patrol),
     },
     {
       icon: 'megaphone' as const,
@@ -525,6 +565,38 @@ export default function MemberHome(props: MemberHomeProps) {
         </MotiView>
       </ScrollView>
 
+      {activePatrol ? (
+        <MotiView
+          from={{ opacity: 0, translateY: 16 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={contentEnterTransition}
+          style={[styles.patrolChipWrap, { bottom: patrolChipBottom }]}
+          pointerEvents="box-none">
+          <PressableScale
+            scaleTo={0.98}
+            onPress={() => navigation.navigate(ROUTES.patrolActive)}
+            contentStyle={styles.patrolChip}>
+            <View style={styles.patrolChipIcon}>
+              <Icon name="route" size={18} color={colors.success} />
+            </View>
+            <View style={styles.patrolChipBody}>
+              <Text style={styles.patrolChipTitle} numberOfLines={1}>
+                Patroli berjalan
+              </Text>
+              <Text style={styles.patrolChipMeta} numberOfLines={1}>
+                {activePatrol.completed_checkpoints}/{activePatrol.total_checkpoints} checkpoint
+                {activePatrol.route?.name ? ` · ${activePatrol.route.name}` : ''} ·{' '}
+                {patrolDurationLabel(activePatrol.started_at)}
+              </Text>
+              <View style={styles.patrolChipTrack}>
+                <View style={[styles.patrolChipFill, { width: `${patrolPercent}%` }]} />
+              </View>
+            </View>
+            <Icon name="chevron-right" size={18} color={colors.placeholder} />
+          </PressableScale>
+        </MotiView>
+      ) : null}
+
       <QrIdentityModal
         visible={isQrModalVisible}
         value={qrPayload}
@@ -639,4 +711,39 @@ const styles = StyleSheet.create({
   shortcutCell: {
     flex: 1,
   },
+  patrolChipWrap: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+  },
+  patrolChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    ...cardShadowRaised,
+  },
+  patrolChipIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: colors.successSurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  patrolChipBody: { flex: 1, gap: 4 },
+  patrolChipTitle: { fontSize: 13, fontWeight: '700', color: colors.heading },
+  patrolChipMeta: { fontSize: 11, color: colors.textMuted },
+  patrolChipTrack: {
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: colors.chipSurface,
+    overflow: 'hidden',
+  },
+  patrolChipFill: { height: '100%', borderRadius: 999, backgroundColor: colors.success },
 });

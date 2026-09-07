@@ -2,7 +2,13 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { ROUTES } from '@/navigation/paths';
-import type { HandbookChapter, HealthRecordDetail, RollCallEntryStatus } from '@/types';
+import type {
+  HandbookChapter,
+  HealthRecordDetail,
+  PatrolMonitoringSession,
+  PatrolRoute,
+  RollCallEntryStatus,
+} from '@/types';
 
 /** Payload hasil satu sesi tryout TKD — cukup untuk merekonstruksi skor & pembahasan (data dummy). */
 export type TkdAttemptParams = {
@@ -80,6 +86,30 @@ export type RootStackParamList = {
     serviceNumber?: string;
     status: RollCallEntryStatus;
   };
+  // --- Patroli ---
+  [ROUTES.patrol]: undefined;
+  // Rute lengkap di-pass supaya daftar checkpoint tampil tanpa fetch ulang; layar ini juga
+  // yang memulai sesi (catatan awal + tombol "Mulai Patroli Rute Ini" → POST start).
+  [ROUTES.patrolRouteDetail]: { route: PatrolRoute; activePatrolSessionId?: number };
+  [ROUTES.patrolActive]: undefined;
+  // Scan QR checkpoint (kamera). `nextCheckpoint` = checkpoint berikutnya yang harus dipindai.
+  [ROUTES.patrolScan]: {
+    sessionId: number;
+    routeName?: string;
+    totalCheckpoints: number;
+    nextCheckpoint: { name: string; qrCode: string; sequenceOrder: number };
+  };
+  // Ambil foto bukti (selfie) setelah scan checkpoint.
+  [ROUTES.patrolPhoto]: {
+    sessionId: number;
+    checkpointName: string;
+    checkpointCode: string;
+    sequenceOrder: number;
+    totalCheckpoints: number;
+  };
+  // Monitoring patroli (POV komandan — hanya memantau, tidak ikut patroli).
+  [ROUTES.patrolMonitoring]: undefined;
+  [ROUTES.patrolMonitoringDetail]: { session: PatrolMonitoringSession };
 };
 
 export type MainTabParamList = {

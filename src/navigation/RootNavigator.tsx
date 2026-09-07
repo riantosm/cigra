@@ -37,6 +37,13 @@ import LoginScreen from '@/screens/Login';
 import MeFamilyDetailScreen from '@/screens/MeFamilyDetail';
 import MyMovementsScreen from '@/screens/MyMovements';
 import NotificationsScreen from '@/screens/Notifications';
+import PatrolActiveScreen from '@/screens/PatrolActive';
+import PatrolMonitoringScreen from '@/screens/PatrolMonitoring';
+import PatrolMonitoringDetailScreen from '@/screens/PatrolMonitoringDetail';
+import PatrolPhotoScreen from '@/screens/PatrolPhoto';
+import PatrolRouteDetailScreen from '@/screens/PatrolRouteDetail';
+import PatrolScanScreen from '@/screens/PatrolScan';
+import PatrolScreen from '@/screens/Patrol';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
 import PersonnelTrackingScreen from '@/screens/PersonnelTracking';
 import ProfileScreen from '@/screens/Profile';
@@ -185,6 +192,16 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.rollCallSearch} component={RollCallSearchScreen} />
         <Stack.Screen name={ROUTES.rollCallScan} component={RollCallScanScreen} />
         <Stack.Screen name={ROUTES.rollCallEntry} component={RollCallEntryScreen} />
+        <Stack.Screen name={ROUTES.patrol} component={PatrolScreen} />
+        <Stack.Screen name={ROUTES.patrolRouteDetail} component={PatrolRouteDetailScreen} />
+        <Stack.Screen name={ROUTES.patrolActive} component={PatrolActiveScreen} />
+        <Stack.Screen name={ROUTES.patrolScan} component={PatrolScanScreen} />
+        <Stack.Screen name={ROUTES.patrolPhoto} component={PatrolPhotoScreen} />
+        <Stack.Screen name={ROUTES.patrolMonitoring} component={PatrolMonitoringScreen} />
+        <Stack.Screen
+          name={ROUTES.patrolMonitoringDetail}
+          component={PatrolMonitoringDetailScreen}
+        />
       </Stack.Navigator>
     </>
   );

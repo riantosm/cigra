@@ -9,7 +9,7 @@ import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
 
-export type GradientButtonTone = 'primary' | 'danger' | 'akademik';
+export type GradientButtonTone = 'primary' | 'danger' | 'akademik' | 'success';
 
 export interface GradientButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -26,12 +26,14 @@ const toneStops: Record<GradientButtonTone, [string, string]> = {
   primary: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
   danger: [colors.gradientDangerCtaStart, colors.danger],
   akademik: [colors.academyAkademikStart, colors.academyAkademikEnd],
+  success: [colors.gradientSuccessStart, colors.success],
 };
 
 const toneShadow: Record<GradientButtonTone, string> = {
   primary: colors.primary,
   danger: colors.danger,
   akademik: colors.academyAkademikEnd,
+  success: colors.success,
 };
 
 // Canvas-theme primary CTA (DESIGN_SYSTEM.md §5.6): pill, gradient fill, blue/red glow shadow,

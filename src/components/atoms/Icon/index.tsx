@@ -31,6 +31,8 @@ export type IconName =
   | 'settings'
   | 'bell'
   | 'crosshair'
+  | 'camera'
+  | 'route'
   | 'chevron-right'
   | 'megaphone'
   | 'clipboard-check'
@@ -123,6 +125,10 @@ const pathByName: Record<IconName, string> = {
   bell: 'M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9Z M13.73 21a2 2 0 0 1-3.46 0',
   crosshair:
     'M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20Z M22 12h-4M6 12H2M12 6V2M12 22v-4',
+  camera:
+    'M4 8h3l1.6-2.4a1 1 0 0 1 .84-.45h5.12a1 1 0 0 1 .83.45L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z M12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z',
+  route:
+    'M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M18 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M9 16h6a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h3',
   'chevron-right': 'M9 6l6 6-6 6',
   megaphone:
     'M3 11v2a1 1 0 0 0 1 1h2l4 3V7L6 10H4a1 1 0 0 0-1 1Z M14 8a4 4 0 0 1 0 8M17 5a8 8 0 0 1 0 14',

@@ -4,6 +4,8 @@ import { getMessaging, getToken, onMessage, subscribeToTopic, unsubscribeFromTop
 import type { RemoteMessage } from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance, AndroidVisibility, AuthorizationStatus } from '@notifee/react-native';
 
+import { clearPatrolOngoingNotification } from '@/utils/patrolNotification';
+
 // Channel Android khusus notifikasi darurat — importance HIGH + bypassDnd supaya tetap
 // berbunyi walau HP dalam mode Do Not Disturb. `sound: 'siren'` merujuk ke
 // android/app/src/main/res/raw/siren.mp3 (salinan dari src/assets/sound/Siren.mp3).
@@ -192,6 +194,9 @@ export async function initializePushNotifications(roles: string[] = []): Promise
 }
 
 export async function teardownPushNotifications(): Promise<void> {
+  // Notifikasi "Patroli berjalan" tidak boleh menggantung setelah logout.
+  await clearPatrolOngoingNotification();
+
   if (Platform.OS !== 'android' || !isFirebaseReady) return;
 
   unsubscribeOnMessage?.();

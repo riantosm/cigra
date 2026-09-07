@@ -108,8 +108,8 @@ function movementDetail(item: ActivityMovement): string {
 }
 
 // Grid Home = 2 baris x 4 kartu: 7 quick action pertama + kartu "Lainnya" (bottom sheet berisi
-// sisanya). "Kekuatan Apel" (index 3, role instruktur apel saja) menggeser "Distribusi Senjata"
-// ke dalam sheet "Lainnya" saat tampil.
+// sisanya). "Kekuatan Apel" (index 3, role instruktur apel saja) + "Patroli" (semua komandan)
+// menggeser kartu di ekornya ("Distribusi Senjata", dst.) ke dalam sheet "Lainnya".
 const VISIBLE_QUICK_ACTION_COUNT = 7;
 
 export default function CommanderHome(props: CommanderHomeProps) {
@@ -206,6 +206,12 @@ export default function CommanderHome(props: CommanderHomeProps) {
           },
         ]
       : []),
+    {
+      icon: 'route',
+      label: 'Monitoring Patroli',
+      color: colors.success,
+      onPress: () => navigation.navigate(ROUTES.patrolMonitoring),
+    },
     {
       icon: 'map-pin',
       label: 'Peta Personel',

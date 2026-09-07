@@ -53,4 +53,12 @@ export const ROUTES = {
   rollCallSearch: 'RollCallSearch',
   rollCallScan: 'RollCallScan',
   rollCallEntry: 'RollCallEntry',
+  // --- Patroli ---
+  patrol: 'Patrol',
+  patrolRouteDetail: 'PatrolRouteDetail',
+  patrolActive: 'PatrolActive',
+  patrolScan: 'PatrolScan',
+  patrolPhoto: 'PatrolPhoto',
+  patrolMonitoring: 'PatrolMonitoring',
+  patrolMonitoringDetail: 'PatrolMonitoringDetail',
 } as const;
