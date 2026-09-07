@@ -2567,7 +2567,7 @@ Catatan:
 
 ### 10.1 Daftar Rute Patroli
 
-> [!DONE] Rute patroli + checkpoint berurut. Entry point: quick action "Patroli" di Home Komandan (semua role `komandan`). 6 layar `Patrol*`, `services/api/patrol.service.ts`. Layar `Patrol` (beranda) & `PatrolRouteDetail`. Diverifikasi via API live 2026-09-07.
+> [!DONE] Rute patroli + checkpoint berurut. **Dua POV:** anggota (menjalankan patroli — shortcut "Patroli" di Akses Cepat Home anggota) & komandan (memantau saja — quick action "Monitoring Patroli", lihat §10.7). Layar anggota: `Patrol` (beranda) → `PatrolRouteDetail` → `PatrolActive` / `PatrolScan` / `PatrolPhoto`. `services/api/patrol.service.ts`. Diverifikasi via API live 2026-09-07.
 
 `GET /patrols/routes`
 
@@ -2589,6 +2589,14 @@ Catatan:
       "created_by_user_id": 205,
       "created_at": "2026-09-07T04:08:34.000000Z",
       "updated_at": "2026-09-07T04:08:34.000000Z",
+      "status_summary": {
+        "is_selectable": false,
+        "has_ongoing_session": true,
+        "ongoing_session_id": 1,
+        "ongoing_officer": { "id": 102, "full_name": "Anggota Satuan", "service_number": "3101050002", "rank": null },
+        "completed_today_count": 4
+      },
+      "checkpoints_count": 6,
       "checkpoints": [
         {
           "id": 1,
@@ -2609,7 +2617,9 @@ Catatan:
 }
 ```
 
-Catatan: `checkpoints[]` diurutkan FE by `sequence_order`. Kartu rute menampilkan `name` + `code` + jumlah checkpoint; `PatrolRouteDetail` menampilkan timeline checkpoint (kode QR, radius, koordinat).
+Catatan:
+- `checkpoints[]` diurutkan FE by `sequence_order`. `PatrolRouteDetail` menampilkan timeline checkpoint (kode QR, radius, koordinat).
+- `status_summary`: kalau `is_selectable = false` **dan** `ongoing_session_id` bukan sesi milik user → kartu rute di daftar diredupkan + ikon gembok + banner "Sedang dipatroli oleh `<officer>`" + **tidak bisa diklik**. Kalau sesi berjalannya milik user sendiri → kartu tetap bisa diklik dan langsung ke `PatrolActive`.
 
 ### 10.2 Sesi Patroli Aktif Saya
 
@@ -2663,11 +2673,11 @@ Catatan: `checkpoints[]` diurutkan FE by `sequence_order`. Kartu rute menampilka
 Catatan:
 - `data` = `null` kalau petugas tidak punya sesi `in_progress` (FE juga menangani `404` → `null`).
 - `started_at` ISO UTC (`…Z`). FE render pakai `toLocaleTimeString('id-ID')` (zona perangkat = WIB).
-- Progres = `completed_checkpoints` / `total_checkpoints`. `logs[]` (bentuk belum final) dipakai best-effort untuk stempel waktu tiap checkpoint.
+- Progres = `completed_checkpoints` / `total_checkpoints`. `logs[]` terisi setelah check-in (bentuk = `data.log` di §10.6) — FE memakainya untuk menandai checkpoint mana yang sudah selesai + stempel waktunya.
 
 ### 10.3 Mulai Patroli Baru
 
-> [!DONE] `POST /patrols/sessions/start`. Diverifikasi via API live 2026-09-07: `200` `{ success:true, message, data:<sesi, bentuk = 10.2> }`. Layar `PatrolStart` (pilih rute + catatan) → sukses → `PatrolActive`.
+> [!DONE] `POST /patrols/sessions/start`. Diverifikasi via API live 2026-09-07: `200` `{ success:true, message, data:<sesi, bentuk = 10.2> }`. Dipanggil langsung dari `PatrolRouteDetail` (field "Catatan Awal" + tombol "Mulai Patroli Rute Ini") — tidak ada layar pilih-rute terpisah → sukses → `PatrolActive`.
 
 `POST /patrols/sessions/start`
 
@@ -2750,7 +2760,7 @@ Catatan: FE mengizinkan selesai walau `completed_checkpoints < total_checkpoints
 
 ### 10.5 Riwayat & Detail Sesi Patroli
 
-> [!PARTIAL] Endpoint jalan (`GET /patrols/sessions/history` + `GET /patrols/sessions/{session}`), sudah ada di `patrol.service.ts` (`getPatrolHistoryApi`, `getPatrolSessionApi`) — **belum dipakai layar mana pun** (belum ada artboard untuk layar riwayat/detail sesi). Diverifikasi via API live 2026-09-07.
+> [!PARTIAL] `GET /patrols/sessions/history` — di `patrol.service.ts` (`getPatrolHistoryApi`), **belum dipakai layar**. `GET /patrols/sessions/{session}` (`getPatrolSessionApi`) **dipakai `PatrolMonitoringDetail`** (§10.7) untuk mengambil `route.checkpoints[]` lengkap; komandan bisa membaca sesi milik prajurit lain. Diverifikasi via API live 2026-09-07.
 
 `GET /patrols/sessions/history` · `GET /patrols/sessions/{session}`
 
@@ -2797,11 +2807,127 @@ Catatan: FE mengizinkan selesai walau `completed_checkpoints < total_checkpoints
 
 Catatan: `history` `data` = array polos + `meta` sibling (bukan Laravel paginator bersarang seperti `/roll-calls`). `getPatrolHistoryApi` mengembalikan array `PatrolSession[]` (`meta` di-drop untuk sekarang).
 
-### 10.6 Verifikasi Checkpoint (Scan QR + Foto Bukti)
+### 10.6 Check-in Checkpoint (Scan QR + Selfie)
 
-> [!TODO] **Belum ada endpoint.** Layar `PatrolScan` (kamera QR + cek izin kamera) & `PatrolPhoto` (selfie bukti + tinjau) sudah dibangun dengan navigasi berfungsi, tapi tombol **"Kirim Bukti" dinonaktifkan** + ada banner "menunggu endpoint". `PatrolScan` punya tombol `[DEV]` (`__DEV__` only) untuk simulasi scan benar → lanjut ke `PatrolPhoto`.
+> [!DONE] `POST /patrols/sessions/{session}/checkin` — **multipart**. Diuji end-to-end di device 2026-09-07: `PatrolScan` (kamera QR 1:1) → cocok → `PatrolPhoto` (selfie kamera depan 1:1 + GPS riil) → "Kirim Bukti" → `StatusModal` sukses → kembali ke `PatrolActive` (progres & `logs[]` bertambah). Foto tersimpan di `log.photo_path` (mis. `patrol/photos/xxx.jpg`) — dilayani via `GET <API_BASE>/secure-files/<photo_path>` (butuh header `Authorization`; FE render pakai `SecureImage`). `log.photo_url` belum diisi backend (selalu `null`) — FE pakai `photo_path`. `PatrolScan` punya tombol `[DEV]` (`__DEV__` only) untuk melewati scan QR fisik saat uji.
 
-Butuh dari backend: endpoint untuk mencatat kunjungan checkpoint (mis. `POST /patrols/sessions/{session}/checkpoints` dengan `qr_code` + `latitude`/`longitude` + foto `file`), yang menaikkan `completed_checkpoints` dan mengisi `logs[]`. Sudah dicek 2026-09-07 — pola path umum (`/scan`, `/checkpoints`, `/checkpoints/{id}/scan`, `PATCH /sessions/{id}`, dst.) semua `404`/`405`.
+`POST /patrols/sessions/{session}/checkin` — `Content-Type: multipart/form-data`.
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `qr_code` | string | Wajib | kode QR sticker checkpoint (mis. `QR-RUTE-MKO-01-P02`) |
+| `latitude` | number | Wajib | koordinat GPS riil petugas |
+| `longitude` | number | Wajib | koordinat GPS riil petugas |
+| `photo` | file | Wajib | foto selfie (JPEG/PNG/WEBP, maks 10 MB) |
+| `notes` | string | Opsional | catatan situasi checkpoint |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Checkpoint 'Gerbang Utama' berhasil dicatat (Jarak: 0m).",
+  "data": {
+    "log": {
+      "id": 18,
+      "patrol_session_id": 8,
+      "patrol_checkpoint_id": 1,
+      "scanned_at": "2026-09-07T06:50:43.000000Z",
+      "scanned_latitude": -6.91916,
+      "scanned_longitude": 107.61812,
+      "distance_meters": 0,
+      "is_valid_location": true,
+      "notes": "Uji integrasi",
+      "photo_path": "patrol/photos/2U5P2uSvhojworCSjbP8TgMHPctTtkxy0YJDrm2t.jpg",
+      "photo_url": null,
+      "checkpoint": { "id": 1, "name": "Gerbang Utama", "sequence_order": 1, "qr_code": "QR-RUTE-MKO-01-P01" }
+    },
+    "is_valid_location": true,
+    "distance_meters": 0,
+    "radius_tolerance_meters": 40,
+    "progress": {
+      "total_checkpoints": 6,
+      "completed_checkpoints_count": 1,
+      "remaining_checkpoints_count": 5,
+      "is_all_completed": false,
+      "percentage": 16.7
+    },
+    "completed_checkpoints": [{ "id": 1, "name": "Gerbang Utama", "sequence_order": 1 }],
+    "remaining_checkpoints": [{ "id": 2, "name": "Gedung Mako (Depan)", "sequence_order": 2 }]
+  }
+}
+```
+
+Catatan:
+- Foto tersimpan di `data.log.photo_path` (`photo_url` masih `null` — belum digenerate backend). FE menampilkan selfie di sheet detail log (`PatrolActive`, ketuk baris checkpoint yang sudah check-in) lewat `SecureImage` yang me-resolve `photo_path` → `<API_BASE>/secure-files/<photo_path>` + header `Authorization`.
+- Check-in **di luar radius** tetap `200 success:true` — `message` menyebut jaraknya (mis. "…dicatat di luar radius toleransi (1232m dari 56m)."), `is_valid_location: false`. FE menampilkannya sebagai sukses dengan pesan itu.
+- FE mengirim `latitude`/`longitude` dari `getCurrentCoordinates()` (akurasi tinggi). GPS gagal → `StatusModal` "Lokasi GPS Diperlukan" (buka Pengaturan Lokasi / izin app).
+- `photo` dari `Camera.takePhoto()` VisionCamera (`{ uri: 'file://…', name, type: 'image/jpeg' }`).
+- Setelah sukses, `PatrolActive` refetch `GET /patrols/sessions/active` → `logs[]` terisi (bentuk = `data.log` di atas); FE menentukan checkpoint "selesai" & "berikutnya" dari `logs[].patrol_checkpoint_id` (bukan asumsi berurutan).
+- Body kosong → `422` `{ message, errors: { qr_code, latitude, longitude, photo } }` standar Laravel.
+
+### 10.7 Monitoring Patroli (POV Komandan)
+
+> [!DONE] `GET /patrols/monitoring` — endpoint khusus POV komandan untuk memantau seluruh sesi patroli prajurit + KPI summary. Diverifikasi via API live 2026-09-07. Quick action "Monitoring Patroli" di Home Komandan → `PatrolMonitoring` (KPI + filter + daftar sesi) → `PatrolMonitoringDetail`. Komandan **hanya memantau** — tidak ada tombol aksi. Belum ada role guard di backend (anggota juga bisa `200`) — FE membatasi lewat role.
+
+`GET /patrols/monitoring`
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `status` | string | Opsional | `in_progress` / `completed` — memfilter list **dan** `summary` |
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | default 15 |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Data monitoring patroli berhasil dimuat.",
+  "summary": { "total_sessions": 45, "in_progress_count": 3, "completed_count": 42 },
+  "data": [
+    {
+      "id": 12,
+      "status": "in_progress",
+      "started_at": "2026-09-07T14:00:00+07:00",
+      "completed_at": null,
+      "duration_minutes": 42,
+      "total_checkpoints": 5,
+      "completed_checkpoints": 3,
+      "progress_percentage": 60.0,
+      "has_location_anomaly": false,
+      "notes": "Patroli berjalan aman terkendali",
+      "route": { "id": 1, "name": "Patroli Luar Mako", "code": "PTR-OUTER-01" },
+      "officer": { "id": 5, "full_name": "Serda Andi Pratama", "service_number": "01010101", "rank": "SERDA" },
+      "logs": [
+        {
+          "id": 88,
+          "checkpoint": { "id": 10, "name": "Checkpoint 1 - Pos Utama", "sequence_order": 1, "qr_code": "CHK-PTR-1" },
+          "scanned_at": "2026-09-07T14:15:00+07:00",
+          "scanned_latitude": -6.917464,
+          "scanned_longitude": 107.619123,
+          "distance_meters": 8.4,
+          "is_valid_location": true,
+          "photo_url": "http://localhost:8000/api/secure-files/patrol/photos/img.jpg",
+          "notes": "Pos utama terkunci aman"
+        }
+      ]
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 3, "per_page": 15, "total": 45 }
+}
+```
+
+Catatan:
+- Bentuk response **bukan** `ApiResponse<T>` biasa — `summary` & `meta` ada di root, bukan di dalam `data`. `getPatrolMonitoringApi` mengembalikan `{ summary, sessions, meta }`.
+- `summary` ikut menyempit kalau `status` dikirim → FE menahan KPI ke hasil tak-terfilter ("Semua") supaya angkanya stabil saat ganti filter.
+- `logs[]` hanya checkpoint yang **sudah** di-check-in. Untuk daftar checkpoint **lengkap** (termasuk yang belum), `PatrolMonitoringDetail` juga memanggil `GET /patrols/sessions/{id}` (§10.5) → `route.checkpoints[]`, lalu digabung by `checkpoint.id`.
+- `logs[].photo_url` di sini URL siap pakai (contoh backend `http://localhost:8000/...` → di produksi jadi host asli); FE tetap render lewat `SecureImage` (menempel header `Authorization` untuk host API sendiri).
+- `has_location_anomaly` → banner peringatan "Ada check-in di luar radius checkpoint" pada kartu & detail sesi.
 
 ---
 

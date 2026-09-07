@@ -31,9 +31,18 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ### Baru
 
-- Fitur **Patroli** (quick action komandan): daftar rute patroli + checkpoint, sesi patroli
-  berjalan dengan progres checkpoint, mulai & selesaikan patroli. Alur scan QR checkpoint +
-  foto bukti (selfie) sudah tersedia layarnya — pengiriman ke server menunggu endpoint backend.
+- Fitur **Patroli** untuk anggota (Akses Cepat): pilih rute → mulai sesi patroli (dengan catatan
+  awal), progres checkpoint, dan **check-in checkpoint** — scan QR + foto selfie (kamera 1:1) +
+  lokasi GPS dikirim ke server. Detail sesi menampilkan deskripsi rute, catatan awal, serta info
+  tiap checkpoint (koordinat, radius, jarak check-in, foto selfie). Rute yang sedang dipatroli
+  anggota lain terkunci di daftar. Selesaikan patroli setelah semua checkpoint di-check-in.
+- Sesi patroli berjalan tampil sebagai **chip mengambang di Home anggota** dan **notifikasi Android
+  yang menetap** (progress bar checkpoint) — diketuk untuk membuka detail sesi.
+- **Monitoring Patroli** untuk komandan (quick action): pantau seluruh sesi patroli prajurit
+  real-time — ringkasan KPI (total / berjalan / selesai), filter status, daftar sesi (petugas,
+  rute, progres, durasi, penanda check-in di luar radius), dan detail per sesi menampilkan
+  **seluruh checkpoint rute** (yang sudah & belum di-check-in) lengkap dengan foto selfie, jarak,
+  dan lokasi tiap check-in.
 
 ## v0.5.0 (versionCode 5)
 
