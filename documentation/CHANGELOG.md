@@ -29,6 +29,12 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+### Baru
+
+- Fitur **Patroli** (quick action komandan): daftar rute patroli + checkpoint, sesi patroli
+  berjalan dengan progres checkpoint, mulai & selesaikan patroli. Alur scan QR checkpoint +
+  foto bukti (selfie) sudah tersedia layarnya — pengiriman ke server menunggu endpoint backend.
+
 ## v0.5.0 (versionCode 5)
 
 _4 September 2026_

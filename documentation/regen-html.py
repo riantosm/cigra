@@ -34,7 +34,7 @@ LOGO_GRAY = HERE / "LogoIcon-gray.png"
 BUILD_GRADLE = ROOT / "android" / "app" / "build.gradle"
 
 # Tanggal pengecekan terakhir — tampil di header kanan-atas viewer. Update saat sweep status berikutnya.
-CHECKED = "4 September 2026"
+CHECKED = "7 September 2026"
 
 
 def data_uri(path):

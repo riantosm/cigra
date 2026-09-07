@@ -465,7 +465,7 @@
     <a href="./changelog.html">Changelog</a>
   </nav>
   <span class="spacer"></span>
-  <span class="checked">Pengecekan terakhir<b>4 September 2026</b></span>
+  <span class="checked">Pengecekan terakhir<b>7 September 2026</b></span>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti tema">
     <span id="themeLabel">Gelap</span>
   </button>
@@ -501,7 +501,7 @@
 
 <script type="text/markdown" id="src-doc"># API Contract — Smart Battalion Apps
 
-**Pengecekan terakhir: 4 September 2026**
+**Pengecekan terakhir: 7 September 2026**
 
 Dokumentasi **semua endpoint** yang dipanggil aplikasi (yang sudah jalan maupun yang masih
 dummy) beserta status integrasinya. Dibagi per **peran**: Umum (semua role), Komandan,
@@ -2562,6 +2562,246 @@ Catatan:
 Catatan:
 - `content` = Rich Text HTML untuk `type === 'article'`, `null` untuk `record_display`. FE merender HTML lewat `RichTextContent` (tanpa WebView / lib tambahan).
 - URL gambar di dalam `content` mengarah ke `/api/secure-files/...` (contoh backend `http://localhost:8000`) — FE menormalkan ke base URL API lalu merender lewat `SecureImage` (dengan header `Authorization`).
+
+## 10. Patroli
+
+### 10.1 Daftar Rute Patroli
+
+> [!DONE] Rute patroli + checkpoint berurut. Entry point: quick action "Patroli" di Home Komandan (semua role `komandan`). 6 layar `Patrol*`, `services/api/patrol.service.ts`. Layar `Patrol` (beranda) & `PatrolRouteDetail`. Diverifikasi via API live 2026-09-07.
+
+`GET /patrols/routes`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "tenant_id": 1,
+      "name": "Patroli Perimeter Mako",
+      "code": "RUTE-MKO-01",
+      "description": "Keliling perimeter area Mako: gerbang utama, gedung, lapangan, gudang.",
+      "is_active": true,
+      "created_by_user_id": 205,
+      "created_at": "2026-09-07T04:08:34.000000Z",
+      "updated_at": "2026-09-07T04:08:34.000000Z",
+      "checkpoints": [
+        {
+          "id": 1,
+          "patrol_route_id": 1,
+          "name": "Gerbang Utama",
+          "sequence_order": 1,
+          "qr_code": "QR-RUTE-MKO-01-P01",
+          "latitude": -6.91916,
+          "longitude": 107.61812,
+          "radius_meters": 40,
+          "notes": "Checkpoint posisi Gerbang Utama",
+          "created_at": "2026-09-07T04:08:34.000000Z",
+          "updated_at": "2026-09-07T04:08:34.000000Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Catatan: `checkpoints[]` diurutkan FE by `sequence_order`. Kartu rute menampilkan `name` + `code` + jumlah checkpoint; `PatrolRouteDetail` menampilkan timeline checkpoint (kode QR, radius, koordinat).
+
+### 10.2 Sesi Patroli Aktif Saya
+
+> [!DONE] Sesi `in_progress` milik petugas yang login. Dipakai di layar `Patrol` (kartu "Sesi Berjalan") & `PatrolActive`. Diverifikasi via API live 2026-09-07 — response menyertakan `route.checkpoints[]` + `logs[]`, jadi `PatrolActive` tidak perlu request rute terpisah.
+
+`GET /patrols/sessions/active`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5,
+    "tenant_id": 1,
+    "patrol_route_id": 1,
+    "officer_personnel_id": 101,
+    "status": "in_progress",
+    "started_at": "2026-09-07T04:10:07.000000Z",
+    "completed_at": null,
+    "total_checkpoints": 6,
+    "completed_checkpoints": 0,
+    "notes": "Patroli rutin siang",
+    "created_at": "2026-09-07T04:10:07.000000Z",
+    "updated_at": "2026-09-07T04:10:07.000000Z",
+    "route": {
+      "id": 1,
+      "name": "Patroli Perimeter Mako",
+      "code": "RUTE-MKO-01",
+      "description": "Keliling perimeter area Mako: ...",
+      "is_active": true,
+      "checkpoints": [
+        {
+          "id": 1,
+          "name": "Gerbang Utama",
+          "sequence_order": 1,
+          "qr_code": "QR-RUTE-MKO-01-P01",
+          "latitude": -6.91916,
+          "longitude": 107.61812,
+          "radius_meters": 40
+        }
+      ]
+    },
+    "logs": []
+  }
+}
+```
+
+Catatan:
+- `data` = `null` kalau petugas tidak punya sesi `in_progress` (FE juga menangani `404` → `null`).
+- `started_at` ISO UTC (`…Z`). FE render pakai `toLocaleTimeString('id-ID')` (zona perangkat = WIB).
+- Progres = `completed_checkpoints` / `total_checkpoints`. `logs[]` (bentuk belum final) dipakai best-effort untuk stempel waktu tiap checkpoint.
+
+### 10.3 Mulai Patroli Baru
+
+> [!DONE] `POST /patrols/sessions/start`. Diverifikasi via API live 2026-09-07: `200` `{ success:true, message, data:<sesi, bentuk = 10.2> }`. Layar `PatrolStart` (pilih rute + catatan) → sukses → `PatrolActive`.
+
+`POST /patrols/sessions/start`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `patrol_route_id` | integer | Wajib | ID rute dari §10.1 |
+| `notes` | string | Opsional | catatan awal patroli |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Sesi patroli berhasil dimulai.",
+  "data": {
+    "id": 6,
+    "tenant_id": 1,
+    "patrol_route_id": 2,
+    "officer_personnel_id": 101,
+    "status": "in_progress",
+    "started_at": "2026-09-07T04:21:22.000000Z",
+    "total_checkpoints": 5,
+    "completed_checkpoints": 0,
+    "notes": "Mulai dari pos jaga utama",
+    "created_at": "2026-09-07T04:21:22.000000Z",
+    "updated_at": "2026-09-07T04:21:22.000000Z",
+    "route": { "id": 2, "name": "Patroli Pos Jaga Utama", "code": "RUTE-MKO-02", "checkpoints": [] }
+  }
+}
+```
+
+**Response `422`** (petugas masih punya sesi berjalan):
+
+```json
+{
+  "success": false,
+  "message": "Anda masih memiliki sesi patroli yang sedang berjalan.",
+  "data": {
+    "id": 7,
+    "status": "in_progress",
+    "total_checkpoints": 4,
+    "completed_checkpoints": 0
+  }
+}
+```
+
+Catatan: pada `422` di atas FE menampilkan `StatusModal` "Sesi Patroli Masih Berjalan" dengan tombol **"Lihat Patroli Berjalan"** → `PatrolActive`. Body kosong / `patrol_route_id` hilang → `422` `{ message, errors: { patrol_route_id: [...] } }` standar Laravel.
+
+### 10.4 Selesaikan Patroli
+
+> [!DONE] `POST /patrols/sessions/{session}/complete` — `{session}` = id sesi. Diverifikasi via API live 2026-09-07: `200` `{ success:true, message, data:<sesi status "completed"> }`. Layar `PatrolActive` (tombol hijau "Selesaikan Patroli" → konfirmasi → `StatusModal` sukses → kembali).
+
+`POST /patrols/sessions/{session}/complete`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Patroli berhasil diselesaikan.",
+  "data": {
+    "id": 6,
+    "tenant_id": 1,
+    "patrol_route_id": 2,
+    "officer_personnel_id": 101,
+    "status": "completed",
+    "started_at": "2026-09-07T04:21:22.000000Z",
+    "completed_at": "2026-09-07T04:27:10.000000Z",
+    "total_checkpoints": 5,
+    "completed_checkpoints": 0
+  }
+}
+```
+
+Catatan: FE mengizinkan selesai walau `completed_checkpoints < total_checkpoints` (konfirmasi menyebut sisa checkpoint yang belum diverifikasi).
+
+### 10.5 Riwayat & Detail Sesi Patroli
+
+> [!PARTIAL] Endpoint jalan (`GET /patrols/sessions/history` + `GET /patrols/sessions/{session}`), sudah ada di `patrol.service.ts` (`getPatrolHistoryApi`, `getPatrolSessionApi`) — **belum dipakai layar mana pun** (belum ada artboard untuk layar riwayat/detail sesi). Diverifikasi via API live 2026-09-07.
+
+`GET /patrols/sessions/history` · `GET /patrols/sessions/{session}`
+
+**Query** (`history`):
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `page` | integer | Opsional | — |
+| `per_page` | integer | Opsional | default 15 |
+
+**Response history `200`:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "tenant_id": 1,
+      "patrol_route_id": 1,
+      "officer_personnel_id": 102,
+      "status": "in_progress",
+      "started_at": "2026-09-07T03:28:34.000000Z",
+      "completed_at": null,
+      "total_checkpoints": 6,
+      "completed_checkpoints": 2,
+      "notes": "Patroli rutin siang hari",
+      "created_at": "2026-09-07T04:08:34.000000Z",
+      "updated_at": "2026-09-07T04:08:34.000000Z",
+      "route": { "id": 1, "name": "Patroli Perimeter Mako", "code": "RUTE-MKO-01" },
+      "officer": { "id": 102, "tenant_id": 1, "full_name": "...", "service_number": "..." }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 15,
+    "total": 0
+  }
+}
+```
+
+**Response detail `200`:** `{ success:true, data:<sesi, bentuk = 10.2 + "officer"> }`. `GET /patrols/sessions/{id}` untuk id yang tidak ada → `404`.
+
+Catatan: `history` `data` = array polos + `meta` sibling (bukan Laravel paginator bersarang seperti `/roll-calls`). `getPatrolHistoryApi` mengembalikan array `PatrolSession[]` (`meta` di-drop untuk sekarang).
+
+### 10.6 Verifikasi Checkpoint (Scan QR + Foto Bukti)
+
+> [!TODO] **Belum ada endpoint.** Layar `PatrolScan` (kamera QR + cek izin kamera) & `PatrolPhoto` (selfie bukti + tinjau) sudah dibangun dengan navigasi berfungsi, tapi tombol **"Kirim Bukti" dinonaktifkan** + ada banner "menunggu endpoint". `PatrolScan` punya tombol `[DEV]` (`__DEV__` only) untuk simulasi scan benar → lanjut ke `PatrolPhoto`.
+
+Butuh dari backend: endpoint untuk mencatat kunjungan checkpoint (mis. `POST /patrols/sessions/{session}/checkpoints` dengan `qr_code` + `latitude`/`longitude` + foto `file`), yang menaikkan `completed_checkpoints` dan mengisi `logs[]`. Sudah dicek 2026-09-07 — pola path umum (`/scan`, `/checkpoints`, `/checkpoints/{id}/scan`, `PATCH /sessions/{id}`, dst.) semua `404`/`405`.
 
 ---
 
