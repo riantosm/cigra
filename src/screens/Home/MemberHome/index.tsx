@@ -388,6 +388,12 @@ export default function MemberHome(props: MemberHomeProps) {
       onPress: () => navigation.navigate(ROUTES.patrol),
     },
     {
+      icon: 'mail' as const,
+      color: colors.primary,
+      label: 'Disposisi',
+      onPress: () => navigation.navigate(ROUTES.dispositionList),
+    },
+    {
       icon: 'megaphone' as const,
       color: colors.warning,
       label: 'Pengumuman',

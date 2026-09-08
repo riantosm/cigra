@@ -91,6 +91,24 @@ export default function NotificationsScreen(props: Props) {
         },
       };
     }
+    if (action?.type === 'disposition') {
+      return {
+        label: 'Buka Detail Disposisi',
+        onPress: () => {
+          setSelected(null);
+          navigation.navigate(ROUTES.dispositionDetail, { id: Number(action.id) });
+        },
+      };
+    }
+    if (action?.type === 'disposition_list') {
+      return {
+        label: 'Buka Daftar Disposisi',
+        onPress: () => {
+          setSelected(null);
+          navigation.navigate(ROUTES.dispositionList);
+        },
+      };
+    }
     return undefined;
   }
 

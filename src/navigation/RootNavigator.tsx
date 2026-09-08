@@ -23,6 +23,14 @@ import AppBootstrapScreen from '@/screens/AppBootstrap';
 import AnnouncementsScreen from '@/screens/Announcements';
 import BukuSakuDetailScreen from '@/screens/BukuSakuDetail';
 import ComingSoonScreen from '@/screens/ComingSoon';
+import DispositionComposeScreen from '@/screens/DispositionCompose';
+import DispositionDetailScreen from '@/screens/DispositionDetail';
+import DispositionFollowUpScreen from '@/screens/DispositionFollowUp';
+import DispositionListScreen from '@/screens/DispositionList';
+import DispositionRecipientSearchScreen from '@/screens/DispositionRecipientSearch';
+import IncomingLetterCreateScreen from '@/screens/IncomingLetterCreate';
+import IncomingLetterDetailScreen from '@/screens/IncomingLetterDetail';
+import IncomingLetterListScreen from '@/screens/IncomingLetterList';
 import EmergencyContactsScreen from '@/screens/EmergencyContacts';
 import EmergencyDetailScreen from '@/screens/EmergencyDetail';
 import EmergencyListScreen from '@/screens/EmergencyList';
@@ -202,6 +210,17 @@ export default function RootNavigator() {
           name={ROUTES.patrolMonitoringDetail}
           component={PatrolMonitoringDetailScreen}
         />
+        <Stack.Screen name={ROUTES.dispositionList} component={DispositionListScreen} />
+        <Stack.Screen name={ROUTES.dispositionDetail} component={DispositionDetailScreen} />
+        <Stack.Screen name={ROUTES.dispositionFollowUp} component={DispositionFollowUpScreen} />
+        <Stack.Screen name={ROUTES.dispositionCompose} component={DispositionComposeScreen} />
+        <Stack.Screen
+          name={ROUTES.dispositionRecipientSearch}
+          component={DispositionRecipientSearchScreen}
+        />
+        <Stack.Screen name={ROUTES.incomingLetterList} component={IncomingLetterListScreen} />
+        <Stack.Screen name={ROUTES.incomingLetterCreate} component={IncomingLetterCreateScreen} />
+        <Stack.Screen name={ROUTES.incomingLetterDetail} component={IncomingLetterDetailScreen} />
       </Stack.Navigator>
     </>
   );

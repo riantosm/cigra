@@ -7,8 +7,16 @@ import type {
   HealthRecordDetail,
   PatrolMonitoringSession,
   PatrolRoute,
+  PersonnelSearchItem,
   RollCallEntryStatus,
 } from '@/types';
+
+/** Surat masuk terpilih yang di-pass ke layar Buat Disposisi (subset ringan). */
+export type DispositionComposeLetter = {
+  id: number;
+  letter_number: string;
+  subject: string;
+};
 
 /** Payload hasil satu sesi tryout TKD — cukup untuk merekonstruksi skor & pembahasan (data dummy). */
 export type TkdAttemptParams = {
@@ -110,6 +118,27 @@ export type RootStackParamList = {
   // Monitoring patroli (POV komandan — hanya memantau, tidak ikut patroli).
   [ROUTES.patrolMonitoring]: undefined;
   [ROUTES.patrolMonitoringDetail]: { session: PatrolMonitoringSession };
+  // --- Disposisi Surat ---
+  // Kotak masuk disposisi (disposisi yang ditujukan ke user). Tidak ada tab "terkirim" —
+  // komandan melacak disposisi terbitannya lewat detail surat masuk.
+  [ROUTES.dispositionList]: undefined;
+  [ROUTES.dispositionDetail]: { id: number };
+  [ROUTES.dispositionFollowUp]: { id: number; dispositionNumber?: string; subject?: string };
+  // `dispositionId` diisi → mode ubah draf (PUT). `incomingLetter` = surat terpilih.
+  // `recipients` di-merge kembali dari layar Cari & Pilih Penerima.
+  [ROUTES.dispositionCompose]:
+    | {
+        incomingLetter?: DispositionComposeLetter;
+        dispositionId?: number;
+        recipients?: PersonnelSearchItem[];
+      }
+    | undefined;
+  [ROUTES.dispositionRecipientSearch]: { selectedIds: number[] };
+  // `pickerMode` → dibuka dari layar Buat Disposisi untuk MEMILIH surat (kembali ke Compose
+  // dengan merge param), bukan alur berdiri sendiri.
+  [ROUTES.incomingLetterList]: { pickerMode?: boolean } | undefined;
+  [ROUTES.incomingLetterCreate]: undefined;
+  [ROUTES.incomingLetterDetail]: { id: number; pickerMode?: boolean };
 };
 
 export type MainTabParamList = {

@@ -29,20 +29,44 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+### Ditingkatkan
+
+- Komandan: di halaman "Surat Masuk" ada ikon di pojok kanan header untuk membuka "Disposisi Surat"
+  (disposisi yang ditujukan kepada komandan sendiri).
+
+### Perbaikan
+
+- Buat Disposisi: setelah "Kirim Disposisi" berhasil lalu tekan "Selesai", menekan tombol kembali
+  dari detail surat tidak lagi membuka form kirim disposisi — langsung ke daftar Surat Masuk.
+- Cari Penerima: saat pencarian sedang memuat, tombol "Tambahkan" tetap menempel di bawah layar,
+  tidak lagi ikut naik menempel indikator loading.
+
+## v0.6.0 (versionCode 6)
+
+_8 September 2026_
+
 ### Baru
 
-- Fitur **Patroli** untuk anggota (Akses Cepat): pilih rute → mulai sesi patroli (dengan catatan
-  awal), progres checkpoint, dan **check-in checkpoint** — scan QR + foto selfie (kamera 1:1) +
-  lokasi GPS dikirim ke server. Detail sesi menampilkan deskripsi rute, catatan awal, serta info
-  tiap checkpoint (koordinat, radius, jarak check-in, foto selfie). Rute yang sedang dipatroli
-  anggota lain terkunci di daftar. Selesaikan patroli setelah semua checkpoint di-check-in.
-- Sesi patroli berjalan tampil sebagai **chip mengambang di Home anggota** dan **notifikasi Android
-  yang menetap** (progress bar checkpoint) — diketuk untuk membuka detail sesi.
-- **Monitoring Patroli** untuk komandan (quick action): pantau seluruh sesi patroli prajurit
-  real-time — ringkasan KPI (total / berjalan / selesai), filter status, daftar sesi (petugas,
-  rute, progres, durasi, penanda check-in di luar radius), dan detail per sesi menampilkan
-  **seluruh checkpoint rute** (yang sudah & belum di-check-in) lengkap dengan foto selfie, jarak,
-  dan lokasi tiap check-in.
+- Fitur **Patroli** untuk anggota (Akses Cepat): pilih rute, mulai sesi dengan catatan awal, lalu
+  check-in tiap checkpoint — scan QR + foto selfie + lokasi GPS. Detail sesi menampilkan progres,
+  deskripsi rute, dan info tiap check-in (jarak, foto). Rute yang sedang dipatroli anggota lain
+  terkunci. Selesaikan setelah semua checkpoint di-check-in.
+- Sesi patroli berjalan tampil sebagai chip mengambang di Home anggota dan notifikasi Android yang
+  menetap (progres checkpoint) — diketuk untuk membuka sesi.
+- **Monitoring Patroli** untuk komandan (quick action): pantau semua sesi patroli real-time — KPI
+  total/berjalan/selesai, filter status, daftar sesi (petugas, rute, progres, durasi, penanda
+  check-in di luar radius), dan detail sesi dengan seluruh checkpoint rute + foto selfie tiap
+  check-in.
+- Fitur **Disposisi Surat**. Anggota (Akses Cepat "Disposisi"): daftar disposisi yang ditugaskan +
+  ringkasan, detail (status baca tercatat otomatis), tambah tindak lanjut + lampiran, tandai
+  selesai. Komandan (quick action "Disposisi Surat"): catat surat masuk (dengan berkas PDF), cari &
+  pilih penerima, terbitkan disposisi (prioritas, instruksi, tenggat) atau simpan draf — draf bisa
+  diedit, dikirim, atau dihapus. Notifikasi disposisi dikirim lewat push notification.
+
+### Ditingkatkan
+
+- Token perangkat Firebase (FCM) kini didaftarkan ke server saat login dan dihapus saat logout,
+  agar push notification per-pengguna (mis. disposisi) sampai ke perangkat yang dipakai.
 
 ## v0.5.0 (versionCode 5)
 

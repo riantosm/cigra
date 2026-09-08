@@ -61,4 +61,13 @@ export const ROUTES = {
   patrolPhoto: 'PatrolPhoto',
   patrolMonitoring: 'PatrolMonitoring',
   patrolMonitoringDetail: 'PatrolMonitoringDetail',
+  // --- Disposisi Surat ---
+  dispositionList: 'DispositionList',
+  dispositionDetail: 'DispositionDetail',
+  dispositionFollowUp: 'DispositionFollowUp',
+  dispositionCompose: 'DispositionCompose',
+  dispositionRecipientSearch: 'DispositionRecipientSearch',
+  incomingLetterList: 'IncomingLetterList',
+  incomingLetterCreate: 'IncomingLetterCreate',
+  incomingLetterDetail: 'IncomingLetterDetail',
 } as const;

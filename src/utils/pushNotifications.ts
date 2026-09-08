@@ -1,9 +1,17 @@
 import { Platform } from 'react-native';
 import Config from 'react-native-config';
-import { getMessaging, getToken, onMessage, subscribeToTopic, unsubscribeFromTopic } from '@react-native-firebase/messaging';
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  onTokenRefresh,
+  subscribeToTopic,
+  unsubscribeFromTopic,
+} from '@react-native-firebase/messaging';
 import type { RemoteMessage } from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance, AndroidVisibility, AuthorizationStatus } from '@notifee/react-native';
 
+import { registerFcmTokenApi, unregisterFcmTokenApi } from '@/services/api/device.service';
 import { clearPatrolOngoingNotification } from '@/utils/patrolNotification';
 
 // Channel Android khusus notifikasi darurat — importance HIGH + bypassDnd supaya tetap
@@ -129,7 +137,24 @@ export async function displayLocalEmergencyAlert(eventId: string): Promise<void>
 
 let isFirebaseReady = false;
 let unsubscribeOnMessage: (() => void) | null = null;
+let unsubscribeOnTokenRefresh: (() => void) | null = null;
 let subscribedTopics: string[] = [];
+// Token FCM terakhir yang berhasil didaftarkan ke backend — supaya tidak POST ulang token yang
+// sama tiap kali initializePushNotifications dipanggil (mis. saat role berubah).
+let registeredFcmToken: string | null = null;
+
+// Daftarkan / perbarui FCM token milik user aktif ke backend (`POST /devices/firebase-token`),
+// dipakai untuk push notification yang dikirim per-user (mis. disposisi surat). Best-effort:
+// kegagalan tidak boleh mengganggu setup push lainnya.
+async function registerFcmTokenWithBackend(token: string | null | undefined): Promise<void> {
+  if (!token || token === registeredFcmToken) return;
+  try {
+    await registerFcmTokenApi(token);
+    registeredFcmToken = token;
+  } catch {
+    // Backend belum siap / offline — coba lagi saat init berikutnya atau saat token di-refresh.
+  }
+}
 
 // Selain BROADCAST_TOPIC (semua device), device juga subscribe ke satu topic per role yang
 // dimiliki user (mis. "komandan", "anggota") — jadi backend bisa kirim FCM cuma ke topic role
@@ -148,10 +173,16 @@ async function ensureFirebaseReady(): Promise<void> {
   await ensureAlertChannel();
 
   const messaging = getMessaging();
-  await getToken(messaging);
+  const token = await getToken(messaging);
+  await registerFcmTokenWithBackend(token);
 
   unsubscribeOnMessage = onMessage(messaging, async remoteMessage => {
     await displayRemoteMessage(remoteMessage);
+  });
+
+  // FCM bisa merotasi token kapan saja (mis. restore app, clear data) — daftarkan yang baru.
+  unsubscribeOnTokenRefresh = onTokenRefresh(messaging, async newToken => {
+    await registerFcmTokenWithBackend(newToken);
   });
 
   isFirebaseReady = true;
@@ -188,6 +219,11 @@ export async function initializePushNotifications(roles: string[] = []): Promise
   try {
     await ensureFirebaseReady();
     await syncSubscribedTopics(roles);
+    // Kalau registrasi token ke backend gagal saat ensureFirebaseReady (mis. backend sempat
+    // offline), coba lagi tiap init berikutnya — no-op kalau token sudah terdaftar.
+    if (!registeredFcmToken) {
+      await registerFcmTokenWithBackend(await getToken(getMessaging()));
+    }
   } catch {
     // Firebase belum dikonfigurasi (belum ada google-services.json) — abaikan, coba lagi nanti.
   }
@@ -197,10 +233,24 @@ export async function teardownPushNotifications(): Promise<void> {
   // Notifikasi "Patroli berjalan" tidak boleh menggantung setelah logout.
   await clearPatrolOngoingNotification();
 
+  // Hapus FCM token milik user di backend (`DELETE /devices/firebase-token`) supaya server tidak
+  // mengirim push ke device ini setelah logout. Harus dipanggil SEBELUM token auth dibersihkan
+  // (lihat urutan di authSlice.logout). Best-effort.
+  if (registeredFcmToken) {
+    try {
+      await unregisterFcmTokenApi();
+    } catch {
+      // abaikan — sesi mungkin sudah tidak valid.
+    }
+    registeredFcmToken = null;
+  }
+
   if (Platform.OS !== 'android' || !isFirebaseReady) return;
 
   unsubscribeOnMessage?.();
   unsubscribeOnMessage = null;
+  unsubscribeOnTokenRefresh?.();
+  unsubscribeOnTokenRefresh = null;
   isFirebaseReady = false;
 
   try {

@@ -3,7 +3,12 @@ import type { PaginationMeta } from '@/types/catalog.types';
 // GET /notifications + POST /notifications/{id}/read + POST /notifications/read-all.
 // Dipakai lonceng header untuk SEMUA role (komandan & anggota). Lihat API_CONTRACT.md §3.
 
-export type AppNotificationType = 'emergency' | 'announcement' | 'info' | 'system';
+export type AppNotificationType =
+  | 'emergency'
+  | 'announcement'
+  | 'info'
+  | 'system'
+  | 'disposition';
 
 export interface AppNotificationAction {
   type: string;

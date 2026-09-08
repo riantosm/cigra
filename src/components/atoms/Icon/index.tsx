@@ -73,6 +73,7 @@ export type IconName =
   | 'paperclip'
   | 'file'
   | 'download'
+  | 'edit'
   | 'check';
 
 export interface IconProps {
@@ -181,6 +182,7 @@ const pathByName: Record<IconName, string> = {
     'm21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48',
   file: 'M14 3v5h5M8 3h7l5 5v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z',
   download: 'M12 4v11M7 11l5 5 5-5M5 20h14',
+  edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z',
   check: 'M5 13l4 4L19 7',
 };
 

@@ -213,6 +213,12 @@ export default function CommanderHome(props: CommanderHomeProps) {
       onPress: () => navigation.navigate(ROUTES.patrolMonitoring),
     },
     {
+      icon: 'mail',
+      label: 'Disposisi Surat',
+      color: colors.primary,
+      onPress: () => navigation.navigate(ROUTES.incomingLetterList),
+    },
+    {
       icon: 'map-pin',
       label: 'Peta Personel',
       color: colors.success,

@@ -1096,7 +1096,41 @@ Catatan: `status` = `fresh` | `stale` | `offline`; `location` bisa `null`.
 Catatan: `data` tidak meng-echo `description`.
 ## 8. Push Notification (FCM)
 
-> [!DONE] Tanpa endpoint REST — `initializePushNotifications(roles)` subscribe ke FCM topic per role lewat `@react-native-firebase/messaging`. Backend cukup mem-broadcast ke topic. Notifikasi in-app tetap dibaca dari `GET /notifications` (§3).
+> [!DONE] Dua jalur, keduanya aktif:
+> - **Broadcast lewat topic** — `initializePushNotifications(roles)` subscribe ke FCM topic per role (mis. `all_users`, `komandan`, `anggota`) lewat `@react-native-firebase/messaging`. Backend cukup mem-broadcast ke topic, tanpa perlu menyimpan token per-device.
+> - **Kirim per-pengguna** — device token FCM didaftarkan ke backend saat sesi login siap (`ensureFirebaseReady` di `utils/pushNotifications.ts`) & saat token dirotasi FCM (`onTokenRefresh`); dihapus saat logout (`teardownPushNotifications`, dipanggil sebelum token auth dibersihkan). Dipakai untuk push yang ditujukan ke satu user (mis. disposisi surat). Android-only (seluruh stack push app ini Android-only). Best-effort — kegagalan tidak memblokir alur login/logout.
+>
+> Notifikasi in-app tetap dibaca dari `GET /notifications` (§3).
+
+`POST /devices/firebase-token` — daftarkan / perbarui FCM token milik user aktif. Butuh `Authorization: Bearer`.
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `fcm_token` | string | Wajib | device token dari SDK Firebase |
+
+**Response `200`/`201`:**
+
+```json
+{
+  "success": true,
+  "message": "FCM token updated successfully"
+}
+```
+
+`DELETE /devices/firebase-token` — hapus FCM token milik user (dipanggil saat logout). Butuh `Authorization: Bearer`.
+
+**Tanpa parameter.**
+
+**Response `200`/`201`:**
+
+```json
+{
+  "success": true,
+  "message": "FCM token removed successfully"
+}
+```
 
 ---
 

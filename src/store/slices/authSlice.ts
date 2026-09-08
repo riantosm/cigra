@@ -124,6 +124,9 @@ export const loginWithOtp = createAsyncThunk<LoginThunkResult, OtpVerifyPayload,
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
+  // teardownPushNotifications() memanggil DELETE /devices/firebase-token — jalankan selagi token
+  // auth masih valid (sebelum logoutApi menginvalidasi sesi & sebelum setAuthToken(null)).
+  await teardownPushNotifications();
   try {
     await logoutApi();
   } catch {
@@ -131,7 +134,6 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   } finally {
     await setAuthToken(null);
     await stopBackgroundLocationTracking();
-    await teardownPushNotifications();
   }
 });
 
