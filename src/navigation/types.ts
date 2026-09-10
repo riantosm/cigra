@@ -1,8 +1,11 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { ROUTES } from '@/navigation/paths';
 import type {
+  AcademyVerificationItem,
+  AcademyProgramPov,
   HandbookChapter,
   HealthRecordDetail,
   PatrolMonitoringSession,
@@ -18,14 +21,6 @@ export type DispositionComposeLetter = {
   subject: string;
 };
 
-/** Payload hasil satu sesi tryout TKD — cukup untuk merekonstruksi skor & pembahasan (data dummy). */
-export type TkdAttemptParams = {
-  moduleId: string;
-  answers: Record<string, string>;
-  raguIds: string[];
-  elapsedSeconds: number;
-};
-
 export type CatalogResourceKey =
   | 'personnel'
   | 'persit'
@@ -39,14 +34,21 @@ export type RootStackParamList = {
   [ROUTES.changePassword]: undefined;
   [ROUTES.appBootstrap]: undefined;
   [ROUTES.main]: undefined;
-  // Academy sub-app (bottom-tab navigator sendiri) — di-push dari tab "Academy" bar utama.
-  [ROUTES.academyRoot]: undefined;
-  // Alur Akademik › TKD (data dummy).
-  [ROUTES.academyTkdList]: undefined;
-  [ROUTES.academyTkdModule]: { moduleId: string };
-  [ROUTES.academyTkdExam]: { moduleId: string };
-  [ROUTES.academyTkdResult]: TkdAttemptParams;
-  [ROUTES.academyTkdReview]: TkdAttemptParams;
+  // --- Smart Academy --- (`academyRoot` = bottom-tab navigator per peran; layar di bawah = root-stack)
+  [ROUTES.academyRoot]: NavigatorScreenParams<AcademyTabParamList> | undefined;
+  [ROUTES.academyProgramDetail]: { programId: number; pov?: AcademyProgramPov };
+  [ROUTES.academyMaterial]: { programId: number; componentId: number; materialId?: number; title?: string };
+  [ROUTES.academyAssessmentIntro]: { assessmentId: number; programId: number; title?: string };
+  [ROUTES.academyAttempt]: { attemptId: number; assessmentId: number; programId: number };
+  [ROUTES.academyAttemptResult]: { attemptId: number; programId?: number };
+  [ROUTES.academyPracticalEntry]: { practicalId: number; programId: number; title?: string };
+  [ROUTES.academyResultDetail]: { programId: number; title?: string };
+  [ROUTES.academyCompetencyDetail]: { competencyId: number; name?: string };
+  [ROUTES.academyInsProgramDetail]: { programId: number; title?: string };
+  [ROUTES.academyInsVerificationDetail]: { item: AcademyVerificationItem };
+  [ROUTES.academyCmdAttention]: undefined;
+  [ROUTES.academyCmdProgramDetail]: { programId: number; title?: string };
+  [ROUTES.academyCmdCompetency]: undefined;
   [ROUTES.catalogList]: { resource: CatalogResourceKey };
   [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string; initialTab?: string };
   [ROUTES.profile]: undefined;
@@ -155,12 +157,13 @@ export type MainTabParamList = {
   [ROUTES.academy]: undefined;
 };
 
+// Tab internal Smart Academy — subset yang dirender tergantung peran (AcademyTabNavigator).
 export type AcademyTabParamList = {
-  [ROUTES.academyBeranda]: undefined;
-  [ROUTES.academyAkademik]: undefined;
-  [ROUTES.academyPsikologi]: undefined;
-  [ROUTES.academyJasmani]: undefined;
-  [ROUTES.academyRiwayat]: undefined;
+  [ROUTES.academyTabHome]: undefined;
+  [ROUTES.academyTabPrograms]: undefined;
+  [ROUTES.academyTabResults]: undefined;
+  [ROUTES.academyTabCompetencies]: undefined;
+  [ROUTES.academyTabVerifications]: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =

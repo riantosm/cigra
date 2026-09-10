@@ -12,17 +12,16 @@ import { colors } from '@/theme/colors';
 import { tabBarShadow } from '@/theme/shadows';
 
 const iconByRoute: Partial<Record<string, IconName>> = {
-  [ROUTES.academyBeranda]: 'home',
-  [ROUTES.academyAkademik]: 'academy',
-  [ROUTES.academyPsikologi]: 'brain',
-  [ROUTES.academyJasmani]: 'heartbeat',
-  [ROUTES.academyRiwayat]: 'history',
+  [ROUTES.academyTabHome]: 'home',
+  [ROUTES.academyTabPrograms]: 'academy',
+  [ROUTES.academyTabResults]: 'bar-chart',
+  [ROUTES.academyTabCompetencies]: 'medal',
+  [ROUTES.academyTabVerifications]: 'clipboard-check',
 };
 
-// Bottom tab bar khusus Academy. Ukuran & gaya **identik** dengan bar utama (`CustomTabBar`,
-// DESIGN_SYSTEM §5.10) — tinggi 64 + safe-area, sudut atas radius 24, `surface` + `tabBarShadow`,
-// item aktif = pill gradient primary `minWidth 78` — hanya saja 5 item setara **tanpa** tombol
-// Emergency yang menonjol di tengah.
+// Bottom tab bar Smart Academy — gaya identik `CustomTabBar` (DESIGN_SYSTEM §5.10): tinggi 64 +
+// safe-area, sudut atas radius 24, `surface` + `tabBarShadow`, item aktif = pill gradient primary.
+// 3–4 item setara, tanpa tombol Emergency menonjol.
 export default function AcademyTabBar(props: BottomTabBarProps) {
   const { state, navigation, descriptors } = props;
   const insets = useSafeAreaInsets();
@@ -49,10 +48,6 @@ export default function AcademyTabBar(props: BottomTabBarProps) {
           }
         }
 
-        function onLongPress() {
-          navigation.emit({ type: 'tabLongPress', target: route.key });
-        }
-
         const iconName = iconByRoute[route.name];
         const tint = focused ? colors.primaryForeground : colors.placeholder;
 
@@ -60,7 +55,7 @@ export default function AcademyTabBar(props: BottomTabBarProps) {
           <PressableScale
             key={route.key}
             onPress={onPress}
-            onLongPress={onLongPress}
+            onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
             accessibilityRole="button"
             accessibilityState={focused ? { selected: true } : {}}
             accessibilityLabel={label}
@@ -90,7 +85,6 @@ export default function AcademyTabBar(props: BottomTabBarProps) {
   );
 }
 
-// Nilai style disamakan persis dengan `src/navigation/CustomTabBar.tsx`.
 const styles = StyleSheet.create({
   bar: {
     position: 'absolute',
@@ -105,16 +99,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     ...tabBarShadow,
   },
-  item: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-  },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  itemContent: { alignItems: 'center', justifyContent: 'center', gap: 3 },
   pill: {
     minWidth: 78,
     paddingVertical: 6,
@@ -127,11 +113,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
   },
-  label: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  labelActive: {
-    fontWeight: '700',
-  },
+  label: { fontSize: 10, fontWeight: '600' },
+  labelActive: { fontWeight: '700' },
 });

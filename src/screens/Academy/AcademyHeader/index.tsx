@@ -1,77 +1,75 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { logo } from '@/assets';
-import GradientAvatar from '@/components/atoms/GradientAvatar';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { smallButtonShadow } from '@/theme/shadows';
 
 export interface AcademyHeaderProps {
-  /** Inisial avatar (huruf pertama nama). */
+  subtitle: string;
   initial: string;
   onAvatarPress: () => void;
 }
 
-// Chrome tetap untuk seluruh sub-app Academy — persis artboard "Academy — Beranda": logo + wordmark
-// "Cigra Academy" + avatar gradient. Bukan `HomeHeader` (tak ada lonceng / sapaan) dan tanpa tombol
-// kembali — keluar dari Academy lewat gestur back (Android: ketuk 2x, lihat AcademyTabNavigator).
+// Chrome tetap Smart Academy (di atas bottom-tab per peran) — logo + wordmark + subtitle peran +
+// avatar → Profile. Tanpa tombol back (keluar Academy lewat back Android dari tab pertama).
 export default function AcademyHeader(props: AcademyHeaderProps) {
-  const { initial, onAvatarPress } = props;
+  const { subtitle, initial, onAvatarPress } = props;
 
   return (
-    <View style={styles.header}>
+    <View style={styles.container}>
       <View style={styles.left}>
-        <Image source={logo.LogoIcon} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.brandText}>
-          <Text style={styles.brandDark}>Cigra</Text>
-          <Text style={styles.brandAccent}> Academy</Text>
-        </Text>
+        <View style={styles.logoBadge}>
+          <Image source={logo.LogoIcon} style={styles.logo} resizeMode="contain" />
+        </View>
+        <View style={styles.titleGroup}>
+          <Text style={styles.title}>
+            <Text style={styles.titleStrong}>Smart</Text> Academy
+          </Text>
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        </View>
       </View>
-      <PressableScale
-        onPress={onAvatarPress}
-        accessibilityRole="button"
-        accessibilityLabel="Profil">
-        <GradientAvatar
-          label={initial}
-          gradientStart={colors.gradientPrimaryStart}
-          gradientEnd={colors.gradientPrimaryEnd}
-          size={36}
-        />
+      <PressableScale onPress={onAvatarPress} contentStyle={styles.avatar} accessibilityLabel="Profil">
+        <Text style={styles.avatarText}>{initial}</Text>
       </PressableScale>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
     paddingHorizontal: 20,
-    paddingVertical: 13,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
+  left: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  logoBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSoft,
-  },
-  left: {
-    flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    padding: 6,
+    ...smallButtonShadow,
   },
-  logo: {
-    width: 30,
-    height: 30,
+  logo: { width: '100%', height: '100%' },
+  titleGroup: { flex: 1 },
+  title: { fontSize: 18, fontWeight: '700', color: colors.heading, letterSpacing: -0.2 },
+  titleStrong: { fontWeight: '800', color: colors.primary },
+  subtitle: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  brandText: {
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  brandDark: {
-    color: colors.heading,
-  },
-  brandAccent: {
-    color: colors.primary,
-  },
+  avatarText: { fontSize: 15, fontWeight: '700', color: colors.primaryForeground },
 });
