@@ -4,9 +4,11 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StyleProp, ViewStyle } from 'react-native';
 
+import EarthquakeWidget from '@/components/organisms/EarthquakeWidget';
 import WeatherAlertBanner from '@/components/organisms/WeatherAlertBanner';
 import WeatherLocationSheet from '@/components/organisms/WeatherLocationSheet';
 import WeatherWidget from '@/components/organisms/WeatherWidget';
+import { useEarthquake } from '@/hooks/useEarthquake';
 import { useWeather } from '@/hooks/useWeather';
 import { useWeatherAlerts } from '@/hooks/useWeatherAlerts';
 import { ROUTES } from '@/navigation/paths';
@@ -14,7 +16,7 @@ import type { RootStackParamList } from '@/navigation/types';
 
 export interface HomeWeatherWidgetHandle {
   // Dipanggil oleh handleRefresh tiap Home body saat pull-to-refresh — ikut me-refresh
-  // /weather/reverse-geocode + /weather + /weather/alerts (dan /weather/regions saat sheet dibuka).
+  // /weather(+reverse-geocode) + /weather/alerts + /earthquake/latest.
   reload: () => Promise<void>;
 }
 
@@ -31,16 +33,26 @@ const HomeWeatherWidget = forwardRef<HomeWeatherWidgetHandle, { style?: StylePro
       error: alertsError,
       reload: reloadAlerts,
     } = useWeatherAlerts();
+    const {
+      latest: quake,
+      isLoading: quakeLoading,
+      error: quakeError,
+      reload: reloadQuake,
+    } = useEarthquake();
     const [isSheetVisible, setIsSheetVisible] = useState(false);
 
     useImperativeHandle(
       ref,
       () => ({
         reload: async () => {
-          await Promise.all([reload('refresh'), reloadAlerts('refresh')]);
+          await Promise.all([
+            reload('refresh'),
+            reloadAlerts('refresh'),
+            reloadQuake('refresh'),
+          ]);
         },
       }),
-      [reload, reloadAlerts],
+      [reload, reloadAlerts, reloadQuake],
     );
 
     return (
@@ -60,6 +72,13 @@ const HomeWeatherWidget = forwardRef<HomeWeatherWidgetHandle, { style?: StylePro
           onPress={() => navigation.navigate(ROUTES.weather)}
           onChangeLocation={() => setIsSheetVisible(true)}
         />
+        <EarthquakeWidget
+          latest={quake}
+          isLoading={quakeLoading}
+          error={quakeError}
+          onPress={() => navigation.navigate(ROUTES.earthquake)}
+          style={styles.earthquake}
+        />
         <WeatherLocationSheet
           visible={isSheetVisible}
           onClose={() => setIsSheetVisible(false)}
@@ -75,6 +94,9 @@ const HomeWeatherWidget = forwardRef<HomeWeatherWidgetHandle, { style?: StylePro
 const styles = StyleSheet.create({
   banner: {
     marginBottom: 12,
+  },
+  earthquake: {
+    marginTop: 12,
   },
 });
 

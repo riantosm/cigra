@@ -66,6 +66,8 @@ export type RootStackParamList = {
   [ROUTES.weather]: undefined;
   // Peringatan Dini Cuaca Ekstrem BMKG — dibuka dari banner peringatan di Home.
   [ROUTES.weatherAlerts]: undefined;
+  // Gempa Bumi BMKG (InaTEWS) — dibuka dari widget gempa di Home.
+  [ROUTES.earthquake]: undefined;
   [ROUTES.myMovements]: undefined;
   // Detail anggota keluarga (Persit) versi anggota — `id` = `MeFamilyMember.id`.
   [ROUTES.meFamilyDetail]: { id: number; name?: string };

@@ -31,10 +31,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ### Baru
 
-- Widget **Prakiraan Cuaca** BMKG di Home (semua peran): ringkas & bisa dibuka untuk rincian +
-  prakiraan per 3 jam untuk 3 hari; lokasi ikut GPS atau dipilih manual.
-- Banner **Peringatan Dini Cuaca Ekstrem** BMKG di Home (merah/kuning), diketuk untuk daftar
-  lengkap peringatan + tautan resmi BMKG.
+- Info cuaca BMKG di Home (semua peran): widget **Prakiraan Cuaca** (rincian + prakiraan per 3
+  jam 3 hari, lokasi GPS/manual) & banner **Peringatan Dini Cuaca Ekstrem** (merah/kuning).
+- Widget **Gempa Bumi Terkini** BMKG (InaTEWS) di Home + layar detail (Shakemap, M 5.0+,
+  gempa dirasakan).
 
 ### Ditingkatkan
 

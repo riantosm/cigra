@@ -38,6 +38,7 @@ export const ROUTES = {
   announcements: 'Announcements',
   weather: 'Weather',
   weatherAlerts: 'WeatherAlerts',
+  earthquake: 'Earthquake',
   myMovements: 'MyMovements',
   meFamilyDetail: 'MeFamilyDetail',
   activityMovements: 'ActivityMovements',
