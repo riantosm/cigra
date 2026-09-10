@@ -11,6 +11,8 @@ import ScreenBackground from '@/components/atoms/ScreenBackground';
 import HealthRecordCard from '@/components/molecules/HealthRecordCard';
 import SyncStrip from '@/components/molecules/SyncStrip';
 import HomeHeader from '@/screens/Home/HomeHeader';
+import HomeWeatherWidget from '@/screens/Home/HomeWeatherWidget';
+import type { HomeWeatherWidgetHandle } from '@/screens/Home/HomeWeatherWidget';
 import QuickActionButton from '@/screens/Home/QuickActionButton';
 import StatCard from '@/screens/Home/StatCard';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
@@ -43,6 +45,7 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
   const [dashboard, setDashboard] = useState<HealthDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isFirstFocus = useRef(true);
+  const weatherRef = useRef<HomeWeatherWidgetHandle>(null);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -74,7 +77,7 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      await Promise.all([onRefresh(), loadDashboard()]);
+      await Promise.all([onRefresh(), loadDashboard(), weatherRef.current?.reload()]);
       setLastSyncedAt(new Date());
     } finally {
       setIsRefreshing(false);
@@ -129,6 +132,8 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}>
           <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
+
+          <HomeWeatherWidget ref={weatherRef} style={styles.weatherWidget} />
 
           <Text style={styles.greeting}>Halo, {displayName}</Text>
           <Text style={styles.greetingSub}>Petugas Kesehatan Satuan</Text>
@@ -209,6 +214,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   syncStrip: { marginBottom: 20 },
+  weatherWidget: { marginBottom: 20 },
   greeting: {
     fontSize: 20,
     fontWeight: '800',

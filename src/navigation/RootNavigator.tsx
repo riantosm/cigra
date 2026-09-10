@@ -63,6 +63,7 @@ import RollCallScanScreen from '@/screens/RollCallScan';
 import RollCallSearchScreen from '@/screens/RollCallSearch';
 import SendAnnouncementScreen from '@/screens/SendAnnouncement';
 import SettingsScreen from '@/screens/Settings';
+import WeatherScreen from '@/screens/Weather';
 import { getAuthToken, setAuthToken } from '@/services/api/axiosInstance';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
@@ -183,6 +184,7 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.emergencyDetail} component={EmergencyDetailScreen} />
         <Stack.Screen name={ROUTES.emergencyContacts} component={EmergencyContactsScreen} />
         <Stack.Screen name={ROUTES.announcements} component={AnnouncementsScreen} />
+        <Stack.Screen name={ROUTES.weather} component={WeatherScreen} />
         <Stack.Screen name={ROUTES.myMovements} component={MyMovementsScreen} />
         <Stack.Screen name={ROUTES.meFamilyDetail} component={MeFamilyDetailScreen} />
         <Stack.Screen name={ROUTES.activityMovements} component={ActivityMovementsScreen} />

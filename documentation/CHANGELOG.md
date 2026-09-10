@@ -29,6 +29,12 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+### Baru
+
+- Widget **Prakiraan Cuaca** di Home (semua peran): default ringkas, diketuk untuk buka rincian
+  (kelembapan/angin/jarak pandang + prakiraan 3 hari + tautan ke layar lengkap per 3 jam). Lokasi
+  ikut GPS, bisa diganti manual lewat pencarian wilayah. Sumber data resmi BMKG.
+
 ### Ditingkatkan
 
 - Komandan: di halaman "Surat Masuk" ada ikon di pojok kanan header untuk membuka "Disposisi Surat"

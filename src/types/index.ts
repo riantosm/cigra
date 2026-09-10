@@ -14,3 +14,4 @@ export * from './rollCall.types';
 export * from './patrol.types';
 export * from './bukuSaku.types';
 export * from './disposition.types';
+export * from './weather.types';

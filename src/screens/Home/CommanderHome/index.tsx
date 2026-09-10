@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,6 +14,8 @@ import PersonnelMap from '@/components/organisms/PersonnelMap';
 import ActivityRow from '@/screens/Home/ActivityRow';
 import AnnouncementRow from '@/screens/Home/AnnouncementRow';
 import HomeHeader from '@/screens/Home/HomeHeader';
+import HomeWeatherWidget from '@/screens/Home/HomeWeatherWidget';
+import type { HomeWeatherWidgetHandle } from '@/screens/Home/HomeWeatherWidget';
 import QuickActionButton from '@/screens/Home/QuickActionButton';
 import type { QuickActionButtonProps } from '@/screens/Home/QuickActionButton';
 import QuickActionSheet from '@/screens/Home/QuickActionSheet';
@@ -117,6 +119,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isQuickActionSheetVisible, setIsQuickActionSheetVisible] = useState(false);
+  const weatherRef = useRef<HomeWeatherWidgetHandle>(null);
   const [personnelLocations, setPersonnelLocations] = useState<PersonnelLocationOverviewItem[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [situation, setSituation] = useState<DashboardSituation | null>(null);
@@ -157,7 +160,12 @@ export default function CommanderHome(props: CommanderHomeProps) {
   async function handleRefresh() {
     setIsRefreshing(true);
     try {
-      await Promise.all([onRefresh(), loadPersonnelLocations(), loadDashboard()]);
+      await Promise.all([
+        onRefresh(),
+        loadPersonnelLocations(),
+        loadDashboard(),
+        weatherRef.current?.reload(),
+      ]);
       setLastSyncedAt(new Date());
     } finally {
       setIsRefreshing(false);
@@ -281,6 +289,8 @@ export default function CommanderHome(props: CommanderHomeProps) {
         }>
         <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }} transition={contentEnterTransition}>
           <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
+
+          <HomeWeatherWidget ref={weatherRef} style={styles.weatherWidget} />
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Quick Action</Text>
@@ -487,6 +497,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   syncStrip: {
+    marginBottom: 20,
+  },
+  weatherWidget: {
     marginBottom: 20,
   },
   sectionHeader: {

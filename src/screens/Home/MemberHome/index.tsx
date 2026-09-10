@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,6 +22,8 @@ import ShortcutButton from '@/screens/Home/MemberHome/ShortcutButton';
 import StatusTile from '@/screens/Home/MemberHome/StatusTile';
 import TimelineRow from '@/screens/Home/MemberHome/TimelineRow';
 import HomeHeader from '@/screens/Home/HomeHeader';
+import HomeWeatherWidget from '@/screens/Home/HomeWeatherWidget';
+import type { HomeWeatherWidgetHandle } from '@/screens/Home/HomeWeatherWidget';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
@@ -248,6 +250,7 @@ export default function MemberHome(props: MemberHomeProps) {
   const [movements, setMovements] = useState<MeMovement[]>([]);
   const [activePatrol, setActivePatrol] = useState<PatrolSession | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const weatherRef = useRef<HomeWeatherWidgetHandle>(null);
   const insets = useSafeAreaInsets();
 
   const loadActivePatrol = useCallback(async () => {
@@ -299,7 +302,13 @@ export default function MemberHome(props: MemberHomeProps) {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      await Promise.all([onRefresh(), loadMyLocation(), loadMe(), loadActivePatrol()]);
+      await Promise.all([
+        onRefresh(),
+        loadMyLocation(),
+        loadMe(),
+        loadActivePatrol(),
+        weatherRef.current?.reload(),
+      ]);
       setLastSyncedAt(new Date());
     } finally {
       setIsRefreshing(false);
@@ -426,6 +435,8 @@ export default function MemberHome(props: MemberHomeProps) {
           animate={{ opacity: 1, translateY: 0 }}
           transition={contentEnterTransition}>
           <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
+
+          <HomeWeatherWidget ref={weatherRef} style={styles.weatherWidget} />
 
           <MemberIdCard
             photoPath={personnel?.photo}
@@ -653,6 +664,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   syncStrip: {
+    marginBottom: 16,
+  },
+  weatherWidget: {
     marginBottom: 16,
   },
   sectionHeader: {
