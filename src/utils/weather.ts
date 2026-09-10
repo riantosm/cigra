@@ -1,4 +1,5 @@
-import type { WeatherForecastDay, WeatherPoint } from '@/types';
+import { colors } from '@/theme/colors';
+import type { WeatherAlertSeverity, WeatherForecastDay, WeatherPoint } from '@/types';
 
 export interface DaySummary {
   label: string;
@@ -39,4 +40,33 @@ export function summarizeForecastDay(day: WeatherForecastDay): DaySummary {
     tempUnit: items[0]?.temp_unit ?? '°C',
     representative,
   };
+}
+
+export interface AlertSeverityMeta {
+  label: string;
+  accent: string;
+  surface: string;
+  border: string;
+  badgeVariant: 'warning' | 'danger';
+}
+
+const ALERT_SEVERITY_META: Record<WeatherAlertSeverity, AlertSeverityMeta> = {
+  warning: {
+    label: 'Waspada',
+    accent: colors.warning,
+    surface: colors.warningSurface,
+    border: colors.alertBannerBorder,
+    badgeVariant: 'warning',
+  },
+  danger: {
+    label: 'Bahaya',
+    accent: colors.danger,
+    surface: colors.dangerSurface,
+    border: colors.dangerBorderSoft,
+    badgeVariant: 'danger',
+  },
+};
+
+export function alertSeverityMeta(severity: WeatherAlertSeverity): AlertSeverityMeta {
+  return ALERT_SEVERITY_META[severity] ?? ALERT_SEVERITY_META.warning;
 }

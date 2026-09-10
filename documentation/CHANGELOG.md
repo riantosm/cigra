@@ -31,9 +31,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ### Baru
 
-- Widget **Prakiraan Cuaca** di Home (semua peran): default ringkas, diketuk untuk buka rincian
-  (kelembapan/angin/jarak pandang + prakiraan 3 hari + tautan ke layar lengkap per 3 jam). Lokasi
-  ikut GPS, bisa diganti manual lewat pencarian wilayah. Sumber data resmi BMKG.
+- Widget **Prakiraan Cuaca** BMKG di Home (semua peran): ringkas & bisa dibuka untuk rincian +
+  prakiraan per 3 jam untuk 3 hari; lokasi ikut GPS atau dipilih manual.
+- Banner **Peringatan Dini Cuaca Ekstrem** BMKG di Home (merah/kuning), diketuk untuk daftar
+  lengkap peringatan + tautan resmi BMKG.
 
 ### Ditingkatkan
 

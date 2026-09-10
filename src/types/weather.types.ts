@@ -67,3 +67,31 @@ export interface WeatherRegion {
   lon: number | null;
   distance_km?: number;
 }
+
+// GET /weather/alerts — Peringatan Dini Cuaca Ekstrem BMKG (CAP Alert Nowcast).
+export type WeatherAlertSeverity = 'warning' | 'danger';
+
+export interface WeatherAlert {
+  title: string;
+  // Tautan XML CAP resmi BMKG.
+  link: string;
+  guid: string;
+  pub_date_raw: string;
+  pub_date_formatted: string;
+  pub_date_iso: string;
+  author: string;
+  description: string;
+  severity: WeatherAlertSeverity;
+  badge_class: string;
+  icon: string;
+}
+
+export interface WeatherAlertFeed {
+  channel_title: string;
+  channel_link: string;
+  channel_description: string;
+  total: number;
+  items: WeatherAlert[];
+  cached_at: string | null;
+  attribution: string;
+}

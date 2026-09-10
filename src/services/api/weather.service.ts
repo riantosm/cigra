@@ -1,5 +1,5 @@
 import { axiosInstance } from '@/services/api/axiosInstance';
-import type { ApiResponse, WeatherForecast, WeatherRegion } from '@/types';
+import type { ApiResponse, WeatherAlertFeed, WeatherForecast, WeatherRegion } from '@/types';
 
 // Prakiraan Cuaca BMKG — publik, tidak butuh Authorization. Backend meng-cache 30 menit &
 // membatasi 60 permintaan/menit/IP, jadi cukup panggil sekali per buka layar / refresh.
@@ -60,6 +60,26 @@ export async function searchWeatherRegionsApi(
 export async function reverseGeocodeWeatherApi(lat: number, lon: number): Promise<WeatherRegion> {
   const { data } = await axiosInstance.get<ApiResponse<WeatherRegion>>('/weather/reverse-geocode', {
     params: { latitude: lat, longitude: lon },
+  });
+  return data.data;
+}
+
+export interface WeatherAlertQuery {
+  // 'id' (default) atau 'en'.
+  lang?: 'id' | 'en';
+  // Filter nama daerah / kabupaten / provinsi.
+  search?: string;
+}
+
+// GET /weather/alerts — Peringatan Dini Cuaca Ekstrem BMKG (CAP Alert Nowcast). Publik,
+// di-cache 5 menit di backend. Atribusi BMKG wajib tampil.
+export async function getWeatherAlertsApi(query: WeatherAlertQuery = {}): Promise<WeatherAlertFeed> {
+  const params: Record<string, string> = {};
+  if (query.lang) params.lang = query.lang;
+  if (query.search) params.search = query.search;
+
+  const { data } = await axiosInstance.get<ApiResponse<WeatherAlertFeed>>('/weather/alerts', {
+    params,
   });
   return data.data;
 }

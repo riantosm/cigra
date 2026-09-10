@@ -37,6 +37,7 @@ export const ROUTES = {
   emergencyContacts: 'EmergencyContacts',
   announcements: 'Announcements',
   weather: 'Weather',
+  weatherAlerts: 'WeatherAlerts',
   myMovements: 'MyMovements',
   meFamilyDetail: 'MeFamilyDetail',
   activityMovements: 'ActivityMovements',
