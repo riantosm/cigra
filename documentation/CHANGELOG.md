@@ -29,6 +29,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v0.7.0 (versionCode 7)
+
+_10 September 2026_
+
 ### Baru
 
 - Smart Academy: menu Academy dirombak jadi modul belajar–ujian–monitoring yang menyesuaikan
