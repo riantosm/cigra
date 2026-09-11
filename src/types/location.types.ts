@@ -51,6 +51,7 @@ export interface PersonnelLocationOverviewItem {
   status: LocationStatus;
   location: PersonnelLocationPoint | null;
   last_seen: string | null;
+  photo?: string | null;
 }
 
 export interface LocationsOverviewFilters {

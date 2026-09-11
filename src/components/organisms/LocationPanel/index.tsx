@@ -24,6 +24,7 @@ export interface LocationPanelPerson {
   rank: string | null;
   unit: string | null;
   tenantId: number;
+  photo?: string | null;
 }
 
 export interface LocationPanelProps {
@@ -92,6 +93,7 @@ export default function LocationPanel(props: LocationPanelProps) {
                 status: locationDetail?.status ?? 'offline',
                 location: currentLocation,
                 last_seen: currentLocation.captured_at,
+                photo: person.photo ?? null,
               },
             ]}
             interactive={false}

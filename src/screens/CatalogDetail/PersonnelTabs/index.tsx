@@ -220,6 +220,7 @@ export default function PersonnelTabs(props: PersonnelTabsProps) {
               rank: detail.rank,
               unit: detail.current_assignment?.unit ?? null,
               tenantId: detail.tenant_id,
+              photo: detail.photo,
             }}
           />
         ),

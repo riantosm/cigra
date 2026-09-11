@@ -44,6 +44,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 - Kekuatan Apel: daftar Hadir/Absen/Belum, sheet detail personel, pencarian personel, scan QR, dan
   form keterangan absen menampilkan foto asli anggota (dari `GET /roll-calls/{session}` &
   `GET /roll-calls/personnel/search`), bukan cuma inisial.
+- Peta Personel & tab Lokasi (detail personel/persit): marker sekarang menampilkan foto asli
+  personel (dari `GET /locations/overview`), bukan pin polos. Marker yang berdekatan pada zoom
+  saat ini otomatis digabung jadi satu (foto + badge jumlah); tap untuk zoom ke kelompoknya, dan
+  begitu region cukup renggang, marker otomatis terpisah lagi jadi foto individual.
 
 ## v0.7.0 (versionCode 7)
 

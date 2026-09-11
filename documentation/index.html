@@ -1471,7 +1471,7 @@ Catatan: `handled_by` bisa `{ id, name }` atau string; key `filters` **tidak dik
 
 ### 5.1 Overview
 
-> [!DONE] Kartu "Peta Personel Real-time" (preview non-interaktif) di CommanderHome, layar **Peta Personel** fullscreen, dan layar **Tracking** (list). `PersonnelTracking` me-loop semua halaman (`fetchAllOverview`) karena search-nya client-side. Filter `status` server-side; marker callout / baris → detail personel (`{personnel}` = `service_number`).
+> [!DONE] Kartu "Peta Personel Real-time" (preview non-interaktif) di CommanderHome, layar **Peta Personel** fullscreen, dan layar **Tracking** (list). `PersonnelTracking` me-loop semua halaman (`fetchAllOverview`) karena search-nya client-side. Filter `status` server-side; marker callout / baris → detail personel (`{personnel}` = `service_number`). Sejak 2026-09-11, item juga menyertakan `photo` — dipakai sebagai foto marker di `organisms/PersonnelMap` (fallback inisial ber-tone status kalau tidak ada/tidak bisa ditampilkan); marker yang berdekatan pada zoom saat ini otomatis digabung jadi satu (foto orang pertama + badge jumlah), tap untuk zoom ke kelompok itu — begitu region cukup renggang, otomatis terpisah lagi jadi marker foto individual.
 
 `GET /locations/overview`
 
@@ -1498,6 +1498,7 @@ Catatan: `handled_by` bisa `{ id, name }` atau string; key `filters` **tidak dik
       "unit": "Kompi A",
       "tenant_id": 1,
       "status": "fresh",
+      "photo": "/api/secure-files/personnel/photos/abc.jpg",
       "location": {
         "id": 9901,
         "latitude": -6.1547,
@@ -1527,7 +1528,7 @@ Catatan: `handled_by` bisa `{ id, name }` atau string; key `filters` **tidak dik
 
 ### 5.2 Detail Lokasi Personel
 
-> [!DONE] Tab "Lokasi" di detail personel/persit (`organisms/LocationPanel` + `hooks/usePersonnelLocation`): fetch sekali lalu polling diam 60s **hanya saat tab Lokasi aktif**. Status badge + `PersonnelMap` + "Buka di Google Maps" + riwayat 50 entri (dari 5.3).
+> [!DONE] Tab "Lokasi" di detail personel/persit (`organisms/LocationPanel` + `hooks/usePersonnelLocation`): fetch sekali lalu polling diam 60s **hanya saat tab Lokasi aktif**. Status badge + `PersonnelMap` + "Buka di Google Maps" + riwayat 50 entri (dari 5.3). Endpoint ini sendiri tidak mengirim `photo` di `profile` — marker foto di panel ini memakai `photo` dari detail Personel/Persit yang sudah dibuka (6.1/6.2), diteruskan lewat prop `LocationPanelPerson.photo`.
 
 `GET /locations/{personnel}` — `{personnel}` = NRP (`service_number`).
 
