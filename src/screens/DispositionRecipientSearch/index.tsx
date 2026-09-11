@@ -5,6 +5,7 @@ import { CommonActions } from '@react-navigation/native';
 import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import PersonAvatar from '@/components/molecules/PersonAvatar';
 import SearchFilterBar from '@/components/molecules/SearchFilterBar';
 import MainLayout from '@/components/templates/MainLayout';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
@@ -154,9 +155,7 @@ export default function DispositionRecipientSearchScreen(props: Props) {
               const checked = Boolean(selected[item.id]);
               return (
                 <PressableScale scaleTo={0.98} onPress={() => toggle(item)} contentStyle={styles.row}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
-                  </View>
+                  <PersonAvatar photo={item.photo} name={item.full_name} size={40} />
                   <View style={styles.rowBody}>
                     <Text style={styles.rowName} numberOfLines={1}>
                       {item.full_name}
@@ -229,15 +228,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     ...cardShadow,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  avatarText: { fontSize: 15, fontWeight: '700', color: colors.primaryForeground },
   rowBody: { flex: 1, gap: 3 },
   rowName: { fontSize: 14, fontWeight: '700', color: colors.heading },
   rowMeta: { fontSize: 12, color: colors.textMuted },

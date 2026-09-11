@@ -8,6 +8,7 @@ import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
 import InfoRow from '@/components/molecules/InfoRow';
+import PersonAvatar from '@/components/molecules/PersonAvatar';
 import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
@@ -185,9 +186,7 @@ export default function DispositionDetailScreen(props: Props) {
             <Card style={styles.card}>
               <Text style={styles.sectionLabel}>PENGIRIM DISPOSISI</Text>
               <View style={styles.senderRow}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{(detail.sender.name.charAt(0) || '?').toUpperCase()}</Text>
-                </View>
+                <PersonAvatar photo={detail.sender.photo} name={detail.sender.name} size={44} />
                 <View style={styles.senderBody}>
                   <Text style={styles.senderName}>{detail.sender.name}</Text>
                   {detail.sender.position ? (
@@ -235,11 +234,7 @@ export default function DispositionDetailScreen(props: Props) {
                   <View
                     key={r.id}
                     style={[styles.recipientRow, index < detail.recipients.length - 1 && styles.recipientDivider]}>
-                    <View style={[styles.recipientAvatar]}>
-                      <Text style={styles.recipientAvatarText}>
-                        {(r.personnel_name.charAt(0) || '?').toUpperCase()}
-                      </Text>
-                    </View>
+                    <PersonAvatar photo={r.photo} name={r.personnel_name} size={40} />
                     <View style={styles.recipientBody}>
                       <Text style={styles.recipientName} numberOfLines={1}>
                         {r.personnel_name}
@@ -404,15 +399,6 @@ const styles = StyleSheet.create({
   deadlineLabel: { flex: 1, fontSize: 12, color: colors.textMuted },
   deadlineValue: { fontSize: 13, fontWeight: '700', color: colors.dangerText },
   senderRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  avatarText: { fontSize: 17, fontWeight: '700', color: colors.primaryForeground },
   senderBody: { flex: 1, gap: 2 },
   senderName: { fontSize: 15, fontWeight: '700', color: colors.heading },
   senderMeta: { fontSize: 12, color: colors.textMuted },
@@ -435,15 +421,6 @@ const styles = StyleSheet.create({
   emptyRow: { fontSize: 13, color: colors.textMuted },
   recipientRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   recipientDivider: { borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
-  recipientAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  recipientAvatarText: { fontSize: 13, fontWeight: '700', color: colors.primaryForeground },
   recipientBody: { flex: 1, gap: 2 },
   recipientName: { fontSize: 13, fontWeight: '700', color: colors.heading },
   recipientMeta: { fontSize: 11, color: colors.textMuted },

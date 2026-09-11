@@ -35,6 +35,13 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   profil, ubah data pribadi (nama, email, no. telepon, alamat, tempat/tanggal lahir, golongan
   darah, jenis kelamin), dan ganti password.
 
+### Ditingkatkan
+
+- Disposisi Surat: detail disposisi menampilkan foto asli pengirim & tiap penerima (bukan cuma
+  inisial) memakai foto dari API.
+- Disposisi Surat: daftar hasil pencarian penerima (Cari & Pilih) menampilkan foto asli anggota
+  dari `GET /personnel/search`, bukan cuma inisial.
+
 ## v0.7.0 (versionCode 7)
 
 _10 September 2026_

@@ -142,6 +142,7 @@ export interface DispositionSenderRef {
   id: number;
   name: string;
   position: string | null;
+  photo?: string | null;
 }
 
 export interface DispositionRecipient {
@@ -152,6 +153,7 @@ export interface DispositionRecipient {
   status: DispositionRecipientStatus;
   read_at: string | null;
   completed_at?: string | null;
+  photo?: string | null;
 }
 
 export interface DispositionFollowUp {
@@ -224,4 +226,5 @@ export interface PersonnelSearchItem {
   id: number;
   full_name: string;
   service_number: string;
+  photo?: string | null;
 }

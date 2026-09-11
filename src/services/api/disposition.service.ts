@@ -169,6 +169,7 @@ function normalizeRecipient(raw: any): DispositionDetail['recipients'][number] {
     status: mapRecipientStatus(raw.status) ?? 'unread',
     read_at: raw.read_at ?? null,
     completed_at: raw.completed_at ?? null,
+    photo: pickFirst(raw.photo, raw.personnel?.photo) ?? null,
   };
 }
 
@@ -208,6 +209,7 @@ function normalizeDetail(raw: any): DispositionDetail {
       id: raw.sender?.id ?? 0,
       name: raw.sender?.name ?? 'Pengirim tidak diketahui',
       position: pickFirst(raw.sender?.position, raw.sender?.unit) ?? null,
+      photo: raw.sender?.photo ?? null,
     },
     recipients: Array.isArray(raw.recipients) ? raw.recipients.map(normalizeRecipient) : [],
     follow_ups: Array.isArray(raw.follow_ups) ? raw.follow_ups.map(normalizeFollowUp) : [],
