@@ -93,8 +93,8 @@ const styles = StyleSheet.create({
   },
   legend: {
     position: 'absolute',
-    left: 16,
-    bottom: 20,
+    right: 16,
+    top: 16,
     gap: 8,
     padding: 12,
     paddingHorizontal: 14,

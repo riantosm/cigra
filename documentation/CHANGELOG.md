@@ -46,8 +46,12 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   `GET /roll-calls/personnel/search`), bukan cuma inisial.
 - Peta Personel & tab Lokasi (detail personel/persit): marker sekarang menampilkan foto asli
   personel (dari `GET /locations/overview`), bukan pin polos. Marker yang berdekatan pada zoom
-  saat ini otomatis digabung jadi satu (foto + badge jumlah); tap untuk zoom ke kelompoknya, dan
-  begitu region cukup renggang, marker otomatis terpisah lagi jadi foto individual.
+  saat ini otomatis digabung jadi grid foto (maks. 4 sel, sisanya jadi badge "+N"); begitu region
+  cukup renggang, otomatis terpisah lagi jadi foto individual. Tap marker (tunggal maupun
+  kelompok) membuka kartu detail mengambang — bisa digeser antar personel kalau kelompoknya berisi
+  lebih dari satu orang — dengan ikon untuk membuka detail personel penuh; marker yang dipilih
+  disorot warna berbeda selama kartunya terbuka. Kartu legenda status di layar Peta Personel
+  dipindah ke pojok kanan atas.
 
 ## v0.7.0 (versionCode 7)
 

@@ -1,13 +1,15 @@
-import { useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
-import MapView, { Callout, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useMemo, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
 import { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
 import { colors } from '@/theme/colors';
+import { cardShadowRaised } from '@/theme/shadows';
 import type { PersonnelLocationOverviewItem } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
 import { joinFields } from '@/utils/format';
@@ -104,39 +106,24 @@ function clusterPersonnel(points: LocatedPersonnel[], latitudeDelta: number): Ma
   return clusters;
 }
 
-function clusterBoundsRegion(items: LocatedPersonnel[]): Region {
-  const lats = items.map(i => i.location.latitude);
-  const lngs = items.map(i => i.location.longitude);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const ZOOM_IN_PADDING = 3;
-  const MIN_DELTA = 0.004;
-
-  return {
-    latitude: (minLat + maxLat) / 2,
-    longitude: (minLng + maxLng) / 2,
-    latitudeDelta: Math.max((maxLat - minLat) * ZOOM_IN_PADDING, MIN_DELTA),
-    longitudeDelta: Math.max((maxLng - minLng) * ZOOM_IN_PADDING, MIN_DELTA),
-  };
-}
-
 // Satu marker personel — foto asli (`SecureImage`) kalau ada & bisa ditampilkan, jatuh ke inisial
-// ber-tone status kalau tidak. `tracksViewChanges` aktif hanya sampai konten selesai tergambar
-// (foto termuat / gagal, atau langsung untuk fallback inisial) lalu dimatikan — react-native-maps
+// ber-tone status kalau tidak. Tap membuka kartu detail mengambang di komponen induk (bukan
+// `Callout` bawaan react-native-maps) — `selected` menyorot marker ini dengan warna berbeda
+// selama kartunya terbuka. `tracksViewChanges` aktif hanya sampai konten selesai tergambar (foto
+// termuat / gagal, atau langsung untuk fallback inisial) lalu dimatikan — react-native-maps
 // menggambar ulang marker custom tiap frame selama flag ini aktif, mahal kalau dibiarkan terus.
-function SinglePersonnelMarker(props: { item: LocatedPersonnel; onSelect?: () => void }) {
-  const { item, onSelect } = props;
+function SinglePersonnelMarker(props: { item: LocatedPersonnel; selected: boolean; onPress: () => void }) {
+  const { item, selected, onPress } = props;
   const [ready, setReady] = useState(!isDisplayablePhoto(item.photo));
-  const toneColor = locationStatusMeta[item.status].color;
+  const ringColor = selected ? colors.primary : locationStatusMeta[item.status].color;
 
   return (
     <Marker
       coordinate={{ latitude: item.location.latitude, longitude: item.location.longitude }}
+      onPress={onPress}
       tracksViewChanges={!ready}
     >
-      <View style={[styles.markerRing, styles.singleRing, { borderColor: toneColor }]}>
+      <View style={[styles.markerRing, styles.singleRing, selected && styles.markerRingSelected, { borderColor: ringColor }]}>
         {isDisplayablePhoto(item.photo) ? (
           <SecureImage
             path={item.photo}
@@ -145,29 +132,71 @@ function SinglePersonnelMarker(props: { item: LocatedPersonnel; onSelect?: () =>
             onLoadError={() => setReady(true)}
           />
         ) : (
-          <View style={[styles.markerFallback, styles.singlePhoto, { backgroundColor: toneColor }]}>
+          <View style={[styles.markerFallback, styles.singlePhoto, { backgroundColor: ringColor }]}>
             <Text style={styles.markerInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
           </View>
         )}
       </View>
-      <Callout onPress={onSelect}>
-        <View style={styles.callout}>
-          <Text style={styles.calloutName}>{item.full_name}</Text>
-          <Text style={styles.calloutMeta}>{joinFields(item.rank, item.unit)}</Text>
-          {onSelect ? <Text style={styles.calloutAction}>Lihat detail personel</Text> : null}
-        </View>
-      </Callout>
     </Marker>
   );
 }
 
-// Gabungan beberapa personel yang berdekatan pada zoom saat ini — foto orang pertama + badge
-// jumlah. Tap untuk zoom ke batas kelompok ini; begitu jaraknya cukup renggang di layar, kelompok
-// otomatis terpisah lagi lewat `onRegionChangeComplete` di komponen induk.
-function ClusterMarker(props: { cluster: MarkerCluster; onPress: () => void }) {
-  const { cluster, onPress } = props;
-  const first = cluster.items[0];
-  const [ready, setReady] = useState(!isDisplayablePhoto(first.photo));
+// Satu sel foto di dalam grid kelompok — foto asli kalau ada & bisa ditampilkan, jatuh ke inisial
+// ber-tone status kalau tidak (`onDone` hanya dipanggil untuk sel yang benar-benar memuat foto —
+// lihat `photosToLoad` di `ClusterMarker`).
+function ClusterCell(props: { item: LocatedPersonnel; onDone: () => void }) {
+  const { item, onDone } = props;
+  const toneColor = locationStatusMeta[item.status].color;
+
+  return (
+    <View style={[styles.clusterCellRing, { borderColor: toneColor }]}>
+      {isDisplayablePhoto(item.photo) ? (
+        <SecureImage path={item.photo} style={styles.clusterCellPhoto} onLoad={onDone} onLoadError={onDone} />
+      ) : (
+        <View style={[styles.markerFallback, styles.clusterCellPhoto, { backgroundColor: toneColor }]}>
+          <Text style={styles.clusterCellInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// Sel terakhir grid ketika kelompok > 4 orang — menampilkan jumlah sisa (`+N`) alih-alih foto.
+function ClusterCountCell(props: { count: number }) {
+  return (
+    <View style={[styles.clusterCellRing, styles.clusterCountRing]}>
+      <Text style={styles.clusterCountText}>+{props.count}</Text>
+    </View>
+  );
+}
+
+type ClusterGridLayout = 'pair' | 'triangle' | 'grid4' | 'gridPlus';
+
+function clusterGridLayout(count: number): ClusterGridLayout {
+  if (count <= 2) return 'pair';
+  if (count === 3) return 'triangle';
+  if (count === 4) return 'grid4';
+  return 'gridPlus';
+}
+
+// Gabungan beberapa personel yang berdekatan pada zoom saat ini — ditampilkan sebagai grid foto
+// (maks. 4 sel): 2 orang → sejajar kiri-kanan, 3 orang → 2 atas + 1 bawah, 4 orang → grid penuh
+// 2x2, ≥5 orang → 2 atas + 1 bawah-kiri + sel terakhir "+sisa". Tap membuka kartu mengambang
+// (bisa digeser antar personel dalam kelompok ini) di komponen induk, sama seperti marker
+// tunggal. Kelompok ini otomatis terpisah lagi jadi marker individual begitu region cukup
+// renggang lewat `onRegionChangeComplete` di komponen induk (kalau titiknya benar-benar sama,
+// biarkan tetap bersatu — tidak perlu dipaksa terpisah).
+function ClusterMarker(props: { cluster: MarkerCluster; selected: boolean; onPress: () => void }) {
+  const { cluster, selected, onPress } = props;
+  const items = cluster.items;
+  const layout = clusterGridLayout(items.length);
+  const shown = layout === 'gridPlus' ? items.slice(0, 3) : items.slice(0, 4);
+  const remaining = items.length - shown.length;
+
+  const photosToLoad = useMemo(() => shown.filter(item => isDisplayablePhoto(item.photo)).length, [shown]);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const handleCellDone = () => setLoadedCount(c => c + 1);
+  const ready = loadedCount >= photosToLoad;
 
   return (
     <Marker
@@ -175,26 +204,134 @@ function ClusterMarker(props: { cluster: MarkerCluster; onPress: () => void }) {
       onPress={onPress}
       tracksViewChanges={!ready}
     >
-      <View style={styles.clusterWrap}>
-        <View style={[styles.markerRing, styles.clusterRing]}>
-          {isDisplayablePhoto(first.photo) ? (
-            <SecureImage
-              path={first.photo}
-              style={styles.clusterPhoto}
-              onLoad={() => setReady(true)}
-              onLoadError={() => setReady(true)}
-            />
-          ) : (
-            <View style={[styles.markerFallback, styles.clusterPhoto, { backgroundColor: colors.primary }]}>
-              <Text style={styles.markerInitial}>{(first.full_name.charAt(0) || '?').toUpperCase()}</Text>
+      <View style={[styles.clusterGrid, selected && styles.clusterGridSelected]}>
+        {layout === 'pair' ? (
+          <View style={styles.clusterRow}>
+            <ClusterCell item={shown[0]} onDone={handleCellDone} />
+            <ClusterCell item={shown[1]} onDone={handleCellDone} />
+          </View>
+        ) : null}
+        {layout === 'triangle' ? (
+          <>
+            <View style={styles.clusterRow}>
+              <ClusterCell item={shown[0]} onDone={handleCellDone} />
+              <ClusterCell item={shown[1]} onDone={handleCellDone} />
             </View>
-          )}
-        </View>
-        <View style={styles.clusterBadge}>
-          <Text style={styles.clusterBadgeText}>{cluster.items.length}</Text>
-        </View>
+            <View style={styles.clusterRow}>
+              <ClusterCell item={shown[2]} onDone={handleCellDone} />
+            </View>
+          </>
+        ) : null}
+        {layout === 'grid4' ? (
+          <>
+            <View style={styles.clusterRow}>
+              <ClusterCell item={shown[0]} onDone={handleCellDone} />
+              <ClusterCell item={shown[1]} onDone={handleCellDone} />
+            </View>
+            <View style={styles.clusterRow}>
+              <ClusterCell item={shown[2]} onDone={handleCellDone} />
+              <ClusterCell item={shown[3]} onDone={handleCellDone} />
+            </View>
+          </>
+        ) : null}
+        {layout === 'gridPlus' ? (
+          <>
+            <View style={styles.clusterRow}>
+              <ClusterCell item={shown[0]} onDone={handleCellDone} />
+              <ClusterCell item={shown[1]} onDone={handleCellDone} />
+            </View>
+            <View style={styles.clusterRow}>
+              <ClusterCell item={shown[2]} onDone={handleCellDone} />
+              <ClusterCountCell count={remaining} />
+            </View>
+          </>
+        ) : null}
       </View>
     </Marker>
+  );
+}
+
+const FLOATING_CARD_WIDTH = 260;
+
+// Kartu detail personel yang mengambang di atas peta saat sebuah marker di-tap — foto/inisial +
+// nama + jabatan, dan ikon panah untuk membuka detail personel penuh (kalau `onSelect` diisi).
+// Kalau marker yang di-tap adalah kelompok (>1 orang), kartunya jadi bisa digeser (`ScrollView`
+// horizontal ber-paging) antar personel dalam kelompok itu, dengan titik indikator halaman.
+function PersonnelFloatingCard(props: {
+  clusterKey: string;
+  items: LocatedPersonnel[];
+  onSelect?: (item: LocatedPersonnel) => void;
+  onClose: () => void;
+}) {
+  const { clusterKey, items, onSelect, onClose } = props;
+  const [page, setPage] = useState(0);
+
+  function handleMomentumEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const next = Math.round(event.nativeEvent.contentOffset.x / FLOATING_CARD_WIDTH);
+    if (next !== page) setPage(next);
+  }
+
+  return (
+    <View style={styles.floatingWrap}>
+    <View style={styles.floatingShell}>
+      <PressableScale onPress={onClose} contentStyle={styles.floatingClose} accessibilityLabel="Tutup">
+        <Icon name="close" size={14} color={colors.textMuted} />
+      </PressableScale>
+      <ScrollView
+        // `key` me-reset scroll ke halaman pertama tiap kali marker yang dipilih berbeda.
+        key={clusterKey}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleMomentumEnd}
+        style={styles.floatingScroll}
+      >
+        {items.map(item => (
+          <View key={item.id} style={styles.floatingCard}>
+            <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: locationStatusMeta[item.status].color }]}>
+              {isDisplayablePhoto(item.photo) ? (
+                <SecureImage path={item.photo} style={styles.floatingAvatarPhoto} />
+              ) : (
+                <View
+                  style={[
+                    styles.markerFallback,
+                    styles.floatingAvatarPhoto,
+                    { backgroundColor: locationStatusMeta[item.status].color },
+                  ]}
+                >
+                  <Text style={styles.floatingAvatarInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.floatingBody}>
+              <Text style={styles.floatingName} numberOfLines={1}>
+                {item.full_name}
+              </Text>
+              <Text style={styles.floatingMeta} numberOfLines={1}>
+                {joinFields(item.rank, item.unit)}
+              </Text>
+            </View>
+            {onSelect ? (
+              <PressableScale
+                onPress={() => onSelect(item)}
+                contentStyle={styles.floatingAction}
+                accessibilityLabel="Lihat detail personel"
+              >
+                <Icon name="chevron-right" size={18} color={colors.primaryForeground} />
+              </PressableScale>
+            ) : null}
+          </View>
+        ))}
+      </ScrollView>
+      {items.length > 1 ? (
+        <View style={styles.floatingDots}>
+          {items.map((item, index) => (
+            <View key={item.id} style={[styles.floatingDot, index === page && styles.floatingDotActive]} />
+          ))}
+        </View>
+      ) : null}
+    </View>
+    </View>
   );
 }
 
@@ -207,7 +344,6 @@ export default function PersonnelMap(props: PersonnelMapProps) {
     lite = false,
   } = props;
   const liteMode = lite && Platform.OS === 'android';
-  const mapRef = useRef<MapView>(null);
 
   const located = useMemo(
     () =>
@@ -222,14 +358,13 @@ export default function PersonnelMap(props: PersonnelMapProps) {
 
   const clusters = useMemo(() => clusterPersonnel(located, latitudeDelta), [located, latitudeDelta]);
 
-  function zoomIntoCluster(cluster: MarkerCluster) {
-    mapRef.current?.animateToRegion(clusterBoundsRegion(cluster.items), 350);
-  }
+  // Marker yang sedang dipilih (di-tap) — disorot warna berbeda & membuka kartu mengambang.
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const selectedCluster = selectedKey ? clusters.find(cluster => cluster.key === selectedKey) ?? null : null;
 
   return (
     <View style={[styles.container, style]}>
       <MapView
-        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         liteMode={liteMode}
@@ -239,6 +374,7 @@ export default function PersonnelMap(props: PersonnelMapProps) {
         rotateEnabled={interactive}
         pitchEnabled={interactive}
         toolbarEnabled={interactive}
+        onPress={() => setSelectedKey(null)}
         onRegionChangeComplete={region => setLatitudeDelta(region.latitudeDelta)}
       >
         {clusters.map(cluster =>
@@ -246,13 +382,28 @@ export default function PersonnelMap(props: PersonnelMapProps) {
             <SinglePersonnelMarker
               key={cluster.key}
               item={cluster.items[0]}
-              onSelect={onSelectPersonnel ? () => onSelectPersonnel(cluster.items[0]) : undefined}
+              selected={cluster.key === selectedKey}
+              onPress={() => setSelectedKey(cluster.key)}
             />
           ) : (
-            <ClusterMarker key={cluster.key} cluster={cluster} onPress={() => zoomIntoCluster(cluster)} />
+            <ClusterMarker
+              key={cluster.key}
+              cluster={cluster}
+              selected={cluster.key === selectedKey}
+              onPress={() => setSelectedKey(cluster.key)}
+            />
           ),
         )}
       </MapView>
+
+      {selectedCluster ? (
+        <PersonnelFloatingCard
+          clusterKey={selectedCluster.key}
+          items={selectedCluster.items}
+          onSelect={onSelectPersonnel}
+          onClose={() => setSelectedKey(null)}
+        />
+      ) : null}
 
       {interactive && located.length === 0 ? (
         <View
@@ -280,6 +431,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     backgroundColor: colors.surface,
   },
+  markerRingSelected: {
+    borderWidth: 3,
+  },
   singleRing: {
     width: 40,
     height: 40,
@@ -300,58 +454,145 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primaryForeground,
   },
-  clusterWrap: {
+  clusterGrid: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
   },
-  clusterRing: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  clusterGridSelected: {
+    backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  clusterPhoto: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  clusterBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    paddingHorizontal: 4,
+  clusterRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.danger,
-    borderWidth: 2,
-    borderColor: colors.surface,
+    gap: 4,
   },
-  clusterBadgeText: {
-    fontSize: 11,
+  clusterCellRing: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    backgroundColor: colors.surface,
+  },
+  clusterCellPhoto: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  clusterCellInitial: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: colors.primaryForeground,
+  },
+  clusterCountRing: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  clusterCountText: {
+    fontSize: 8,
     fontWeight: '800',
-    color: colors.dangerForeground,
+    color: colors.primaryForeground,
   },
-  callout: {
-    minWidth: 160,
+  floatingWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 16,
+    alignItems: 'center',
+  },
+  floatingShell: {
+    width: FLOATING_CARD_WIDTH,
+  },
+  floatingClose: {
+    position: 'absolute',
+    top: -10,
+    right: -6,
+    zIndex: 1,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  floatingScroll: {
+    width: FLOATING_CARD_WIDTH,
+    flexGrow: 0,
+    borderRadius: 18,
+    backgroundColor: colors.floatingSurface,
+    ...cardShadowRaised,
+  },
+  floatingCard: {
+    width: FLOATING_CARD_WIDTH,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+  },
+  floatingAvatarRing: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  floatingAvatarPhoto: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.neutralSurface,
+  },
+  floatingAvatarInitial: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primaryForeground,
+  },
+  floatingBody: {
+    flex: 1,
     gap: 2,
   },
-  calloutName: {
+  floatingName: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.text,
   },
-  calloutMeta: {
+  floatingMeta: {
     fontSize: 12,
     color: colors.textMuted,
   },
-  calloutAction: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary,
+  floatingAction: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  floatingDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 5,
+    marginTop: 8,
+  },
+  floatingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.borderSoft,
+  },
+  floatingDotActive: {
+    backgroundColor: colors.primary,
+    width: 16,
   },
   emptyOverlay: {
     alignItems: 'center',
