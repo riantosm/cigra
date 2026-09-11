@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -106,15 +106,33 @@ function clusterPersonnel(points: LocatedPersonnel[], latitudeDelta: number): Ma
   return clusters;
 }
 
+// `react-native-fast-image` (dasar `SecureImage`) kadang tidak berhasil mengirim event
+// `onLoad`/`onError` ke JS di bawah New Architecture/bridgeless (`newArchEnabled=true` —
+// terlihat sebagai "Unhandled SoftException: getJSModule(RCTEventEmitter)..." di logcat, gambar
+// aslinya tetap termuat di layer native tapi JS tidak pernah diberi tahu). Failsafe timeout ini
+// memastikan `tracksViewChanges` tetap berhenti walau event itu tak pernah sampai.
+const PHOTO_LOAD_FAILSAFE_MS = 4000;
+
 // Satu marker personel — foto asli (`SecureImage`) kalau ada & bisa ditampilkan, jatuh ke inisial
-// ber-tone status kalau tidak. Tap membuka kartu detail mengambang di komponen induk (bukan
-// `Callout` bawaan react-native-maps) — `selected` menyorot marker ini dengan warna berbeda
-// selama kartunya terbuka. `tracksViewChanges` aktif hanya sampai konten selesai tergambar (foto
-// termuat / gagal, atau langsung untuk fallback inisial) lalu dimatikan — react-native-maps
-// menggambar ulang marker custom tiap frame selama flag ini aktif, mahal kalau dibiarkan terus.
+// ber-tone status kalau tidak (juga kalau fotonya gagal dimuat). Tap membuka kartu detail
+// mengambang di komponen induk (bukan `Callout` bawaan react-native-maps) — `selected` menyorot
+// marker ini dengan warna berbeda selama kartunya terbuka. `tracksViewChanges` aktif hanya sampai
+// konten selesai tergambar (foto termuat / gagal, atau langsung untuk fallback inisial) lalu
+// dimatikan — react-native-maps menggambar ulang marker custom tiap frame selama flag ini aktif,
+// mahal kalau dibiarkan terus.
 function SinglePersonnelMarker(props: { item: LocatedPersonnel; selected: boolean; onPress: () => void }) {
   const { item, selected, onPress } = props;
-  const [ready, setReady] = useState(!isDisplayablePhoto(item.photo));
+  const hasPhoto = isDisplayablePhoto(item.photo);
+  const [ready, setReady] = useState(!hasPhoto);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!hasPhoto || ready) return;
+    const timer = setTimeout(() => setReady(true), PHOTO_LOAD_FAILSAFE_MS);
+    return () => clearTimeout(timer);
+  }, [hasPhoto, ready]);
+
+  const showPhoto = hasPhoto && !failed;
   const ringColor = selected ? colors.primary : locationStatusMeta[item.status].color;
 
   return (
@@ -124,12 +142,15 @@ function SinglePersonnelMarker(props: { item: LocatedPersonnel; selected: boolea
       tracksViewChanges={!ready}
     >
       <View style={[styles.markerRing, styles.singleRing, selected && styles.markerRingSelected, { borderColor: ringColor }]}>
-        {isDisplayablePhoto(item.photo) ? (
+        {showPhoto ? (
           <SecureImage
             path={item.photo}
             style={styles.singlePhoto}
             onLoad={() => setReady(true)}
-            onLoadError={() => setReady(true)}
+            onLoadError={() => {
+              setFailed(true);
+              setReady(true);
+            }}
           />
         ) : (
           <View style={[styles.markerFallback, styles.singlePhoto, { backgroundColor: ringColor }]}>
@@ -142,16 +163,43 @@ function SinglePersonnelMarker(props: { item: LocatedPersonnel; selected: boolea
 }
 
 // Satu sel foto di dalam grid kelompok — foto asli kalau ada & bisa ditampilkan, jatuh ke inisial
-// ber-tone status kalau tidak (`onDone` hanya dipanggil untuk sel yang benar-benar memuat foto —
-// lihat `photosToLoad` di `ClusterMarker`).
+// ber-tone status kalau tidak (juga kalau fotonya gagal dimuat). `onDone` hanya dipanggil untuk
+// sel yang benar-benar mencoba memuat foto (lihat `photosToLoad` di `ClusterMarker`), dan hanya
+// sekali per sel (`firedRef`) supaya event yang telat + failsafe timeout tidak dobel hitung.
 function ClusterCell(props: { item: LocatedPersonnel; onDone: () => void }) {
   const { item, onDone } = props;
+  const hasPhoto = isDisplayablePhoto(item.photo);
+  const [failed, setFailed] = useState(false);
+  const firedRef = useRef(false);
   const toneColor = locationStatusMeta[item.status].color;
+
+  function fireOnce() {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    onDone();
+  }
+
+  useEffect(() => {
+    if (!hasPhoto) return;
+    const timer = setTimeout(fireOnce, PHOTO_LOAD_FAILSAFE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasPhoto]);
+
+  const showPhoto = hasPhoto && !failed;
 
   return (
     <View style={[styles.clusterCellRing, { borderColor: toneColor }]}>
-      {isDisplayablePhoto(item.photo) ? (
-        <SecureImage path={item.photo} style={styles.clusterCellPhoto} onLoad={onDone} onLoadError={onDone} />
+      {showPhoto ? (
+        <SecureImage
+          path={item.photo}
+          style={styles.clusterCellPhoto}
+          onLoad={fireOnce}
+          onLoadError={() => {
+            setFailed(true);
+            fireOnce();
+          }}
+        />
       ) : (
         <View style={[styles.markerFallback, styles.clusterCellPhoto, { backgroundColor: toneColor }]}>
           <Text style={styles.clusterCellInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
@@ -253,6 +301,50 @@ function ClusterMarker(props: { cluster: MarkerCluster; selected: boolean; onPre
 
 const FLOATING_CARD_WIDTH = 260;
 
+// Satu halaman kartu mengambang — foto/inisial (jatuh ke inisial juga kalau fotonya gagal dimuat)
+// + nama + jabatan + ikon panah ke detail personel (kalau `onSelect` diisi).
+function FloatingCardPage(props: { item: LocatedPersonnel; onSelect?: (item: LocatedPersonnel) => void }) {
+  const { item, onSelect } = props;
+  const [failed, setFailed] = useState(false);
+  const showPhoto = isDisplayablePhoto(item.photo) && !failed;
+  const toneColor = locationStatusMeta[item.status].color;
+
+  return (
+    <View style={styles.floatingCard}>
+      <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: toneColor }]}>
+        {showPhoto ? (
+          <SecureImage
+            path={item.photo}
+            style={styles.floatingAvatarPhoto}
+            onLoadError={() => setFailed(true)}
+          />
+        ) : (
+          <View style={[styles.markerFallback, styles.floatingAvatarPhoto, { backgroundColor: toneColor }]}>
+            <Text style={styles.floatingAvatarInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.floatingBody}>
+        <Text style={styles.floatingName} numberOfLines={1}>
+          {item.full_name}
+        </Text>
+        <Text style={styles.floatingMeta} numberOfLines={1}>
+          {joinFields(item.rank, item.unit)}
+        </Text>
+      </View>
+      {onSelect ? (
+        <PressableScale
+          onPress={() => onSelect(item)}
+          contentStyle={styles.floatingAction}
+          accessibilityLabel="Lihat detail personel"
+        >
+          <Icon name="chevron-right" size={18} color={colors.primaryForeground} />
+        </PressableScale>
+      ) : null}
+    </View>
+  );
+}
+
 // Kartu detail personel yang mengambang di atas peta saat sebuah marker di-tap — foto/inisial +
 // nama + jabatan, dan ikon panah untuk membuka detail personel penuh (kalau `onSelect` diisi).
 // Kalau marker yang di-tap adalah kelompok (>1 orang), kartunya jadi bisa digeser (`ScrollView`
@@ -287,40 +379,7 @@ function PersonnelFloatingCard(props: {
         style={styles.floatingScroll}
       >
         {items.map(item => (
-          <View key={item.id} style={styles.floatingCard}>
-            <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: locationStatusMeta[item.status].color }]}>
-              {isDisplayablePhoto(item.photo) ? (
-                <SecureImage path={item.photo} style={styles.floatingAvatarPhoto} />
-              ) : (
-                <View
-                  style={[
-                    styles.markerFallback,
-                    styles.floatingAvatarPhoto,
-                    { backgroundColor: locationStatusMeta[item.status].color },
-                  ]}
-                >
-                  <Text style={styles.floatingAvatarInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.floatingBody}>
-              <Text style={styles.floatingName} numberOfLines={1}>
-                {item.full_name}
-              </Text>
-              <Text style={styles.floatingMeta} numberOfLines={1}>
-                {joinFields(item.rank, item.unit)}
-              </Text>
-            </View>
-            {onSelect ? (
-              <PressableScale
-                onPress={() => onSelect(item)}
-                contentStyle={styles.floatingAction}
-                accessibilityLabel="Lihat detail personel"
-              >
-                <Icon name="chevron-right" size={18} color={colors.primaryForeground} />
-              </PressableScale>
-            ) : null}
-          </View>
+          <FloatingCardPage key={item.id} item={item} onSelect={onSelect} />
         ))}
       </ScrollView>
       {items.length > 1 ? (
