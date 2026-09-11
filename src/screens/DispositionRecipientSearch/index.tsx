@@ -18,6 +18,8 @@ import { extractErrorMessage } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.dispositionRecipientSearch>;
 
+const SEARCH_DEBOUNCE_MS = 1000;
+
 export default function DispositionRecipientSearchScreen(props: Props) {
   const { navigation, route } = props;
   const keyboardHeight = useKeyboardHeight();
@@ -70,7 +72,7 @@ export default function DispositionRecipientSearchScreen(props: Props) {
       } finally {
         setIsSearching(false);
       }
-    }, q ? 400 : 0);
+    }, q ? SEARCH_DEBOUNCE_MS : 0);
     return () => clearTimeout(timer);
   }, [query]);
 

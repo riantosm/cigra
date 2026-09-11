@@ -14,6 +14,8 @@ import type { WeatherRegion } from '@/types';
 import { extractErrorMessage, joinFields } from '@/utils/format';
 import { getCurrentCoordinates } from '@/utils/location';
 
+const SEARCH_DEBOUNCE_MS = 1000;
+
 export interface WeatherLocationSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -93,7 +95,7 @@ export default function WeatherLocationSheet(props: WeatherLocationSheetProps) {
       } finally {
         setIsSearching(false);
       }
-    }, 400);
+    }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [trimmed, isSearchMode]);
 

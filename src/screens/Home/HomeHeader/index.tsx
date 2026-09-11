@@ -80,7 +80,7 @@ export default function HomeHeader(props: HomeHeaderProps) {
             />
           ) : (
             <View style={styles.avatarFallback}>
-              <Text style={styles.avatarFallbackLabel}>{(user?.name ?? 'U').charAt(0).toUpperCase()}</Text>
+              <Text style={styles.avatarFallbackLabel}>{(personnel?.full_name ?? user?.name ?? 'U').charAt(0).toUpperCase()}</Text>
             </View>
           )}
         </PressableScale>

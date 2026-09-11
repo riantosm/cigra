@@ -16,7 +16,7 @@ import { extractErrorMessage, joinFields } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.healthPersonnelSearch>;
 
-const SEARCH_DEBOUNCE_MS = 500;
+const SEARCH_DEBOUNCE_MS = 1000;
 const MIN_QUERY_LENGTH = 2;
 
 // Cari anggota (nama/NRP) untuk petugas kesehatan. `mode: 'input'` → hasil menuju langsung ke

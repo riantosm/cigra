@@ -33,10 +33,12 @@ export function regionLabel(region: WeatherRegion): string {
 }
 
 // Ambil prakiraan cuaca BMKG untuk Home:
-// 1. default → koordinat GPS di-reverse-geocode dulu ke ADM4 terdekat
-//    (GET /weather/reverse-geocode) supaya nama wilayahnya presisi, lalu GET /weather?adm4=.
-// 2. kalau reverse-geocode gagal → GET /weather?lat=&lon=. Kalau GPS gagal → GET /weather
-//    (backend jatuh ke wilayah satuan pangkalan).
+// 1. default → koordinat GPS di-reverse-geocode dulu (GET /weather/reverse-geocode) untuk dapat
+//    lat/lon wilayah terdekat yang presisi, lalu GET /weather?lat=&lon= pakai koordinat HASIL
+//    reverse-geocode itu (bukan adm4, dan bukan koordinat GPS mentah).
+// 2. kalau reverse-geocode gagal (atau tidak menyertakan lat/lon) → GET /weather?lat=&lon= pakai
+//    koordinat GPS mentah sebagai fallback. Kalau GPS sendiri gagal → GET /weather (backend
+//    jatuh ke wilayah satuan pangkalan).
 // 3. kalau pengguna memilih lokasi manual (sesi ini) → pakai kode ADM4-nya (GET /weather?adm4=).
 export function useWeather(): UseWeatherResult {
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
@@ -77,7 +79,11 @@ export function useWeather(): UseWeatherResult {
     try {
       const region = await reverseGeocodeWeatherApi(coords.latitude, coords.longitude);
       if (mountedRef.current) setNearest(region);
-      return await getWeatherApi({ adm4: region.adm4 });
+      if (typeof region.lat === 'number' && typeof region.lon === 'number') {
+        return await getWeatherApi({ lat: region.lat, lon: region.lon });
+      }
+      // Jarang terjadi: hasil reverse-geocode tanpa koordinat — pakai koordinat GPS mentah.
+      return await getWeatherApi({ lat: coords.latitude, lon: coords.longitude });
     } catch {
       if (mountedRef.current) setNearest(null);
       return getWeatherApi({ lat: coords.latitude, lon: coords.longitude });

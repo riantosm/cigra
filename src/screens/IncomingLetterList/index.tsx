@@ -21,6 +21,7 @@ import { SECURITY_LEVELS, letterDateLabel, securityLevelBadgeVariant, securityLe
 type Props = RootStackScreenProps<typeof ROUTES.incomingLetterList>;
 
 const PER_PAGE = 20;
+const SEARCH_DEBOUNCE_MS = 1000;
 
 export default function IncomingLetterListScreen(props: Props) {
   const { navigation, route } = props;
@@ -53,6 +54,9 @@ export default function IncomingLetterListScreen(props: Props) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  // Nilai yang benar-benar dipakai untuk query API — diisi dari `query` setelah didebounce, jadi
+  // ganti huruf sambil mengetik tidak langsung menembak API tiap keystroke.
+  const [search, setSearch] = useState('');
   const [security, setSecurity] = useState<SecurityLevel | null>(null);
   const isFirstFocus = useRef(true);
 
@@ -66,7 +70,7 @@ export default function IncomingLetterListScreen(props: Props) {
         const result = await getIncomingLettersApi({
           page: targetPage,
           per_page: PER_PAGE,
-          search: query.trim() || undefined,
+          search: search || undefined,
           security_level: security ?? undefined,
         });
         setItems(previous =>
@@ -85,18 +89,22 @@ export default function IncomingLetterListScreen(props: Props) {
         setIsLoadingMore(false);
       }
     },
-    [query, security],
+    [search, security],
   );
 
-  // Muat awal + debounce tiap kali search / filter berubah.
+  // Debounce ketikan pencarian (bukan filter keamanan — itu langsung dipakai apa adanya).
   useEffect(() => {
-    const timer = setTimeout(
-      () => load(1, isFirstFocus.current ? 'initial' : 'refresh'),
-      isFirstFocus.current ? 0 : 350,
-    );
-    isFirstFocus.current = false;
+    const trimmed = query.trim();
+    if (trimmed === search) return;
+    const timer = setTimeout(() => setSearch(trimmed), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [query, security, load]);
+  }, [query, search]);
+
+  // Muat awal + tiap kali hasil debounce pencarian atau filter keamanan berubah.
+  useEffect(() => {
+    load(1, isFirstFocus.current ? 'initial' : 'refresh');
+    isFirstFocus.current = false;
+  }, [search, security, load]);
 
   // Re-fetch saat kembali ke layar ini (mis. setelah catat surat baru / buat disposisi).
   useFocusEffect(
@@ -133,7 +141,10 @@ export default function IncomingLetterListScreen(props: Props) {
         <SearchFilterBar
           value={query}
           onChangeText={setQuery}
-          onClear={() => setQuery('')}
+          onClear={() => {
+            setQuery('');
+            setSearch('');
+          }}
           placeholder="Cari nomor surat, perihal, pengirim..."
           style={styles.search}
         />
