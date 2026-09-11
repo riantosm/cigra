@@ -15,8 +15,8 @@ export interface WeatherAlertBannerProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// Banner Peringatan Dini Cuaca Ekstrem BMKG di Home (di atas widget cuaca). Ketuk → layar
-// daftar peringatan. Atribusi "BMKG" ada di layar detail.
+// Kartu Peringatan Dini Cuaca Ekstrem BMKG — sel kiri grid 2 kolom di Home (pasangan dengan
+// EarthquakeWidget). Ketuk → layar daftar peringatan. Atribusi "BMKG" ada di layar detail.
 export default function WeatherAlertBanner(props: WeatherAlertBannerProps) {
   const { alerts, isLoading, error, onPress, style } = props;
 
@@ -32,14 +32,22 @@ export default function WeatherAlertBanner(props: WeatherAlertBannerProps) {
         scaleTo={0.98}
         onPress={onPress}
         disabled={!onPress}
-        contentStyle={[styles.calm, style]}
+        style={[styles.root, style]}
+        contentStyle={[styles.card, styles.calmCard]}
         accessibilityRole="button"
         accessibilityLabel="Tidak ada peringatan dini cuaca">
-        <Icon name="shield-check" size={15} color={colors.success} />
-        <Text style={styles.calmText} numberOfLines={1}>
-          Tidak ada peringatan dini cuaca ekstrem
+        <View style={styles.headRow}>
+          <View style={[styles.iconBadge, { backgroundColor: colors.successSurface }]}>
+            <Icon name="shield-check" size={16} color={colors.success} />
+          </View>
+          <Text style={[styles.title, { color: colors.success }]} numberOfLines={1}>
+            Cuaca Aman
+          </Text>
+          {onPress ? <Icon name="chevron-right" size={16} color={colors.textMuted} /> : null}
+        </View>
+        <Text style={styles.headline} numberOfLines={2}>
+          Tidak ada peringatan dini cuaca ekstrem aktif
         </Text>
-        <Icon name="chevron-right" size={13} color={colors.textMuted} />
       </PressableScale>
     );
   }
@@ -53,79 +61,74 @@ export default function WeatherAlertBanner(props: WeatherAlertBannerProps) {
       scaleTo={0.98}
       onPress={onPress}
       disabled={!onPress}
-      contentStyle={[styles.card, { backgroundColor: meta.surface, borderColor: meta.border }, style]}
+      style={[styles.root, style]}
+      contentStyle={[styles.card, { backgroundColor: meta.surface, borderColor: meta.border }]}
       accessibilityRole="button"
       accessibilityLabel={`${count} peringatan dini cuaca aktif`}>
-      <View style={[styles.iconBadge, { backgroundColor: `${meta.accent}22` }]}>
-        <Icon name="alert-triangle" size={18} color={meta.accent} />
-      </View>
-      <View style={styles.body}>
+      <View style={styles.headRow}>
+        <View style={[styles.iconBadge, { backgroundColor: `${meta.accent}22` }]}>
+          <Icon name="alert-triangle" size={16} color={meta.accent} />
+        </View>
         <Text style={[styles.title, { color: meta.accent }]} numberOfLines={1}>
-          {count} Peringatan Dini Cuaca Aktif
+          {count} Peringatan Dini
         </Text>
-        <Text style={styles.headline} numberOfLines={2}>
-          {headline.title}
-        </Text>
-        {headline.pub_date_formatted ? (
-          <Text style={styles.meta} numberOfLines={1}>
-            {headline.pub_date_formatted}
-          </Text>
-        ) : null}
+        {onPress ? <Icon name="chevron-right" size={16} color={meta.accent} /> : null}
       </View>
-      <Icon name="chevron-right" size={16} color={meta.accent} />
+      <Text style={styles.headline} numberOfLines={2}>
+        {headline.title}
+      </Text>
+      {headline.pub_date_formatted ? (
+        <Text style={styles.date} numberOfLines={1}>
+          {headline.pub_date_formatted}
+        </Text>
+      ) : null}
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  calm: {
+  root: {
+    flex: 1,
+  },
+  card: {
+    flex: 1,
+    gap: 8,
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+  },
+  calmCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.borderSoft,
+  },
+  headRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surface,
-  },
-  calmText: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textMuted,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
   },
   iconBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  body: {
-    flex: 1,
-    gap: 2,
-  },
   title: {
-    fontSize: 13,
+    flex: 1,
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: -0.2,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   headline: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '400',
     color: colors.text,
+    lineHeight: 17,
   },
-  meta: {
+  date: {
     fontSize: 10,
+    fontWeight: '500',
     color: colors.textMuted,
   },
 });

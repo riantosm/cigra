@@ -5,8 +5,8 @@ import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
 import type { EarthquakeLatest } from '@/types';
-import { formatRelativeTime, joinFields } from '@/utils/format';
 import { earthquakeMeta } from '@/utils/earthquake';
+import { joinFields } from '@/utils/format';
 
 export interface EarthquakeWidgetProps {
   latest: EarthquakeLatest | null;
@@ -16,8 +16,8 @@ export interface EarthquakeWidgetProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// Widget Gempa Bumi Terkini BMKG di Home (di bawah widget cuaca). Ketuk → layar detail gempa
-// (Terkini / M 5.0+ / Dirasakan). Atribusi "BMKG" ada di layar detail.
+// Kartu Gempa Bumi Terkini BMKG — sel kanan grid 2 kolom di Home (pasangan dengan
+// WeatherAlertBanner). Ketuk → layar detail gempa (Terkini / M 5.0+ / Dirasakan).
 export default function EarthquakeWidget(props: EarthquakeWidgetProps) {
   const { latest, onPress, style } = props;
 
@@ -25,92 +25,88 @@ export default function EarthquakeWidget(props: EarthquakeWidgetProps) {
   if (!latest) return null;
 
   const meta = earthquakeMeta(latest.magnitude, latest.is_tsunami_potential);
-  const rel = formatRelativeTime(latest.datetime_utc);
+  const dateLabel = joinFields(latest.tanggal, latest.jam);
 
   return (
     <PressableScale
       scaleTo={0.98}
       onPress={onPress}
       disabled={!onPress}
-      contentStyle={[styles.card, style]}
+      style={[styles.root, style]}
+      contentStyle={styles.card}
       accessibilityRole="button"
       accessibilityLabel={`Gempa terkini magnitudo ${latest.magnitude}, ${latest.wilayah}`}>
-      <View style={[styles.magBadge, { backgroundColor: `${meta.accent}1F`, borderColor: meta.border }]}>
-        <Text style={[styles.magValue, { color: meta.accent }]}>{latest.magnitude.toFixed(1)}</Text>
-        <Text style={[styles.magUnit, { color: meta.accent }]}>SR</Text>
-      </View>
-
-      <View style={styles.body}>
-        <View style={styles.headRow}>
-          <Text style={styles.kicker}>GEMPA TERKINI</Text>
-          {latest.is_tsunami_potential ? (
-            <View style={styles.tsunamiChip}>
-              <Icon name="alert-triangle" size={11} color={colors.dangerForeground} />
-              <Text style={styles.tsunamiChipText}>TSUNAMI</Text>
-            </View>
-          ) : null}
+      <View style={styles.headRow}>
+        <View style={[styles.magBadge, { backgroundColor: `${meta.accent}1F` }]}>
+          <Text style={[styles.magValue, { color: meta.accent }]}>{latest.magnitude.toFixed(1)}</Text>
+          <Text style={[styles.magUnit, { color: meta.accent }]}>SR</Text>
         </View>
-        <Text style={styles.wilayah} numberOfLines={2}>
-          {latest.wilayah}
+        <Text style={styles.kicker} numberOfLines={1}>
+          GEMPA TERKINI
         </Text>
-        <Text style={styles.meta} numberOfLines={1}>
-          {joinFields(rel ?? latest.jam, `${latest.kedalaman} dalam`, latest.potensi)}
-        </Text>
+        {latest.is_tsunami_potential ? (
+          <View style={styles.tsunamiChip}>
+            <Text style={styles.tsunamiChipText}>TSUNAMI</Text>
+          </View>
+        ) : null}
+        {onPress ? <Icon name="chevron-right" size={16} color={colors.textMuted} /> : null}
       </View>
-
-      <Icon name="chevron-right" size={16} color={colors.textMuted} />
+      <Text style={styles.wilayah} numberOfLines={2}>
+        {latest.wilayah}
+      </Text>
+      {dateLabel ? (
+        <Text style={styles.date} numberOfLines={1}>
+          {dateLabel}
+        </Text>
+      ) : null}
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    flex: 1,
+    gap: 8,
     padding: 14,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
-  },
-  magBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  magValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  magUnit: {
-    fontSize: 9,
-    fontWeight: '700',
-    marginTop: -2,
-  },
-  body: {
-    flex: 1,
-    gap: 2,
   },
   headRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  magBadge: {
+    minWidth: 44,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  magValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  magUnit: {
+    fontSize: 8,
+    fontWeight: '700',
+    marginTop: -2,
+  },
   kicker: {
+    flex: 1,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.4,
     color: colors.textMuted,
   },
   tsunamiChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -123,11 +119,13 @@ const styles = StyleSheet.create({
   },
   wilayah: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '400',
     color: colors.text,
+    lineHeight: 17,
   },
-  meta: {
-    fontSize: 11,
+  date: {
+    fontSize: 10,
+    fontWeight: '500',
     color: colors.textMuted,
   },
 });

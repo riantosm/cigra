@@ -20,9 +20,10 @@ export interface HomeWeatherWidgetHandle {
   reload: () => Promise<void>;
 }
 
-// Container widget cuaca untuk semua body Home (Commander/Member/HealthOfficer): banner
-// Peringatan Dini Cuaca Ekstrem + widget prakiraan cuaca + sheet "Ubah Lokasi Cuaca". Semua
-// pemanggilan API cuaca + navigasi ke layar detailnya terpusat di sini.
+// Container widget cuaca untuk semua body Home (Commander/Member/HealthOfficer): baris grid 2
+// kolom (Peringatan Dini Cuaca Ekstrem + Gempa Terkini) di atas widget prakiraan cuaca, plus
+// sheet "Ubah Lokasi Cuaca". Semua pemanggilan API cuaca + navigasi ke layar detailnya
+// terpusat di sini.
 const HomeWeatherWidget = forwardRef<HomeWeatherWidgetHandle, { style?: StyleProp<ViewStyle> }>(
   function HomeWeatherWidgetImpl({ style }, ref) {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -57,13 +58,20 @@ const HomeWeatherWidget = forwardRef<HomeWeatherWidgetHandle, { style?: StylePro
 
     return (
       <View style={style}>
-        <WeatherAlertBanner
-          alerts={alerts}
-          isLoading={alertsLoading}
-          error={alertsError}
-          onPress={() => navigation.navigate(ROUTES.weatherAlerts)}
-          style={styles.banner}
-        />
+        <View style={styles.grid}>
+          <WeatherAlertBanner
+            alerts={alerts}
+            isLoading={alertsLoading}
+            error={alertsError}
+            onPress={() => navigation.navigate(ROUTES.weatherAlerts)}
+          />
+          <EarthquakeWidget
+            latest={quake}
+            isLoading={quakeLoading}
+            error={quakeError}
+            onPress={() => navigation.navigate(ROUTES.earthquake)}
+          />
+        </View>
         <WeatherWidget
           weather={weather}
           isLoading={isLoading}
@@ -71,13 +79,6 @@ const HomeWeatherWidget = forwardRef<HomeWeatherWidgetHandle, { style?: StylePro
           manualLabel={manualRegion?.label ?? null}
           onPress={() => navigation.navigate(ROUTES.weather)}
           onChangeLocation={() => setIsSheetVisible(true)}
-        />
-        <EarthquakeWidget
-          latest={quake}
-          isLoading={quakeLoading}
-          error={quakeError}
-          onPress={() => navigation.navigate(ROUTES.earthquake)}
-          style={styles.earthquake}
         />
         <WeatherLocationSheet
           visible={isSheetVisible}
@@ -92,11 +93,10 @@ const HomeWeatherWidget = forwardRef<HomeWeatherWidgetHandle, { style?: StylePro
 );
 
 const styles = StyleSheet.create({
-  banner: {
+  grid: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 12,
-  },
-  earthquake: {
-    marginTop: 12,
   },
 });
 
