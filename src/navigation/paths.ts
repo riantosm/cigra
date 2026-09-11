@@ -37,6 +37,7 @@ export const ROUTES = {
   academyCmdProgramDetail: 'AcademyCmdProgramDetail',
   academyCmdCompetency: 'AcademyCmdCompetency',
   profile: 'Profile',
+  editProfile: 'EditProfile',
   catalogList: 'CatalogList',
   catalogDetail: 'CatalogDetail',
   settings: 'Settings',

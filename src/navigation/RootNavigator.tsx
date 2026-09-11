@@ -62,6 +62,7 @@ import PatrolScanScreen from '@/screens/PatrolScan';
 import PatrolScreen from '@/screens/Patrol';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
 import PersonnelTrackingScreen from '@/screens/PersonnelTracking';
+import EditProfileScreen from '@/screens/EditProfile';
 import ProfileScreen from '@/screens/Profile';
 import RollCallCreateScreen from '@/screens/RollCallCreate';
 import RollCallDetailScreen from '@/screens/RollCallDetail';
@@ -207,6 +208,7 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
         <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
         <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />
+        <Stack.Screen name={ROUTES.editProfile} component={EditProfileScreen} />
         <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
         <Stack.Screen name={ROUTES.comingSoon} component={ComingSoonScreen} />
         <Stack.Screen name={ROUTES.bukuSakuDetail} component={BukuSakuDetailScreen} />

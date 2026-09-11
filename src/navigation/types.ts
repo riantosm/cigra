@@ -52,6 +52,7 @@ export type RootStackParamList = {
   [ROUTES.catalogList]: { resource: CatalogResourceKey };
   [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string; initialTab?: string };
   [ROUTES.profile]: undefined;
+  [ROUTES.editProfile]: undefined;
   [ROUTES.settings]: undefined;
   [ROUTES.comingSoon]: { title: string };
   // Buka satu Bab Buku Saku sebagai E-Book; navigasi antar halaman (next/back) pakai

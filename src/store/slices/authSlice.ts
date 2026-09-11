@@ -4,7 +4,14 @@ import axios from 'axios';
 
 import { getMeApi, loginApi, logoutApi, verifyLoginOtpApi } from '@/services/api/auth.service';
 import { setAuthToken } from '@/services/api/axiosInstance';
-import type { AuthState, AuthUser, LoginPayload, OtpVerifyPayload, OtpVerifyResult } from '@/types';
+import type {
+  AuthState,
+  AuthUser,
+  LoginPayload,
+  OtpVerifyPayload,
+  OtpVerifyResult,
+  UpdateProfileResult,
+} from '@/types';
 import { stopBackgroundLocationTracking } from '@/utils/location';
 import { teardownPushNotifications } from '@/utils/pushNotifications';
 
@@ -162,6 +169,21 @@ const authSlice = createSlice({
     appCheckCompleted(state) {
       state.appChecked = true;
     },
+    // Dipanggil layar EditProfile setelah salah satu form (foto / data pribadi / password) sukses
+    // POST /profile — response-nya sendiri sudah berisi state akun+personel terbaru, jadi cukup
+    // di-merge langsung tanpa refetch /auth/me terpisah. Field yang tidak ada di response (mis.
+    // `family`/`permissions`, atau field personel yang tak diubah form itu) dipertahankan.
+    profileUpdated(state, action: PayloadAction<UpdateProfileResult>) {
+      if (!state.user) return;
+      const result = action.payload;
+      state.user.name = result.name ?? state.user.name;
+      state.user.email = result.email ?? state.user.email;
+      if (result.personnel) {
+        state.user.personnel = state.user.personnel
+          ? { ...state.user.personnel, ...result.personnel }
+          : (result.personnel as unknown as AuthUser['personnel']);
+      }
+    },
   },
   extraReducers: builder => {
     builder
@@ -205,5 +227,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuthError, logoutLocal, passwordChanged, appCheckCompleted } = authSlice.actions;
+export const { clearAuthError, logoutLocal, passwordChanged, appCheckCompleted, profileUpdated } =
+  authSlice.actions;
 export default authSlice.reducer;

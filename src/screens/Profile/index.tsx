@@ -143,14 +143,24 @@ export default function ProfileScreen(props: ProfileScreenProps) {
       variant="canvas"
       onBack={() => navigation.goBack()}
       right={
-        <PressableScale
-          onPress={() => navigation.navigate(ROUTES.settings)}
-          hitSlop={12}
-          contentStyle={styles.headerAction}
-          accessibilityRole="button"
-          accessibilityLabel="Pengaturan">
-          <Icon name="settings" size={20} color={colors.primary} />
-        </PressableScale>
+        <View style={styles.headerActions}>
+          <PressableScale
+            onPress={() => navigation.navigate(ROUTES.editProfile)}
+            hitSlop={12}
+            contentStyle={styles.headerAction}
+            accessibilityRole="button"
+            accessibilityLabel="Edit Profil">
+            <Icon name="edit" size={18} color={colors.primary} />
+          </PressableScale>
+          <PressableScale
+            onPress={() => navigation.navigate(ROUTES.settings)}
+            hitSlop={12}
+            contentStyle={styles.headerAction}
+            accessibilityRole="button"
+            accessibilityLabel="Pengaturan">
+            <Icon name="settings" size={20} color={colors.primary} />
+          </PressableScale>
+        </View>
       }>
       <ScrollView
         style={styles.container}
@@ -319,6 +329,10 @@ export default function ProfileScreen(props: ProfileScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 10,
   },
   headerAction: {
     width: 40,

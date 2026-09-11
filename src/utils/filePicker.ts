@@ -64,6 +64,40 @@ export async function pickAttachment(options: PickAttachmentOptions = {}): Promi
   }
 }
 
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024; // 2 MB — batas foto profil (POST /profile)
+const ALLOWED_PHOTO_MIME_FRAGMENTS = ['png', 'jpeg', 'jpg', 'webp'];
+
+// Pilih foto profil baru (galeri) lewat @react-native-documents/picker, dibatasi ke gambar saja.
+// Validasi tipe (JPEG/PNG/WEBP) + ukuran ≤ 2MB sesuai kontrak `POST /profile`. `null` kalau
+// user membatalkan.
+export async function pickProfilePhoto(): Promise<FilePickResult | null> {
+  try {
+    const [file] = await pick({ type: [types.images], mode: 'import', allowMultiSelection: false });
+    if (!file?.uri) return null;
+
+    const mime = (file.type ?? '').toLowerCase();
+    const typeOk = ALLOWED_PHOTO_MIME_FRAGMENTS.some(fragment => mime.includes(fragment));
+    if (!typeOk) {
+      throw new Error('Format foto tidak didukung. Pilih JPEG, PNG, atau WEBP.');
+    }
+    if (typeof file.size === 'number' && file.size > MAX_PHOTO_BYTES) {
+      throw new Error('Ukuran foto melebihi 2 MB. Pilih foto yang lebih kecil.');
+    }
+
+    const ext = extOf(file.name);
+    return {
+      uri: file.uri,
+      name: file.name ?? `foto-profil.${ext || 'jpg'}`,
+      type: file.type ?? 'image/jpeg',
+      size: file.size ?? null,
+    };
+  } catch (error) {
+    if (isErrorWithCode(error) && error.code === errorCodes.OPERATION_CANCELED) return null;
+    if (error instanceof Error) throw error;
+    throw new Error('Gagal membuka pemilih foto. Coba lagi.');
+  }
+}
+
 export function formatFileSize(bytes: number | null | undefined): string {
   if (bytes == null) return '';
   if (bytes < 1024) return `${bytes} B`;

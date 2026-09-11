@@ -29,6 +29,12 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+### Baru
+
+- Profile: layar Edit Profil baru (ikon pensil di header) dengan 3 form terpisah — ganti foto
+  profil, ubah data pribadi (nama, email, no. telepon, alamat, tempat/tanggal lahir, golongan
+  darah, jenis kelamin), dan ganti password.
+
 ## v0.7.0 (versionCode 7)
 
 _10 September 2026_
