@@ -40,9 +40,9 @@ export default function MainTabNavigator() {
           <CustomTabBar {...props} onEmergencyToastChange={setToastMessage} />
         )}>
         <Tab.Screen name={ROUTES.home} component={HomeScreen} options={{ title: 'Home' }} />
-        <Tab.Screen name={ROUTES.riwayat} component={RiwayatScreen} options={{ title: 'Riwayat' }} />
-        <Tab.Screen name={ROUTES.emergency} component={EmergencyScreen} options={{ title: 'Emergency' }} />
         <Tab.Screen name={ROUTES.bukuSaku} component={BukuSakuScreen} options={{ title: 'Buku Saku' }} />
+        <Tab.Screen name={ROUTES.emergency} component={EmergencyScreen} options={{ title: 'Emergency' }} />
+        <Tab.Screen name={ROUTES.riwayat} component={RiwayatScreen} options={{ title: 'Riwayat' }} />
         <Tab.Screen
           name={ROUTES.academy}
           component={AcademyScreen}

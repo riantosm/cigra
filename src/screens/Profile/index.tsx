@@ -172,14 +172,14 @@ export default function ProfileScreen(props: ProfileScreenProps) {
                 />
               ) : (
                 <GradientAvatar
-                  label={(user?.name ?? 'U').charAt(0).toUpperCase()}
+                  label={(personnel?.full_name ?? user?.name ?? 'U').charAt(0).toUpperCase()}
                   gradientStart={colors.gradientPrimaryStart}
                   gradientEnd={colors.gradientPrimaryEnd}
                   size={72}
                 />
               )}
               <View style={styles.identity}>
-                <Text style={styles.name}>{user?.name ?? '-'}</Text>
+                <Text style={styles.name}>{personnel?.full_name ?? user?.name ?? '-'}</Text>
                 <Badge label={isActive ? 'AKTIF' : 'NONAKTIF'} variant={isActive ? 'success' : 'neutral'} />
                 <View style={styles.identityMeta}>
                   <View style={styles.identityMetaRow}>
