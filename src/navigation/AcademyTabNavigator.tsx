@@ -43,7 +43,8 @@ export default function AcademyTabNavigator(props: Props) {
       <SafeAreaView edges={['top', 'left', 'right']}>
         <AcademyHeader
           subtitle={subtitle}
-          initial={fullName.charAt(0).toUpperCase()}
+          fullName={fullName}
+          photoPath={user?.personnel?.photo}
           onAvatarPress={() => navigation.navigate(ROUTES.profile)}
         />
       </SafeAreaView>
