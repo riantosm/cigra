@@ -267,21 +267,15 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ### Ditingkatkan
 
-- Disposisi Surat: detail disposisi menampilkan foto asli pengirim & tiap penerima (bukan cuma
-  inisial) memakai foto dari API.
-- Disposisi Surat: daftar hasil pencarian penerima (Cari & Pilih) menampilkan foto asli anggota
-  dari `GET /personnel/search`, bukan cuma inisial.
-- Kekuatan Apel: daftar Hadir/Absen/Belum, sheet detail personel, pencarian personel, scan QR, dan
-  form keterangan absen menampilkan foto asli anggota (dari `GET /roll-calls/{session}` &
-  `GET /roll-calls/personnel/search`), bukan cuma inisial.
-- Peta Personel & tab Lokasi (detail personel/persit): marker sekarang menampilkan foto asli
-  personel (dari `GET /locations/overview`), bukan pin polos. Marker yang berdekatan pada zoom
-  saat ini otomatis digabung jadi grid foto (maks. 4 sel, sisanya jadi badge "+N"); begitu region
-  cukup renggang, otomatis terpisah lagi jadi foto individual. Tap marker (tunggal maupun
-  kelompok) membuka kartu detail mengambang — bisa digeser antar personel kalau kelompoknya berisi
-  lebih dari satu orang — dengan ikon untuk membuka detail personel penuh; marker yang dipilih
-  disorot warna berbeda selama kartunya terbuka. Kartu legenda status di layar Peta Personel
-  dipindah ke pojok kanan atas.
+- Disposisi Surat: detail disposisi & pencarian penerima menampilkan foto asli pengirim/anggota
+  (bukan cuma inisial).
+- Kekuatan Apel: daftar Hadir/Absen/Belum, pencarian personel, scan QR, dan form absen menampilkan
+  foto asli anggota, bukan cuma inisial.
+- Peta Personel & tab Lokasi: marker memakai foto asli personel (jatuh ke inisial kalau tidak
+  ada/gagal dimuat). Marker berdekatan otomatis digabung jadi grid foto (maks. 4, sisanya badge
+  "+N"), terpisah lagi begitu di-zoom. Tap marker menyoroti & membuka carousel kartu profil
+  (avatar, nama, jabatan, status, tombol Lokasi/Lihat Detail) — satu kartu per personel kalau
+  markernya gabungan. Legenda status dipindah ke pojok kanan atas.
 
 ## v0.7.0 (versionCode 7)
 

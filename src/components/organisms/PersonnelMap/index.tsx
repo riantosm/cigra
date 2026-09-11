@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 
@@ -12,7 +12,8 @@ import { colors } from '@/theme/colors';
 import { cardShadowRaised } from '@/theme/shadows';
 import type { PersonnelLocationOverviewItem } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
-import { joinFields } from '@/utils/format';
+import { formatRelativeTime, joinFields } from '@/utils/format';
+import { openCoordinatesInMaps } from '@/utils/location';
 
 export interface PersonnelMapProps {
   personnel: PersonnelLocationOverviewItem[];
@@ -299,19 +300,29 @@ function ClusterMarker(props: { cluster: MarkerCluster; selected: boolean; onPre
   );
 }
 
-const FLOATING_CARD_WIDTH = 260;
+const FLOATING_CARD_MAX_WIDTH = 250;
+const FLOATING_CARD_GAP = 12;
+const FLOATING_CARD_SIDE_MARGIN = 28;
 
-// Satu halaman kartu mengambang — foto/inisial (jatuh ke inisial juga kalau fotonya gagal dimuat)
-// + nama + jabatan + ikon panah ke detail personel (kalau `onSelect` diisi).
-function FloatingCardPage(props: { item: LocatedPersonnel; onSelect?: (item: LocatedPersonnel) => void }) {
-  const { item, onSelect } = props;
+// Satu kartu personel di carousel — avatar bulat besar di tengah-atas, nama, jabatan, status
+// lokasi, lalu dua tombol (buka lokasi / lihat detail) — meniru pola "kartu profil" umum
+// (avatar-nama-subjudul-tombol). Foto jatuh ke inisial ber-tone status kalau tidak ada atau gagal
+// dimuat.
+function FloatingCardPage(props: {
+  item: LocatedPersonnel;
+  onSelect?: (item: LocatedPersonnel) => void;
+  width: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { item, onSelect, width, style } = props;
   const [failed, setFailed] = useState(false);
   const showPhoto = isDisplayablePhoto(item.photo) && !failed;
-  const toneColor = locationStatusMeta[item.status].color;
+  const toneMeta = locationStatusMeta[item.status];
+  const relative = formatRelativeTime(item.last_seen);
 
   return (
-    <View style={styles.floatingCard}>
-      <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: toneColor }]}>
+    <View style={[styles.floatingCard, { width }, style]}>
+      <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: colors.surface }]}>
         {showPhoto ? (
           <SecureImage
             path={item.photo}
@@ -319,67 +330,98 @@ function FloatingCardPage(props: { item: LocatedPersonnel; onSelect?: (item: Loc
             onLoadError={() => setFailed(true)}
           />
         ) : (
-          <View style={[styles.markerFallback, styles.floatingAvatarPhoto, { backgroundColor: toneColor }]}>
+          <View style={[styles.markerFallback, styles.floatingAvatarPhoto, { backgroundColor: toneMeta.color }]}>
             <Text style={styles.floatingAvatarInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
           </View>
         )}
       </View>
-      <View style={styles.floatingBody}>
-        <Text style={styles.floatingName} numberOfLines={1}>
-          {item.full_name}
-        </Text>
-        <Text style={styles.floatingMeta} numberOfLines={1}>
-          {joinFields(item.rank, item.unit)}
+
+      <Text style={styles.floatingName} numberOfLines={1}>
+        {item.full_name}
+      </Text>
+      <Text style={styles.floatingMeta} numberOfLines={1}>
+        {joinFields(item.rank, item.unit) || 'Personel'}
+      </Text>
+      <View style={styles.floatingStatusRow}>
+        <View style={[styles.floatingStatusDot, { backgroundColor: toneMeta.color }]} />
+        <Text style={styles.floatingStatusText} numberOfLines={1}>
+          {relative ? `${toneMeta.label} · ${relative}` : toneMeta.label}
         </Text>
       </View>
-      {onSelect ? (
+
+      <View style={styles.floatingActions}>
         <PressableScale
-          onPress={() => onSelect(item)}
-          contentStyle={styles.floatingAction}
-          accessibilityLabel="Lihat detail personel"
+          scaleTo={0.97}
+          onPress={() => openCoordinatesInMaps(item.location.latitude, item.location.longitude)}
+          contentStyle={styles.floatingSecondaryButton}
         >
-          <Icon name="chevron-right" size={18} color={colors.primaryForeground} />
+          <Icon name="map-pin" size={14} color={colors.primary} />
+          <Text style={styles.floatingSecondaryButtonText}>Lokasi</Text>
         </PressableScale>
-      ) : null}
+        {onSelect ? (
+          <PressableScale
+            scaleTo={0.97}
+            onPress={() => onSelect(item)}
+            contentStyle={styles.floatingPrimaryButton}
+          >
+            <Text style={styles.floatingPrimaryButtonText}>Lihat Detail</Text>
+          </PressableScale>
+        ) : null}
+      </View>
     </View>
   );
 }
 
-// Kartu detail personel yang mengambang di atas peta saat sebuah marker di-tap — foto/inisial +
-// nama + jabatan, dan ikon panah untuk membuka detail personel penuh (kalau `onSelect` diisi).
-// Kalau marker yang di-tap adalah kelompok (>1 orang), kartunya jadi bisa digeser (`ScrollView`
-// horizontal ber-paging) antar personel dalam kelompok itu, dengan titik indikator halaman.
+// Carousel kartu detail personel yang mengambang di atas peta saat sebuah marker di-tap — sesuai
+// pola "kartu profil" umum (avatar-nama-subjudul-tombol), kartu-kartu bertetangga sedikit
+// "mengintip" di tepi layar. Kalau marker yang di-tap adalah kelompok (>1 orang), ada satu kartu
+// per personel yang bisa digeser (snap per-kartu) dengan titik indikator halaman; kalau cuma satu
+// personel, cuma satu kartu yang tampil (tidak ada dot).
 function PersonnelFloatingCard(props: {
   clusterKey: string;
   items: LocatedPersonnel[];
   onSelect?: (item: LocatedPersonnel) => void;
   onClose: () => void;
+  containerWidth: number;
 }) {
-  const { clusterKey, items, onSelect, onClose } = props;
+  const { clusterKey, items, onSelect, onClose, containerWidth } = props;
   const [page, setPage] = useState(0);
 
+  const cardWidth = containerWidth > 0
+    ? Math.min(FLOATING_CARD_MAX_WIDTH, containerWidth - FLOATING_CARD_SIDE_MARGIN * 2)
+    : FLOATING_CARD_MAX_WIDTH;
+  const snapInterval = cardWidth + FLOATING_CARD_GAP;
+  const sidePadding = Math.max(16, (containerWidth - cardWidth) / 2);
+
   function handleMomentumEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const next = Math.round(event.nativeEvent.contentOffset.x / FLOATING_CARD_WIDTH);
+    const next = Math.round(event.nativeEvent.contentOffset.x / snapInterval);
     if (next !== page) setPage(next);
   }
 
   return (
-    <View style={styles.floatingWrap}>
-    <View style={styles.floatingShell}>
-      <PressableScale onPress={onClose} contentStyle={styles.floatingClose} accessibilityLabel="Tutup">
+    <View style={styles.floatingWrap} pointerEvents="box-none">
+      <PressableScale onPress={onClose} contentStyle={[styles.floatingClose, { right: sidePadding - 4 }]} accessibilityLabel="Tutup">
         <Icon name="close" size={14} color={colors.textMuted} />
       </PressableScale>
       <ScrollView
         // `key` me-reset scroll ke halaman pertama tiap kali marker yang dipilih berbeda.
         key={clusterKey}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
+        snapToInterval={items.length > 1 ? snapInterval : undefined}
+        decelerationRate="fast"
+        disableIntervalMomentum={items.length > 1}
         onMomentumScrollEnd={handleMomentumEnd}
-        style={styles.floatingScroll}
+        contentContainerStyle={[styles.floatingScrollContent, { paddingHorizontal: sidePadding }]}
       >
-        {items.map(item => (
-          <FloatingCardPage key={item.id} item={item} onSelect={onSelect} />
+        {items.map((item, index) => (
+          <FloatingCardPage
+            key={item.id}
+            item={item}
+            onSelect={onSelect}
+            width={cardWidth}
+            style={index < items.length - 1 ? styles.floatingCardSpacing : undefined}
+          />
         ))}
       </ScrollView>
       {items.length > 1 ? (
@@ -389,7 +431,6 @@ function PersonnelFloatingCard(props: {
           ))}
         </View>
       ) : null}
-    </View>
     </View>
   );
 }
@@ -421,8 +462,14 @@ export default function PersonnelMap(props: PersonnelMapProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selectedCluster = selectedKey ? clusters.find(cluster => cluster.key === selectedKey) ?? null : null;
 
+  // Lebar kontainer — dipakai kartu mengambang supaya kartu bertetangga "mengintip" di tepi layar.
+  const [containerWidth, setContainerWidth] = useState(0);
+  function handleContainerLayout(event: LayoutChangeEvent) {
+    setContainerWidth(event.nativeEvent.layout.width);
+  }
+
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} onLayout={handleContainerLayout}>
       <MapView
         provider={PROVIDER_GOOGLE}
         style={styles.map}
@@ -461,6 +508,7 @@ export default function PersonnelMap(props: PersonnelMapProps) {
           items={selectedCluster.items}
           onSelect={onSelectPersonnel}
           onClose={() => setSelectedKey(null)}
+          containerWidth={containerWidth}
         />
       ) : null}
 
@@ -567,15 +615,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 16,
-    alignItems: 'center',
-  },
-  floatingShell: {
-    width: FLOATING_CARD_WIDTH,
   },
   floatingClose: {
     position: 'absolute',
     top: -10,
-    right: -6,
     zIndex: 1,
     width: 24,
     height: 24,
@@ -586,56 +629,101 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSoft,
   },
-  floatingScroll: {
-    width: FLOATING_CARD_WIDTH,
-    flexGrow: 0,
-    borderRadius: 18,
+  floatingScrollContent: {
+    flexDirection: 'row',
+  },
+  floatingCardSpacing: {
+    marginRight: FLOATING_CARD_GAP,
+  },
+  floatingCard: {
+    alignItems: 'center',
+    borderRadius: 20,
+    padding: 16,
+    paddingTop: 20,
+    gap: 4,
     backgroundColor: colors.floatingSurface,
     ...cardShadowRaised,
   },
-  floatingCard: {
-    width: FLOATING_CARD_WIDTH,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 12,
-  },
   floatingAvatarRing: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 3,
+    marginBottom: 6,
   },
   floatingAvatarPhoto: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: colors.neutralSurface,
   },
   floatingAvatarInitial: {
-    fontSize: 16,
+    fontSize: 26,
     fontWeight: '700',
     color: colors.primaryForeground,
   },
-  floatingBody: {
-    flex: 1,
-    gap: 2,
-  },
   floatingName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.text,
+    textAlign: 'center',
   },
   floatingMeta: {
     fontSize: 12,
     color: colors.textMuted,
+    textAlign: 'center',
   },
-  floatingAction: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  floatingStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  floatingStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  floatingStatusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  floatingActions: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+  },
+  floatingSecondaryButton: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    height: 36,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.primaryTintBorder,
+    backgroundColor: colors.surface,
+  },
+  floatingSecondaryButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  floatingPrimaryButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 36,
+    borderRadius: 999,
     backgroundColor: colors.primary,
+  },
+  floatingPrimaryButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primaryForeground,
   },
   floatingDots: {
     flexDirection: 'row',
