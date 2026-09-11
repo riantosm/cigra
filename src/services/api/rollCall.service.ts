@@ -53,9 +53,30 @@ export async function createRollCallApi(payload: CreateRollCallPayload): Promise
   return data.data;
 }
 
+// Backend mengirim field foto personel sebagai `foto` (dikonfirmasi dari `GET /roll-calls/{id}`);
+// fallback ke `photo`/`photo_path` untuk jaga-jaga kalau endpoint lain memakai nama berbeda.
+function personnelPhoto(raw: any): string | null {
+  return raw?.foto ?? raw?.photo ?? raw?.photo_path ?? null;
+}
+
+function normalizePersonnelRef<T extends { id: number; full_name: string; service_number: string }>(
+  raw: any,
+): T & { photo: string | null } {
+  return { ...raw, photo: personnelPhoto(raw) };
+}
+
+function normalizeRollCallDetail(raw: RollCallDetail): RollCallDetail {
+  return {
+    ...raw,
+    present: raw.present.map(entry => ({ ...entry, personnel: normalizePersonnelRef(entry.personnel) })),
+    absent: raw.absent.map(entry => ({ ...entry, personnel: normalizePersonnelRef(entry.personnel) })),
+    unmarked: raw.unmarked.map(person => normalizePersonnelRef(person)),
+  };
+}
+
 export async function getRollCallDetailApi(sessionId: number | string): Promise<RollCallDetail> {
   const { data } = await axiosInstance.get<ApiResponse<RollCallDetail>>(`/roll-calls/${sessionId}`);
-  return data.data;
+  return normalizeRollCallDetail(data.data);
 }
 
 export async function submitRollCallEntryApi(
@@ -89,5 +110,5 @@ export async function searchRollCallPersonnelApi(q: string): Promise<RollCallPer
     '/roll-calls/personnel/search',
     { params: { q } },
   );
-  return data.data;
+  return (data.data ?? []).map(item => normalizePersonnelRef<RollCallPersonnelSearchItem>(item));
 }

@@ -6,6 +6,7 @@ import Badge from '@/components/atoms/Badge';
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
 import Card from '@/components/molecules/Card';
 import SegmentedControl from '@/components/molecules/SegmentedControl';
 import BottomSheet from '@/components/organisms/BottomSheet';
@@ -16,6 +17,7 @@ import type { RootStackScreenProps } from '@/navigation/types';
 import { closeRollCallApi, getRollCallDetailApi } from '@/services/api/rollCall.service';
 import { colors } from '@/theme/colors';
 import type { RollCallDetail, RollCallEntryStatus } from '@/types';
+import { isDisplayablePhoto } from '@/utils/avatar';
 import { extractErrorMessage } from '@/utils/format';
 import { attendanceColor, rollCallDateLong, rollCallTimeLabel } from '@/utils/rollCall';
 
@@ -27,6 +29,7 @@ type AttendanceTab = 'present' | 'absent' | 'unmarked';
 interface SelectedPerson {
   fullName: string;
   serviceNumber: string;
+  photo?: string | null;
   status: AttendanceTab;
   reasonName?: string | null;
   note?: string | null;
@@ -236,12 +239,14 @@ export default function RollCallDetailScreen(props: Props) {
                     key={entry.id}
                     name={entry.personnel.full_name}
                     serviceNumber={entry.personnel.service_number}
+                    photo={entry.personnel.photo}
                     tone="present"
                     badge={{ label: 'Hadir', variant: 'success' }}
                     onPress={() =>
                       setSelectedPerson({
                         fullName: entry.personnel.full_name,
                         serviceNumber: entry.personnel.service_number,
+                        photo: entry.personnel.photo,
                         status: 'present',
                       })
                     }
@@ -254,6 +259,7 @@ export default function RollCallDetailScreen(props: Props) {
                     key={entry.id}
                     name={entry.personnel.full_name}
                     serviceNumber={entry.personnel.service_number}
+                    photo={entry.personnel.photo}
                     tone="absent"
                     badge={{
                       label: entry.absence_reason?.name ?? entry.note ?? 'Tidak Hadir',
@@ -263,6 +269,7 @@ export default function RollCallDetailScreen(props: Props) {
                       setSelectedPerson({
                         fullName: entry.personnel.full_name,
                         serviceNumber: entry.personnel.service_number,
+                        photo: entry.personnel.photo,
                         status: 'absent',
                         reasonName: entry.absence_reason?.name ?? null,
                         note: entry.note,
@@ -277,12 +284,14 @@ export default function RollCallDetailScreen(props: Props) {
                     key={person.id}
                     name={person.full_name}
                     serviceNumber={person.service_number}
+                    photo={person.photo}
                     tone="unmarked"
                     badge={{ label: 'Belum', variant: 'neutral' }}
                     onPress={() =>
                       setSelectedPerson({
                         fullName: person.full_name,
                         serviceNumber: person.service_number,
+                        photo: person.photo,
                         status: 'unmarked',
                       })
                     }
@@ -323,16 +332,12 @@ export default function RollCallDetailScreen(props: Props) {
         {selectedPerson ? (
           <View style={styles.personSheet}>
             <View style={styles.personSheetHead}>
-              <View
-                style={[
-                  styles.avatar,
-                  styles.personSheetAvatar,
-                  { backgroundColor: AVATAR_TONE[selectedPerson.status][0] },
-                ]}>
-                <Text style={styles.avatarText}>
-                  {(selectedPerson.fullName.charAt(0) || '?').toUpperCase()}
-                </Text>
-              </View>
+              <ToneAvatar
+                photo={selectedPerson.photo}
+                name={selectedPerson.fullName}
+                tone={selectedPerson.status}
+                style={styles.personSheetAvatar}
+              />
               <View style={styles.personSheetIdentity}>
                 <Text style={styles.personSheetName}>{selectedPerson.fullName}</Text>
                 <Text style={styles.personSheetMeta}>NRP {selectedPerson.serviceNumber}</Text>
@@ -428,9 +433,31 @@ const AVATAR_TONE: Record<'present' | 'absent' | 'unmarked', [string, string]> =
   unmarked: [colors.gradientInactiveStart, colors.gradientInactiveEnd],
 };
 
+// Avatar ber-tone status (present/absent/unmarked) — foto asli kalau ada & bisa ditampilkan,
+// jatuh ke inisial ber-tone kalau tidak.
+function ToneAvatar(props: {
+  photo?: string | null;
+  name: string;
+  tone: 'present' | 'absent' | 'unmarked';
+  style?: object;
+}) {
+  const { photo, name, tone, style } = props;
+  const [failed, setFailed] = useState(false);
+
+  if (isDisplayablePhoto(photo) && !failed) {
+    return <SecureImage path={photo ?? null} style={[styles.avatar, styles.avatarImage, style]} onLoadError={() => setFailed(true)} />;
+  }
+  return (
+    <View style={[styles.avatar, { backgroundColor: AVATAR_TONE[tone][0] }, style]}>
+      <Text style={styles.avatarText}>{(name.charAt(0) || '?').toUpperCase()}</Text>
+    </View>
+  );
+}
+
 function EntryRow(props: {
   name: string;
   serviceNumber: string;
+  photo?: string | null;
   tone: 'present' | 'absent' | 'unmarked';
   badge: { label: string; variant: BadgeVariant };
   onPress: () => void;
@@ -438,9 +465,7 @@ function EntryRow(props: {
   return (
     <PressableScale scaleTo={0.98} onPress={props.onPress}>
       <Card style={styles.entryCard}>
-        <View style={[styles.avatar, { backgroundColor: AVATAR_TONE[props.tone][0] }]}>
-          <Text style={styles.avatarText}>{(props.name.charAt(0) || '?').toUpperCase()}</Text>
-        </View>
+        <ToneAvatar photo={props.photo} name={props.name} tone={props.tone} />
         <View style={styles.entryBody}>
           <Text style={styles.entryName} numberOfLines={1}>
             {props.name}
@@ -555,6 +580,7 @@ const styles = StyleSheet.create({
   entryMeta: { fontSize: 12, color: colors.textMuted },
   entryEmpty: { fontSize: 13, color: colors.textMuted, textAlign: 'center', paddingVertical: 20 },
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  avatarImage: { backgroundColor: colors.neutralSurface },
   avatarText: { fontSize: 16, fontWeight: '700', color: colors.primaryForeground },
   personSheet: { paddingBottom: 12, gap: 16 },
   personSheetHead: { flexDirection: 'row', alignItems: 'center', gap: 14 },

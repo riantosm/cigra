@@ -61,6 +61,7 @@ export interface RollCallPersonnelRef {
   id: number;
   full_name: string;
   service_number: string;
+  photo?: string | null;
 }
 
 export interface RollCallPresentEntry {
@@ -85,6 +86,7 @@ export interface RollCallUnmarkedPersonnel {
   id: number;
   full_name: string;
   service_number: string;
+  photo?: string | null;
 }
 
 export interface RollCallDetail {
@@ -121,6 +123,7 @@ export interface RollCallPersonnelSearchItem {
   id: number;
   full_name: string;
   service_number: string;
+  photo?: string | null;
 }
 
 // Hasil POST /roll-calls/{session}/close.

@@ -1865,8 +1865,9 @@ Catatan: `date` disimpan sebagai **datetime ISO UTC** (`…T17:00:00.000000Z` = 
   `absence_reason_id`, `note`, `input_by_user_id`, `+ personnel`). `unmarked[]` = objek Personnel
   langsung (`id` = personnel_id), bukan objek entry.
 - `personnel` di present/absent/unmarked adalah **objek Personnel lengkap** (`rank_id`, `rank` object,
-  `current_assignment`, `photo_path`, `foto`, `birth_date`, dst.) — FE hanya membaca `full_name` +
-  `service_number`.
+  `current_assignment`, `photo_path`, `foto`, `birth_date`, dst.) — FE membaca `full_name`,
+  `service_number`, dan sejak 2026-09-11 juga `foto` (avatar asli di `RollCallDetail`/`RollCallSearch`/
+  `RollCallEntry`, fallback ke `photo`/`photo_path` kalau `foto` tidak ada).
 - `absent[].absence_reason` = objek reason lengkap (`id`, `name`, `description`, `sort_order`, …) — FE
   membaca `name`. `breakdown[]` = `{ name, count }` per keterangan absen.
 
@@ -2014,7 +2015,7 @@ Catatan: (FE cuma pakai `id`, `name`, `description`). 8 keterangan: Izin, Sakit,
 }
 ```
 
-Catatan: backend kirim objek Personnel penuh; FE hanya baca `id` (dipakai sebagai `personnel_id`), `full_name`, `service_number`.
+Catatan: backend kirim objek Personnel penuh; FE baca `id` (dipakai sebagai `personnel_id`), `full_name`, `service_number`, dan sejak 2026-09-11 juga `foto` (dipakai `RollCallScan` untuk teruskan avatar ke `RollCallEntry`).
 
 ## 9. Buku Saku (E-Book)
 

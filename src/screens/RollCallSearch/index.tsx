@@ -6,6 +6,7 @@ import Badge from '@/components/atoms/Badge';
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
 import SearchFilterBar from '@/components/molecules/SearchFilterBar';
 import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
@@ -16,6 +17,7 @@ import { getRollCallDetailApi, submitRollCallEntryApi } from '@/services/api/rol
 import { colors } from '@/theme/colors';
 import { cardShadow, smallButtonShadow } from '@/theme/shadows';
 import type { RollCallDetail } from '@/types';
+import { isDisplayablePhoto } from '@/utils/avatar';
 import { extractErrorMessage } from '@/utils/format';
 import { entryStatusLabel } from '@/utils/rollCall';
 
@@ -27,6 +29,7 @@ interface RosterItem {
   personnelId: number;
   fullName: string;
   serviceNumber: string;
+  photo: string | null;
   status: RosterStatus;
 }
 
@@ -45,18 +48,21 @@ function buildRoster(detail: RollCallDetail): RosterItem[] {
       personnelId: e.personnel_id,
       fullName: e.personnel.full_name,
       serviceNumber: e.personnel.service_number,
+      photo: e.personnel.photo ?? null,
       status: 'present' as RosterStatus,
     })),
     ...detail.absent.map(e => ({
       personnelId: e.personnel_id,
       fullName: e.personnel.full_name,
       serviceNumber: e.personnel.service_number,
+      photo: e.personnel.photo ?? null,
       status: 'absent' as RosterStatus,
     })),
     ...detail.unmarked.map(p => ({
       personnelId: p.id,
       fullName: p.full_name,
       serviceNumber: p.service_number,
+      photo: p.photo ?? null,
       status: 'unmarked' as RosterStatus,
     })),
   ];
@@ -116,6 +122,7 @@ export default function RollCallSearchScreen(props: Props) {
         sessionId,
         personnelId: item.personnelId,
         personnelName: item.fullName,
+        personnelPhoto: item.photo,
         serviceNumber: item.serviceNumber,
         status: 'absent',
       });
@@ -186,17 +193,7 @@ export default function RollCallSearchScreen(props: Props) {
                   disabled={saving || done}
                   onPress={() => handleSelect(item)}
                   contentStyle={[styles.row, done && styles.rowDone]}>
-                  <View
-                    style={[
-                      styles.avatar,
-                      item.status === 'present' && styles.avatarPresent,
-                      item.status === 'absent' && styles.avatarAbsent,
-                      item.status === 'unmarked' && styles.avatarUnmarked,
-                    ]}>
-                    <Text style={styles.avatarText}>
-                      {(item.fullName.charAt(0) || '?').toUpperCase()}
-                    </Text>
-                  </View>
+                  <RosterAvatar photo={item.photo} name={item.fullName} status={item.status} />
                   <View style={styles.rowBody}>
                     <Text style={styles.rowName} numberOfLines={1}>
                       {item.fullName}
@@ -241,6 +238,28 @@ export default function RollCallSearchScreen(props: Props) {
   );
 }
 
+// Avatar berwarna sesuai status kehadiran (present/absent/unmarked) — pakai foto asli kalau ada,
+// jatuh ke inisial ber-tone status kalau tidak (sama seperti pola tone di RollCallDetail).
+function RosterAvatar(props: { photo: string | null; name: string; status: RosterStatus }) {
+  const { photo, name, status } = props;
+  const [failed, setFailed] = useState(false);
+
+  if (isDisplayablePhoto(photo) && !failed) {
+    return <SecureImage path={photo} style={styles.avatarImage} onLoadError={() => setFailed(true)} />;
+  }
+  return (
+    <View
+      style={[
+        styles.avatar,
+        status === 'present' && styles.avatarPresent,
+        status === 'absent' && styles.avatarAbsent,
+        status === 'unmarked' && styles.avatarUnmarked,
+      ]}>
+      <Text style={styles.avatarText}>{(name.charAt(0) || '?').toUpperCase()}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   headerAction: {
     width: 40,
@@ -279,6 +298,7 @@ const styles = StyleSheet.create({
   avatarAbsent: { backgroundColor: colors.warning },
   avatarUnmarked: { backgroundColor: colors.placeholder },
   avatarText: { fontSize: 15, fontWeight: '700', color: colors.primaryForeground },
+  avatarImage: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.neutralSurface },
   rowBody: { flex: 1, gap: 2 },
   rowName: { fontSize: 14, fontWeight: '700', color: colors.heading },
   rowMeta: { fontSize: 12, color: colors.textMuted },

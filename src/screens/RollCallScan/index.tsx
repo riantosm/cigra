@@ -116,6 +116,7 @@ export default function RollCallScanScreen(props: Props) {
             sessionId,
             personnelId: person.id,
             personnelName: person.full_name,
+            personnelPhoto: person.photo,
             serviceNumber: person.service_number,
             status: 'absent',
           });

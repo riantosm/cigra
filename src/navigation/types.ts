@@ -100,6 +100,7 @@ export type RootStackParamList = {
     sessionId: number;
     personnelId: number;
     personnelName: string;
+    personnelPhoto?: string | null;
     serviceNumber?: string;
     status: RollCallEntryStatus;
   };

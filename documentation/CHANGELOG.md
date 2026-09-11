@@ -41,6 +41,9 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   inisial) memakai foto dari API.
 - Disposisi Surat: daftar hasil pencarian penerima (Cari & Pilih) menampilkan foto asli anggota
   dari `GET /personnel/search`, bukan cuma inisial.
+- Kekuatan Apel: daftar Hadir/Absen/Belum, sheet detail personel, pencarian personel, scan QR, dan
+  form keterangan absen menampilkan foto asli anggota (dari `GET /roll-calls/{session}` &
+  `GET /roll-calls/personnel/search`), bukan cuma inisial.
 
 ## v0.7.0 (versionCode 7)
 

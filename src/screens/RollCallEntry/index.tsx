@@ -5,6 +5,7 @@ import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import TextField from '@/components/atoms/TextField';
+import PersonAvatar from '@/components/molecules/PersonAvatar';
 import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
@@ -25,7 +26,7 @@ function isOtherReason(reason: AbsenceReason): boolean {
 
 export default function RollCallEntryScreen(props: Props) {
   const { navigation, route } = props;
-  const { sessionId, personnelId, personnelName, serviceNumber } = route.params;
+  const { sessionId, personnelId, personnelName, personnelPhoto, serviceNumber } = route.params;
   const keyboardHeight = useKeyboardHeight();
 
   const [status, setStatus] = useState<RollCallEntryStatus>(route.params.status);
@@ -122,9 +123,7 @@ export default function RollCallEntryScreen(props: Props) {
             keyboardDismissMode="interactive"
             showsVerticalScrollIndicator={false}>
             <View style={styles.identityCard}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{(personnelName.charAt(0) || '?').toUpperCase()}</Text>
-              </View>
+              <PersonAvatar photo={personnelPhoto} name={personnelName} size={48} />
               <View style={styles.identityBody}>
                 <Text style={styles.identityName} numberOfLines={1}>
                   {personnelName}
@@ -260,15 +259,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     ...smallButtonShadow,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  avatarText: { fontSize: 18, fontWeight: '700', color: colors.primaryForeground },
   identityBody: { flex: 1, gap: 2 },
   identityName: { fontSize: 16, fontWeight: '700', color: colors.heading },
   identityMeta: { fontSize: 12, color: colors.textMuted },
