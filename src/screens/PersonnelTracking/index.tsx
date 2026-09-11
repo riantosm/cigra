@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 import GradientAvatar from '@/components/atoms/GradientAvatar';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
 import Card from '@/components/molecules/Card';
 import LocationStatusBadge, { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
 import SearchFilterBar from '@/components/molecules/SearchFilterBar';
@@ -14,14 +16,45 @@ import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { colors } from '@/theme/colors';
+import { smallButtonShadow } from '@/theme/shadows';
 import type { LocationStatus, PersonnelLocationOverviewItem } from '@/types';
+import { isDisplayablePhoto } from '@/utils/avatar';
 import { extractErrorMessage, joinFields } from '@/utils/format';
+import { navigateOrBack } from '@/utils/navigation';
 
 const statusAvatarGradient: Record<LocationStatus, [string, string]> = {
   fresh: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
   stale: [colors.gradientWarnStart, colors.warning],
   offline: [colors.gradientInactiveStart, colors.gradientInactiveEnd],
 };
+
+// Avatar baris daftar (44px) — foto asli (`SecureImage`) kalau ada & bisa ditampilkan, jatuh ke
+// inisial ber-gradient sesuai status lokasi kalau tidak (juga kalau fotonya gagal dimuat). Dibuat
+// lokal (bukan pakai `PersonAvatar` biasa) karena warna fallback-nya perlu ikut status
+// (fresh/stale/offline), bukan gradient primary tetap.
+function TrackingAvatar(props: { item: PersonnelLocationOverviewItem }) {
+  const { item } = props;
+  const [failed, setFailed] = useState(false);
+  const showPhoto = isDisplayablePhoto(item.photo) && !failed;
+  const [gradientStart, gradientEnd] = statusAvatarGradient[item.status];
+
+  if (showPhoto) {
+    return <SecureImage path={item.photo} style={avatarPhotoStyle} onLoadError={() => setFailed(true)} />;
+  }
+
+  return (
+    <GradientAvatar
+      label={item.full_name.charAt(0).toUpperCase()}
+      gradientStart={gradientStart}
+      gradientEnd={gradientEnd}
+      size={44}
+    />
+  );
+}
+
+const avatarPhotoStyle = StyleSheet.create({
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.neutralSurface },
+}).avatar;
 
 type Props = RootStackScreenProps<typeof ROUTES.personnelTracking>;
 
@@ -74,15 +107,19 @@ export default function PersonnelTrackingScreen(props: Props) {
   const activeFilterCount = Object.keys(filters).length;
 
   const load = useCallback(
-    async (mode: 'initial' | 'refresh') => {
+    async (mode: 'initial' | 'refresh' | 'silent') => {
       if (mode === 'initial') setIsLoading(true);
       if (mode === 'refresh') setIsRefreshing(true);
-      setErrorMessage(null);
+      if (mode !== 'silent') setErrorMessage(null);
       try {
         setItems(await fetchAllOverview(statusFilter));
       } catch (error) {
-        setErrorMessage(extractErrorMessage(error, 'Gagal memuat data lokasi personel.'));
-        setItems([]);
+        // Polling diam-diam (`silent`) tidak boleh mengganti daftar yang sudah tampil jadi
+        // pesan error / kosong — biarkan data lama tetap kelihatan, coba lagi menit berikutnya.
+        if (mode !== 'silent') {
+          setErrorMessage(extractErrorMessage(error, 'Gagal memuat data lokasi personel.'));
+          setItems([]);
+        }
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -94,6 +131,16 @@ export default function PersonnelTrackingScreen(props: Props) {
   useEffect(() => {
     load('initial');
   }, [load]);
+
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    // Polling posisi tiap menit selagi layar ini aktif — sama seperti tab "Lokasi" di detail
+    // personel/persit (`usePersonnelLocation`). Dijeda saat layar tidak fokus (mis. sedang di
+    // detail personel) supaya tidak boros request untuk layar yang tidak terlihat.
+    if (!isFocused) return undefined;
+    const intervalId = setInterval(() => load('silent'), 60_000);
+    return () => clearInterval(intervalId);
+  }, [isFocused, load]);
 
   const visibleItems = useMemo(() => {
     const query = searchInput.trim().toLowerCase();
@@ -127,7 +174,17 @@ export default function PersonnelTrackingScreen(props: Props) {
       title="Lokasi Personel"
       subtitle="Lacak posisi seluruh personel"
       variant="canvas"
-      onBack={() => navigation.goBack()}>
+      onBack={() => navigation.goBack()}
+      right={
+        <PressableScale
+          onPress={() => navigateOrBack(navigation, ROUTES.personnelMap)}
+          hitSlop={12}
+          contentStyle={styles.headerAction}
+          accessibilityRole="button"
+          accessibilityLabel="Lihat Peta Personel">
+          <Icon name="map-pin" size={20} color={colors.primary} />
+        </PressableScale>
+      }>
       <View style={styles.container}>
         <SearchFilterBar
           value={searchInput}
@@ -166,12 +223,7 @@ export default function PersonnelTrackingScreen(props: Props) {
               <PressableScale scaleTo={0.98} onPress={() => openDetail(item)}>
                 <Card style={styles.row}>
                   <View style={styles.rowTop}>
-                    <GradientAvatar
-                      label={item.full_name.charAt(0).toUpperCase()}
-                      gradientStart={statusAvatarGradient[item.status][0]}
-                      gradientEnd={statusAvatarGradient[item.status][1]}
-                      size={44}
-                    />
+                    <TrackingAvatar item={item} />
                     <View style={styles.rowIdentity}>
                       <Text style={styles.name} numberOfLines={1}>
                         {item.full_name}
@@ -218,6 +270,15 @@ export default function PersonnelTrackingScreen(props: Props) {
 }
 
 const styles = StyleSheet.create({
+  headerAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...smallButtonShadow,
+  },
   container: {
     flex: 1,
     paddingTop: 4,

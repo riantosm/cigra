@@ -259,6 +259,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v0.8.0 (versionCode 8)
+
+_11 September 2026_
+
 ### Baru
 
 - Profile: layar Edit Profil baru (ikon pensil di header) dengan 3 form terpisah — ganti foto
@@ -271,11 +275,18 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   (bukan cuma inisial).
 - Kekuatan Apel: daftar Hadir/Absen/Belum, pencarian personel, scan QR, dan form absen menampilkan
   foto asli anggota, bukan cuma inisial.
-- Peta Personel & tab Lokasi: marker memakai foto asli personel (jatuh ke inisial kalau tidak
-  ada/gagal dimuat). Marker berdekatan otomatis digabung jadi grid foto (maks. 4, sisanya badge
-  "+N"), terpisah lagi begitu di-zoom. Tap marker menyoroti & membuka carousel kartu profil
-  (avatar, nama, jabatan, status, tombol Lokasi/Lihat Detail) — satu kartu per personel kalau
-  markernya gabungan. Legenda status dipindah ke pojok kanan atas.
+- Peta Personel & Lokasi Personel: marker & daftar memakai foto asli personel (jatuh ke inisial
+  kalau tidak ada/gagal dimuat). Marker berdekatan otomatis digabung jadi grid foto (maks. 4,
+  sisanya badge "+N"), terpisah lagi begitu di-zoom. Tap marker menyoroti & membuka carousel kartu
+  profil (avatar, nama, jabatan, status hidup berjalan, tombol Lokasi/Lihat Detail) — satu kartu
+  per personel kalau markernya gabungan. Kedua halaman saling terhubung lewat ikon di header, dan
+  keduanya polling posisi otomatis tiap menit selagi dibuka.
+
+### Perbaikan
+
+- Peta Personel: marker foto personel kadang tampil kosong walau fotonya valid (balapan snapshot
+  peta Android saat foto baru selesai dimuat, dan bitmap yang kadung salah tidak diminta ulang
+  saat peta digeser/di-zoom) — sekarang selalu tersinkron dengan tampilan terkini.
 
 ## v0.7.0 (versionCode 7)
 
@@ -449,7 +460,7 @@ _27 – 30 Agustus 2026_
 - Gap pada bottom tab bar; timing spinner pull-to-refresh di Home.
 </script>
 <script>
-  var APK_NAME = "SmartBattalion-v0.7.0(7)-release.apk";
+  var APK_NAME = "SmartBattalion-v0.8.0(8)-release.apk";
 
   // ---------- theme toggle (default terang, sinkron dgn viewer API Contract) ----------
   (function () {

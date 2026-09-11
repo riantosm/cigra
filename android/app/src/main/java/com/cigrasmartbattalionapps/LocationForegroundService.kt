@@ -240,7 +240,7 @@ class LocationForegroundService : Service() {
       if (location.hasAltitude()) put("altitude", location.altitude)
       if (location.hasBearing()) put("heading", location.bearing.toDouble())
       if (location.hasSpeed()) put("speed", location.speed.toDouble())
-      put("source", "mobile")
+      put("source", "mobile-v${BuildConfig.VERSION_NAME}")
     }
 
     val url = URL(BuildConfig.API_BASE_URL + "/locations")

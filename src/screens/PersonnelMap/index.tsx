@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
+import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
 import PersonnelMap from '@/components/organisms/PersonnelMap';
 import MainLayout from '@/components/templates/MainLayout';
@@ -8,8 +11,9 @@ import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { colors } from '@/theme/colors';
-import { cardShadowRaised } from '@/theme/shadows';
+import { cardShadowRaised, smallButtonShadow } from '@/theme/shadows';
 import { extractErrorMessage } from '@/utils/format';
+import { navigateOrBack } from '@/utils/navigation';
 import type { LocationStatus, PersonnelLocationOverviewItem } from '@/types';
 
 type Props = RootStackScreenProps<'PersonnelMap'>;
@@ -22,24 +26,38 @@ export default function PersonnelMapScreen(props: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
+  const load = useCallback(async (mode: 'initial' | 'silent' = 'initial') => {
+    if (mode === 'initial') {
+      setIsLoading(true);
+      setErrorMessage(null);
+    }
     try {
       // per_page besar — daftar ini dipakai buat nampilin semua marker di peta sekaligus, bukan
       // list berpaginasi, jadi tidak ada UI "muat lagi" untuk halaman selanjutnya.
       const result = await getLocationsOverviewApi({ per_page: 50 });
       setPersonnel(result.items);
     } catch (error) {
-      setErrorMessage(extractErrorMessage(error, 'Gagal memuat data lokasi personel.'));
+      // Polling diam-diam (`silent`) tidak boleh mengganti peta yang sudah tampil jadi pesan
+      // error — biarkan marker lama tetap kelihatan, coba lagi menit berikutnya.
+      if (mode === 'initial') setErrorMessage(extractErrorMessage(error, 'Gagal memuat data lokasi personel.'));
     } finally {
-      setIsLoading(false);
+      if (mode === 'initial') setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    load();
+    load('initial');
   }, [load]);
+
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    // Polling posisi tiap menit selagi layar ini aktif — sama seperti tab "Lokasi" di detail
+    // personel/persit (`usePersonnelLocation`) & layar Lokasi Personel. Dijeda saat layar tidak
+    // fokus (mis. sedang di detail personel) supaya tidak boros request untuk layar tidak terlihat.
+    if (!isFocused) return undefined;
+    const intervalId = setInterval(() => load('silent'), 60_000);
+    return () => clearInterval(intervalId);
+  }, [isFocused, load]);
 
   const counts = useMemo(() => {
     const base: Record<LocationStatus, number> = { fresh: 0, stale: 0, offline: 0 };
@@ -52,7 +70,17 @@ export default function PersonnelMapScreen(props: Props) {
       title="Peta Personel"
       subtitle="Posisi real-time seluruh personel"
       variant="canvas"
-      onBack={() => navigation.goBack()}>
+      onBack={() => navigation.goBack()}
+      right={
+        <PressableScale
+          onPress={() => navigateOrBack(navigation, ROUTES.personnelTracking)}
+          hitSlop={12}
+          contentStyle={styles.headerAction}
+          accessibilityRole="button"
+          accessibilityLabel="Lihat daftar Lokasi Personel">
+          <Icon name="users" size={20} color={colors.primary} />
+        </PressableScale>
+      }>
       <View style={styles.container}>
         {isLoading ? (
           <ActivityIndicator style={styles.centerState} color={colors.primary} />
@@ -85,6 +113,15 @@ export default function PersonnelMapScreen(props: Props) {
 }
 
 const styles = StyleSheet.create({
+  headerAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...smallButtonShadow,
+  },
   container: {
     flex: 1,
   },

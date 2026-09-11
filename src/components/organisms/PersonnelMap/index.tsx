@@ -1,19 +1,69 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type {
+  ImageStyle,
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import SecureImage from '@/components/atoms/SecureImage';
-import { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
+import LocationStatusBadge, { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
+import { getAuthToken } from '@/services/api/axiosInstance';
+import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
-import { cardShadowRaised } from '@/theme/shadows';
+import { cardShadowRaised, smallButtonShadow } from '@/theme/shadows';
 import type { PersonnelLocationOverviewItem } from '@/types';
-import { isDisplayablePhoto } from '@/utils/avatar';
-import { formatRelativeTime, joinFields } from '@/utils/format';
+import { isDisplayablePhoto, isProtectedApiUrl, resolveSecureFileUrl } from '@/utils/avatar';
+import { joinFields } from '@/utils/format';
 import { openCoordinatesInMaps } from '@/utils/location';
+
+// `SecureImage` (dasarnya `react-native-fast-image`) ternyata tidak bisa diandalkan khusus untuk
+// marker peta ini — logcat device menunjukkan `react-native-fast-image` melempar "Unhandled
+// SoftException: getJSModule(RCTEventEmitter)..." di bawah New Architecture (`newArchEnabled=true`
+// di proyek ini), dan efeknya bukan cuma event `onLoad` yang tak sampai ke JS: Glide-nya sendiri
+// sukses (`onResourceReady`), tapi gambarnya tidak pernah benar-benar ter-commit ke View native —
+// hasilnya lingkaran kosong meski fotonya valid. `<Image>` inti RN teruji penuh di Fabric/New
+// Architecture, jadi dipakai di sini sebagai pengganti — logika resolve URL + header auth-nya sama
+// seperti `SecureImage`, cuma library gambarnya beda.
+function MarkerImage(props: {
+  path: string | null | undefined;
+  style: StyleProp<ImageStyle>;
+  onLoad?: () => void;
+  onError?: () => void;
+}) {
+  const { path, style, onLoad, onError } = props;
+  const persistedToken = useAppSelector(state => state.auth.token);
+  const [token, setToken] = useState<string | null>(persistedToken);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAuthToken().then(value => {
+      if (!cancelled && value) setToken(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [path]);
+
+  const uri = resolveSecureFileUrl(path);
+  if (!uri) return null;
+  const withAuth = Boolean(token) && isProtectedApiUrl(uri);
+
+  return (
+    <Image
+      style={style}
+      source={{ uri, ...(withAuth ? { headers: { Authorization: `Bearer ${token}` } } : null) }}
+      onLoad={onLoad}
+      onError={onError}
+    />
+  );
+}
 
 export interface PersonnelMapProps {
   personnel: PersonnelLocationOverviewItem[];
@@ -100,110 +150,55 @@ function clusterPersonnel(points: LocatedPersonnel[], latitudeDelta: number): Ma
       existing.longitude = (existing.longitude * count + lng) / (count + 1);
       existing.items.push(item);
     } else {
-      clusters.push({ key: `cluster-${item.id}`, latitude: lat, longitude: lng, items: [item] });
+      // `key` sementara — dihitung ulang di bawah supaya stabil (lihat catatan).
+      clusters.push({ key: '', latitude: lat, longitude: lng, items: [item] });
     }
+  });
+
+  // `key` dibangun dari SEMUA id anggota (diurutkan), bukan cuma id item pertama yang kebetulan
+  // memulai kelompok itu saat iterasi — kalau dipakai id item pertama, key bisa "goyang" antar
+  // recompute (mis. gara-gara radius berubah sedikit karena floating-point saat pan/zoom) padahal
+  // anggota kelompoknya sama persis, bikin React meng-unmount lalu me-remount ulang marker-nya dan
+  // membatalkan state loading foto yang sedang berjalan (marker yang tadinya sudah menampilkan
+  // foto tiba-tiba balik kosong lagi). Key yang stabil berarti marker yang sama TETAP sama
+  // komponennya selama anggotanya tidak berubah, apa pun urutan iterasi internalnya.
+  clusters.forEach(cluster => {
+    cluster.key = `cluster-${cluster.items.map(item => item.id).sort((a, b) => a - b).join('-')}`;
   });
 
   return clusters;
 }
 
-// `react-native-fast-image` (dasar `SecureImage`) kadang tidak berhasil mengirim event
-// `onLoad`/`onError` ke JS di bawah New Architecture/bridgeless (`newArchEnabled=true` —
-// terlihat sebagai "Unhandled SoftException: getJSModule(RCTEventEmitter)..." di logcat, gambar
-// aslinya tetap termuat di layer native tapi JS tidak pernah diberi tahu). Failsafe timeout ini
-// memastikan `tracksViewChanges` tetap berhenti walau event itu tak pernah sampai.
-const PHOTO_LOAD_FAILSAFE_MS = 4000;
-
-// Satu marker personel — foto asli (`SecureImage`) kalau ada & bisa ditampilkan, jatuh ke inisial
-// ber-tone status kalau tidak (juga kalau fotonya gagal dimuat). Tap membuka kartu detail
-// mengambang di komponen induk (bukan `Callout` bawaan react-native-maps) — `selected` menyorot
-// marker ini dengan warna berbeda selama kartunya terbuka. `tracksViewChanges` aktif hanya sampai
-// konten selesai tergambar (foto termuat / gagal, atau langsung untuk fallback inisial) lalu
-// dimatikan — react-native-maps menggambar ulang marker custom tiap frame selama flag ini aktif,
-// mahal kalau dibiarkan terus.
-function SinglePersonnelMarker(props: { item: LocatedPersonnel; selected: boolean; onPress: () => void }) {
-  const { item, selected, onPress } = props;
-  const hasPhoto = isDisplayablePhoto(item.photo);
-  const [ready, setReady] = useState(!hasPhoto);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (!hasPhoto || ready) return;
-    const timer = setTimeout(() => setReady(true), PHOTO_LOAD_FAILSAFE_MS);
-    return () => clearTimeout(timer);
-  }, [hasPhoto, ready]);
-
-  const showPhoto = hasPhoto && !failed;
-  const ringColor = selected ? colors.primary : locationStatusMeta[item.status].color;
-
-  return (
-    <Marker
-      coordinate={{ latitude: item.location.latitude, longitude: item.location.longitude }}
-      onPress={onPress}
-      tracksViewChanges={!ready}
-    >
-      <View style={[styles.markerRing, styles.singleRing, selected && styles.markerRingSelected, { borderColor: ringColor }]}>
-        {showPhoto ? (
-          <SecureImage
-            path={item.photo}
-            style={styles.singlePhoto}
-            onLoad={() => setReady(true)}
-            onLoadError={() => {
-              setFailed(true);
-              setReady(true);
-            }}
-          />
-        ) : (
-          <View style={[styles.markerFallback, styles.singlePhoto, { backgroundColor: ringColor }]}>
-            <Text style={styles.markerInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
-          </View>
-        )}
-      </View>
-    </Marker>
-  );
-}
-
-// Satu sel foto di dalam grid kelompok — foto asli kalau ada & bisa ditampilkan, jatuh ke inisial
-// ber-tone status kalau tidak (juga kalau fotonya gagal dimuat). `onDone` hanya dipanggil untuk
-// sel yang benar-benar mencoba memuat foto (lihat `photosToLoad` di `ClusterMarker`), dan hanya
-// sekali per sel (`firedRef`) supaya event yang telat + failsafe timeout tidak dobel hitung.
-function ClusterCell(props: { item: LocatedPersonnel; onDone: () => void }) {
-  const { item, onDone } = props;
+// Satu sel foto — foto asli (`MarkerImage`) kalau ada & bisa ditampilkan, jatuh ke inisial
+// ber-tone status kalau tidak (juga kalau fotonya gagal/tak kunjung dimuat). Dipakai untuk marker
+// satu orang (`size` besar) MAUPUN satu sel di grid kelompok (`size` kecil) — komponennya sengaja
+// sama persis untuk keduanya.
+//
+// `PersonnelGroupMarker` (Marker pembungkusnya) sengaja SELALU `tracksViewChanges={true}` — pernah
+// dicoba dimatikan begitu semua foto termuat (demi performa, react-native-maps men-snapshot marker
+// custom jadi bitmap statis selama flag ini aktif), tapi ternyata rawan balapan dengan Android:
+// bitmap yang sempat "dibekukan" bisa jadi masih dari sebelum foto benar-benar tergambar (marker
+// kelihatan kosong walau foto yang sama sukses tampil di kartu mengambang yang bukan snapshot),
+// dan re-cluster akibat pan/zoom bisa memicu Google Maps meng-invalidasi bitmap yang sudah benar
+// itu lalu tidak pernah memintanya ulang. Untuk jumlah marker di app ini (maks. puluhan), biaya
+// snapshot terus-menerus jauh lebih murah daripada risiko marker kosong permanen.
+function PhotoCell(props: { item: LocatedPersonnel; size: number; borderWidth: number; ringColor: string }) {
+  const { item, size, borderWidth, ringColor } = props;
   const hasPhoto = isDisplayablePhoto(item.photo);
   const [failed, setFailed] = useState(false);
-  const firedRef = useRef(false);
-  const toneColor = locationStatusMeta[item.status].color;
-
-  function fireOnce() {
-    if (firedRef.current) return;
-    firedRef.current = true;
-    onDone();
-  }
-
-  useEffect(() => {
-    if (!hasPhoto) return;
-    const timer = setTimeout(fireOnce, PHOTO_LOAD_FAILSAFE_MS);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasPhoto]);
+  const sizeStyle = { width: size, height: size, borderRadius: size / 2 };
 
   const showPhoto = hasPhoto && !failed;
 
   return (
-    <View style={[styles.clusterCellRing, { borderColor: toneColor }]}>
+    <View style={[styles.markerRing, sizeStyle, { borderWidth, borderColor: ringColor }]}>
       {showPhoto ? (
-        <SecureImage
-          path={item.photo}
-          style={styles.clusterCellPhoto}
-          onLoad={fireOnce}
-          onLoadError={() => {
-            setFailed(true);
-            fireOnce();
-          }}
-        />
+        <MarkerImage path={item.photo} style={sizeStyle} onError={() => setFailed(true)} />
       ) : (
-        <View style={[styles.markerFallback, styles.clusterCellPhoto, { backgroundColor: toneColor }]}>
-          <Text style={styles.clusterCellInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
+        <View style={[styles.markerFallback, sizeStyle, { backgroundColor: ringColor }]}>
+          <Text style={[styles.markerInitial, size < 30 && styles.clusterCellInitial]}>
+            {(item.full_name.charAt(0) || '?').toUpperCase()}
+          </Text>
         </View>
       )}
     </View>
@@ -219,78 +214,87 @@ function ClusterCountCell(props: { count: number }) {
   );
 }
 
-type ClusterGridLayout = 'pair' | 'triangle' | 'grid4' | 'gridPlus';
+type ClusterGridLayout = 'single' | 'pair' | 'triangle' | 'grid4' | 'gridPlus';
 
 function clusterGridLayout(count: number): ClusterGridLayout {
-  if (count <= 2) return 'pair';
+  if (count <= 1) return 'single';
+  if (count === 2) return 'pair';
   if (count === 3) return 'triangle';
   if (count === 4) return 'grid4';
   return 'gridPlus';
 }
 
-// Gabungan beberapa personel yang berdekatan pada zoom saat ini — ditampilkan sebagai grid foto
-// (maks. 4 sel): 2 orang → sejajar kiri-kanan, 3 orang → 2 atas + 1 bawah, 4 orang → grid penuh
-// 2x2, ≥5 orang → 2 atas + 1 bawah-kiri + sel terakhir "+sisa". Tap membuka kartu mengambang
-// (bisa digeser antar personel dalam kelompok ini) di komponen induk, sama seperti marker
-// tunggal. Kelompok ini otomatis terpisah lagi jadi marker individual begitu region cukup
-// renggang lewat `onRegionChangeComplete` di komponen induk (kalau titiknya benar-benar sama,
-// biarkan tetap bersatu — tidak perlu dipaksa terpisah).
-function ClusterMarker(props: { cluster: MarkerCluster; selected: boolean; onPress: () => void }) {
+// Satu marker personel di peta — ditampilkan sebagai grid foto (maks. 4 sel), sama untuk semua
+// ukuran kelompok termasuk 1 orang: 1 orang → satu sel saja, 2 orang → sejajar kiri-kanan, 3 orang
+// → 2 atas + 1 bawah, 4 orang → grid penuh 2x2, ≥5 orang → 2 atas + 1 bawah-kiri + sel terakhir
+// "+sisa". Tap membuka kartu detail mengambang di komponen induk (bisa digeser antar personel
+// kalau kelompoknya >1 orang) — `selected` menyorot marker ini selama kartunya terbuka. Kelompok
+// otomatis terpisah lagi jadi marker individual begitu region cukup renggang lewat
+// `onRegionChangeComplete` di komponen induk (kalau titiknya benar-benar sama, biarkan tetap
+// bersatu — tidak perlu dipaksa terpisah). Lihat catatan `tracksViewChanges` di `PhotoCell` untuk
+// kenapa marker ini selalu di-snapshot ulang, tidak dioptimalkan mati setelah foto termuat.
+function PersonnelGroupMarker(props: { cluster: MarkerCluster; selected: boolean; onPress: () => void }) {
   const { cluster, selected, onPress } = props;
   const items = cluster.items;
   const layout = clusterGridLayout(items.length);
   const shown = layout === 'gridPlus' ? items.slice(0, 3) : items.slice(0, 4);
   const remaining = items.length - shown.length;
 
-  const photosToLoad = useMemo(() => shown.filter(item => isDisplayablePhoto(item.photo)).length, [shown]);
-  const [loadedCount, setLoadedCount] = useState(0);
-  const handleCellDone = () => setLoadedCount(c => c + 1);
-  const ready = loadedCount >= photosToLoad;
-
   return (
     <Marker
       coordinate={{ latitude: cluster.latitude, longitude: cluster.longitude }}
-      onPress={onPress}
-      tracksViewChanges={!ready}
+      onPress={event => {
+        // Android react-native-maps kadang meneruskan tap marker ke `onPress` MapView juga —
+        // tanpa ini, tap marker langsung ke-override jadi "tap area kosong" (`setSelectedKey(null)`
+        // di komponen induk) di render yang sama, jadi kartu tidak pernah kelihatan muncul.
+        event.stopPropagation();
+        onPress();
+      }}
+      tracksViewChanges
     >
       <View style={[styles.clusterGrid, selected && styles.clusterGridSelected]}>
+        {layout === 'single' ? (
+          <View style={styles.clusterRow}>
+            <PhotoCell item={shown[0]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[0].status].color} />
+          </View>
+        ) : null}
         {layout === 'pair' ? (
           <View style={styles.clusterRow}>
-            <ClusterCell item={shown[0]} onDone={handleCellDone} />
-            <ClusterCell item={shown[1]} onDone={handleCellDone} />
+            <PhotoCell item={shown[0]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[0].status].color} />
+            <PhotoCell item={shown[1]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[1].status].color} />
           </View>
         ) : null}
         {layout === 'triangle' ? (
           <>
             <View style={styles.clusterRow}>
-              <ClusterCell item={shown[0]} onDone={handleCellDone} />
-              <ClusterCell item={shown[1]} onDone={handleCellDone} />
+              <PhotoCell item={shown[0]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[0].status].color} />
+              <PhotoCell item={shown[1]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[1].status].color} />
             </View>
             <View style={styles.clusterRow}>
-              <ClusterCell item={shown[2]} onDone={handleCellDone} />
+              <PhotoCell item={shown[2]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[2].status].color} />
             </View>
           </>
         ) : null}
         {layout === 'grid4' ? (
           <>
             <View style={styles.clusterRow}>
-              <ClusterCell item={shown[0]} onDone={handleCellDone} />
-              <ClusterCell item={shown[1]} onDone={handleCellDone} />
+              <PhotoCell item={shown[0]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[0].status].color} />
+              <PhotoCell item={shown[1]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[1].status].color} />
             </View>
             <View style={styles.clusterRow}>
-              <ClusterCell item={shown[2]} onDone={handleCellDone} />
-              <ClusterCell item={shown[3]} onDone={handleCellDone} />
+              <PhotoCell item={shown[2]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[2].status].color} />
+              <PhotoCell item={shown[3]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[3].status].color} />
             </View>
           </>
         ) : null}
         {layout === 'gridPlus' ? (
           <>
             <View style={styles.clusterRow}>
-              <ClusterCell item={shown[0]} onDone={handleCellDone} />
-              <ClusterCell item={shown[1]} onDone={handleCellDone} />
+              <PhotoCell item={shown[0]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[0].status].color} />
+              <PhotoCell item={shown[1]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[1].status].color} />
             </View>
             <View style={styles.clusterRow}>
-              <ClusterCell item={shown[2]} onDone={handleCellDone} />
+              <PhotoCell item={shown[2]} size={20} borderWidth={1.5} ringColor={locationStatusMeta[shown[2].status].color} />
               <ClusterCountCell count={remaining} />
             </View>
           </>
@@ -318,16 +322,15 @@ function FloatingCardPage(props: {
   const [failed, setFailed] = useState(false);
   const showPhoto = isDisplayablePhoto(item.photo) && !failed;
   const toneMeta = locationStatusMeta[item.status];
-  const relative = formatRelativeTime(item.last_seen);
 
   return (
     <View style={[styles.floatingCard, { width }, style]}>
       <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: colors.surface }]}>
         {showPhoto ? (
-          <SecureImage
+          <MarkerImage
             path={item.photo}
             style={styles.floatingAvatarPhoto}
-            onLoadError={() => setFailed(true)}
+            onError={() => setFailed(true)}
           />
         ) : (
           <View style={[styles.markerFallback, styles.floatingAvatarPhoto, { backgroundColor: toneMeta.color }]}>
@@ -342,17 +345,13 @@ function FloatingCardPage(props: {
       <Text style={styles.floatingMeta} numberOfLines={1}>
         {joinFields(item.rank, item.unit) || 'Personel'}
       </Text>
-      <View style={styles.floatingStatusRow}>
-        <View style={[styles.floatingStatusDot, { backgroundColor: toneMeta.color }]} />
-        <Text style={styles.floatingStatusText} numberOfLines={1}>
-          {relative ? `${toneMeta.label} · ${relative}` : toneMeta.label}
-        </Text>
-      </View>
+      <LocationStatusBadge status={item.status} timestamp={item.last_seen} style={styles.floatingStatusBadge} />
 
       <View style={styles.floatingActions}>
         <PressableScale
           scaleTo={0.97}
           onPress={() => openCoordinatesInMaps(item.location.latitude, item.location.longitude)}
+          style={styles.floatingActionFlex}
           contentStyle={styles.floatingSecondaryButton}
         >
           <Icon name="map-pin" size={14} color={colors.primary} />
@@ -362,6 +361,7 @@ function FloatingCardPage(props: {
           <PressableScale
             scaleTo={0.97}
             onPress={() => onSelect(item)}
+            style={styles.floatingActionFlex}
             contentStyle={styles.floatingPrimaryButton}
           >
             <Text style={styles.floatingPrimaryButtonText}>Lihat Detail</Text>
@@ -400,8 +400,14 @@ function PersonnelFloatingCard(props: {
 
   return (
     <View style={styles.floatingWrap} pointerEvents="box-none">
-      <PressableScale onPress={onClose} contentStyle={[styles.floatingClose, { right: sidePadding - 4 }]} accessibilityLabel="Tutup">
-        <Icon name="close" size={14} color={colors.textMuted} />
+      <PressableScale
+        onPress={onClose}
+        style={[styles.floatingCloseWrap, { right: sidePadding - 4 }]}
+        contentStyle={styles.floatingClose}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Tutup">
+        <Icon name="close" size={15} color={colors.textMuted} />
       </PressableScale>
       <ScrollView
         // `key` me-reset scroll ke halaman pertama tiap kali marker yang dipilih berbeda.
@@ -483,23 +489,14 @@ export default function PersonnelMap(props: PersonnelMapProps) {
         onPress={() => setSelectedKey(null)}
         onRegionChangeComplete={region => setLatitudeDelta(region.latitudeDelta)}
       >
-        {clusters.map(cluster =>
-          cluster.items.length === 1 ? (
-            <SinglePersonnelMarker
-              key={cluster.key}
-              item={cluster.items[0]}
-              selected={cluster.key === selectedKey}
-              onPress={() => setSelectedKey(cluster.key)}
-            />
-          ) : (
-            <ClusterMarker
-              key={cluster.key}
-              cluster={cluster}
-              selected={cluster.key === selectedKey}
-              onPress={() => setSelectedKey(cluster.key)}
-            />
-          ),
-        )}
+        {clusters.map(cluster => (
+          <PersonnelGroupMarker
+            key={cluster.key}
+            cluster={cluster}
+            selected={cluster.key === selectedKey}
+            onPress={() => setSelectedKey(cluster.key)}
+          />
+        ))}
       </MapView>
 
       {selectedCluster ? (
@@ -537,20 +534,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     backgroundColor: colors.surface,
-  },
-  markerRingSelected: {
-    borderWidth: 3,
-  },
-  singleRing: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  singlePhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.neutralSurface,
   },
   markerFallback: {
     alignItems: 'center',
@@ -591,11 +574,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     backgroundColor: colors.surface,
   },
-  clusterCellPhoto: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
   clusterCellInitial: {
     fontSize: 8,
     fontWeight: '700',
@@ -615,19 +593,30 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 16,
+    // Tanpa ini, MapView Android (surface GL) menggambar di atas sibling View manapun terlepas
+    // dari urutannya di JSX — kartu jadi ketutup peta walau state-nya benar. `zIndex` di sini
+    // memaksa layer ini tampil di atas.
+    zIndex: 10,
+  },
+  floatingCloseWrap: {
+    // Posisi & hit-area harus ada di `style` (Pressable luar), bukan `contentStyle` (MotiView
+    // dalam) — kalau tidak, lingkaran yang kelihatan ada di posisi absolute itu, tapi area yang
+    // benar-benar bisa di-tap tetap di ukuran/posisi asal si Pressable (tidak nyambung dengan
+    // lingkarannya), jadi susah/gagal di-tap.
+    position: 'absolute',
+    top: -14,
+    zIndex: 20,
   },
   floatingClose: {
-    position: 'absolute',
-    top: -10,
-    zIndex: 1,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.borderSoft,
+    ...smallButtonShadow,
   },
   floatingScrollContent: {
     flexDirection: 'row',
@@ -673,30 +662,22 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
   },
-  floatingStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+  floatingStatusBadge: {
+    alignSelf: 'center',
     marginTop: 2,
     marginBottom: 10,
-  },
-  floatingStatusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  floatingStatusText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textMuted,
   },
   floatingActions: {
     flexDirection: 'row',
     gap: 8,
     width: '100%',
   },
-  floatingSecondaryButton: {
+  // `flex: 1` di sini (Pressable luar), bukan di `contentStyle` — sama seperti kasus tombol X:
+  // flex/grow cuma berpengaruh di elemen yang benar-benar jadi flex item baris ini.
+  floatingActionFlex: {
     flex: 1,
+  },
+  floatingSecondaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -713,7 +694,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   floatingPrimaryButton: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     height: 36,
@@ -746,6 +726,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: colors.overlay,
+    zIndex: 5,
   },
   emptyText: {
     fontSize: 13,

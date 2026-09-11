@@ -446,7 +446,15 @@ export default function CommanderHome(props: CommanderHomeProps) {
               <Text style={styles.mapPlaceholderText}>Memuat lokasi personel...</Text>
             </View>
           ) : (
-            <PersonnelMap personnel={personnelLocations} interactive={false} lite style={styles.mapPreview} />
+            <PressableScale
+              scaleTo={0.98}
+              onPress={() => navigation.navigate(ROUTES.personnelMap)}
+              style={styles.mapPreview}
+              contentStyle={styles.mapPreviewContent}
+              accessibilityRole="button"
+              accessibilityLabel="Lihat Peta Lengkap">
+              <PersonnelMap personnel={personnelLocations} interactive={false} lite style={styles.mapPreviewMap} />
+            </PressableScale>
           )}
         </MotiView>
       </ScrollView>
@@ -615,6 +623,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSoft,
     marginBottom: 24,
+  },
+  mapPreviewContent: {
+    flex: 1,
+  },
+  mapPreviewMap: {
+    flex: 1,
   },
   mapPlaceholder: {
     alignItems: 'center',
