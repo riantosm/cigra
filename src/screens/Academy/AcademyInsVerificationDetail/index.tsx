@@ -6,6 +6,7 @@ import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import BottomSheet from '@/components/organisms/BottomSheet';
 import StatusModal from '@/components/organisms/StatusModal';
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import AcademyScreen from '@/screens/Academy/shared/AcademyScreen';
@@ -26,6 +27,7 @@ export default function AcademyInsVerificationDetailScreen(props: Props) {
   const [scoreInput, setScoreInput] = useState('');
   const [notes, setNotes] = useState('');
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const keyboardHeight = useKeyboardHeight();
 
   const metrics = Object.entries(item.metric_values ?? {});
   const score = Number(scoreInput);
@@ -105,7 +107,7 @@ export default function AcademyInsVerificationDetailScreen(props: Props) {
 
       {/* Verify */}
       <BottomSheet visible={sheet === 'verify'} onRequestClose={() => setSheet(null)}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: keyboardHeight || 24 }]}>
           <Text style={styles.sheetTitle}>Verifikasi & Tetapkan Nilai</Text>
           <Text style={styles.sheetSub}>
             Nilai resmi (0–100) akan dikunci dan masuk ke perhitungan akhir program.
@@ -146,7 +148,7 @@ export default function AcademyInsVerificationDetailScreen(props: Props) {
 
       {/* Reject */}
       <BottomSheet visible={sheet === 'reject'} onRequestClose={() => setSheet(null)}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: keyboardHeight || 24 }]}>
           <Text style={styles.sheetTitle}>Alasan Penolakan</Text>
           <Text style={styles.sheetSub}>Wajib diisi — alasan akan dikirim ke peserta.</Text>
           <TextInput
