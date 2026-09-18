@@ -69,6 +69,10 @@ yarn-error.log
 # env
 .env
 
+# Firebase config (contains API keys) — keep local, don't commit
+android/app/google-services.json
+ios/**/GoogleService-Info.plist
+
 # others
 CLAUDE.md
 .claude
