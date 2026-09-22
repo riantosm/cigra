@@ -115,22 +115,27 @@ android {
 }
 
 /**
- * Setiap kali `assembleRelease` selesai, salin APK release ke folder `documentation/`
- * di root repo (sebelah CHANGELOG.md). File .apk-nya di-gitignore (`documentation/*.apk`)
- * dan tidak ikut ter-deploy ke Vercel (`documentation/.vercelignore`) — yang di-commit
- * cukup documentation/CHANGELOG.md. Tulis entri rilis baru di file itu, lalu jalankan
- * `python3 documentation/regen-html.py` untuk memperbarui changelog.html.
+ * Setiap kali `assembleDebug`/`assembleRelease` selesai, salin APK-nya ke folder
+ * `documentation/` di root repo (sebelah CHANGELOG.md). File .apk-nya di-gitignore
+ * (`documentation/*.apk`) dan tidak ikut ter-deploy ke Vercel (`documentation/.vercelignore`) —
+ * yang di-commit cukup documentation/CHANGELOG.md. Tulis entri rilis baru di file itu, lalu
+ * jalankan `python3 documentation/regen-html.py` untuk memperbarui changelog.html.
  */
 def changelogDir = new File(rootProject.projectDir.parentFile, "documentation")
 
-tasks.register("copyReleaseApkToChangelog", Copy) {
-    from(layout.buildDirectory.dir("outputs/apk/release")) {
-        include "*.apk"
+["debug", "release"].each { variantName ->
+    tasks.register("copy${variantName.capitalize()}ApkToChangelog", Copy) {
+        from(layout.buildDirectory.dir("outputs/apk/${variantName}")) {
+            include "*.apk"
+        }
+        into changelogDir
     }
-    into changelogDir
 }
 
 tasks.configureEach { task ->
+    if (task.name == "assembleDebug") {
+        task.finalizedBy("copyDebugApkToChangelog")
+    }
     if (task.name == "assembleRelease") {
         task.finalizedBy("copyReleaseApkToChangelog")
     }
