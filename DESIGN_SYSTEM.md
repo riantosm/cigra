@@ -357,6 +357,67 @@ Kartu kecil (radius `16`, border `borderSoft`, shadow default), `padding 12`. Fo
 `[ikon + label]` (satu baris, ikon `16`, label `12/600` `#334155`) / angka `18/700` `heading` /
 persen `11/600` muted / progress bar (`track` `4px` `chipSurface`, `fill` warna kategori).
 
+### 5.13b Chip ikon gradient ("Aksen Gradient") + kartu hero Ringkasan Situasi
+
+Sejak redesign **CommanderHome 2026-09-22** ("Opsi C · Aksen Gradient" dari canvas), beberapa
+icon-chip yang tadinya tint flat (`${color}1F` di atas `surface` putih) sekarang boleh memakai
+**gradient 2-tone** (react-native-svg, pola yang sama dengan `GradientAvatar`/`GradientButton`) —
+ikon jadi putih, bukan berwarna. Pasangan warnanya **selalu** salah satu token gradient yang sudah
+ada di `theme/colors.ts` (`gradientPersonnelStart/End`, `gradientFamilyStart/End`,
+`gradientWarnStart`+`warning`, `gradientSuccessStart`+`success`, `gradientEntryStart/End`,
+`gradientWeaponStart/End`, `gradientHealthStart/End`, `gradientDangerStart`+`danger`,
+`gradientPrimaryStart/End`) — **tidak pernah** warna baru dikarang untuk ini.
+
+- Komponen: `atoms/GradientIconChip` (`icon`, `colors:[start,end]`, `size`, `iconSize`, `radius`) —
+  chip kotak membulat, dipakai lewat prop opsional `gradientColors` di `screens/Home/
+  QuickActionButton`, `screens/Home/ActivityRow`, `screens/Home/AnnouncementRow`, dan
+  `organisms/MessageDetailSheet` (fallback ke tint flat lama kalau prop-nya tidak diisi — jadi
+  pemanggil lama tidak perlu ikut berubah). Ini **bukan** "gradient di mana-mana" (§7) — kartu &
+  section tetap flat, gradient cuma di chip ikon kecil, sama seperti avatar bergradient yang sudah
+  lama ada di aplikasi.
+- Dipakai di: `CommanderHome` (grid Quick Action + bottom sheet "Lainnya" lewat
+  `QuickActionSheet`, baris Aktivitas Terbaru, baris Pengumuman Terbaru), `HealthOfficerHome`
+  (3 quick action), layar `ActivityMovements` ("Lihat Semua" Aktivitas), `Announcements` ("Lihat
+  Semua" Pengumuman — dulu `iconCircle` flat, sekarang `GradientIconChip` langsung, tanpa fallback),
+  dan `Notifications` (chip per tipe: `emergency`/`announcement`/`info` dapat gradient, tipe apa pun
+  yang mengandung substring `"disposition"` — backend punya beberapa varian tak konsisten:
+  `disposition_completed`/`disposition_recipient_completed`/`disposition_follow_up`/
+  `letter_disposition`, belum ada di `API_CONTRACT.md` — dipetakan ke ikon `mail` + gradient
+  personnel; `system` sengaja tetap flat, tak punya identitas warna kuat).
+- **`screens/Home/SituationHeroCard`** menggantikan grid 2×2 `StatCard` + banner alert terpisah di
+  `CommanderHome` "Ringkasan Situasi": satu kartu — header gradient primary (angka total besar +
+  ikon `shield-check`), lalu strip sinyal darurat yang **menyatu** di bawahnya (merah kalau
+  `active_alerts > 0`, hijau tenang "Tidak ada sinyal darurat aktif" kalau tidak — dua-duanya
+  `PressableScale` ke `EmergencyList`), lalu baris mini-stat (ikon+angka+label+persen, garis
+  `borderSoft` vertikal antar kolom, bukan kartu terpisah-pisah). `StatCard` sendiri tidak dihapus —
+  masih dipakai apa adanya di `HealthOfficerHome` ("Ringkasan Pemeriksaan", section berbeda, bukan
+  "Ringkasan Situasi").
+- **Peta Personel Real-time (CommanderHome)**: kartu preview map dapat bingkai gradient tipis
+  (`padding:2` + `Rect` gradient primary radius18, map di dalamnya radius16) + chip mengambang kiri
+  atas ("`N`/`total` dipantau", `floatingSurface` + `smallButtonShadow`) + pill mengambang kanan
+  bawah ("Peta Lengkap", `primary` + `ctaPrimaryShadow`) — dekoratif saja, seluruh kartu tetap satu
+  `PressableScale` ke `PersonnelMap` fullscreen.
+
+**Rollout 2026-09-22 (lanjutan) — chip flat lain di seluruh app ikut dikonversi**, supaya satu
+gaya konsisten di mana pun ada icon-chip (bukan cuma Home): `SendAnnouncement` (`FieldHeader` tiap
+field form + kartu Riwayat Terkirim), `RollCallDetail` ("Input Absen" `ChoiceRow` Hadir/Tidak
+Hadir), `RollCallEntry` (chip "Status Kehadiran" & "Keterangan"), `BukuSaku` (`rowIcon` tiap bab) +
+`BukuSakuDetail` (`recordIcon` marker `record_display`), `molecules/HealthRecordCard` (dipakai
+`HealthMyHistory`/`HealthDashboard`/`HealthPersonnelProfile` — chip `heartbeat` jadi gradient
+health), `MemberHome` (`ShortcutButton` "Akses Cepat", `StatusTile` "Status Saya", `NoticeRow`
+"Pengumuman Terbaru", `TimelineRow` "Aktivitas Terbaru", chip patroli mengambang), dan hampir
+seluruh Smart Academy (`AcademyMemberHome` pendingIcon, `AcademyInstructorHome` progIcon/verifIcon,
+`AcademyCommanderOverview`+`AcademyCmdAttention` attentionIcon per-status, `AcademyCmdCompetency`
+medal, `AcademyMaterial` fileIcon, `AcademyAttemptResult` badge LULUS/TIDAK LULUS jadi gradient
+success/danger, `AcademyProgramDetail` node timeline "selesai" jadi gradient success + check).
+`src/utils/gradientColor.ts` (`gradientForColor`) menerjemahkan satu warna flat yang sudah ada
+(dari array/lookup status→warna yang sudah dipakai lebih dulu) jadi pasangan gradient tanpa perlu
+menulis ulang tiap lookup — dipakai di `MemberHome`'s 4 baris. Tidak disentuh (out of scope): grid
+Quick Action `HealthOfficerHome`-nya sendiri sebenarnya sudah dikonversi di rollout awal;
+`molecules/EmptyState`, `RollCallList`/`RollCallScan`/`RollCallSearch`, dan hampir semua layar
+Academy assessment/attempt (tak punya pola icon-chip flat — ikonnya inline di pill/banner, bukan
+kotak/lingkaran ber-tint terpisah) sengaja dibiarkan flat.
+
 ### 5.14 Latar dekoratif
 
 **Layar non-Auth:** latar polos near-white `pageGradient*` (`atoms/ScreenBackground`), **tanpa

@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { MotiView } from 'moti';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Badge from '@/components/atoms/Badge';
 import Icon from '@/components/atoms/Icon';
@@ -31,8 +32,27 @@ import { colors } from '@/theme/colors';
 import type { EarthquakeItem } from '@/types';
 import { earthquakeMeta, formatMagnitude } from '@/utils/earthquake';
 import { extractErrorMessage, joinFields, orDash } from '@/utils/format';
+import { gradientForColor } from '@/utils/gradientColor';
 import { contentEnterTransition } from '@/utils/motion';
 import { openCoordinatesInMaps } from '@/utils/location';
+
+// Latar gradient di belakang badge magnitudo (pill kecil di kartu list, kotak besar di hero) —
+// "Aksen Gradient" (DESIGN_SYSTEM.md §5.13b), samakan dengan `organisms/EarthquakeWidget`.
+function MagGradientFill(props: { colors: readonly [string, string]; radius: number }) {
+  const [from, to] = props.colors;
+  const gradientId = `eqDetailMag-${from}-${to}`.replace(/[^a-zA-Z0-9-]/g, '');
+  return (
+    <Svg style={StyleSheet.absoluteFill}>
+      <Defs>
+        <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={from} />
+          <Stop offset="1" stopColor={to} />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" rx={props.radius} fill={`url(#${gradientId})`} />
+    </Svg>
+  );
+}
 
 type Props = RootStackScreenProps<typeof ROUTES.earthquake>;
 
@@ -49,8 +69,9 @@ function QuakeCard({ item }: { item: EarthquakeItem }) {
   return (
     <Card style={[styles.quakeCard, { borderColor: meta.border }]}>
       <View style={styles.quakeHead}>
-        <View style={[styles.magPill, { backgroundColor: `${meta.accent}1F` }]}>
-          <Text style={[styles.magPillText, { color: meta.accent }]}>{formatMagnitude(item.magnitude)}</Text>
+        <View style={styles.magPill}>
+          <MagGradientFill colors={gradientForColor(meta.accent)} radius={8} />
+          <Text style={styles.magPillText}>{formatMagnitude(item.magnitude)}</Text>
         </View>
         <Text style={styles.quakeTime} numberOfLines={1}>
           {joinFields(item.tanggal, item.jam)}
@@ -176,11 +197,10 @@ export default function EarthquakeScreen(props: Props) {
               transition={contentEnterTransition}>
               <Card style={[styles.hero, { borderColor: meta.border }]}>
                 <View style={styles.heroTop}>
-                  <View style={[styles.heroMag, { backgroundColor: `${meta.accent}1F` }]}>
-                    <Text style={[styles.heroMagValue, { color: meta.accent }]}>
-                      {latest.magnitude.toFixed(1)}
-                    </Text>
-                    <Text style={[styles.heroMagUnit, { color: meta.accent }]}>Magnitudo</Text>
+                  <View style={styles.heroMag}>
+                    <MagGradientFill colors={gradientForColor(meta.accent)} radius={18} />
+                    <Text style={styles.heroMagValue}>{latest.magnitude.toFixed(1)}</Text>
+                    <Text style={styles.heroMagUnit}>Magnitudo</Text>
                   </View>
                   <View style={styles.heroText}>
                     <Badge label={latest.level_label || meta.label} variant={meta.badgeVariant} />
@@ -296,16 +316,19 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   heroMagValue: {
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -1,
+    color: colors.primaryForeground,
   },
   heroMagUnit: {
     fontSize: 9,
     fontWeight: '700',
     marginTop: -2,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   heroText: {
     flex: 1,
@@ -388,10 +411,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+    overflow: 'hidden',
   },
   magPillText: {
     fontSize: 12,
     fontWeight: '800',
+    color: colors.primaryForeground,
   },
   quakeTime: {
     flex: 1,

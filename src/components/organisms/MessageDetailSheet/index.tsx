@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import GradientButton from '@/components/atoms/GradientButton';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import BottomSheet from '@/components/organisms/BottomSheet';
@@ -18,20 +19,27 @@ export interface MessageDetailSheetProps {
   metaLines?: (string | null | undefined)[];
   /** Tombol aksi opsional (mis. "Buka" untuk notifikasi bertaut). */
   action?: { label: string; onPress: () => void };
+  // "Aksen Gradient" (DESIGN_SYSTEM.md) — kalau diisi, chip ikon jadi gradient (menggantikan
+  // iconColor/iconSurface flat). Opsional supaya pemanggil lama tetap tampil seperti sebelumnya.
+  gradientColors?: readonly [string, string];
 }
 
 // Sheet baca-penuh untuk baris notifikasi / pengumuman yang di list dipangkas jadi 1-2 baris.
 // Tidak ada endpoint detail — semua teks diambil dari data list yang sudah ada.
 export default function MessageDetailSheet(props: MessageDetailSheetProps) {
-  const { visible, onRequestClose, icon, iconColor, iconSurface, title, body, metaLines, action } = props;
+  const { visible, onRequestClose, icon, iconColor, iconSurface, title, body, metaLines, action, gradientColors } = props;
   const metas = (metaLines ?? []).filter((line): line is string => Boolean(line && line.trim().length > 0));
 
   return (
     <BottomSheet visible={visible} onRequestClose={onRequestClose}>
       <View style={styles.header}>
-        <View style={[styles.iconCircle, { backgroundColor: iconSurface }]}>
-          <Icon name={icon} size={20} color={iconColor} />
-        </View>
+        {gradientColors ? (
+          <GradientIconChip icon={icon} colors={gradientColors} size={40} iconSize={20} radius={12} />
+        ) : (
+          <View style={[styles.iconCircle, { backgroundColor: iconSurface }]}>
+            <Icon name={icon} size={20} color={iconColor} />
+          </View>
+        )}
         <Text style={styles.title}>{title}</Text>
       </View>
 

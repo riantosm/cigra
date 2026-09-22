@@ -1,11 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { WeatherAlert } from '@/types';
 import { alertSeverityMeta } from '@/utils/weather';
+import { gradientForColor } from '@/utils/gradientColor';
 
 export interface WeatherAlertBannerProps {
   alerts: WeatherAlert[];
@@ -37,9 +40,13 @@ export default function WeatherAlertBanner(props: WeatherAlertBannerProps) {
         accessibilityRole="button"
         accessibilityLabel="Tidak ada peringatan dini cuaca">
         <View style={styles.headRow}>
-          <View style={[styles.iconBadge, { backgroundColor: colors.successSurface }]}>
-            <Icon name="shield-check" size={16} color={colors.success} />
-          </View>
+          <GradientIconChip
+            icon="shield-check"
+            colors={[colors.gradientSuccessStart, colors.success]}
+            size={30}
+            iconSize={16}
+            radius={10}
+          />
           <Text style={[styles.title, { color: colors.success }]} numberOfLines={1}>
             Cuaca Aman
           </Text>
@@ -66,9 +73,13 @@ export default function WeatherAlertBanner(props: WeatherAlertBannerProps) {
       accessibilityRole="button"
       accessibilityLabel={`${count} peringatan dini cuaca aktif`}>
       <View style={styles.headRow}>
-        <View style={[styles.iconBadge, { backgroundColor: `${meta.accent}22` }]}>
-          <Icon name="alert-triangle" size={16} color={meta.accent} />
-        </View>
+        <GradientIconChip
+          icon="alert-triangle"
+          colors={gradientForColor(meta.accent)}
+          size={30}
+          iconSize={16}
+          radius={10}
+        />
         <Text style={[styles.title, { color: meta.accent }]} numberOfLines={1}>
           {count} Peringatan Dini
         </Text>
@@ -96,6 +107,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     borderWidth: 1,
+    ...cardShadow,
   },
   calmCard: {
     backgroundColor: colors.surface,
@@ -105,13 +117,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  iconBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   title: {
     flex: 1,

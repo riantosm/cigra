@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import Badge from '@/components/atoms/Badge';
 import GradientButton from '@/components/atoms/GradientButton';
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
 import { ROUTES } from '@/navigation/paths';
@@ -151,16 +151,17 @@ export default function AcademyProgramDetailScreen(props: Props) {
                         index < components.length - 1 && styles.tlRowBorder,
                       ]}>
                       <View style={styles.tlRail}>
-                        <View
-                          style={[
-                            styles.tlNode,
-                            done && styles.tlNodeDone,
-                            !done && styles.tlNodeActive,
-                          ]}>
-                          {done ? (
-                            <Icon name="check" size={13} color={colors.surface} />
-                          ) : null}
-                        </View>
+                        {done ? (
+                          <GradientIconChip
+                            icon="check"
+                            colors={[colors.gradientSuccessStart, colors.success]}
+                            size={24}
+                            iconSize={13}
+                            radius={12}
+                          />
+                        ) : (
+                          <View style={[styles.tlNode, styles.tlNodeActive]} />
+                        )}
                       </View>
                       <View style={styles.flex}>
                         <Text style={styles.tlTitle} numberOfLines={2}>
@@ -217,7 +218,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tlNodeActive: { borderColor: colors.primary },
-  tlNodeDone: { borderColor: colors.success, backgroundColor: colors.success },
   tlTitle: { fontSize: 14, fontWeight: '700', color: colors.heading },
   tlMeta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   tlBadge: { alignSelf: 'flex-start', marginTop: 6 },

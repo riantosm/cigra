@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { MotiView } from 'moti';
 
 import GradientButton from '@/components/atoms/GradientButton';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
@@ -27,26 +28,45 @@ const TITLE_MAX = 80;
 const HISTORY_PREVIEW = 3;
 
 // Samakan dengan halaman "Pengumuman" (screens/Announcements) supaya tipe pengumuman punya
-// warna/ikon yang konsisten di seluruh aplikasi.
-const typeMeta: Record<AnnouncementType, { label: string; icon: IconName; color: string; surface: string }> = {
-  alert: { label: 'Peringatan', icon: 'alert-triangle', color: colors.danger, surface: colors.dangerSurface },
-  announcement: { label: 'Pengumuman', icon: 'megaphone', color: colors.warning, surface: colors.chipSurface },
-  info: { label: 'Info', icon: 'info', color: colors.primary, surface: colors.primarySurface },
+// warna/ikon yang konsisten di seluruh aplikasi. `gradient` = "Aksen Gradient" (DESIGN_SYSTEM.md
+// §5.13b), dipakai chip ikon kartu Riwayat Terkirim.
+const typeMeta: Record<
+  AnnouncementType,
+  { label: string; icon: IconName; color: string; surface: string; gradient: readonly [string, string] }
+> = {
+  alert: {
+    label: 'Peringatan',
+    icon: 'alert-triangle',
+    color: colors.danger,
+    surface: colors.dangerSurface,
+    gradient: [colors.gradientDangerStart, colors.danger],
+  },
+  announcement: {
+    label: 'Pengumuman',
+    icon: 'megaphone',
+    color: colors.warning,
+    surface: colors.chipSurface,
+    gradient: [colors.gradientWarnStart, colors.warning],
+  },
+  info: {
+    label: 'Info',
+    icon: 'info',
+    color: colors.primary,
+    surface: colors.primarySurface,
+    gradient: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
+  },
 };
 
 interface FieldHeaderProps {
   icon: IconName;
   label: string;
-  color: string;
-  surface: string;
+  gradientColors: readonly [string, string];
 }
 
 function FieldHeader(props: FieldHeaderProps) {
   return (
     <View style={styles.fieldHeader}>
-      <View style={[styles.fieldIcon, { backgroundColor: props.surface }]}>
-        <Icon name={props.icon} size={15} color={props.color} />
-      </View>
+      <GradientIconChip icon={props.icon} colors={props.gradientColors} size={30} iconSize={15} radius={10} />
       <Text style={styles.fieldLabel}>{props.label}</Text>
     </View>
   );
@@ -115,7 +135,11 @@ export default function SendAnnouncementScreen(props: Props) {
           <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }} transition={contentEnterTransition}>
             <Card style={styles.formCard}>
               <View style={styles.field}>
-                <FieldHeader icon="handbook" label="Judul" color={colors.primary} surface={colors.primarySurface} />
+                <FieldHeader
+                  icon="handbook"
+                  label="Judul"
+                  gradientColors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+                />
                 <TextField
                   placeholder="mis. Apel Pagi"
                   value={title}
@@ -128,8 +152,7 @@ export default function SendAnnouncementScreen(props: Props) {
                 <FieldHeader
                   icon="megaphone"
                   label="Isi Pengumuman"
-                  color={colors.gradientWeaponStart}
-                  surface={colors.neutralSurface}
+                  gradientColors={[colors.gradientWeaponStart, colors.gradientWeaponEnd]}
                 />
                 <View>
                   <TextField
@@ -147,7 +170,11 @@ export default function SendAnnouncementScreen(props: Props) {
               </View>
 
               <View style={styles.field}>
-                <FieldHeader icon="layers" label="Tipe" color={colors.primary} surface={colors.primarySurface} />
+                <FieldHeader
+                  icon="layers"
+                  label="Tipe"
+                  gradientColors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+                />
                 <SegmentedControl
                   value={type}
                   onChange={setType}
@@ -160,7 +187,11 @@ export default function SendAnnouncementScreen(props: Props) {
               </View>
 
               <View style={styles.field}>
-                <FieldHeader icon="users" label="Kirim ke" color={colors.warning} surface={colors.warningSurface} />
+                <FieldHeader
+                  icon="users"
+                  label="Kirim ke"
+                  gradientColors={[colors.gradientWarnStart, colors.warning]}
+                />
                 <SegmentedControl
                   value={scope}
                   onChange={setScope}
@@ -208,9 +239,7 @@ export default function SendAnnouncementScreen(props: Props) {
                   return (
                     <Card key={String(item.id)} style={styles.histCard}>
                       <View style={styles.histRow}>
-                        <View style={[styles.histIcon, { backgroundColor: meta.surface }]}>
-                          <Icon name={meta.icon} size={18} color={meta.color} />
-                        </View>
+                        <GradientIconChip icon={meta.icon} colors={meta.gradient} size={40} iconSize={18} radius={20} />
                         <View style={styles.histBody}>
                           <View style={styles.histTop}>
                             <View style={[styles.typePill, { backgroundColor: meta.surface }]}>
@@ -296,13 +325,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  fieldIcon: {
-    height: 30,
-    width: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   fieldLabel: {
     fontSize: 14,
     fontWeight: '700',
@@ -380,13 +402,6 @@ const styles = StyleSheet.create({
   histRow: {
     flexDirection: 'row',
     gap: 12,
-  },
-  histIcon: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   histBody: {
     flex: 1,

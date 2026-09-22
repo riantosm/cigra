@@ -11,6 +11,7 @@ import {
 import { MotiView } from 'moti';
 
 import Badge from '@/components/atoms/Badge';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
@@ -23,6 +24,7 @@ import { useWeatherAlerts } from '@/hooks/useWeatherAlerts';
 import { colors } from '@/theme/colors';
 import type { WeatherAlert } from '@/types';
 import { cleanValue } from '@/utils/format';
+import { gradientForColor } from '@/utils/gradientColor';
 import { contentEnterTransition } from '@/utils/motion';
 import { alertSeverityMeta } from '@/utils/weather';
 
@@ -33,9 +35,13 @@ function AlertCard({ alert }: { alert: WeatherAlert }) {
   return (
     <Card style={[styles.card, { borderColor: meta.border }]}>
       <View style={styles.cardHead}>
-        <View style={[styles.iconBadge, { backgroundColor: `${meta.accent}22` }]}>
-          <Icon name="alert-triangle" size={16} color={meta.accent} />
-        </View>
+        <GradientIconChip
+          icon="alert-triangle"
+          colors={gradientForColor(meta.accent)}
+          size={30}
+          iconSize={16}
+          radius={10}
+        />
         <Badge label={meta.label} variant={meta.badgeVariant} />
         {alert.pub_date_formatted ? (
           <Text style={styles.date} numberOfLines={1}>
@@ -171,13 +177,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  iconBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   date: {
     flex: 1,

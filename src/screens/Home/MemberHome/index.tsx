@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import ScreenBackground from '@/components/atoms/ScreenBackground';
@@ -593,9 +594,13 @@ export default function MemberHome(props: MemberHomeProps) {
             scaleTo={0.98}
             onPress={() => navigation.navigate(ROUTES.patrolActive)}
             contentStyle={styles.patrolChip}>
-            <View style={styles.patrolChipIcon}>
-              <Icon name="route" size={18} color={colors.success} />
-            </View>
+            <GradientIconChip
+              icon="route"
+              colors={[colors.gradientSuccessStart, colors.success]}
+              size={36}
+              iconSize={18}
+              radius={12}
+            />
             <View style={styles.patrolChipBody}>
               <Text style={styles.patrolChipTitle} numberOfLines={1}>
                 Patroli berjalan
@@ -747,14 +752,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSoft,
     ...cardShadowRaised,
-  },
-  patrolChipIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.successSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   patrolChipBody: { flex: 1, gap: 4 },
   patrolChipTitle: { fontSize: 13, fontWeight: '700', color: colors.heading },

@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import type { IconName } from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
+import { gradientForColor } from '@/utils/gradientColor';
 
 export interface StatusTileProps {
   icon: IconName;
@@ -20,9 +21,7 @@ export default function StatusTile(props: StatusTileProps) {
 
   return (
     <View style={styles.tile}>
-      <View style={[styles.iconWrap, { backgroundColor: `${color}1A` }]}>
-        <Icon name={icon} size={15} color={color} />
-      </View>
+      <GradientIconChip icon={icon} colors={gradientForColor(color)} size={30} iconSize={15} radius={10} style={styles.iconWrap} />
       <Text style={styles.label} numberOfLines={1}>
         {label}
       </Text>
@@ -48,11 +47,6 @@ const styles = StyleSheet.create({
     ...cardShadow,
   },
   iconWrap: {
-    height: 30,
-    width: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 6,
   },
   label: {

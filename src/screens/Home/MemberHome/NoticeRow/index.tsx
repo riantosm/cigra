@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import type { IconName } from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
+import { gradientForColor } from '@/utils/gradientColor';
 
 export type NoticeType = 'alert' | 'announcement' | 'info';
 
@@ -35,9 +36,7 @@ export default function NoticeRow(props: NoticeRowProps) {
 
   return (
     <View style={styles.row}>
-      <View style={[styles.iconWrap, { backgroundColor: `${color}1A` }]}>
-        <Icon name={typeIcon[type]} size={15} color={color} />
-      </View>
+      <GradientIconChip icon={typeIcon[type]} colors={gradientForColor(color)} size={32} iconSize={15} radius={10} />
       <View style={styles.textGroup}>
         <View style={styles.titleRow}>
           <Text style={styles.title} numberOfLines={1}>
@@ -65,13 +64,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
     paddingVertical: 12,
-  },
-  iconWrap: {
-    height: 32,
-    width: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   textGroup: {
     flex: 1,

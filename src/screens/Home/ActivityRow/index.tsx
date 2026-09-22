@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
 
@@ -8,6 +9,8 @@ export interface ActivityRowProps {
   detail: string;
   time: string;
   direction: 'in' | 'out';
+  // "Aksen Gradient" (DESIGN_SYSTEM.md) — chip jadi 2-tone gradient (ikon putih) bukan tint flat.
+  gradientColors?: readonly [string, string];
 }
 
 const directionColor: Record<ActivityRowProps['direction'], string> = {
@@ -16,16 +19,21 @@ const directionColor: Record<ActivityRowProps['direction'], string> = {
 };
 
 // Satu baris "Aktivitas Terbaru" di CommanderHome — struktur identik dengan MemberHome/TimelineRow
-// (DESIGN_SYSTEM.md §5.16): icon-chip ber-tint arah, judul 1 baris, detail 2 baris, waktu di kanan.
+// (DESIGN_SYSTEM.md §5.16): icon-chip ber-tint arah (atau gradient kalau `gradientColors` diisi),
+// judul 1 baris, detail 2 baris, waktu di kanan.
 export default function ActivityRow(props: ActivityRowProps) {
-  const { name, detail, time, direction } = props;
+  const { name, detail, time, direction, gradientColors } = props;
   const color = directionColor[direction];
 
   return (
     <View style={styles.row}>
-      <View style={[styles.iconWrap, { backgroundColor: `${color}1F` }]}>
-        <Icon name="entry-exit" size={15} color={color} />
-      </View>
+      {gradientColors ? (
+        <GradientIconChip icon="entry-exit" colors={gradientColors} size={32} iconSize={15} radius={10} style={styles.iconWrap} />
+      ) : (
+        <View style={[styles.iconWrap, { backgroundColor: `${color}1F` }]}>
+          <Icon name="entry-exit" size={15} color={color} />
+        </View>
+      )}
       <View style={styles.textGroup}>
         <Text style={styles.title} numberOfLines={1}>
           {name}

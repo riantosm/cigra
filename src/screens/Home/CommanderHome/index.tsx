@@ -4,6 +4,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
@@ -19,7 +20,7 @@ import type { HomeWeatherWidgetHandle } from '@/screens/Home/HomeWeatherWidget';
 import QuickActionButton from '@/screens/Home/QuickActionButton';
 import type { QuickActionButtonProps } from '@/screens/Home/QuickActionButton';
 import QuickActionSheet from '@/screens/Home/QuickActionSheet';
-import StatCard from '@/screens/Home/StatCard';
+import SituationHeroCard from '@/screens/Home/SituationHeroCard';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
@@ -28,7 +29,7 @@ import { getDashboardSituationApi } from '@/services/api/dashboard.service';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
-import { cardShadow } from '@/theme/shadows';
+import { cardShadow, ctaPrimaryShadow, smallButtonShadow } from '@/theme/shadows';
 import { contentEnterTransition } from '@/utils/motion';
 import { cleanValue, formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 import type {
@@ -93,16 +94,23 @@ function toSituationStats(data: DashboardSituation | null): SituationStat[] {
   return [total, ...rest].slice(0, 4);
 }
 
-// Samakan dengan halaman "Pengumuman" (screens/Announcements).
-const ANNOUNCEMENT_META: Record<string, { icon: IconName; color: string; surface: string }> = {
-  alert: { icon: 'alert-triangle', color: colors.danger, surface: colors.dangerSurface },
-  announcement: { icon: 'megaphone', color: colors.warning, surface: colors.chipSurface },
-  info: { icon: 'info', color: colors.primary, surface: colors.primarySurface },
+// Samakan dengan halaman "Pengumuman" (screens/Announcements). `gradient` = pasangan token
+// gradient yang sudah ada di colors.ts (DESIGN_SYSTEM.md "Aksen Gradient") — dipakai chip ikon.
+const ANNOUNCEMENT_META: Record<string, { icon: IconName; color: string; surface: string; gradient: readonly [string, string] }> = {
+  alert: { icon: 'alert-triangle', color: colors.danger, surface: colors.dangerSurface, gradient: [colors.gradientDangerStart, colors.danger] },
+  announcement: { icon: 'megaphone', color: colors.warning, surface: colors.chipSurface, gradient: [colors.gradientWarnStart, colors.warning] },
+  info: { icon: 'info', color: colors.primary, surface: colors.primarySurface, gradient: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd] },
 };
 
 function announcementMeta(type: string) {
   return ANNOUNCEMENT_META[type] ?? ANNOUNCEMENT_META.announcement;
 }
+
+// Chip ikon gradient arah pergerakan (Aktivitas Terbaru) — hijau utk masuk, amber utk keluar.
+const DIRECTION_GRADIENT: Record<'in' | 'out', readonly [string, string]> = {
+  in: [colors.gradientSuccessStart, colors.success],
+  out: [colors.gradientWarnStart, colors.warning],
+};
 
 function movementDetail(item: ActivityMovement): string {
   const head = cleanValue(item.note) ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
@@ -190,18 +198,21 @@ export default function CommanderHome(props: CommanderHomeProps) {
       icon: 'profile',
       label: 'Distribusi Personel',
       color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'personnel' }),
     },
     {
       icon: 'users',
       label: 'Keluarga (Persit)',
       color: colors.gradientFamilyEnd,
+      gradientColors: [colors.gradientFamilyStart, colors.gradientFamilyEnd],
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'persit' }),
     },
     {
       icon: 'megaphone',
       label: 'Kirim Pengumuman',
       color: colors.warning,
+      gradientColors: [colors.gradientWarnStart, colors.warning],
       onPress: () => navigation.navigate(ROUTES.sendAnnouncement),
     },
     ...(canManageRollCall
@@ -210,6 +221,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
             icon: 'clipboard-check' as const,
             label: 'Kekuatan Apel',
             color: colors.primary,
+            gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd] as const,
             onPress: () => navigation.navigate(ROUTES.rollCallList),
           },
         ]
@@ -218,54 +230,68 @@ export default function CommanderHome(props: CommanderHomeProps) {
       icon: 'route',
       label: 'Monitoring Patroli',
       color: colors.success,
+      gradientColors: [colors.gradientSuccessStart, colors.success],
       onPress: () => navigation.navigate(ROUTES.patrolMonitoring),
     },
     {
       icon: 'mail',
       label: 'Disposisi Surat',
       color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.incomingLetterList),
     },
     {
       icon: 'map-pin',
       label: 'Peta Personel',
       color: colors.success,
+      gradientColors: [colors.gradientSuccessStart, colors.success],
       onPress: () => navigation.navigate(ROUTES.personnelTracking),
     },
     {
       icon: 'car',
       label: 'Kendaraan',
       color: colors.gradientEntryStart,
+      gradientColors: [colors.gradientEntryStart, colors.gradientEntryEnd],
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'vehicles' }),
     },
     {
       icon: 'weapon',
       label: 'Kategori Senjata',
       color: colors.gradientWeaponStart,
+      gradientColors: [colors.gradientWeaponStart, colors.gradientWeaponEnd],
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'weapon-categories' }),
     },
     {
       icon: 'weapon',
       label: 'Distribusi Senjata',
       color: colors.gradientHealthStart,
+      gradientColors: [colors.gradientHealthStart, colors.gradientHealthEnd],
       onPress: () => navigation.navigate(ROUTES.catalogList, { resource: 'weapon-assignments' }),
     },
     {
       icon: 'emergency',
       label: 'Alarm Satuan',
       color: colors.gradientWeaponStart,
+      gradientColors: [colors.gradientWeaponStart, colors.gradientWeaponEnd],
       onPress: () => navigation.navigate(ROUTES.alarmSatuan),
     },
     {
       icon: 'handbook',
       label: 'Buku Saku',
       color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.bukuSaku),
     },
   ];
   const gridActions: QuickActionButtonProps[] = [
     ...quickActions.slice(0, VISIBLE_QUICK_ACTION_COUNT),
-    { icon: 'grid', label: 'Lainnya', color: colors.primary, onPress: () => setIsQuickActionSheetVisible(true) },
+    {
+      icon: 'grid',
+      label: 'Lainnya',
+      color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
+      onPress: () => setIsQuickActionSheetVisible(true),
+    },
   ];
   const quickActionRows: QuickActionButtonProps[][] = [];
   for (let i = 0; i < gridActions.length; i += 4) {
@@ -304,6 +330,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
                     icon={action.icon}
                     label={action.label}
                     color={action.color}
+                    gradientColors={action.gradientColors}
                     onPress={action.onPress}
                     style={styles.quickActionCell}
                   />
@@ -327,47 +354,14 @@ export default function CommanderHome(props: CommanderHomeProps) {
               <Text style={styles.emptyRow}>Ringkasan situasi belum tersedia.</Text>
             </View>
           ) : (
-            <View style={styles.statGrid}>
-              {[situationStats.slice(0, 2), situationStats.slice(2, 4)]
-                .filter(row => row.length > 0)
-                .map((row, rowIndex) => (
-                  <View key={rowIndex} style={styles.statRow}>
-                    {row.map(stat => (
-                      <StatCard
-                        key={stat.label}
-                        icon={stat.icon}
-                        label={stat.label}
-                        value={stat.value}
-                        meta={stat.meta}
-                        color={stat.color}
-                        percent={stat.percent}
-                      />
-                    ))}
-                  </View>
-                ))}
-            </View>
+            <SituationHeroCard
+              total={situationStats[0]?.value ?? '0'}
+              stats={situationStats.slice(1)}
+              activeAlerts={situation?.active_alerts ?? 0}
+              onPressAlerts={() => navigation.navigate(ROUTES.emergencyList)}
+              style={styles.situationHero}
+            />
           )}
-
-          <PressableScale
-            scaleTo={0.98}
-            onPress={() => navigation.navigate(ROUTES.emergencyList)}
-            contentStyle={styles.alertBanner}>
-            <View style={styles.alertIconChip}>
-              <Icon name="emergency" size={20} color={colors.danger} />
-            </View>
-            <View style={styles.alertTextGroup}>
-              <Text style={styles.alertTitle}>
-                {situation?.active_alerts ?? 0} Sinyal Darurat Aktif
-              </Text>
-              <Text style={styles.alertSubtitle}>
-                {(situation?.active_alerts ?? 0) > 0 ? 'Perhatian diperlukan' : 'Tidak ada yang aktif'}
-              </Text>
-            </View>
-            <View style={styles.alertLink}>
-              <Text style={styles.alertLinkText}>Lihat Detail</Text>
-              <Icon name="chevron-right" size={16} color={colors.dangerText} />
-            </View>
-          </PressableScale>
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
@@ -396,6 +390,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
                     detail={movementDetail(movement)}
                     time={formatRelativeTime(movement.occurred_at) ?? '-'}
                     direction={movement.direction === 'out' ? 'out' : 'in'}
+                    gradientColors={DIRECTION_GRADIENT[movement.direction === 'out' ? 'out' : 'in']}
                   />
                 </PressableScale>
               ))
@@ -427,6 +422,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
                       sender={item.created_by?.name ?? 'Komando'}
                       time={formatRelativeTime(item.published_at) ?? '-'}
                       color={meta.color}
+                      gradientColors={meta.gradient}
                     />
                   </PressableScale>
                 );
@@ -449,11 +445,32 @@ export default function CommanderHome(props: CommanderHomeProps) {
             <PressableScale
               scaleTo={0.98}
               onPress={() => navigation.navigate(ROUTES.personnelMap)}
-              style={styles.mapPreview}
-              contentStyle={styles.mapPreviewContent}
+              style={styles.mapRingOuter}
+              contentStyle={styles.mapRingContent}
               accessibilityRole="button"
               accessibilityLabel="Lihat Peta Lengkap">
-              <PersonnelMap personnel={personnelLocations} interactive={false} lite style={styles.mapPreviewMap} />
+              <Svg style={StyleSheet.absoluteFill}>
+                <Defs>
+                  <LinearGradient id="mapRing" x1="0" y1="0" x2="1" y2="1">
+                    <Stop offset="0" stopColor={colors.gradientPrimaryStart} />
+                    <Stop offset="1" stopColor={colors.gradientPrimaryEnd} />
+                  </LinearGradient>
+                </Defs>
+                <Rect width="100%" height="100%" rx={18} fill="url(#mapRing)" />
+              </Svg>
+              <View style={styles.mapPreview}>
+                <PersonnelMap personnel={personnelLocations} interactive={false} lite style={styles.mapPreviewMap} />
+                <View style={styles.mapLegend}>
+                  <View style={styles.mapLegendDot} />
+                  <Text style={styles.mapLegendText}>
+                    {personnelLocations.length}/{situation?.total_personnel ?? '-'} dipantau
+                  </Text>
+                </View>
+                <View style={styles.mapPill}>
+                  <Icon name="map-pin" size={14} color={colors.primaryForeground} />
+                  <Text style={styles.mapPillText}>Peta Lengkap</Text>
+                </View>
+              </View>
             </PressableScale>
           )}
         </MotiView>
@@ -471,6 +488,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
         icon={selectedNotice ? announcementMeta(selectedNotice.type).icon : 'megaphone'}
         iconColor={selectedNotice ? announcementMeta(selectedNotice.type).color : colors.primary}
         iconSurface={selectedNotice ? announcementMeta(selectedNotice.type).surface : colors.primarySurface}
+        gradientColors={selectedNotice ? announcementMeta(selectedNotice.type).gradient : ANNOUNCEMENT_META.info.gradient}
         title={selectedNotice?.title ?? ''}
         body={selectedNotice?.body ?? ''}
         metaLines={[
@@ -543,60 +561,8 @@ const styles = StyleSheet.create({
   quickActionCell: {
     flex: 1,
   },
-  statGrid: {
-    gap: 10,
-    marginBottom: 20,
-  },
-  statRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  alertBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.alertBannerBorder,
-    backgroundColor: colors.alertBannerStart,
+  situationHero: {
     marginBottom: 24,
-    shadowColor: colors.danger,
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
-  },
-  alertIconChip: {
-    height: 38,
-    width: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-  alertTextGroup: {
-    flex: 1,
-    gap: 2,
-  },
-  alertLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  alertLinkText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.dangerText,
-  },
-  alertTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.dangerText,
-  },
-  alertSubtitle: {
-    fontSize: 12,
-    color: colors.danger,
   },
   listCard: {
     paddingHorizontal: 14,
@@ -616,19 +582,63 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     paddingVertical: 16,
   },
-  mapPreview: {
-    height: 160,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
+  mapRingOuter: {
     marginBottom: 24,
   },
-  mapPreviewContent: {
-    flex: 1,
+  mapRingContent: {
+    padding: 2,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  mapPreview: {
+    height: 176,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   mapPreviewMap: {
     flex: 1,
+  },
+  mapLegend: {
+    position: 'absolute',
+    left: 12,
+    top: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: colors.floatingSurface,
+    ...smallButtonShadow,
+  },
+  mapLegendDot: {
+    height: 6,
+    width: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+  },
+  mapLegendText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.heading,
+  },
+  mapPill: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: colors.primary,
+    ...ctaPrimaryShadow,
+  },
+  mapPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primaryForeground,
   },
   mapPlaceholder: {
     alignItems: 'center',

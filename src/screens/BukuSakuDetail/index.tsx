@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import RichTextContent from '@/components/molecules/RichTextContent';
@@ -105,9 +106,14 @@ export default function BukuSakuDetailScreen(props: Props) {
           </View>
         ) : article?.type === 'record_display' ? (
           <View style={styles.recordCard}>
-            <View style={styles.recordIcon}>
-              <Icon name="id-card" size={20} color={colors.primary} />
-            </View>
+            <GradientIconChip
+              icon="id-card"
+              colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+              size={44}
+              iconSize={20}
+              radius={13}
+              style={styles.recordIcon}
+            />
             <Text style={styles.recordTitle}>Rekam nilai prajurit</Text>
             <Text style={styles.recordMeta}>
               {article.record_type
@@ -230,12 +236,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   recordIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.chipSurface,
     marginBottom: 4,
   },
   recordTitle: {

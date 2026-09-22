@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
-import Icon from '@/components/atoms/Icon';
-import type { IconName } from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
 import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
@@ -13,14 +12,36 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAnnouncements } from '@/store/slices/announcementSlice';
 import { colors } from '@/theme/colors';
 import type { Announcement } from '@/types';
+import type { IconName } from '@/components/atoms/Icon';
 import { formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.announcements>;
 
-const typeMeta: Record<string, { label: string; icon: IconName; color: string; surface: string }> = {
-  alert: { label: 'Peringatan', icon: 'alert-triangle', color: colors.danger, surface: colors.dangerSurface },
-  announcement: { label: 'Pengumuman', icon: 'megaphone', color: colors.warning, surface: colors.chipSurface },
-  info: { label: 'Info', icon: 'info', color: colors.primary, surface: colors.primarySurface },
+const typeMeta: Record<
+  string,
+  { label: string; icon: IconName; color: string; surface: string; gradient: readonly [string, string] }
+> = {
+  alert: {
+    label: 'Peringatan',
+    icon: 'alert-triangle',
+    color: colors.danger,
+    surface: colors.dangerSurface,
+    gradient: [colors.gradientDangerStart, colors.danger],
+  },
+  announcement: {
+    label: 'Pengumuman',
+    icon: 'megaphone',
+    color: colors.warning,
+    surface: colors.chipSurface,
+    gradient: [colors.gradientWarnStart, colors.warning],
+  },
+  info: {
+    label: 'Info',
+    icon: 'info',
+    color: colors.primary,
+    surface: colors.primarySurface,
+    gradient: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
+  },
 };
 
 function metaFor(type: string) {
@@ -81,9 +102,7 @@ export default function AnnouncementsScreen(props: Props) {
           return (
             <PressableScale scaleTo={0.98} onPress={() => setSelected(item)}>
               <Card style={styles.row}>
-                <View style={[styles.iconCircle, { backgroundColor: m.surface }]}>
-                  <Icon name={m.icon} size={18} color={m.color} />
-                </View>
+                <GradientIconChip icon={m.icon} colors={m.gradient} size={40} iconSize={18} radius={12} />
                 <View style={styles.textGroup}>
                   <View style={styles.topRow}>
                     <View style={[styles.typePill, { backgroundColor: m.surface }]}>
@@ -113,6 +132,7 @@ export default function AnnouncementsScreen(props: Props) {
         icon={selected ? metaFor(selected.type).icon : 'megaphone'}
         iconColor={selected ? metaFor(selected.type).color : colors.primary}
         iconSurface={selected ? metaFor(selected.type).surface : colors.primarySurface}
+        gradientColors={selected ? metaFor(selected.type).gradient : typeMeta.info.gradient}
         title={selected?.title ?? ''}
         body={selected?.body ?? ''}
         metaLines={[
@@ -150,13 +170,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-  },
-  iconCircle: {
-    height: 40,
-    width: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   textGroup: {
     flex: 1,

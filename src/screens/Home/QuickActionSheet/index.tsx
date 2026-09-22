@@ -38,6 +38,7 @@ export default function QuickActionSheet(props: QuickActionSheetProps) {
                 label={action.label}
                 color={action.color}
                 onPress={action.onPress}
+                gradientColors={action.gradientColors}
                 style={styles.cell}
               />
             ))}

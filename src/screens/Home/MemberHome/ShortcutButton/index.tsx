@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { gradientForColor } from '@/utils/gradientColor';
 
 export interface ShortcutButtonProps {
   icon: IconName;
@@ -14,16 +15,14 @@ export interface ShortcutButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// Tombol di baris "Akses Cepat" pada Home Anggota — ikon bulat berwarna + label, tanpa border
+// Tombol di baris "Akses Cepat" pada Home Anggota — ikon bulat gradient + label, tanpa border
 // kartu (beda dengan QuickActionButton milik CommanderHome yang berupa kartu).
 export default function ShortcutButton(props: ShortcutButtonProps) {
   const { icon, color, label, onPress, style } = props;
 
   return (
     <PressableScale onPress={onPress} style={style} contentStyle={styles.button}>
-      <View style={[styles.iconWrap, { backgroundColor: `${color}1A` }]}>
-        <Icon name={icon} size={20} color={color} />
-      </View>
+      <GradientIconChip icon={icon} colors={gradientForColor(color)} size={44} iconSize={20} radius={16} />
       <Text style={styles.label} numberOfLines={2}>
         {label}
       </Text>
@@ -36,13 +35,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingVertical: 4,
-  },
-  iconWrap: {
-    height: 44,
-    width: 44,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   label: {
     fontSize: 11,

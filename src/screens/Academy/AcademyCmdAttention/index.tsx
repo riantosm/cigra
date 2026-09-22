@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import type { IconName } from '@/components/atoms/Icon';
 import Card from '@/components/molecules/Card';
 import { ROUTES } from '@/navigation/paths';
@@ -39,8 +39,7 @@ export default function AcademyCmdAttentionScreen(props: Props) {
   const rows: {
     key: string;
     icon: IconName;
-    surface: string;
-    color: string;
+    gradient: readonly [string, string];
     title: string;
     sub: string;
     value: number;
@@ -48,8 +47,7 @@ export default function AcademyCmdAttentionScreen(props: Props) {
     {
       key: 'not_completed',
       icon: 'clipboard-check',
-      surface: colors.warningSurface,
-      color: colors.warningText,
+      gradient: [colors.gradientWarnStart, colors.warning],
       title: 'Program belum selesai',
       sub: 'Anggota yang belum menuntaskan program',
       value: data?.not_completed ?? 0,
@@ -57,8 +55,7 @@ export default function AcademyCmdAttentionScreen(props: Props) {
     {
       key: 'failed',
       icon: 'close',
-      surface: colors.dangerSurface,
-      color: colors.danger,
+      gradient: [colors.gradientDangerStart, colors.danger],
       title: 'Tidak lulus assessment',
       sub: 'Perlu remedial / pengulangan',
       value: data?.failed ?? 0,
@@ -66,8 +63,7 @@ export default function AcademyCmdAttentionScreen(props: Props) {
     {
       key: 'pending',
       icon: 'clock',
-      surface: colors.primarySurface,
-      color: colors.primary,
+      gradient: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       title: 'Praktik belum diverifikasi',
       sub: 'Menunggu instruktur',
       value: data?.pending_verifications ?? 0,
@@ -84,9 +80,7 @@ export default function AcademyCmdAttentionScreen(props: Props) {
       onRetry={load}>
       {rows.map(row => (
         <Card key={row.key} style={styles.row}>
-          <View style={[styles.icon, { backgroundColor: row.surface }]}>
-            <Icon name={row.icon} size={19} color={row.color} />
-          </View>
+          <GradientIconChip icon={row.icon} colors={row.gradient} size={40} iconSize={19} radius={12} />
           <View style={styles.flex}>
             <Text style={styles.title}>{row.title}</Text>
             <Text style={styles.sub}>{row.sub}</Text>
@@ -101,13 +95,6 @@ export default function AcademyCmdAttentionScreen(props: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: { fontSize: 14, fontWeight: '700', color: colors.heading },
   sub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   value: { fontSize: 20, fontWeight: '800', color: colors.heading },

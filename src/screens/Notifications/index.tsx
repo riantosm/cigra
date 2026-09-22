@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
@@ -20,6 +21,15 @@ import type { AppNotification } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 
 type Props = RootStackScreenProps<typeof ROUTES.notifications>;
+
+// Backend mengirim beberapa varian type khusus disposisi yang belum ada di API_CONTRACT.md dan
+// tidak konsisten namanya (`disposition_completed` / `disposition_recipient_completed` /
+// `disposition_follow_up` / `letter_disposition` / dst) — dicek lewat substring "disposition"
+// (bukan daftar tetap / prefix) supaya varian baru ikut kepetakan otomatis, ke ikon+gradient "mail"
+// yang sama dengan quick action Disposisi Surat.
+function isDispositionType(type: string): boolean {
+  return type.includes('disposition');
+}
 
 const typeIcon: Record<string, IconName> = {
   emergency: 'emergency',
@@ -42,8 +52,22 @@ const typeSurface: Record<string, string> = {
   system: colors.chipSurface,
 };
 
+// "Aksen Gradient" (DESIGN_SYSTEM.md) — samakan dengan chip ikon Home/Pengumuman. `system` sengaja
+// tidak punya gradient (notifikasi generik, tanpa identitas warna kuat) — tetap chip tint flat.
+const typeGradient: Partial<Record<string, readonly [string, string]>> = {
+  emergency: [colors.gradientDangerStart, colors.danger],
+  announcement: [colors.gradientWarnStart, colors.warning],
+  info: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
+};
+
 function iconFor(type: string): IconName {
+  if (isDispositionType(type)) return 'mail';
   return typeIcon[type] ?? 'info';
+}
+
+function gradientFor(type: string): readonly [string, string] | undefined {
+  if (isDispositionType(type)) return [colors.gradientPersonnelStart, colors.gradientPersonnelEnd];
+  return typeGradient[type];
 }
 
 export default function NotificationsScreen(props: Props) {
@@ -151,12 +175,17 @@ export default function NotificationsScreen(props: Props) {
         renderItem={({ item }) => {
           const color = typeColor[item.type] ?? colors.primary;
           const surface = typeSurface[item.type] ?? colors.primarySurface;
+          const gradient = gradientFor(item.type);
           return (
             <PressableScale scaleTo={0.98} onPress={() => handlePress(item)}>
               <Card style={[styles.row, !item.read && styles.rowUnread]}>
-                <View style={[styles.iconCircle, { backgroundColor: surface }]}>
-                  <Icon name={iconFor(item.type)} size={18} color={color} />
-                </View>
+                {gradient ? (
+                  <GradientIconChip icon={iconFor(item.type)} colors={gradient} size={40} iconSize={18} radius={12} />
+                ) : (
+                  <View style={[styles.iconCircle, { backgroundColor: surface }]}>
+                    <Icon name={iconFor(item.type)} size={18} color={color} />
+                  </View>
+                )}
                 <View style={styles.textGroup}>
                   <Text style={styles.title} numberOfLines={1}>
                     {item.title}
@@ -179,6 +208,7 @@ export default function NotificationsScreen(props: Props) {
         icon={selected ? iconFor(selected.type) : 'info'}
         iconColor={(selected && typeColor[selected.type]) || colors.primary}
         iconSurface={(selected && typeSurface[selected.type]) || colors.primarySurface}
+        gradientColors={selected ? gradientFor(selected.type) : typeGradient.info}
         title={selected?.title ?? ''}
         body={selected?.body ?? ''}
         metaLines={[selected ? formatRelativeTime(selected.created_at) ?? undefined : undefined]}

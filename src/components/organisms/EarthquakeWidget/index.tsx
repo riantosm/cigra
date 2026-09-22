@@ -1,11 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
+import { cardShadow } from '@/theme/shadows';
 import type { EarthquakeLatest } from '@/types';
 import { earthquakeMeta } from '@/utils/earthquake';
+import { gradientForColor } from '@/utils/gradientColor';
 import { joinFields } from '@/utils/format';
 
 export interface EarthquakeWidgetProps {
@@ -26,6 +29,8 @@ export default function EarthquakeWidget(props: EarthquakeWidgetProps) {
 
   const meta = earthquakeMeta(latest.magnitude, latest.is_tsunami_potential);
   const dateLabel = joinFields(latest.tanggal, latest.jam);
+  const [gradFrom, gradTo] = gradientForColor(meta.accent);
+  const gradientId = `eqMag-${gradFrom}-${gradTo}`.replace(/[^a-zA-Z0-9-]/g, '');
 
   return (
     <PressableScale
@@ -37,9 +42,18 @@ export default function EarthquakeWidget(props: EarthquakeWidgetProps) {
       accessibilityRole="button"
       accessibilityLabel={`Gempa terkini magnitudo ${latest.magnitude}, ${latest.wilayah}`}>
       <View style={styles.headRow}>
-        <View style={[styles.magBadge, { backgroundColor: `${meta.accent}1F` }]}>
-          <Text style={[styles.magValue, { color: meta.accent }]}>{latest.magnitude.toFixed(1)}</Text>
-          <Text style={[styles.magUnit, { color: meta.accent }]}>SR</Text>
+        <View style={styles.magBadge}>
+          <Svg style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={gradFrom} />
+                <Stop offset="1" stopColor={gradTo} />
+              </LinearGradient>
+            </Defs>
+            <Rect width="100%" height="100%" rx={10} fill={`url(#${gradientId})`} />
+          </Svg>
+          <Text style={styles.magValue}>{latest.magnitude.toFixed(1)}</Text>
+          <Text style={styles.magUnit}>SR</Text>
         </View>
         <Text style={styles.kicker} numberOfLines={1}>
           GEMPA TERKINI
@@ -75,6 +89,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
+    ...cardShadow,
   },
   headRow: {
     flexDirection: 'row',
@@ -88,16 +103,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   magValue: {
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: -0.5,
+    color: colors.primaryForeground,
   },
   magUnit: {
     fontSize: 8,
     fontWeight: '700',
     marginTop: -2,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   kicker: {
     flex: 1,

@@ -793,19 +793,39 @@ Grid shows the first `VISIBLE_QUICK_ACTION_COUNT` (7) + a "Lainnya" card that op
 (a `BottomSheet` listing the full set); the Kekuatan Apel + Patroli cards push the tail cards (Distribusi
 Senjata, …) into the sheet. `quickActionRows` chunks the visible set into rows of 4 (last row padded with empty spacer
 `View`s so a short row's cards don't stretch). There is no separate "Direktori Katalog" card section and no "Distribusi Status Personel" strip —
-both were folded away / removed. The red banner under "Ringkasan Situasi" reads "N Sinyal Darurat Aktif"
-(N = `dashboard/situation` `active_alerts`) and its "Lihat Detail" navigates to `ROUTES.emergencyList`.
+both were folded away / removed.
+
+**Redesign 2026-09-22 ("Aksen Gradient", see DESIGN_SYSTEM.md §5.13b for the full pattern):**
+`quickActions` items now also carry a `gradientColors: [start,end]` pair (existing gradient tokens
+only) — `QuickActionButton` renders an `atoms/GradientIconChip` (white icon on a 2-tone gradient
+chip) instead of the old flat `${color}1F` tint whenever it's passed; `QuickActionSheet` ("Lainnya"
+bottom sheet) forwards the same `gradientColors` so it matches the grid. The old "Ringkasan Situasi"
+2×2 `StatCard` grid + separate red alert banner are **gone** — replaced by one
+`screens/Home/SituationHeroCard`: gradient-primary header (`situationStats[0]` as the big total),
+a strip that reads "N Sinyal Darurat Aktif — perhatian diperlukan" (danger-tinted, `active_alerts >
+0`) or "Tidak ada sinyal darurat aktif" (calm success tint, `active_alerts === 0`) — either state is
+a `PressableScale` to `ROUTES.emergencyList` — then a mini-stat row (`situationStats.slice(1)`,
+divider lines instead of separate boxed cards). `ActivityRow`/`AnnouncementRow` also take an optional
+`gradientColors` prop now (direction/type → gradient pair, see `DIRECTION_GRADIENT`/
+`ANNOUNCEMENT_META.*.gradient` in this file); the "Peta Personel Real-time" preview card gained a
+thin gradient border ring + a floating "`N`/`total` dipantau" chip + a floating "Peta Lengkap" pill
+(same `PersonnelMap`, same single `PressableScale`, purely decorative additions). None of this needed
+a new native dependency (`react-native-svg` was already in use).
 
 **Data (real API):** "Ringkasan Situasi" = `GET /dashboard/situation` (`toSituationStats` maps
-`total_personnel` + `summary[]` → up to 4 `StatCard`s, icon/colour per `key` in `SITUATION_META`);
-"Aktivitas Terbaru" = `GET /activities/movements?per_page=3` → `recentActivity` (`movements.slice(0,3)`),
-`ActivityRow` wrapped in `PressableScale` → personnel `CatalogDetail`, "Lihat Semua" → `ROUTES.activityMovements`
-(`src/screens/ActivityMovements/index.tsx` — full `GET /activities/movements` list, `per_page=20`, pull-to-
-refresh + "muat lebih banyak", rows → personnel detail); "Pengumuman Terbaru" = `announcementSlice` items
-(`recentAnnouncements`, first 3), each row `PressableScale` → `MessageDetailSheet`, "Lihat Semua" →
-`ROUTES.announcements`. All refetched on pull-to-refresh; announcements + notifications loaded by
-`Home/index.tsx`, dashboard + movements by `CommanderHome`'s own `loadDashboard`.
-`ANNOUNCEMENT_META` (icon/colour/surface) matches `screens/Announcements` and `SendAnnouncement`.
+`total_personnel` + `summary[]` → up to 4 stats, icon/colour per `key` in `SITUATION_META`, fed into
+`SituationHeroCard`); "Aktivitas Terbaru" = `GET /activities/movements?per_page=3` → `recentActivity`
+(`movements.slice(0,3)`), `ActivityRow` wrapped in `PressableScale` → personnel `CatalogDetail`,
+"Lihat Semua" → `ROUTES.activityMovements` (`src/screens/ActivityMovements/index.tsx` — full
+`GET /activities/movements` list, `per_page=20`, pull-to-refresh + "muat lebih banyak", rows →
+personnel detail; its `listCard`'s `paddingBottom` is `28`, not a tiny value — that's the screen's
+only safe-area clearance since a bare `FlatList` `contentContainerStyle` is both its "card" look and
+its scroll padding here); "Pengumuman Terbaru" = `announcementSlice` items (`recentAnnouncements`,
+first 3), each row `PressableScale` → `MessageDetailSheet`, "Lihat Semua" → `ROUTES.announcements`.
+All refetched on pull-to-refresh; announcements + notifications loaded by `Home/index.tsx`, dashboard
++ movements by `CommanderHome`'s own `loadDashboard`. `ANNOUNCEMENT_META` (icon/colour/surface/**gradient**)
+matches `screens/Announcements` and `SendAnnouncement` (`SendAnnouncement`/`typeMeta` there still
+flat-only — not yet migrated to gradient chips, out of scope of the 2026-09-22 pass).
 
 ### Kekuatan Apel (roll call — komandan)
 
@@ -1284,14 +1304,23 @@ Consumers: `MemberIdCard`, `HomeHeader`, `Profile`, `CatalogDetail` header. `res
   Tap row → `markNotificationRead` + **`organisms/MessageDetailSheet`** (read-full bottom sheet — rows are
   clamped to 1–2 lines; no detail endpoint, all text is from the list payload). If the item has an `action`,
   the sheet shows a button (`emergency` → `emergencyDetail`, `emergency_list` → `emergencyList`). Used by
-  **both komandan and anggota**. Contract `API_CONTRACT.md` §3.
+  **both komandan and anggota**. Contract `API_CONTRACT.md` §3. Row icon chip: `emergency`/
+  `announcement`/`info` render `atoms/GradientIconChip` (DESIGN_SYSTEM.md §5.13b); any type whose
+  string **contains** `"disposition"` (backend sends several inconsistent ones — `disposition_completed`,
+  `disposition_recipient_completed`, `disposition_follow_up`, `letter_disposition`, none of them
+  documented in `API_CONTRACT.md` — checked via substring, not an exact list, so a future variant is
+  covered automatically) also gets a gradient chip (`mail` icon, personnel gradient); `system` stays
+  the old flat tint chip on purpose (no strong colour identity).
 - `src/screens/Announcements/index.tsx` — `ROUTES.announcements`, opened from "Lihat Semua" under
   "Pengumuman Terbaru" on **both** Homes + the MemberHome "Pengumuman" shortcut (no longer points at
   Notifications). Full `GET /announcements` list via `announcementSlice` — pull-to-refresh, "muat lebih
   banyak", each row clamped + tap → `MessageDetailSheet` (title + full body + sender/time/`scope_label`).
+  Row icon = `atoms/GradientIconChip` (`typeMeta.*.gradient`, DESIGN_SYSTEM.md §5.13b) — no flat
+  fallback here (unlike `Notifications`), since every `AnnouncementType` has a defined gradient pair.
 - `src/components/organisms/MessageDetailSheet` — shared read-full `BottomSheet` for clamped notification /
-  announcement rows: icon chip + title + meta lines + scrollable body (`maxHeight` 320) + optional
-  `GradientButton` action. No API — fed entirely from the list item.
+  announcement rows: icon chip (`GradientIconChip` when the caller passes `gradientColors`, else the
+  old flat tint) + title + meta lines + scrollable body (`maxHeight` 320) + optional `GradientButton`
+  action. No API — fed entirely from the list item.
 - `src/screens/SendAnnouncement/index.tsx` — "Kirim Pengumuman" quick action. Form (Judul, Isi + char
   counter, Tipe/Kirim-ke via `SegmentedControl`) → `createAnnouncement` thunk → `POST /announcements`
   (`target.scope` from the "Kirim ke" toggle, but **`unit_ids: []` / `role: null` always** — no unit/role

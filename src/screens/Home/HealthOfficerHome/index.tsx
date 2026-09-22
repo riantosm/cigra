@@ -95,18 +95,21 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
       icon: 'clipboard-check' as const,
       label: 'Input Pemeriksaan',
       color: colors.gradientHealthStart,
+      gradientColors: [colors.gradientHealthStart, colors.gradientHealthEnd] as const,
       onPress: () => navigation.navigate(ROUTES.healthPersonnelSearch, { mode: 'input' }),
     },
     {
       icon: 'search' as const,
       label: 'Cari Anggota',
       color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd] as const,
       onPress: () => navigation.navigate(ROUTES.healthPersonnelSearch),
     },
     {
       icon: 'bar-chart' as const,
       label: 'Lihat Dashboard',
       color: colors.gradientHealthEnd,
+      gradientColors: [colors.gradientHealthStart, colors.gradientHealthEnd] as const,
       onPress: () => navigation.navigate(ROUTES.healthDashboard),
     },
   ];
@@ -148,6 +151,7 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
                 icon={action.icon}
                 label={action.label}
                 color={action.color}
+                gradientColors={action.gradientColors}
                 onPress={action.onPress}
                 style={styles.quickActionCell}
                 compact

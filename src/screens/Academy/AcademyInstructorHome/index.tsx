@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import Badge from '@/components/atoms/Badge';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
@@ -62,9 +63,13 @@ export default function AcademyInstructorHome() {
       <Text style={styles.sectionTitle}>Program Saya</Text>
       <PressableScale scaleTo={0.98} onPress={() => navigation.navigate(ROUTES.academyTabPrograms)}>
         <Card style={styles.progRow}>
-          <View style={styles.progIcon}>
-            <Icon name="academy" size={20} color={colors.primary} />
-          </View>
+          <GradientIconChip
+            icon="academy"
+            colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+            size={44}
+            iconSize={20}
+            radius={12}
+          />
           <View style={styles.flex}>
             <Text style={styles.progTitle}>{programs.length} Program Ditangani</Text>
             <Text style={styles.progSub}>Ketuk untuk melihat semua program yang Anda tangani</Text>
@@ -78,9 +83,13 @@ export default function AcademyInstructorHome() {
         scaleTo={0.98}
         onPress={() => navigation.navigate(ROUTES.academyTabVerifications)}>
         <Card style={styles.verifRow}>
-          <View style={styles.verifIcon}>
-            <Icon name="clipboard-check" size={19} color={colors.primary} />
-          </View>
+          <GradientIconChip
+            icon="clipboard-check"
+            colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+            size={44}
+            iconSize={19}
+            radius={12}
+          />
           <View style={styles.flex}>
             <Text style={styles.progTitle}>{pendingVerif ?? 0} Menunggu Verifikasi</Text>
             <Text style={styles.progSub}>Hasil praktik mandiri anggota yang perlu ditinjau</Text>
@@ -137,25 +146,9 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.heading, marginTop: 12 },
   empty: { paddingVertical: 24 },
   progRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  progIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.chipSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   progTitle: { fontSize: 15, fontWeight: '700', color: colors.heading },
   progSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   verifRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  verifIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.primarySurface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   card: { gap: 10 },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
   cardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.heading, lineHeight: 20 },

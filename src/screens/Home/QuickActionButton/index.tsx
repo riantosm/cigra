@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
@@ -18,18 +19,32 @@ export interface QuickActionButtonProps {
   style?: StyleProp<ViewStyle>;
   // Grid 3 kolom dengan label panjang (HealthOfficerHome) — label 12px, ikut artboard-nya.
   compact?: boolean;
+  // "Aksen Gradient" (DESIGN_SYSTEM.md) — chip jadi 2-tone gradient (ikon putih) bukan tint flat.
+  // Opsional supaya pemanggil lama tanpa gradient tetap tampil seperti sebelumnya.
+  gradientColors?: readonly [string, string];
 }
 
-// Kartu quick-action canvas (DESIGN_SYSTEM.md §4): icon-chip ber-tint warna kategori + label
-// 2 baris di bawahnya.
+// Kartu quick-action canvas (DESIGN_SYSTEM.md §4): icon-chip ber-tint warna kategori (atau
+// gradient 2-tone kalau `gradientColors` diisi) + label 2 baris di bawahnya.
 export default function QuickActionButton(props: QuickActionButtonProps) {
-  const { icon, label, color, onPress, style, compact } = props;
+  const { icon, label, color, onPress, style, compact, gradientColors } = props;
 
   return (
     <PressableScale onPress={onPress} style={style} contentStyle={styles.card}>
-      <View style={[styles.chip, { backgroundColor: `${color}1F` }]}>
-        <Icon name={icon} size={compact ? 24 : 22} color={color} />
-      </View>
+      {gradientColors ? (
+        <GradientIconChip
+          icon={icon}
+          colors={gradientColors}
+          size={40}
+          iconSize={compact ? 24 : 22}
+          radius={12}
+          style={styles.chip}
+        />
+      ) : (
+        <View style={[styles.chip, { backgroundColor: `${color}1F` }]}>
+          <Icon name={icon} size={compact ? 24 : 22} color={color} />
+        </View>
+      )}
       <Text style={[styles.label, compact && styles.labelCompact]} numberOfLines={2}>
         {label}
       </Text>

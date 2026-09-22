@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import GradientButton from '@/components/atoms/GradientButton';
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import AcademyScreen from '@/screens/Academy/shared/AcademyScreen';
@@ -56,10 +56,13 @@ export default function AcademyAttemptResultScreen(props: Props) {
       {result ? (
         <>
           <View style={styles.badgeWrap}>
-            <View
-              style={[styles.badge, { backgroundColor: passed ? colors.success : colors.danger }]}>
-              <Icon name={passed ? 'check' : 'close'} size={32} color={colors.surface} />
-            </View>
+            <GradientIconChip
+              icon={passed ? 'check' : 'close'}
+              colors={passed ? [colors.gradientSuccessStart, colors.success] : [colors.gradientDangerStart, colors.danger]}
+              size={76}
+              iconSize={32}
+              radius={38}
+            />
           </View>
 
           <Text style={styles.title}>{passed ? 'LULUS' : 'TIDAK LULUS'}</Text>
@@ -93,13 +96,6 @@ export default function AcademyAttemptResultScreen(props: Props) {
 const styles = StyleSheet.create({
   content: { alignItems: 'center', paddingTop: 24 },
   badgeWrap: { marginTop: 12 },
-  badge: {
-    width: 76,
-    height: 76,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: { fontSize: 20, fontWeight: '800', color: colors.heading, marginTop: 12, letterSpacing: -0.3 },
   card: {
     alignSelf: 'stretch',

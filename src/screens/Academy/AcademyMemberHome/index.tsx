@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import GradientButton from '@/components/atoms/GradientButton';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
@@ -100,9 +101,13 @@ export default function AcademyMemberHome() {
           scaleTo={0.98}
           onPress={() => navigation.navigate(ROUTES.academyTabResults)}>
           <Card style={styles.pendingCard}>
-            <View style={styles.pendingIcon}>
-              <Icon name="clock" size={19} color={colors.warningText} />
-            </View>
+            <GradientIconChip
+              icon="clock"
+              colors={[colors.gradientWarnStart, colors.warning]}
+              size={38}
+              iconSize={19}
+              radius={12}
+            />
             <View style={styles.flex}>
               <Text style={styles.pendingTitle}>Menunggu Verifikasi</Text>
               <Text style={styles.pendingSub}>
@@ -143,14 +148,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.heading, marginTop: 12 },
   empty: { paddingVertical: 24 },
   pendingCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  pendingIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.warningSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   pendingTitle: { fontSize: 14, fontWeight: '700', color: colors.heading },
   pendingSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Card from '@/components/molecules/Card';
 import EmptyState from '@/components/molecules/EmptyState';
 import { ROUTES } from '@/navigation/paths';
@@ -60,9 +60,13 @@ export default function AcademyCmdCompetencyScreen(props: Props) {
           const pct = max > 0 ? (item.total_achieved / max) * 100 : 0;
           return (
             <Card key={item.competency_name} style={styles.row}>
-              <View style={styles.icon}>
-                <Icon name="medal" size={20} color={colors.warningText} />
-              </View>
+              <GradientIconChip
+                icon="medal"
+                colors={[colors.gradientWarnStart, colors.warning]}
+                size={44}
+                iconSize={20}
+                radius={12}
+              />
               <View style={styles.flex}>
                 <Text style={styles.name}>{item.competency_name}</Text>
                 <View style={styles.track}>
@@ -87,14 +91,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   empty: { paddingVertical: 32 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  icon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.warningSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   name: { fontSize: 15, fontWeight: '700', color: colors.heading },
   track: {
     height: 6,

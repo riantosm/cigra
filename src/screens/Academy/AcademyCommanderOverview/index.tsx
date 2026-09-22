@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
@@ -63,24 +64,21 @@ export default function AcademyCommanderOverview() {
       label: 'anggota belum menyelesaikan program',
       value: attention?.not_completed ?? 0,
       icon: 'clipboard-check' as const,
-      surface: colors.warningSurface,
-      color: colors.warningText,
+      gradient: [colors.gradientWarnStart, colors.warning] as const,
     },
     {
       key: 'failed',
       label: 'anggota tidak lulus assessment',
       value: attention?.failed ?? 0,
       icon: 'close' as const,
-      surface: colors.dangerSurface,
-      color: colors.danger,
+      gradient: [colors.gradientDangerStart, colors.danger] as const,
     },
     {
       key: 'pending',
       label: 'hasil praktik menunggu verifikasi',
       value: attention?.pending_verifications ?? 0,
       icon: 'clock' as const,
-      surface: colors.primarySurface,
-      color: colors.primary,
+      gradient: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd] as const,
     },
   ];
 
@@ -124,9 +122,7 @@ export default function AcademyCommanderOverview() {
           scaleTo={0.98}
           onPress={() => navigation.navigate(ROUTES.academyCmdAttention)}>
           <Card style={styles.attentionRow}>
-            <View style={[styles.attentionIcon, { backgroundColor: row.surface }]}>
-              <Icon name={row.icon} size={17} color={row.color} />
-            </View>
+            <GradientIconChip icon={row.icon} colors={row.gradient} size={34} iconSize={17} radius={10} />
             <Text style={styles.attentionText}>
               <Text style={styles.attentionValue}>{row.value}</Text> {row.label}
             </Text>
@@ -217,13 +213,6 @@ const styles = StyleSheet.create({
   stripValue: { fontSize: 18, fontWeight: '800', color: colors.heading },
   stripLabel: { fontSize: 11, color: colors.textMuted, marginTop: 2, textAlign: 'center' },
   attentionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  attentionIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   attentionText: { flex: 1, fontSize: 13, color: colors.text, lineHeight: 18 },
   attentionValue: { fontWeight: '800', color: colors.heading },
   topCard: { paddingHorizontal: 16, paddingVertical: 4 },

@@ -12,6 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import ScreenBackground from '@/components/atoms/ScreenBackground';
@@ -144,9 +145,13 @@ export default function BukuSakuScreen(props: BukuSakuScreenProps) {
                   onPress={() =>
                     navigation.navigate(ROUTES.bukuSakuDetail, { chapter })
                   }>
-                  <View style={styles.rowIcon}>
-                    <Icon name={handbookIcon(chapter.icon)} size={20} color={colors.primary} />
-                  </View>
+                  <GradientIconChip
+                    icon={handbookIcon(chapter.icon)}
+                    colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+                    size={42}
+                    iconSize={20}
+                    radius={13}
+                  />
                   <View style={styles.rowBody}>
                     <Text style={styles.rowTitle}>{chapter.title}</Text>
                     <Text style={styles.rowMeta}>
@@ -211,14 +216,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     ...cardShadow,
-  },
-  rowIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.chipSurface,
   },
   rowBody: {
     flex: 1,

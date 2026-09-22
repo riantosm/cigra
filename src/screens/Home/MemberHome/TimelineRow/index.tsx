@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import { colors } from '@/theme/colors';
+import { gradientForColor } from '@/utils/gradientColor';
 
 export interface TimelineRowProps {
   direction: 'in' | 'out';
@@ -23,9 +24,7 @@ export default function TimelineRow(props: TimelineRowProps) {
 
   return (
     <View style={styles.row}>
-      <View style={[styles.iconWrap, { backgroundColor: `${color}1A` }]}>
-        <Icon name="entry-exit" size={15} color={color} />
-      </View>
+      <GradientIconChip icon="entry-exit" colors={gradientForColor(color)} size={32} iconSize={15} radius={10} />
       <View style={styles.textGroup}>
         <Text style={styles.title} numberOfLines={1}>
           {title}
@@ -47,13 +46,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     paddingVertical: 12,
-  },
-  iconWrap: {
-    height: 32,
-    width: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   textGroup: {
     flex: 1,

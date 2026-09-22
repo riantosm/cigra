@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import Badge from '@/components/atoms/Badge';
 import type { BadgeVariant } from '@/components/atoms/Badge';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
@@ -311,16 +312,14 @@ export default function RollCallDetailScreen(props: Props) {
         <View style={styles.sheetChoices}>
           <ChoiceRow
             icon="check"
-            iconColor={colors.success}
-            iconSurface={colors.successSurface}
+            gradientColors={[colors.gradientSuccessStart, colors.success]}
             title="Tandai Hadir"
             subtitle="Catat personel yang mengikuti apel"
             onPress={() => chooseStatus('present')}
           />
           <ChoiceRow
             icon="alert-triangle"
-            iconColor={colors.danger}
-            iconSurface={colors.dangerSurface}
+            gradientColors={[colors.gradientDangerStart, colors.danger]}
             title="Tandai Tidak Hadir"
             subtitle="Catat personel absen beserta keterangannya"
             onPress={() => chooseStatus('absent')}
@@ -483,17 +482,14 @@ function EntryRow(props: {
 
 function ChoiceRow(props: {
   icon: Parameters<typeof Icon>[0]['name'];
-  iconColor: string;
-  iconSurface: string;
+  gradientColors: readonly [string, string];
   title: string;
   subtitle: string;
   onPress: () => void;
 }) {
   return (
     <PressableScale scaleTo={0.98} onPress={props.onPress} contentStyle={styles.choice}>
-      <View style={[styles.choiceIcon, { backgroundColor: props.iconSurface }]}>
-        <Icon name={props.icon} size={22} color={props.iconColor} />
-      </View>
+      <GradientIconChip icon={props.icon} colors={props.gradientColors} size={46} iconSize={22} radius={14} />
       <View style={styles.choiceBody}>
         <Text style={styles.choiceTitle}>{props.title}</Text>
         <Text style={styles.choiceSubtitle}>{props.subtitle}</Text>
@@ -620,7 +616,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
   },
-  choiceIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   choiceBody: { flex: 1, gap: 2 },
   choiceTitle: { fontSize: 15, fontWeight: '700', color: colors.heading },
   choiceSubtitle: { fontSize: 12, color: colors.textMuted },

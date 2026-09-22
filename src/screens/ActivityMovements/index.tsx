@@ -16,6 +16,12 @@ type Props = RootStackScreenProps<typeof ROUTES.activityMovements>;
 
 const PER_PAGE = 20;
 
+// Chip ikon gradient arah pergerakan — samakan dengan CommanderHome "Aktivitas Terbaru".
+const DIRECTION_GRADIENT: Record<'in' | 'out', readonly [string, string]> = {
+  in: [colors.gradientSuccessStart, colors.success],
+  out: [colors.gradientWarnStart, colors.warning],
+};
+
 function movementDetail(item: ActivityMovement): string {
   const head = cleanValue(item.note) ?? (item.direction === 'out' ? 'Keluar Markas' : 'Masuk Markas');
   return joinFields(head, item.purpose, item.location_label);
@@ -112,6 +118,7 @@ export default function ActivityMovementsScreen(props: Props) {
                   detail={movementDetail(item)}
                   time={formatRelativeTime(item.occurred_at) ?? '-'}
                   direction={item.direction === 'out' ? 'out' : 'in'}
+                  gradientColors={DIRECTION_GRADIENT[item.direction === 'out' ? 'out' : 'in']}
                 />
               </PressableScale>
             )}
@@ -136,7 +143,7 @@ const styles = StyleSheet.create({
   },
   listCard: {
     paddingHorizontal: 14,
-    paddingBottom: 4,
+    paddingBottom: 28,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.borderSoft,

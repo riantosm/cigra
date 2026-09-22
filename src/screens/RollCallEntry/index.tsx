@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import GradientButton from '@/components/atoms/GradientButton';
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import PressableScale from '@/components/atoms/PressableScale';
 import TextField from '@/components/atoms/TextField';
 import PersonAvatar from '@/components/molecules/PersonAvatar';
@@ -136,9 +136,13 @@ export default function RollCallEntryScreen(props: Props) {
 
             <View style={styles.card}>
               <View style={styles.fieldHead}>
-                <View style={styles.fieldChip}>
-                  <Icon name="shield-check" size={15} color={colors.primary} />
-                </View>
+                <GradientIconChip
+                  icon="shield-check"
+                  colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+                  size={30}
+                  iconSize={15}
+                  radius={10}
+                />
                 <Text style={styles.fieldLabel}>Status Kehadiran</Text>
               </View>
               <View style={styles.segment}>
@@ -169,9 +173,13 @@ export default function RollCallEntryScreen(props: Props) {
               {status === 'absent' ? (
                 <>
                   <View style={[styles.fieldHead, styles.fieldHeadSpaced]}>
-                    <View style={styles.fieldChip}>
-                      <Icon name="flag" size={15} color={colors.primary} />
-                    </View>
+                    <GradientIconChip
+                      icon="flag"
+                      colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+                      size={30}
+                      iconSize={15}
+                      radius={10}
+                    />
                     <Text style={styles.fieldLabel}>Keterangan</Text>
                     <Text style={styles.required}>Wajib</Text>
                   </View>
@@ -273,14 +281,6 @@ const styles = StyleSheet.create({
   },
   fieldHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   fieldHeadSpaced: { marginTop: 4 },
-  fieldChip: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.chipSurface,
-  },
   fieldLabel: { fontSize: 14, fontWeight: '700', color: colors.text },
   required: { fontSize: 11, fontWeight: '600', color: colors.danger },
   segment: { flexDirection: 'row', gap: 4, backgroundColor: colors.neutralSurface, borderRadius: 12, padding: 4 },

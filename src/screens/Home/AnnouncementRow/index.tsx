@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import { colors } from '@/theme/colors';
@@ -12,19 +13,25 @@ export interface AnnouncementRowProps {
   sender: string;
   color: string;
   unread?: boolean;
+  // "Aksen Gradient" (DESIGN_SYSTEM.md) — chip jadi 2-tone gradient (ikon putih) bukan tint flat.
+  gradientColors?: readonly [string, string];
 }
 
 // Satu baris "Pengumuman Terbaru" di CommanderHome — struktur identik dengan MemberHome/NoticeRow
-// (DESIGN_SYSTEM.md §5.16): icon-chip ber-tint, judul + waktu di baris atas, detail, pengirim,
-// titik "belum dibaca".
+// (DESIGN_SYSTEM.md §5.16): icon-chip ber-tint (atau gradient kalau `gradientColors` diisi), judul
+// + waktu di baris atas, detail, pengirim, titik "belum dibaca".
 export default function AnnouncementRow(props: AnnouncementRowProps) {
-  const { icon, title, detail, time, sender, color, unread } = props;
+  const { icon, title, detail, time, sender, color, unread, gradientColors } = props;
 
   return (
     <View style={styles.row}>
-      <View style={[styles.iconWrap, { backgroundColor: `${color}1F` }]}>
-        <Icon name={icon} size={15} color={color} />
-      </View>
+      {gradientColors ? (
+        <GradientIconChip icon={icon} colors={gradientColors} size={32} iconSize={15} radius={10} style={styles.iconWrap} />
+      ) : (
+        <View style={[styles.iconWrap, { backgroundColor: `${color}1F` }]}>
+          <Icon name={icon} size={15} color={color} />
+        </View>
+      )}
       <View style={styles.textGroup}>
         <View style={styles.titleRow}>
           <Text style={styles.title} numberOfLines={1}>

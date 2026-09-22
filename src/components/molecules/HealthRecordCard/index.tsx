@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { colors } from '@/theme/colors';
@@ -21,9 +22,13 @@ export default function HealthRecordCard(props: HealthRecordCardProps) {
 
   return (
     <PressableScale scaleTo={0.98} onPress={onPress} contentStyle={styles.card}>
-      <View style={styles.iconCircle}>
-        <Icon name="heartbeat" size={18} color={colors.gradientHealthStart} />
-      </View>
+      <GradientIconChip
+        icon="heartbeat"
+        colors={[colors.gradientHealthStart, colors.gradientHealthEnd]}
+        size={40}
+        iconSize={18}
+        radius={12}
+      />
       <View style={styles.body}>
         <Text style={styles.type} numberOfLines={1}>
           {record.health_check_type}
@@ -59,14 +64,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     ...cardShadow,
-  },
-  iconCircle: {
-    height: 40,
-    width: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.successSurfaceSubtle,
   },
   body: {
     flex: 1,

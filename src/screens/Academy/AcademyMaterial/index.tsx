@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 
 import GradientButton from '@/components/atoms/GradientButton';
-import Icon from '@/components/atoms/Icon';
+import GradientIconChip from '@/components/atoms/GradientIconChip';
 import PressableScale from '@/components/atoms/PressableScale';
 import RichTextContent from '@/components/molecules/RichTextContent';
 import StatusModal from '@/components/organisms/StatusModal';
@@ -105,9 +105,13 @@ export default function AcademyMaterialScreen(props: Props) {
       {fileUrl ? (
         <PressableScale onPress={() => Linking.openURL(fileUrl)}>
           <View style={styles.fileCard}>
-            <View style={styles.fileIcon}>
-              <Icon name={type === 'video' ? 'play' : 'file'} size={19} color={colors.primary} />
-            </View>
+            <GradientIconChip
+              icon={type === 'video' ? 'play' : 'file'}
+              colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+              size={40}
+              iconSize={19}
+              radius={10}
+            />
             <View style={styles.flex}>
               <Text style={styles.fileName} numberOfLines={1}>
                 {fileNameFromUrl(fileUrl)}
@@ -124,9 +128,13 @@ export default function AcademyMaterialScreen(props: Props) {
       {externalUrl ? (
         <PressableScale onPress={() => Linking.openURL(externalUrl)}>
           <View style={styles.fileCard}>
-            <View style={styles.fileIcon}>
-              <Icon name="globe" size={18} color={colors.primary} />
-            </View>
+            <GradientIconChip
+              icon="globe"
+              colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+              size={40}
+              iconSize={18}
+              radius={10}
+            />
             <View style={styles.flex}>
               <Text style={styles.fileName} numberOfLines={1}>
                 Tautan Materi
@@ -173,14 +181,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.attachmentRowSurface,
     padding: 14,
     marginTop: 12,
-  },
-  fileIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: colors.chipSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   fileName: { fontSize: 13, fontWeight: '700', color: colors.heading },
   fileUrl: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
