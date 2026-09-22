@@ -159,16 +159,32 @@ needed (missing `.env` value).
   `com.cigrasmartbattalionapps` applicationId, which no longer matches either current brand's applicationId —
   **`sakaraguna` currently has no valid `google-services-sakaraguna.json`, so FCM is inactive on it until
   someone registers it in Firebase Console**).
-- **Launcher icon per brand** — source of truth is `android/app/brand-icons/<brand>/mipmap-*/ic_launcher*.png`
-  (small PNGs, unlike the Firebase file these ARE committed). The same `build.gradle` block copies
-  `brand-icons/<brand>/` over `src/main/res/` (the real path Android reads) before the build, when that
-  brand's folder exists — else the current `src/main/res/mipmap-*` contents are left as-is. Only
-  `brand-icons/sakaraguna/` exists today (populated from the launcher icon already in `src/main/res/` — the
-  flame mark). **`brand-icons/cigra/` doesn't exist yet** — the raw `LogoCigra.png` crest hasn't been turned
-  into a proper adaptive/mipmap launcher icon set (safe-zone padding, per-DPI exports), so switching to
-  `BRAND=cigra` today keeps whatever icon is currently in `src/main/res/` rather than silently using an
-  unprocessed image. No adaptive-icon XML (`mipmap-anydpi-v26`, foreground/background layers) exists in this
-  project — just flat `ic_launcher.png`/`ic_launcher_round.png` per density bucket.
+- **Launcher icon + native splash icon per brand** — source of truth is `android/app/brand-icons/<brand>/`,
+  which **mirrors the `src/main/res/` subtree** (small PNGs, unlike the Firebase file these ARE committed):
+  `mipmap-*/ic_launcher*.png` (launcher icon, 5 density buckets, `ic_launcher.png` and `_round` identical)
+  and `drawable-nodpi/splash_logo.png` (the native splash screen icon — see below). The same
+  `build.gradle` block does a generic `copy { from(brandIconsDir); into("src/main/res") }` before the
+  build, when that brand's folder exists — else `src/main/res/**` is left as whatever the last build (of
+  any brand) put there. Because it's a plain recursive copy mirroring `res/`, **any other brand-specific
+  native resource** (e.g. a future per-brand notification icon) just needs its file added under the same
+  relative path in `brand-icons/<brand>/` — no Gradle changes required. No adaptive-icon XML
+  (`mipmap-anydpi-v26`, foreground/background layers) exists in this project — just flat
+  `ic_launcher.png`/`ic_launcher_round.png` per density bucket.
+  - `brand-icons/sakaraguna/` — populated from what was already in `src/main/res/` (the flame mark) before
+    multi-brand existed.
+  - `brand-icons/cigra/` — generated 2026-09-22 from `LogoCigra.png` (`sips` for the 5 mipmap sizes; a
+    Pillow script for `splash_logo.png`, center-cropped to its alpha bbox then padded to match
+    sakaraguna's exact canvas/content-size ratio — 450×450 canvas, ~200×200 visible content, 125px margin
+    each side — so the two brands' splash icons render at the same visual size).
+  - **Native splash screen** (`android/app/src/main/res/values/styles.xml` `windowSplashScreenAnimatedIcon`
+    for Android 12+, and `drawable/splash_screen.xml` as the `windowBackground` fallback for API<31) both
+    point at the **single static** `@drawable/splash_logo` — this is what a cold app launch shows during
+    Metro's "Bundling X%…" screen, *before* any JS (and thus before `Config.BRAND`) is reachable, so it
+    can only be made brand-correct by baking a different file in at **build time** via the brand-icons
+    copy above, never by JS-side logic. Forgetting to add `drawable-nodpi/splash_logo.png` to a new
+    brand's `brand-icons/<brand>/` folder is the easy way to reintroduce "wrong logo during bundling" —
+    check this specifically when onboarding a brand, since the mipmap launcher icon can silently be
+    correct while the splash is still wrong (they're independent files, both need populating).
 - **In-app logo (`src/assets/logo/`)** — `index.ts` exports `LogoIcon` via a lookup keyed by
   `Config.BRAND` (`react-native-config`): `{ sakaraguna: require('./LogoSakaraguna.png'), cigra:
   require('./LogoCigra.png') }`, falling back to `sakaraguna`. Adding a brand = adding one entry here; no

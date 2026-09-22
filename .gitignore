@@ -74,6 +74,15 @@ android/app/google-services.json
 android/app/google-services-*.json
 ios/**/GoogleService-Info.plist
 
+# Multi-brand launcher icon / splash icon — build-time copy target from android/app/brand-icons/<BRAND>/
+# (the real source of truth, which IS committed). These change every time a different brand is built, so
+# tracking them just adds noisy "whichever brand was built last" diffs. Gradle repopulates them from
+# brand-icons/ before every build (falls back to the `sakaraguna` brand-icons folder if BRAND is unset),
+# so a fresh clone is never actually missing them at build time.
+android/app/src/main/res/mipmap-*/ic_launcher.png
+android/app/src/main/res/mipmap-*/ic_launcher_round.png
+android/app/src/main/res/drawable-nodpi/splash_logo.png
+
 # others
 .claude
 
