@@ -28,32 +28,6 @@ const ALERT_SOUND = 'siren';
 const ALERT_VIBRATION_PATTERN = [100, 800, 300, 800, 300, 800, 300, 800, 300, 800];
 const BROADCAST_TOPIC = Config.FCM_TOPIC || 'all_users';
 
-// Kunci data payload yang HARUS disertakan backend saat broadcast FCM untuk sebuah panic
-// button ke topic di atas — dipakai untuk dedupe supaya device yang memicunya sendiri tidak
-// dapat notifikasi dobel (satu dari displayLocalEmergencyAlert, satu lagi dari broadcast FCM
-// yang otomatis juga sampai ke device ini karena ikut subscribe topic yang sama).
-const PANIC_EVENT_DATA_KEY = 'panic_button_id';
-const DEDUPE_WINDOW_MS = 60_000;
-
-const recentlyDisplayedEventIds = new Map<string, number>();
-
-function pruneExpiredEventIds(): void {
-  const now = Date.now();
-  for (const [id, seenAt] of recentlyDisplayedEventIds) {
-    if (now - seenAt > DEDUPE_WINDOW_MS) recentlyDisplayedEventIds.delete(id);
-  }
-}
-
-function rememberLocalEvent(eventId: string): void {
-  pruneExpiredEventIds();
-  recentlyDisplayedEventIds.set(eventId, Date.now());
-}
-
-function wasRecentlyDisplayedLocally(eventId: string): boolean {
-  pruneExpiredEventIds();
-  return recentlyDisplayedEventIds.has(eventId);
-}
-
 async function ensureAlertChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await notifee.createChannel({
@@ -99,40 +73,15 @@ async function showAlertNotification(title?: string, body?: string): Promise<voi
 
 // Dipakai baik oleh onMessage (foreground) maupun setBackgroundMessageHandler (index.js) —
 // FCM TIDAK otomatis menampilkan notifikasi saat app di foreground di Android, jadi ini yang
-// menampilkannya secara manual lewat channel custom di atas.
-//
-// Dedupe: kalau backend menyertakan `panic_button_id` di data payload dan device ini baru saja
-// menampilkan alert local untuk ID yang sama (dari displayLocalEmergencyAlert di bawah), pesan
-// FCM ini di-skip — mencegah device yang memicu panic button dapat notifikasi dobel (local +
-// broadcast FCM yang ikut sampai ke device sendiri karena sama-sama subscribe topic ini).
+// menampilkannya secara manual lewat channel custom di atas. Ini adalah SATU-SATUNYA jalur
+// alert darurat (termasuk untuk device yang memicu panic button sendiri — device itu juga
+// subscribe ke BROADCAST_TOPIC jadi ikut menerima FCM ini) — tidak ada lagi alert lokal instan
+// saat sinyal berhasil dikirim, jadi ada jeda selama backend memproses & mem-broadcast FCM-nya.
 export async function displayRemoteMessage(remoteMessage: RemoteMessage): Promise<void> {
-  const { notification, data } = remoteMessage;
+  const { notification } = remoteMessage;
   if (!notification) return;
 
-  const eventId = typeof data?.[PANIC_EVENT_DATA_KEY] === 'string' ? data[PANIC_EVENT_DATA_KEY] : null;
-  if (eventId && wasRecentlyDisplayedLocally(eventId)) return;
-
   await showAlertNotification(notification.title, notification.body);
-}
-
-// Dipanggil dari layar Emergency setelah sinyal darurat berhasil dikirim, supaya orang yang
-// menekan tombol juga langsung dengar sirene di device-nya sendiri — terpisah dari broadcast ke
-// pengguna lain, yang baru benar-benar terkirim setelah backend mengirim FCM ke topic ini
-// (lihat catatan di .env.example soal kirim lewat Firebase Admin SDK/Console).
-//
-// `eventId` = id record panic-button dari response POST /panic-buttons, dipakai untuk dedupe
-// di displayRemoteMessage di atas — backend HARUS menyertakan id yang sama persis sebagai
-// data.panic_button_id saat broadcast FCM untuk kejadian ini.
-export async function displayLocalEmergencyAlert(eventId: string): Promise<void> {
-  if (Platform.OS !== 'android') return;
-  try {
-    await ensureNotificationPermission();
-    await ensureAlertChannel();
-    rememberLocalEvent(eventId);
-    await showAlertNotification('Sinyal Darurat', 'Sinyal darurat telah dikirim ke komando.');
-  } catch {
-    // Firebase/Notifee belum siap — jangan sampai gagal menampilkan alert menghentikan alur panic button.
-  }
 }
 
 let isFirebaseReady = false;

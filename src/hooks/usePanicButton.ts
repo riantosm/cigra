@@ -9,7 +9,6 @@ import {
   openAppSettings,
   openLocationSettings,
 } from '@/utils/location';
-import { displayLocalEmergencyAlert } from '@/utils/pushNotifications';
 
 function extractErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
@@ -47,13 +46,13 @@ export function usePanicButton() {
     setIsSending(true);
     try {
       const { latitude, longitude } = await getCurrentCoordinates();
-      const result = await sendPanicButtonApi({ latitude, longitude });
-      await displayLocalEmergencyAlert(String(result.id));
+      await sendPanicButtonApi({ latitude, longitude });
       setModal({
         visible: true,
         variant: 'success',
         title: 'Sinyal Terkirim',
-        message: 'Sinyal darurat berhasil dikirim beserta lokasi Anda.',
+        message:
+          'Sinyal darurat berhasil dikirim beserta lokasi Anda. Notifikasi & sirene akan berbunyi setelah diteruskan ke komando, mohon tunggu beberapa saat.',
         primaryAction: { label: 'OK', onPress: closeModal },
       });
     } catch (error) {
