@@ -71,10 +71,10 @@ yarn-error.log
 
 # Firebase config (contains API keys) — keep local, don't commit
 android/app/google-services.json
+android/app/google-services-*.json
 ios/**/GoogleService-Info.plist
 
 # others
-CLAUDE.md
 .claude
 
 # release APKs auto-copied into documentation/ by `assembleRelease` — keep the .md/.html, ignore the binaries

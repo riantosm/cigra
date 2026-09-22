@@ -216,10 +216,28 @@ Dipakai di semua layar non-tab (`MainLayout`). Format:
 
 ### 5.2 Home header (tab screen)
 
-Latar `rgba(255,255,255,0.72)` + shadow kartu (tanpa border). Kiri: badge logo (`44`, radius `14`,
-putih, shadow) + `Selamat {pagi/siang/sore/malam}, {Role}` `12` muted / nama `15/700` `heading` /
-satuan `12` muted. Kanan: tombol lonceng (`40`, radius `14`, `chipSurface`, badge angka merah) +
-avatar (`40` lingkaran, gradient primary, inisial putih `16/700`).
+Latar `rgba(255,255,255,0.72)` + shadow kartu (tanpa border). Kiri: logo polos `44×44` (langsung
+`<Image>`, **tanpa** kartu/badge putih/shadow di belakangnya — direvisi 2026-09-22 supaya logo baru
+tampil penuh, bukan terkurung kotak) + `Selamat {pagi/siang/sore/malam}, {Role}` `12` muted / nama
+`15/700` `heading` / satuan `12` muted. Kanan: tombol lonceng (`40`, radius `14`, `chipSurface`,
+badge angka merah) + avatar (`40` lingkaran, gradient primary, inisial putih `16/700`). Pola logo
+polos ini (bukan kartu) juga dipakai `AcademyHeader` (`44×44`), `NavBar` (`44×44`, sudah dari
+awal tanpa kartu), dan logo splash besar di `Login`/`AppBootstrap` (`92×92`/`88×88`, langsung
+`<Image>` tanpa kartu putih + shadow).
+
+> **Logo ikut `BRAND` otomatis — `src/assets/logo/`.** Dua file PNG tersimpan: `LogoCigra.png`
+> (crest elang, brand "cigra") dan `LogoSakaraguna.png` (api oranye, brand "sakaraguna" — logo
+> yang lebih dulu ada, di-restore dari git history `HEAD` commit `5d95d32` saat brand "cigra"
+> ditambahkan 2026-09-22). `src/assets/logo/index.ts` meng-export `LogoIcon` lewat lookup
+> `{ sakaraguna: ..., cigra: ... }[Config.BRAND]` (`react-native-config`, dari `.env`) — ganti
+> `BRAND` di `.env` + rebuild native sudah cukup, **tidak ada file lain yang perlu diedit** untuk
+> pindah logo. Lihat `CLAUDE.md` "App branding (multi-brand)" untuk cakupan penuh (applicationId,
+> ikon launcher, `google-services.json` juga ikut `BRAND` yang sama).
+> **Gaya di sekitar logo (kartu/tanpa-kartu, ukuran) TIDAK ikut brand** — sengaja dibuat satu gaya
+> "polos" (langsung `<Image>`, tanpa kartu/badge/shadow, diperbesar — direvisi 2026-09-22) untuk
+> semua brand di `HomeHeader`/`AcademyHeader`/`NavBar`/`Login`/`AppBootstrap`, supaya menambah
+> brand baru tidak perlu menyentuh style. Kalau suatu brand butuh gaya beda (mis. logo yang lebih
+> ramai secara visual butuh kartu lagi), itu perubahan terpisah yang perlu diminta eksplisit.
 
 ### 5.3 Kartu
 
@@ -410,7 +428,7 @@ terpisah). Section header kartu aset tidak pakai link "Lihat Semua".
 
 | Tipe | Contoh | Struktur |
 |---|---|---|
-| Auth | Login, ForgotPassword | latar gradient + gunung, konten di tengah vertikal, logo dalam kartu putih, form, tombol pill |
+| Auth | Login, ForgotPassword | latar gradient + gunung, konten di tengah vertikal, logo polos (bukan kartu), form, tombol pill |
 | Tab home | MemberHome, CommanderHome, HealthOfficerHome | Home header + strip sinkron + section-section + tab bar bawah |
 | Stack detail | Profile, CatalogDetail, Settings | Header `[← judul/sub]` + ScrollView berisi kartu/SectionCard |
 | List | CatalogList, EmergencyList, Notifications | Header `[← judul/sub]` + (search + filter) + list kartu |

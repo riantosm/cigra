@@ -141,9 +141,7 @@ export default function LoginScreen(props: LoginScreenProps) {
       showMountains
       footer={<Text style={styles.version}>v{appVersion}</Text>}>
       <View style={styles.brand}>
-        <View style={styles.logoBadge}>
-          <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
-        </View>
+        <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
         <Text style={styles.title}>Selamat Datang!</Text>
         <Text style={styles.subtitle}>
           Masuk untuk melanjutkan ke <Text style={styles.subtitleAccent}>Smart Battalion</Text>
@@ -272,24 +270,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 26,
   },
-  logoBadge: {
+  logoImage: {
     width: 92,
     height: 92,
-    borderRadius: 28,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 14,
     marginBottom: 20,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 6,
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
   },
   title: {
     fontSize: 30,

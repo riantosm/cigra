@@ -42,9 +42,7 @@ export default function HomeHeader(props: HomeHeaderProps) {
   return (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
-        <View style={styles.badge}>
-          <Image source={logo.LogoIcon} style={styles.badgeImage} resizeMode="contain" />
-        </View>
+        <Image source={logo.LogoIcon} style={styles.badgeImage} resizeMode="contain" />
         <View style={styles.headerText}>
           <Text style={styles.greeting} numberOfLines={1}>
             Selamat {greetingForHour(new Date().getHours())}, {roleLabel}
@@ -106,19 +104,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  badge: {
-    height: 44,
-    width: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    padding: 7,
-    ...smallButtonShadow,
-  },
   badgeImage: {
-    width: '100%',
-    height: '100%',
+    width: 44,
+    height: 44,
   },
   headerText: {
     flex: 1,

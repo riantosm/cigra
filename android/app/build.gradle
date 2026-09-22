@@ -4,6 +4,43 @@ apply plugin: "com.facebook.react"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
 /**
+ * Multi-brand config — semuanya diturunkan dari satu nilai `BRAND` di `.env` (lihat CLAUDE.md
+ * "App branding (multi-brand)"). `project.env` sudah diisi oleh dotenv.gradle di atas sebelum
+ * baris ini jalan, jadi aman dipakai di `defaultConfig` di bawah.
+ */
+def smartBattalionBrand = (project.env.BRAND ?: "sakaraguna").toString()
+
+// google-services.json per-brand — file asli TIDAK di-commit (berisi kredensial Firebase), jadi
+// disimpan per-brand sebagai `google-services-<brand>.json` (juga gitignored). Di-copy ke
+// `google-services.json` (nama yang dibaca plugin di bawah) tiap kali brand aktif berganti. Kalau
+// file brand aktif belum ada (brand baru yang belum didaftarkan ke Firebase Console),
+// `google-services.json` dihapus supaya blok apply-plugin di bawah otomatis skip — build tetap
+// jalan normal, cuma push notification nonaktif sampai file-nya disiapkan.
+def googleServicesTarget = file("google-services.json")
+def googleServicesSource = file("google-services-${smartBattalionBrand}.json")
+if (googleServicesSource.exists()) {
+    googleServicesTarget.text = googleServicesSource.text
+} else if (googleServicesTarget.exists()) {
+    googleServicesTarget.delete()
+    logger.warn("[brand=${smartBattalionBrand}] google-services-${smartBattalionBrand}.json tidak ditemukan — Firebase/FCM dinonaktifkan untuk build ini.")
+}
+
+// Ikon launcher per-brand — sumber kebenaran di `brand-icons/<brand>/mipmap-*` (ikut di-commit,
+// isinya cuma PNG ikon, beda dari google-services.json yang berisi kredensial). Di-copy ke
+// `src/main/res/mipmap-*` (path asli yang dipakai AGP) tiap kali brand aktif berganti. Kalau
+// brand aktif belum punya folder ikon sendiri, `src/main/res/mipmap-*` yang sudah ada dibiarkan
+// apa adanya.
+def brandIconsDir = file("brand-icons/${smartBattalionBrand}")
+if (brandIconsDir.exists()) {
+    copy {
+        from(brandIconsDir)
+        into("src/main/res")
+    }
+} else {
+    logger.warn("[brand=${smartBattalionBrand}] brand-icons/${smartBattalionBrand}/ tidak ditemukan — ikon launcher memakai isi src/main/res/mipmap-* apa adanya.")
+}
+
+/**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
@@ -78,9 +115,12 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
+    // `namespace` TIDAK ikut brand — ini cuma nama paket Kotlin/Java internal (R class dll.), beda
+    // konsep dari `applicationId` (identitas app di OS/Play Store). Dibiarkan tetap supaya source
+    // Kotlin di `src/main/java/com/cigrasmartbattalionapps/` tidak perlu dipindah tiap ganti brand.
     namespace "com.cigrasmartbattalionapps"
     defaultConfig {
-        applicationId "com.cigrasmartbattalionapps"
+        applicationId "com.${smartBattalionBrand}.smartbattalion"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8

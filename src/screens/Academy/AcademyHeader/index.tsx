@@ -5,7 +5,6 @@ import { logo } from '@/assets';
 import PressableScale from '@/components/atoms/PressableScale';
 import SecureImage from '@/components/atoms/SecureImage';
 import { colors } from '@/theme/colors';
-import { smallButtonShadow } from '@/theme/shadows';
 import { isDisplayablePhoto } from '@/utils/avatar';
 
 export interface AcademyHeaderProps {
@@ -26,9 +25,7 @@ export default function AcademyHeader(props: AcademyHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.left}>
-        <View style={styles.logoBadge}>
-          <Image source={logo.LogoIcon} style={styles.logo} resizeMode="contain" />
-        </View>
+        <Image source={logo.LogoIcon} style={styles.logo} resizeMode="contain" />
         <View style={styles.titleGroup}>
           <Text style={styles.title}>
             <Text style={styles.titleStrong}>Smart</Text> Academy
@@ -61,17 +58,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  logoBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 6,
-    ...smallButtonShadow,
-  },
-  logo: { width: '100%', height: '100%' },
+  logo: { width: 44, height: 44 },
   titleGroup: { flex: 1 },
   title: { fontSize: 18, fontWeight: '700', color: colors.heading, letterSpacing: -0.2 },
   titleStrong: { fontWeight: '800', color: colors.primary },

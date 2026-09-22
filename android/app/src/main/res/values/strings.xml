@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">CigraSmartbattalionApps</string>
+    <!-- app_name dihapus dari sini — sekarang datang dari .env `APP_NAME` (di-resValue otomatis
+         oleh react-native-config's dotenv.gradle jadi @string/APP_NAME). Lihat CLAUDE.md
+         "App branding (multi-brand)". -->
 </resources>

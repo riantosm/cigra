@@ -166,9 +166,7 @@ export default function AppBootstrapScreen(props: AppBootstrapScreenProps) {
           from={{ opacity: 0, translateY: 16 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={authEnterTransition}>
-          <View style={styles.logoBadge}>
-            <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
-          </View>
+          <Image source={logo.LogoIcon} style={styles.logoImage} resizeMode="contain" />
 
           {phase === 'checking' ? (
             <>
@@ -234,24 +232,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
-  logoBadge: {
+  logoImage: {
     width: 88,
     height: 88,
-    borderRadius: 26,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 14,
     marginBottom: 28,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 6,
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
   },
   spinner: {
     marginBottom: 20,
