@@ -35,7 +35,7 @@ const STEPS = [
   {
     key: 'location' as const,
     label: 'Menyiapkan izin lokasi',
-    detail: 'Meminta izin lokasi & menyalakan pelacakan latar belakang.',
+    detail: 'Meminta izin lokasi.',
     timeoutMs: 40000,
   },
 ];
