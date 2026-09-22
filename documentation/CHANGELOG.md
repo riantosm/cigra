@@ -40,6 +40,12 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 - Widget Peringatan Dini Cuaca & Gempa Terkini (di Home dan halaman detailnya) memakai gaya
   ikon gradient yang sama serta bayangan kartu yang sebelumnya belum ada.
 
+### Perbaikan
+
+- Nama di header Home (dan Pangkat di Profile) sempat tertulis "N/A" setelah simpan Edit Profil —
+  respons `POST /profile` mengirim placeholder literal "N/A" untuk pangkat yang belum diisi,
+  bukan kosong seperti `/auth/me`. Sekarang "N/A" dari backend diperlakukan sama seperti "-".
+
 ## v0.8.0 (versionCode 8)
 
 _11 September 2026_

@@ -1,12 +1,21 @@
 import axios from 'axios';
 
 // Normalisasi "tidak ada isi": null / undefined / string kosong / whitespace / placeholder "-"
-// (backend kerap mengirim "-" atau "–" untuk field kosong) → null. Semua helper format lain
-// dibangun di atas ini supaya "-" tidak pernah ikut tampil sebagai data.
+// (backend kerap mengirim "-", "–", atau — khusus respons POST /profile untuk field seperti
+// personnel.rank yang belum diisi — literal "N/A" untuk field kosong) → null. Semua helper format
+// lain dibangun di atas ini supaya placeholder backend tidak pernah ikut tampil sebagai data.
 export function cleanValue(value: string | null | undefined): string | null {
   if (value == null) return null;
   const trimmed = value.trim();
-  if (trimmed.length === 0 || trimmed === '-' || trimmed === '–' || trimmed === '—') return null;
+  if (
+    trimmed.length === 0 ||
+    trimmed === '-' ||
+    trimmed === '–' ||
+    trimmed === '—' ||
+    trimmed.toUpperCase() === 'N/A'
+  ) {
+    return null;
+  }
   return trimmed;
 }
 
