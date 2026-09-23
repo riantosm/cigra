@@ -39,6 +39,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   Smart Academy supaya konsisten di satu aplikasi.
 - Widget Peringatan Dini Cuaca & Gempa Terkini (di Home dan halaman detailnya) memakai gaya
   ikon gradient yang sama serta bayangan kartu yang sebelumnya belum ada.
+- Peta Personel (halaman peta penuh): tambah kolom cari nama/NRP yang langsung menyaring marker
+  di peta, legenda status jadi satu baris chip penuh-lebar (Fresh/Stale/Belum Ada Data), dan
+  kartu profil mengambang saat marker di-tap dirombak jadi tata letak baris (foto di samping
+  nama, bukan di atas) dengan tombol "Lihat Detail" bergaya gradient.
 
 ### Perbaikan
 

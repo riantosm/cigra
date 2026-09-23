@@ -5,13 +5,14 @@ import { useIsFocused } from '@react-navigation/native';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
+import SearchFilterBar from '@/components/molecules/SearchFilterBar';
 import PersonnelMap from '@/components/organisms/PersonnelMap';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackScreenProps } from '@/navigation/types';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { colors } from '@/theme/colors';
-import { cardShadowRaised, smallButtonShadow } from '@/theme/shadows';
+import { smallButtonShadow } from '@/theme/shadows';
 import { extractErrorMessage } from '@/utils/format';
 import { navigateOrBack } from '@/utils/navigation';
 import type { LocationStatus, PersonnelLocationOverviewItem } from '@/types';
@@ -25,6 +26,7 @@ export default function PersonnelMapScreen(props: Props) {
   const [personnel, setPersonnel] = useState<PersonnelLocationOverviewItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const load = useCallback(async (mode: 'initial' | 'silent' = 'initial') => {
     if (mode === 'initial') {
@@ -65,6 +67,16 @@ export default function PersonnelMapScreen(props: Props) {
     return base;
   }, [personnel]);
 
+  const filteredPersonnel = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return personnel;
+    return personnel.filter(
+      item =>
+        item.full_name.toLowerCase().includes(q) ||
+        item.service_number.toLowerCase().includes(q),
+    );
+  }, [personnel, query]);
+
   return (
     <MainLayout
       title="Peta Personel"
@@ -89,21 +101,31 @@ export default function PersonnelMapScreen(props: Props) {
         ) : (
           <View style={styles.mapWrap}>
             <PersonnelMap
-              personnel={personnel}
+              personnel={filteredPersonnel}
               interactive
               onSelectPersonnel={item =>
                 navigation.navigate(ROUTES.catalogDetail, { resource: 'personnel', id: item.service_number })
               }
             />
-            <View style={styles.legend} pointerEvents="none">
-              {LEGEND_ORDER.map(status => (
-                <View key={status} style={styles.legendRow}>
-                  <View style={[styles.legendDot, { backgroundColor: locationStatusMeta[status].color }]} />
-                  <Text style={styles.legendLabel}>
-                    {locationStatusMeta[status].label} ({counts[status]})
-                  </Text>
-                </View>
-              ))}
+            <View style={styles.overlayTop}>
+              <SearchFilterBar
+                value={query}
+                onChangeText={setQuery}
+                onClear={() => setQuery('')}
+                placeholder="Cari nama atau NRP…"
+              />
+              <View style={styles.statusBar}>
+                {LEGEND_ORDER.map(status => (
+                  <View
+                    key={status}
+                    style={[styles.statusChip, { backgroundColor: locationStatusMeta[status].surface }]}>
+                    <View style={[styles.statusDot, { backgroundColor: locationStatusMeta[status].color }]} />
+                    <Text style={[styles.statusChipLabel, { color: locationStatusMeta[status].color }]}>
+                      {locationStatusMeta[status].label} · {counts[status]}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
         )}
@@ -128,30 +150,41 @@ const styles = StyleSheet.create({
   mapWrap: {
     flex: 1,
   },
-  legend: {
+  overlayTop: {
     position: 'absolute',
+    left: 16,
     right: 16,
     top: 16,
-    gap: 8,
-    padding: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: colors.floatingSurface,
-    ...cardShadowRaised,
+    gap: 12,
   },
-  legendRow: {
+  statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: colors.floatingSurface,
+    ...smallButtonShadow,
   },
-  legendDot: {
-    width: 8,
-    height: 8,
+  statusChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: 999,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
     borderRadius: 4,
   },
-  legendLabel: {
+  statusChipLabel: {
     fontSize: 12,
-    color: colors.textMuted,
+    fontWeight: '600',
   },
   centerState: {
     marginTop: 32,

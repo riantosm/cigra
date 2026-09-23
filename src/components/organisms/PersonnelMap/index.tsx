@@ -11,6 +11,7 @@ import type {
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 
+import GradientButton from '@/components/atoms/GradientButton';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
 import LocationStatusBadge, { locationStatusMeta } from '@/components/molecules/LocationStatusBadge';
@@ -304,7 +305,7 @@ function PersonnelGroupMarker(props: { cluster: MarkerCluster; selected: boolean
   );
 }
 
-const FLOATING_CARD_MAX_WIDTH = 250;
+const FLOATING_CARD_MAX_WIDTH = 264;
 const FLOATING_CARD_GAP = 12;
 const FLOATING_CARD_SIDE_MARGIN = 28;
 
@@ -325,47 +326,48 @@ function FloatingCardPage(props: {
 
   return (
     <View style={[styles.floatingCard, { width }, style]}>
-      <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: colors.surface }]}>
-        {showPhoto ? (
-          <MarkerImage
-            path={item.photo}
-            style={styles.floatingAvatarPhoto}
-            onError={() => setFailed(true)}
-          />
-        ) : (
-          <View style={[styles.markerFallback, styles.floatingAvatarPhoto, { backgroundColor: toneMeta.color }]}>
-            <Text style={styles.floatingAvatarInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
-          </View>
-        )}
+      <View style={styles.floatingHeaderRow}>
+        <View style={[styles.markerRing, styles.floatingAvatarRing, { borderColor: colors.surface }]}>
+          {showPhoto ? (
+            <MarkerImage
+              path={item.photo}
+              style={styles.floatingAvatarPhoto}
+              onError={() => setFailed(true)}
+            />
+          ) : (
+            <View style={[styles.markerFallback, styles.floatingAvatarPhoto, { backgroundColor: toneMeta.color }]}>
+              <Text style={styles.floatingAvatarInitial}>{(item.full_name.charAt(0) || '?').toUpperCase()}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.floatingInfo}>
+          <Text style={styles.floatingName} numberOfLines={1}>
+            {item.full_name}
+          </Text>
+          <Text style={styles.floatingMeta} numberOfLines={1}>
+            {joinFields(item.rank, item.unit) || 'Personel'}
+          </Text>
+          <LocationStatusBadge status={item.status} timestamp={item.last_seen} style={styles.floatingStatusBadge} />
+        </View>
       </View>
-
-      <Text style={styles.floatingName} numberOfLines={1}>
-        {item.full_name}
-      </Text>
-      <Text style={styles.floatingMeta} numberOfLines={1}>
-        {joinFields(item.rank, item.unit) || 'Personel'}
-      </Text>
-      <LocationStatusBadge status={item.status} timestamp={item.last_seen} style={styles.floatingStatusBadge} />
 
       <View style={styles.floatingActions}>
         <PressableScale
           scaleTo={0.97}
           onPress={() => openCoordinatesInMaps(item.location.latitude, item.location.longitude)}
-          style={styles.floatingActionFlex}
           contentStyle={styles.floatingSecondaryButton}
+          accessibilityRole="button"
+          accessibilityLabel="Buka lokasi di Google Maps"
         >
-          <Icon name="map-pin" size={14} color={colors.primary} />
-          <Text style={styles.floatingSecondaryButtonText}>Lokasi</Text>
+          <Icon name="map-pin" size={16} color={colors.primary} />
         </PressableScale>
         {onSelect ? (
-          <PressableScale
-            scaleTo={0.97}
+          <GradientButton
+            label="Lihat Detail"
             onPress={() => onSelect(item)}
+            height={40}
             style={styles.floatingActionFlex}
-            contentStyle={styles.floatingPrimaryButton}
-          >
-            <Text style={styles.floatingPrimaryButtonText}>Lihat Detail</Text>
-          </PressableScale>
+          />
         ) : null}
       </View>
     </View>
@@ -625,47 +627,51 @@ const styles = StyleSheet.create({
     marginRight: FLOATING_CARD_GAP,
   },
   floatingCard: {
-    alignItems: 'center',
     borderRadius: 20,
     padding: 16,
-    paddingTop: 20,
-    gap: 4,
+    gap: 12,
     backgroundColor: colors.floatingSurface,
     ...cardShadowRaised,
   },
+  floatingHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  floatingInfo: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
   floatingAvatarRing: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 3,
-    marginBottom: 6,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
   },
   floatingAvatarPhoto: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.neutralSurface,
   },
   floatingAvatarInitial: {
-    fontSize: 26,
+    fontSize: 19,
     fontWeight: '700',
     color: colors.primaryForeground,
   },
   floatingName: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.text,
-    textAlign: 'center',
   },
   floatingMeta: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textMuted,
-    textAlign: 'center',
   },
   floatingStatusBadge: {
-    alignSelf: 'center',
+    alignSelf: 'flex-start',
     marginTop: 2,
-    marginBottom: 10,
   },
   floatingActions: {
     flexDirection: 'row',
@@ -678,32 +684,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   floatingSecondaryButton: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    height: 36,
-    borderRadius: 999,
+    width: 44,
+    height: 40,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.primaryTintBorder,
     backgroundColor: colors.surface,
-  },
-  floatingSecondaryButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  floatingPrimaryButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 36,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
-  },
-  floatingPrimaryButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.primaryForeground,
   },
   floatingDots: {
     flexDirection: 'row',
