@@ -29,6 +29,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v1.0.0 (versionCode 9)
+
+_2026-09-23_
+
 ### Ditingkatkan
 
 - Home Komandan: "Ringkasan Situasi" jadi satu kartu hero gradient (ganti grid statistik +
