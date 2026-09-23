@@ -264,9 +264,15 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 - Kirim sinyal darurat kini hampir instan: memakai lokasi terakhir dari pelacakan latar (kalau
   umurnya ≤ 1 menit dan akurasinya ≤ 50 m), dan baru mencari GPS baru kalau lokasi itu tidak ada
   atau kurang akurat.
+- Layar "Memeriksa aplikasi" setelah login: menampilkan sapaan "Selamat pagi/siang/sore/malam,
+  <nama>", izin diminta berurutan (notifikasi → lokasi → lokasi sepanjang waktu) paling lambat
+  5 detik setelah layar dibuka, dan layar tertahan (dicek ulang tiap 5 detik) sampai izin lokasi
+  & "Izinkan sepanjang waktu" diberikan. Tombol "Lewati" dihapus.
 
 ### Perbaikan
 
+- Dialog izin lokasi saat login pertama tidak lagi tertahan di belakang dialog izin notifikasi
+  (sebelumnya baru muncul setelah loading "Memeriksa aplikasi" selesai).
 - Push notification sempat muncul dua kali saat aplikasi sedang dibuka (foreground).
 
 ## v1.0.0 (versionCode 9)

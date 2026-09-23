@@ -114,3 +114,11 @@ export function extractErrorMessage(error: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+// Bagian waktu untuk sapaan "Selamat pagi/siang/sore/malam" (jam lokal device).
+export function greetingForHour(hour: number): string {
+  if (hour < 11) return 'pagi';
+  if (hour < 15) return 'siang';
+  if (hour < 18) return 'sore';
+  return 'malam';
+}

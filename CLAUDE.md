@@ -488,14 +488,20 @@ needed (missing `.env` value).
 - `src/screens/AppBootstrap/index.tsx` — the interstitial between login success and `Main` (root-stack,
   `RequireAuth skipAppCheckGate`, `options={{ gestureEnabled: false }}`, reached via `navigation.replace`, so
   not back-navigable; `useDoubleBackToExit` for the Android hardware back). Auth-kit look (`AuthBackground` +
-  logo badge). On mount runs `runChecks()`: `dispatch(refreshUser()).unwrap()` (best-effort — fills role etc.
-  for the role-based Home, esp. after OTP login where the thunk only stored a minimal user) then
-  `startBackgroundLocationTracking()`. Only a thrown `LocationUnavailableError` (FINE_LOCATION denied) blocks —
-  it flips to a `'blocked'` phase with the error message, a **"Coba Lagi"** `GradientButton` (re-runs
-  `runChecks`), a "Buka Pengaturan" link (`openAppSettings`), and a "Logout" escape hatch. On success:
-  `dispatch(appCheckCompleted())` → `navigation.replace(ROUTES.main)`. Notification / background-location
-  permission denial stays best-effort (doesn't block). Home's own forced location gate (`StatusModal` on
-  mount) is unchanged and still catches a permission revoked later.
+  logo) + a "Selamat pagi/siang/sore/malam, <nama>" greeting (`greetingForHour` in `utils/format.ts`, shared
+  with `HomeHeader`). Steps in order: `refreshUser()` (best-effort, capped at **5s** so the first permission
+  dialog shows ≤5s after the screen opens) → notification permission (best-effort) → **FINE_LOCATION (required)**
+  → **ACCESS_BACKGROUND_LOCATION / "Izinkan sepanjang waktu" (required)** → `locationTracking.startTracking()`
+  → `appCheckCompleted()` + `replace(Main)`. The request helpers are in `utils/location.ts`
+  (`requestNotificationPermission` / `requestForegroundLocationPermission` / `requestBackgroundLocationPermission`
+  → `'granted'|'denied'|'blocked'`, plus the non-prompting `isBackgroundLocationPermissionGranted`). While a
+  required permission is missing the screen stays in a `'waiting'` phase — re-checked every **5s** + on
+  `AppState` active, auto-continues once granted; button re-requests (or opens Settings when `blocked`), plus
+  "Buka Pengaturan" + "Logout". **No skip button.** `initializePushNotifications` in `RootNavigator` is gated on
+  `isLogin && appChecked` — running it right at login showed notifee's notification dialog on top, and
+  Android's one-permission-dialog-at-a-time rule then held the location dialog back until the old timeout.
+  Home's own forced location gate (`StatusModal` on mount) is unchanged and still catches a permission
+  revoked later.
 - `src/screens/ChangePassword/index.tsx` — `POST /auth/change-password`. If `resetToken` is present it's used
   (no current-password field shown); otherwise the form asks for `current_password` instead (per the API's
   "verify with current_password OR reset_token" contract — covers a session restored from redux-persist where

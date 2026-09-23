@@ -124,10 +124,15 @@ export default function RootNavigator() {
     // `isLogin`) supaya kalau role user berubah selagi masih login (mis. lewat pull-to-refresh di
     // Profile), topic yang di-subscribe ikut disesuaikan: subscribe topic baru, unsubscribe topic
     // yang sudah tidak dimiliki — tanpa perlu request izin lokasi/restart tracking lagi tiap kali.
-    if (isLogin) {
+    //
+    // Digate ke `appChecked` juga: init ini memunculkan dialog izin notifikasi, dan Android hanya
+    // bisa menampilkan satu dialog izin sekaligus — kalau jalan begitu login sukses, dialog lokasi
+    // di layar AppBootstrap tertahan di belakangnya sampai timeout. Izin notifikasi untuk login
+    // baru sudah diminta AppBootstrap (sesudah izin lokasi), jadi di sini tinggal no-op.
+    if (isLogin && appChecked) {
       initializePushNotifications(roles ?? []).catch(() => {});
     }
-  }, [isLogin, roles]);
+  }, [isLogin, appChecked, roles]);
 
   return (
     <>
