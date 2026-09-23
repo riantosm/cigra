@@ -421,6 +421,27 @@ needed (missing `.env` value).
   `openLocationSettings()`, also in `utils/location.ts`). Result/error feedback uses `StatusModal`
   (`src/components/organisms/StatusModal`), not `Alert.alert`. See the `EmergencyTabButton` note above for
   where this hook is consumed.
+  **Location fast path:** before `getCurrentCoordinates()` (which can wait up to 25s for a fresh GPS fix),
+  the hook tries `getRecentTrackedCoordinates()` — the last fix recorded by the native
+  `LocationForegroundService`, persisted to `TrackingPrefs` (`setLastLocation`) and read via
+  `LocationTrackingModule.getLastLocation()`. It's used only when ≤ 60s old **and** accuracy ≤ 50m (no
+  accuracy = rejected); otherwise it falls back to `getCurrentCoordinates()`. The service's
+  `MIN_UPDATE_DISTANCE_M` is `0` on purpose so a stationary user still gets a fresh fix every ~15s —
+  a distance filter would leave the stored fix stale and always force the slow path. `isSending` is **shared across
+  every hook instance** (module-level store + `useSyncExternalStore`), so the `ActivityIndicator` shows on
+  both `EmergencyTabButton` and the Emergency screen's centre button at once and a second send is blocked
+  while one is in flight; the result `StatusModal` stays per-instance (only the button that fired shows it).
+  **No local alert:** the sender's own siren comes only from the FCM broadcast (not a local notifee
+  alert), so there's a delay — the success `StatusModal` says so. Push handling is in
+  `src/utils/pushNotifications.ts`: `data.type === 'emergency'` (backend must send **data-only**, no
+  `notification` field) → siren channel `smart_battalion_alerts_v3` in every app state; any other
+  `notification` message → normal channel `smart_battalion_alerts_normal_v1`, displayed manually **only in
+  foreground** (`isForeground`) because Android auto-displays it itself in background/killed (doing both =
+  duplicate). `ensureFirebaseReady` is single-flight (`firebaseReadyPromise`) — a boolean flag set after the
+  awaits let RootNavigator's back-to-back `initializePushNotifications` calls register `onMessage` twice
+  (duplicate foreground notifications). Settings also has an "Optimisasi Baterai" row
+  (`BatteryOptimizationModule.kt` → `utils/batteryOptimization.ts`) requesting exemption so data-only pushes
+  still wake the app.
 - **Auth screens visual kit** — Login / ForgotPassword / ChangePassword all implement the "canvas theme"
   (DESIGN_SYSTEM.md §1b) via shared pieces: `templates/AuthLayout` (full-bleed gradient backdrop through
   `atoms/AuthBackground` — page gradient + corner blobs + Login-only mountain silhouette; `centered` prop

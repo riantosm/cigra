@@ -2,6 +2,7 @@ package com.cigrasmartbattalionapps
 
 import android.content.Context
 import android.location.LocationManager
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -32,6 +33,24 @@ class LocationTrackingModule(reactContext: ReactApplicationContext) :
     } catch (error: Exception) {
       promise.reject("STOP_TRACKING_ERROR", error)
     }
+  }
+
+  // Fix terakhir yang dicatat LocationForegroundService (null kalau service belum pernah dapat
+  // fix). `time` = waktu fix (epoch ms), `accuracy` null kalau provider tidak melaporkannya.
+  @ReactMethod
+  fun getLastLocation(promise: Promise) {
+    val stored = TrackingPrefs.getLastLocation(reactApplicationContext)
+    if (stored == null) {
+      promise.resolve(null)
+      return
+    }
+    val map = Arguments.createMap().apply {
+      putDouble("latitude", stored.latitude)
+      putDouble("longitude", stored.longitude)
+      if (stored.accuracy != null) putDouble("accuracy", stored.accuracy.toDouble()) else putNull("accuracy")
+      putDouble("time", stored.time.toDouble())
+    }
+    promise.resolve(map)
   }
 
   @ReactMethod

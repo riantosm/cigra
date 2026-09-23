@@ -118,7 +118,12 @@ export async function displayRemoteMessage(
   await showAlertNotification(notification.title, notification.body, NORMAL_CHANNEL_ID);
 }
 
-let isFirebaseReady = false;
+// Single-flight: initializePushNotifications bisa dipanggil beruntun (RootNavigator memanggilnya
+// saat isLogin lalu lagi saat `roles` berubah sesudah refreshUser) sebelum setup pertama selesai.
+// Dengan flag boolean yang baru di-set di akhir, panggilan kedua ikut lolos dan mendaftarkan
+// listener onMessage KEDUA — tiap push foreground jadi tampil dobel. Semua pemanggil menunggu
+// promise yang sama.
+let firebaseReadyPromise: Promise<void> | null = null;
 let unsubscribeOnMessage: (() => void) | null = null;
 let unsubscribeOnTokenRefresh: (() => void) | null = null;
 let subscribedTopics: string[] = [];
@@ -149,9 +154,18 @@ function resolveTopics(roles: string[]): string[] {
 
 // Setup Firebase/Notifee sekali saja (izin, channel, token, listener foreground) — idempoten,
 // terpisah dari sinkronisasi topic di bawah supaya perubahan role tidak perlu setup ulang.
-async function ensureFirebaseReady(): Promise<void> {
-  if (isFirebaseReady) return;
+function ensureFirebaseReady(): Promise<void> {
+  if (!firebaseReadyPromise) {
+    firebaseReadyPromise = setupFirebase().catch(error => {
+      // Gagal (mis. Firebase belum dikonfigurasi) — reset supaya init berikutnya bisa mencoba lagi.
+      firebaseReadyPromise = null;
+      throw error;
+    });
+  }
+  return firebaseReadyPromise;
+}
 
+async function setupFirebase(): Promise<void> {
   await ensureNotificationPermission();
   await ensureAlertChannels();
 
@@ -167,8 +181,6 @@ async function ensureFirebaseReady(): Promise<void> {
   unsubscribeOnTokenRefresh = onTokenRefresh(messaging, async newToken => {
     await registerFcmTokenWithBackend(newToken);
   });
-
-  isFirebaseReady = true;
 }
 
 // Menyamakan topic yang di-subscribe dengan `roles` saat ini: subscribe topic yang baru muncul,
@@ -228,13 +240,15 @@ export async function teardownPushNotifications(): Promise<void> {
     registeredFcmToken = null;
   }
 
-  if (Platform.OS !== 'android' || !isFirebaseReady) return;
+  if (Platform.OS !== 'android' || !firebaseReadyPromise) return;
 
+  // Tunggu setup yang mungkin masih berjalan, supaya listener-nya tidak terdaftar SESUDAH dilepas.
+  await firebaseReadyPromise.catch(() => {});
   unsubscribeOnMessage?.();
   unsubscribeOnMessage = null;
   unsubscribeOnTokenRefresh?.();
   unsubscribeOnTokenRefresh = null;
-  isFirebaseReady = false;
+  firebaseReadyPromise = null;
 
   try {
     const messaging = getMessaging();

@@ -101,6 +101,27 @@ export async function getCurrentCoordinates(options: GetCurrentCoordinatesOption
   }
 }
 
+const TRACKED_FIX_MAX_AGE_MS = 60_000;
+const TRACKED_FIX_MAX_ACCURACY_M = 50;
+
+// Fix terakhir dari foreground service pelacakan (LocationForegroundService.kt), HANYA kalau
+// cukup segar (<= 1 menit) dan akurat (<= 50 m) untuk dipakai sinyal darurat — null kalau tidak
+// ada / tidak memenuhi, supaya pemanggil jatuh ke getCurrentCoordinates(). Fix tanpa nilai akurasi
+// dianggap tidak layak. Batas ini sengaja ketat: koordinat darurat yang salah lebih berbahaya
+// daripada menunggu fix GPS baru beberapa detik.
+export async function getRecentTrackedCoordinates(): Promise<Coordinates | null> {
+  try {
+    const fix = await locationTracking.getLastLocation();
+    if (!fix || fix.accuracy === null) return null;
+    const ageMs = Date.now() - fix.time;
+    if (ageMs < 0 || ageMs > TRACKED_FIX_MAX_AGE_MS) return null;
+    if (fix.accuracy > TRACKED_FIX_MAX_ACCURACY_M) return null;
+    return { latitude: fix.latitude, longitude: fix.longitude };
+  } catch {
+    return null;
+  }
+}
+
 // Cek status izin lokasi tanpa memicu dialog permintaan izin (beda dari ensureAndroidPermission
 // di atas) — dipakai untuk menampilkan status di UI (mis. panel pengaturan di Profile).
 // iOS tidak punya API cek non-invasive setara tanpa library tambahan, jadi dianggap selalu aktif

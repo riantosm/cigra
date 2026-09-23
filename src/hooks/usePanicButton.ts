@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 import axios from 'axios';
 
 import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
 import { sendPanicButtonApi } from '@/services/api/panicButton.service';
 import {
   getCurrentCoordinates,
+  getRecentTrackedCoordinates,
   LocationUnavailableError,
   openAppSettings,
   openLocationSettings,
@@ -36,16 +37,40 @@ const initialModalState: PanicButtonModalState = {
   secondaryAction: undefined,
 };
 
+// Status kirim dibagi antar SEMUA pemakai hook (tombol bottom tab + tombol halaman Kirim Sinyal),
+// supaya keduanya sama-sama menampilkan spinner dan sinyal tidak bisa terkirim dobel dari tombol
+// yang satunya selagi pengiriman masih berjalan. Modal hasil tetap per-pemakai (hanya tombol yang
+// memicu yang menampilkannya).
+let sharedIsSending = false;
+const sendingListeners = new Set<() => void>();
+
+function setSharedIsSending(value: boolean) {
+  sharedIsSending = value;
+  sendingListeners.forEach(listener => listener());
+}
+
+function subscribeSending(listener: () => void) {
+  sendingListeners.add(listener);
+  return () => {
+    sendingListeners.delete(listener);
+  };
+}
+
+const getSharedIsSending = () => sharedIsSending;
+
 export function usePanicButton() {
-  const [isSending, setIsSending] = useState(false);
+  const isSending = useSyncExternalStore(subscribeSending, getSharedIsSending);
   const [modal, setModal] = useState<PanicButtonModalState>(initialModalState);
 
   const closeModal = useCallback(() => setModal(initialModalState), []);
 
   const sendPanicSignal = useCallback(async () => {
-    setIsSending(true);
+    if (sharedIsSending) return;
+    setSharedIsSending(true);
     try {
-      const { latitude, longitude } = await getCurrentCoordinates();
+      // Jalur cepat: fix segar dari service pelacakan latar (instan). Kalau tidak ada / basi / kurang
+      // akurat, baru cari fix GPS baru (bisa sampai ~25 detik).
+      const { latitude, longitude } = (await getRecentTrackedCoordinates()) ?? (await getCurrentCoordinates());
       await sendPanicButtonApi({ latitude, longitude });
       setModal({
         visible: true,
@@ -79,7 +104,7 @@ export function usePanicButton() {
         });
       }
     } finally {
-      setIsSending(false);
+      setSharedIsSending(false);
     }
   }, [closeModal]);
 
