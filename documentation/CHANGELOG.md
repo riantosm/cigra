@@ -29,6 +29,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v1.0.1 (versionCode 10)
+
+_2026-09-23_
+
 ### Ditingkatkan
 
 - Kirim sinyal darurat kini hampir instan: memakai lokasi terakhir dari pelacakan latar (kalau
