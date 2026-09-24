@@ -156,9 +156,20 @@ needed (missing `.env` value).
   `com.<brand>.smartbattalion` → download `google-services.json` → save as `google-services-<brand>.json`) —
   nothing here can fabricate one. `android/app/google-services-legacy-com.cigrasmartbattalionapps.json` is a
   kept-for-reference copy of the file that existed before this system (registered under the old
-  `com.cigrasmartbattalionapps` applicationId, which no longer matches either current brand's applicationId —
-  **`sakaraguna` currently has no valid `google-services-sakaraguna.json`, so FCM is inactive on it until
-  someone registers it in Firebase Console**).
+  `com.cigrasmartbattalionapps` applicationId, which no longer matches either current brand's applicationId).
+  Both current brands are registered as **two Android apps in one Firebase project**
+  (`smartbattalion-sakaraguna`), so FCM + Crashlytics data is already separated per app/package name —
+  a brand only needs its own Firebase *project* if a client must not see the other brands' Console data.
+- **Crashlytics** (`@react-native-firebase/crashlytics`, added 2026-09-24) — Gradle plugin
+  `com.google.firebase:firebase-crashlytics-gradle` (classpath in `android/build.gradle`) is applied
+  **inside the same `if (file("google-services.json").exists())` block** as google-services (it needs
+  `google_app_id`), so a brand without a Firebase file builds without Crashlytics instead of failing.
+  `firebase.json` (repo root) sets `crashlytics_debug_enabled: false` — debug builds send nothing; test
+  with a release build, reports upload on the **next app launch** after a crash.
+  `src/utils/crashlytics.ts`: `syncCrashlyticsUser(user)` (called from a `RootNavigator` effect on
+  `isLogin`/`user` — sets user id + `brand`/`username`/`nrp`/`roles`/`tenant_id` attributes, cleared on
+  logout) and `reportNonFatal(error, context?)` for caught errors. Uncaught JS errors are reported as
+  fatal automatically. Both helpers swallow errors when Firebase isn't configured.
 - **Launcher icon + native splash icon per brand** — source of truth is `android/app/brand-icons/<brand>/`,
   which **mirrors the `src/main/res/` subtree** (small PNGs, unlike the Firebase file these ARE committed):
   `mipmap-*/ic_launcher*.png` (launcher icon, 5 density buckets, `ic_launcher.png` and `_round` identical)

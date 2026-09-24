@@ -82,6 +82,7 @@ import WeatherAlertsScreen from '@/screens/WeatherAlerts';
 import { getAuthToken, setAuthToken } from '@/services/api/axiosInstance';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
+import { syncCrashlyticsUser } from '@/utils/crashlytics';
 import { startBackgroundLocationTracking } from '@/utils/location';
 import { initializePushNotifications } from '@/utils/pushNotifications';
 
@@ -92,6 +93,7 @@ export default function RootNavigator() {
   const isLogin = useAppSelector(state => state.auth.isLogin);
   const appChecked = useAppSelector(state => state.auth.appChecked);
   const roles = useAppSelector(state => state.auth.user?.roles);
+  const user = useAppSelector(state => state.auth.user);
 
   useEffect(() => {
     // Sesi yang sudah login dipulihkan dari redux-persist (bukan lewat thunk `login`) tidak pernah
@@ -137,6 +139,12 @@ export default function RootNavigator() {
       initializePushNotifications(roles ?? []).catch(() => {});
     }
   }, [isLogin, appChecked, roles]);
+
+  useEffect(() => {
+    // Identitas di laporan Crashlytics mengikuti user aktif — ikut berubah saat refreshUser()
+    // memperbarui data, dan dikosongkan saat logout (user jadi null).
+    syncCrashlyticsUser(isLogin ? user : null);
+  }, [isLogin, user]);
 
   return (
     <>
