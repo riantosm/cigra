@@ -164,4 +164,14 @@ export const colors = {
   // --- Academy · Riwayat — hero ungu-gelap + semburat pink (artboard "Academy — Riwayat").
   academyRiwayatHeroSurface: '#1E1826',
   academyRiwayatGlow: 'rgba(236, 72, 153, 0.24)',
+  // --- Tagihan Koperasi — warna identitas tujuh jenis tagihan (bar alokasi + legenda). Nilainya
+  // sengaja sama dengan aksen yang sudah ada (primary/warning/ungu senjata/biru langit/pink persit/
+  // success/slate) supaya palet app tidak bertambah, tapi diberi nama sendiri agar maknanya jelas.
+  coopCategoryToko: '#2563EB',
+  coopCategoryBelanjaWajib: '#F59E0B',
+  coopCategorySekunder: '#8B5CF6',
+  coopCategoryAir: '#0EA5E9',
+  coopCategoryUsipa: '#EC4899',
+  coopCategorySimpanan: '#16A34A',
+  coopCategoryUkp: '#64748B',
 } as const;

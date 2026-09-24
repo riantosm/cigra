@@ -216,7 +216,7 @@ needed (missing `.env` value).
   AcademyProgramDetail, AcademyMaterial, AcademyAssessmentIntro, AcademyAttempt,
   AcademyAttemptResult, AcademyPracticalEntry, AcademyResults, AcademyResultDetail, AcademyCompetencies,
   AcademyCompetencyDetail, AcademyInsProgramDetail, AcademyInsVerificationDetail, AcademyCmdAttention,
-  AcademyCmdProgramDetail, AcademyCmdCompetency) and
+  AcademyCmdProgramDetail, AcademyCmdCompetency, CoopBills, CoopBillDetail, CoopReports, CoopReportDetail) and
   `MainTabParamList` (tabs: Home, Riwayat, Emergency, BukuSaku, Academy),
   plus typed prop helpers (`RootStackScreenProps`, `MainTabScreenProps`).
 - `src/navigation/RootNavigator.tsx` — top-level native-stack. `Login` and `ForgotPassword` are guest-only
@@ -1137,6 +1137,75 @@ RollCall/Patrol).
   "Akses Cepat" `MemberHome` → `dispositionList` (kotak masuk). Notifikasi FCM: `action.type` `disposition`
   → `dispositionDetail`, `disposition_list` → `dispositionList` (di `screens/Notifications` `actionFor`).
 - `Icon` dapat nama baru `edit` (pensil). `notification.types.ts` `AppNotificationType` +`'disposition'`.
+
+### Tagihan Koperasi (`/coop-salary-report/*`)
+
+Real backend, satu menu dengan respons dinamis. Design = canvas Design terpisah "Tagihan Koperasi"
+(https://claude.ai/artifact/CLiSPgr7xWzKSaXXrwMf99, 8 artboard). Types
+`src/types/coopSalary.types.ts` (barrelled), service `src/services/api/coopSalary.service.ts`, helper
+`src/utils/coopSalary.ts` (urutan kanonik 7 jenis, warna `coopCategory*`, `coopCategoryLines` —
+melengkapi jadi 7 jenis, `coopDeltaFromSeries`, `COOP_TREND_META` turun=hijau/naik=amber,
+`formatRupiah`/`formatRupiahCompact`, `trendBarItems`), ekspor `src/utils/coopSalaryExport.ts`.
+**Tanpa Redux slice** — state lokal per layar (+ hook `src/hooks/useCoopMyBills.ts` untuk daftar
+`/me` berpaginasi, dipakai 2 layar).
+
+- **Module gate** `coop_salary_report`: modul nonaktif untuk satuan → **403** di semua endpoint.
+  Home menangkapnya diam-diam dan **menyembunyikan section** (bukan pesan error);
+  `isCoopForbiddenError()` tersedia di service.
+- **`GET /coop-salary-report`** (`getCoopOverviewApi`) → `{mode, categories, capabilities, identity,
+  manager, member}`. `manager` terisi hanya bila `capabilities.can_view_all_reports`. `member` tetap
+  terisi untuk komandan yang punya data personil (`has_own_tagihan`). Blok member di endpoint ini
+  **tidak** membawa `categories` per baris — pakai `/me` bila butuh rincian jenis.
+- **`GET /coop-salary-report/me`** (`getMyCoopBillsApi`) → `{identity, summary, trend, rows[]}` +
+  `meta` di root (dinormalisasi ke `data.meta`); `rows[].categories` ada di sini.
+- **`GET /me/{row}`** / **`GET /{report}/members/{row}`** (struktur identik, `own_view` beda) →
+  `categories`, `comparison` (null di periode pertama; `trend` up/down/flat), `previous_period`,
+  `series`, `history[]`. **`GET /{report}`** → `report` (+`categories`, `uploaded_by`), `top_members`,
+  `rows[]` (`is_linked`, `personnel`) + root `meta`; query `search`/`category`/`linkage`/`sort`/
+  `direction`/`page`/`per_page` (25).
+- **Ekspor** (`src/utils/coopSalaryExport.ts` `exportCoopFile(path, format, name)` — `path` relatif dari
+  `myCoopBillExportPath` / `coopReportExportPath`, jadi file SELALU dari endpoint `.../export/{format}`
+  backend, tidak di-generate klien):
+  - `pdf` = backend mengirim **halaman HTML cetak** (`<body onload="window.print()">`, style inline, tanpa
+    aset eksternal), bukan PDF biner. Diambil lewat **axios** (`getCoopPrintHtmlApi`, ikut refresh-token)
+    lalu Android → **native `HtmlPrintModule`** (`android/.../HtmlPrintModule.kt` + `HtmlPrintPackage`,
+    didaftarkan di `MainApplication`; JS `src/native/htmlPrint.ts`): WebView tak terlihat (JS mati) →
+    `PrintManager` → dialog cetak sistem (pilih "Save as PDF"/printer). Orientasi A4 dibaca dari
+    `@page { size: … landscape }` di HTML (rekap satuan = landscape, rincian anggota = portrait) dan
+    diteruskan sebagai argumen `landscape` — WebView tak menerapkan `@page size` ke dialog sendiri. iOS / build tanpa modul →
+    simpan `.html` + `previewDocument` / intent VIEW. **Jangan** unduh halaman ini dengan blob-util
+    `fetch`: Cloudflare mengirimnya ter-gzip tanpa Content-Length → "Download interrupted.". Membuka
+    `.html` via intent VIEW juga tak andal (pemilih aplikasi acak; HTML Viewer bawaan tidak menjalankan
+    `window.print()`), dan `actionViewIntent` dengan `chooserTitle` crash ("startActivity() from outside
+    of an Activity context") — itu sebabnya dibuat modul native. Perubahan modul = rebuild native.
+  - `excel` = `.xlsx` biner → Android DownloadManager dengan **`storeInDownloads: true`** (folder Download
+    PUBLIK; `fs.dirs.DownloadDir` ternyata folder privat `Android/data/<pkg>/files/Download` yang tak
+    terlihat di aplikasi File) + header `Accept-Encoding: identity`; iOS cache + preview.
+  - `/{report}/export/*` butuh `capabilities.can_export` (route param `canExport`).
+  - Nama file: rincian sendiri `tagihan-koperasi-<slug>`, rekap satuan `rekap-koperasi-<slug>`.
+  - Verified di device 2026-09-24 dengan data asli (akun demo personel + komandan): semua layar, Cetak
+    PDF (rincian portrait, rekap landscape) dan Excel (`/sdcard/Download/*.xlsx`, xlsx valid).
+  - Catatan respons asli: `identity.rank` selalu null → pangkat dari `rank_name` baris; `summary.latest`
+    (member) dan `summary.latest_period` (manager) berisi objek baris/laporan lengkap (+`categories`).
+- **Home**: `MemberHome` — section **"Tagihan Saya"** di bawah "Aset Saya" (`screens/Home/CoopBillCard`,
+  data `/me?per_page=1` di `loadMe` allSettled; selisih % dari 2 nilai terakhir `trend.values`; empty
+  state kalau `rows=[]`). `CommanderHome` — section **"Tagihan Koperasi"** di bawah "Ringkasan Situasi"
+  (`screens/Home/CoopReportCard`: rekap periode terbaru + keterkaitan NRP + peringatan belum tertaut +
+  baris "Tagihan Saya" bila `has_own_tagihan`); komandan ber-mode member → `CoopBillCard` biasa.
+- **Layar** (root-stack, `MainLayout variant="canvas"`, tanpa guard): `CoopBills` (`coopBills`, daftar
+  `/me` via `organisms/CoopMyBillsList`), `CoopBillDetail` (`coopBillDetail` `{rowId, reportId?,
+  periodLabel?}` — tanpa `reportId` = milik sendiri + footer Unduh Excel/Cetak PDF; dengan `reportId`
+  = tampilan pengelola + badge Tertaut/Belum tertaut, tanpa ekspor, riwayat tak bisa diketuk karena
+  `history[]` tak membawa report id), `CoopReports` (`coopReports`, rekap satuan + SegmentedControl
+  Rekap Satuan/Tagihan Saya + `SearchFilterBar` dengan FilterSheet tahun dari `year_options`),
+  `CoopReportDetail` (`coopReportDetail` `{reportId, periodLabel?, canExport?}` — FilterSheet jenis/
+  status NRP/urutan, "Muat lebih banyak").
+- Molekul baru: `StatDividerRow`, `TrendBarChart`, `CoopCategoryBreakdown`, `CoopDeltaPill`,
+  `CoopPeriodRow` (DESIGN_SYSTEM §5.17). Icon baru: `wallet`, `receipt`, `trending-down`, `printer`,
+  `spreadsheet`, `sort`. Native: `HtmlPrintModule` (lihat Ekspor) — tanpa dependency baru, tapi butuh
+  rebuild (`npm run android`).
+- **Belum dipakai**: `tagihan_koperasi` di `GET /catalog/personnel/{id}` (belum ada tab/section di
+  detail personel).
 
 ### Role-based Home routing
 

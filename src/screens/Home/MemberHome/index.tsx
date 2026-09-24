@@ -15,6 +15,7 @@ import MemberIdCard from '@/components/organisms/MemberIdCard';
 import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import QrIdentityModal from '@/components/organisms/QrIdentityModal';
 import AssetCard from '@/screens/Home/MemberHome/AssetCard';
+import CoopBillCard from '@/screens/Home/CoopBillCard';
 import FamilyMemberRow from '@/components/molecules/FamilyMemberRow';
 import AssetDetailSheet from '@/screens/Home/MemberHome/AssetDetailSheet';
 import type { AssetDetailSheetData } from '@/screens/Home/MemberHome/AssetDetailSheet';
@@ -37,12 +38,14 @@ import {
   getMyMovementsApi,
   getMyStatusApi,
 } from '@/services/api/me.service';
+import { getMyCoopBillsApi } from '@/services/api/coopSalary.service';
 import { getActivePatrolSessionApi } from '@/services/api/patrol.service';
 import { colors } from '@/theme/colors';
 import { cardShadow, cardShadowRaised } from '@/theme/shadows';
 import type {
   Announcement,
   AuthUser,
+  CoopMyBills,
   MeAssets,
   MeIdCard,
   MeMovement,
@@ -250,6 +253,8 @@ export default function MemberHome(props: MemberHomeProps) {
   const [assets, setAssets] = useState<MeAssets | null>(null);
   const [movements, setMovements] = useState<MeMovement[]>([]);
   const [activePatrol, setActivePatrol] = useState<PatrolSession | null>(null);
+  // null = section "Tagihan Saya" disembunyikan (modul koperasi nonaktif/403, belum dimuat, gagal).
+  const [coopBills, setCoopBills] = useState<CoopMyBills | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const weatherRef = useRef<HomeWeatherWidgetHandle>(null);
   const insets = useSafeAreaInsets();
@@ -275,16 +280,19 @@ export default function MemberHome(props: MemberHomeProps) {
   // Tiap surface dimuat independen (allSettled) — mis. GET /me/assets sempat 500 di backend,
   // jangan sampai menjatuhkan Kartu Anggota / Status / Aktivitas.
   const loadMe = useCallback(async () => {
-    const [idCardResult, statusResult, assetsResult, movementsResult] = await Promise.allSettled([
+    const [idCardResult, statusResult, assetsResult, movementsResult, coopResult] = await Promise.allSettled([
       getMyIdCardApi(),
       getMyStatusApi(),
       getMyAssetsApi(),
       getMyMovementsApi({ per_page: 3 }),
+      getMyCoopBillsApi({ per_page: 1 }),
     ]);
     if (idCardResult.status === 'fulfilled') setIdCard(idCardResult.value);
     if (statusResult.status === 'fulfilled') setStatus(statusResult.value);
     if (assetsResult.status === 'fulfilled') setAssets(assetsResult.value);
     if (movementsResult.status === 'fulfilled') setMovements(movementsResult.value.items);
+    // Modul koperasi bisa nonaktif untuk satuan (403) → section disembunyikan, bukan error.
+    setCoopBills(coopResult.status === 'fulfilled' ? coopResult.value : null);
   }, []);
 
   useEffect(() => {
@@ -482,6 +490,21 @@ export default function MemberHome(props: MemberHomeProps) {
               onPress={vehicleSheet ? () => setAssetSheet(vehicleSheet) : undefined}
             />
           </View>
+
+          {coopBills ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Tagihan Saya</Text>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coopBills)}>
+                  <Text style={styles.sectionLink}>Lihat Semua</Text>
+                </PressableScale>
+              </View>
+              <CoopBillCard
+                data={coopBills}
+                onPress={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
+              />
+            </>
+          ) : null}
 
           {family.length > 0 ? (
             <>
