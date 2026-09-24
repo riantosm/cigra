@@ -18,3 +18,4 @@ export * from './disposition.types';
 export * from './academy.types';
 export * from './weather.types';
 export * from './earthquake.types';
+export * from './coopSalary.types';

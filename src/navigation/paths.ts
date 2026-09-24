@@ -86,4 +86,9 @@ export const ROUTES = {
   incomingLetterList: 'IncomingLetterList',
   incomingLetterCreate: 'IncomingLetterCreate',
   incomingLetterDetail: 'IncomingLetterDetail',
+  // --- Tagihan Koperasi ---
+  coopBills: 'CoopBills',
+  coopBillDetail: 'CoopBillDetail',
+  coopReports: 'CoopReports',
+  coopReportDetail: 'CoopReportDetail',
 } as const;

@@ -149,6 +149,15 @@ export type RootStackParamList = {
   [ROUTES.incomingLetterList]: { pickerMode?: boolean } | undefined;
   [ROUTES.incomingLetterCreate]: undefined;
   [ROUTES.incomingLetterDetail]: { id: number; pickerMode?: boolean };
+  // --- Tagihan Koperasi ---
+  [ROUTES.coopBills]: undefined;
+  // Tanpa `reportId` → tagihan milik sendiri (`/me/{row}`, bisa ekspor). Dengan `reportId` →
+  // tampilan pengelola (`/{report}/members/{row}`, tanpa ekspor).
+  [ROUTES.coopBillDetail]: { rowId: number; reportId?: number; periodLabel?: string };
+  [ROUTES.coopReports]: undefined;
+  // `canExport` = `capabilities.can_export` dari `GET /coop-salary-report` (detail rekap tak membawa
+  // capabilities sendiri).
+  [ROUTES.coopReportDetail]: { reportId: number; periodLabel?: string; canExport?: boolean };
 };
 
 export type MainTabParamList = {

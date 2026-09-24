@@ -485,6 +485,32 @@ terpisah). Section header kartu aset tidak pakai link "Lihat Semua".
 
 ---
 
+### 5.17 Tagihan Koperasi — kartu nominal, alokasi per jenis, tren
+
+Dari canvas "Tagihan Koperasi" (2026-09-24). Pola untuk layar yang menampilkan **nominal rupiah**:
+
+- **Kartu nominal (Home)** — `screens/Home/CoopBillCard` / `CoopReportCard`: header = chip gradient
+  `wallet` (success) + judul `13/700` + sub `12` muted + chevron; nominal besar `26–28/800`
+  (`letter-spacing -0.5`); di kanannya `molecules/CoopDeltaPill` (naik/turun vs periode lalu);
+  kalimat selisih `12` muted; lalu isi; ditutup `molecules/StatDividerRow`.
+- **`molecules/CoopDeltaPill`** — bentuk Badge (§5.7) dengan ikon tren. **Tagihan turun = hijau**
+  (`success`), **naik = amber** (`warningText` di `warningSurface` — bukan merah, bukan alarm),
+  sama = abu. Peta di `utils/coopSalary.ts` `COOP_TREND_META`.
+- **`molecules/StatDividerRow`** — baris mini-stat rata kiri (label `11` muted di atas, angka
+  `13/700` / `15/700`), garis `borderSoft` vertikal antar kolom, `border="top"` (penutup kartu)
+  atau `"both"` (di tengah kartu). Pakai ini, jangan menggambar ulang baris stat.
+- **`molecules/CoopCategoryBreakdown`** — bar bertumpuk (gap `2`, pill) + legenda. `compact`:
+  jenis bernilai saja, titik `8`. `full`: **ketujuh jenis selalu tampil** (yang nol dipudarkan:
+  swatch `border`, teks `placeholder`, persen "–") + persen + baris "Jumlah". Warna per jenis =
+  token `coopCategory*` (nilainya sama dengan aksen yang sudah ada, jadi palet tidak bertambah).
+- **`molecules/TrendBarChart`** — batang vertikal tanpa lib chart; batang terakhir (periode
+  terbaru) `primary` + label tebal, sisanya `primarySurface`; scroll horizontal bila banyak.
+  Batang flat — tidak pakai gradient (§7).
+- Nominal selalu memakai teks `*_formatted` dari backend; hanya selisih yang dihitung klien
+  (`formatRupiah`, format sama: `Rp 150.000` / `-Rp 150.000`).
+
+---
+
 ## 6. Arketipe layar
 
 | Tipe | Contoh | Struktur |

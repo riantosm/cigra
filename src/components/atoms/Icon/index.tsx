@@ -74,7 +74,13 @@ export type IconName =
   | 'file'
   | 'download'
   | 'edit'
-  | 'check';
+  | 'check'
+  | 'wallet'
+  | 'receipt'
+  | 'trending-down'
+  | 'printer'
+  | 'spreadsheet'
+  | 'sort';
 
 export interface IconProps {
   name: IconName;
@@ -184,6 +190,13 @@ const pathByName: Record<IconName, string> = {
   download: 'M12 4v11M7 11l5 5 5-5M5 20h14',
   edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z',
   check: 'M5 13l4 4L19 7',
+  wallet: 'M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2ZM16 14h.01',
+  receipt: 'M6 3h12v18l-3-2-3 2-3-2-3 2V3ZM9 8h6M9 12h6M9 16h3',
+  'trending-down': 'M3 7l6 6 4-4 8 8M15 17h6v-6',
+  printer:
+    'M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M6 14h12v7H6Z',
+  spreadsheet: 'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5ZM14 3v5h5M8 13h8M8 17h8M12 11v8',
+  sort: 'M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3',
 };
 
 export default function Icon(props: IconProps) {

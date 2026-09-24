@@ -14,6 +14,8 @@ import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import PersonnelMap from '@/components/organisms/PersonnelMap';
 import ActivityRow from '@/screens/Home/ActivityRow';
 import AnnouncementRow from '@/screens/Home/AnnouncementRow';
+import CoopBillCard from '@/screens/Home/CoopBillCard';
+import CoopReportCard from '@/screens/Home/CoopReportCard';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import HomeWeatherWidget from '@/screens/Home/HomeWeatherWidget';
 import type { HomeWeatherWidgetHandle } from '@/screens/Home/HomeWeatherWidget';
@@ -25,6 +27,7 @@ import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getActivityMovementsApi } from '@/services/api/activity.service';
+import { getCoopOverviewApi, getMyCoopBillsApi } from '@/services/api/coopSalary.service';
 import { getDashboardSituationApi } from '@/services/api/dashboard.service';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { useAppSelector } from '@/store/hooks';
@@ -33,6 +36,8 @@ import { cardShadow, ctaPrimaryShadow, smallButtonShadow } from '@/theme/shadows
 import { contentEnterTransition } from '@/utils/motion';
 import { cleanValue, formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 import type {
+  CoopMyBills,
+  CoopOverview,
   ActivityMovement,
   Announcement,
   AuthUser,
@@ -134,6 +139,11 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const [isLoadingSituation, setIsLoadingSituation] = useState(true);
   const [movements, setMovements] = useState<ActivityMovement[]>([]);
   const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
+  // Tagihan Koperasi: `coopOverview.manager` terisi → kartu rekap satuan; komandan ber-mode member
+  // → `coopMyBills` (kartu "Tagihan Saya" seperti anggota). Keduanya null → section disembunyikan
+  // (modul koperasi nonaktif untuk satuan = 403, atau akun tanpa data tagihan).
+  const [coopOverview, setCoopOverview] = useState<CoopOverview | null>(null);
+  const [coopMyBills, setCoopMyBills] = useState<CoopMyBills | null>(null);
 
   const announcements = useAppSelector(state => state.announcements.items);
 
@@ -160,10 +170,27 @@ export default function CommanderHome(props: CommanderHomeProps) {
     setIsLoadingSituation(false);
   }, []);
 
+  const loadCoop = useCallback(async () => {
+    try {
+      const overview = await getCoopOverviewApi({ per_page: 1 });
+      setCoopOverview(overview);
+      if (!overview.manager && overview.member) {
+        setCoopMyBills(await getMyCoopBillsApi({ per_page: 1 }));
+      } else {
+        setCoopMyBills(null);
+      }
+    } catch {
+      // Best-effort (termasuk 403 modul nonaktif): section Tagihan Koperasi disembunyikan.
+      setCoopOverview(null);
+      setCoopMyBills(null);
+    }
+  }, []);
+
   useEffect(() => {
     loadPersonnelLocations();
     loadDashboard();
-  }, [loadPersonnelLocations, loadDashboard]);
+    loadCoop();
+  }, [loadPersonnelLocations, loadDashboard, loadCoop]);
 
   async function handleRefresh() {
     setIsRefreshing(true);
@@ -172,6 +199,7 @@ export default function CommanderHome(props: CommanderHomeProps) {
         onRefresh(),
         loadPersonnelLocations(),
         loadDashboard(),
+        loadCoop(),
         weatherRef.current?.reload(),
       ]);
       setLastSyncedAt(new Date());
@@ -362,6 +390,43 @@ export default function CommanderHome(props: CommanderHomeProps) {
               style={styles.situationHero}
             />
           )}
+
+          {coopOverview?.manager ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Tagihan Koperasi</Text>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coopReports)}>
+                  <Text style={styles.sectionLink}>Lihat Semua</Text>
+                </PressableScale>
+              </View>
+              <CoopReportCard
+                overview={coopOverview}
+                onPressReport={(reportId, periodLabel) =>
+                  navigation.navigate(ROUTES.coopReportDetail, {
+                    reportId,
+                    periodLabel,
+                    canExport: coopOverview.capabilities.can_export,
+                  })
+                }
+                onPressOwnBill={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
+                style={styles.coopSection}
+              />
+            </>
+          ) : coopMyBills ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Tagihan Saya</Text>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coopBills)}>
+                  <Text style={styles.sectionLink}>Lihat Semua</Text>
+                </PressableScale>
+              </View>
+              <CoopBillCard
+                data={coopMyBills}
+                onPress={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
+                style={styles.coopSection}
+              />
+            </>
+          ) : null}
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
@@ -562,6 +627,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   situationHero: {
+    marginBottom: 24,
+  },
+  coopSection: {
     marginBottom: 24,
   },
   listCard: {
