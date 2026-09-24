@@ -123,8 +123,8 @@ android {
         applicationId "com.${smartBattalionBrand}.smartbattalion"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "0.8.0"
+        versionCode 10
+        versionName "1.0.1"
     }
     signingConfigs {
         debug {

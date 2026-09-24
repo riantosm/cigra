@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Icon from '@/components/atoms/Icon';
@@ -72,6 +72,7 @@ export default function EmergencyTabButton({ onToastChange, onOpenEmergencyScree
         scaleTo={0.94}
         accessibilityRole="button"
         accessibilityLabel="Emergency"
+        disabled={isSending}
         onPress={handlePress}
         style={styles.wrapper}
         contentStyle={styles.button}>
@@ -84,7 +85,11 @@ export default function EmergencyTabButton({ onToastChange, onOpenEmergencyScree
           </Defs>
           <Rect width="100%" height="100%" rx={28} ry={28} fill="url(#emergencyTab)" />
         </Svg>
-        <Icon name="emergency" size={26} color={colors.dangerForeground} />
+        {isSending ? (
+          <ActivityIndicator color={colors.dangerForeground} />
+        ) : (
+          <Icon name="emergency" size={26} color={colors.dangerForeground} />
+        )}
       </PressableScale>
 
       <StatusModal

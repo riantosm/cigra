@@ -10,19 +10,12 @@ import { colors } from '@/theme/colors';
 import { headerShadow, smallButtonShadow } from '@/theme/shadows';
 import type { AuthUser } from '@/types';
 import { isDisplayablePhoto } from '@/utils/avatar';
-import { cleanValue, titleCase } from '@/utils/format';
+import { cleanValue, greetingForHour, titleCase } from '@/utils/format';
 
 export interface HomeHeaderProps {
   user: AuthUser | null;
   onAvatarPress: () => void;
   onBellPress?: () => void;
-}
-
-function greetingForHour(hour: number): string {
-  if (hour < 11) return 'pagi';
-  if (hour < 15) return 'siang';
-  if (hour < 18) return 'sore';
-  return 'malam';
 }
 
 // Header dashboard Home — dipakai oleh SEMUA role (CommanderHome & MemberHome) supaya identitas

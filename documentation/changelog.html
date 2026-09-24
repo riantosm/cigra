@@ -259,6 +259,30 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v1.0.1 (versionCode 10)
+
+_2026-09-23_
+
+### Ditingkatkan
+
+- Kirim sinyal darurat kini hampir instan: memakai lokasi terakhir dari pelacakan latar (kalau
+  umurnya ≤ 1 menit dan akurasinya ≤ 50 m), dan baru mencari GPS baru kalau lokasi itu tidak ada
+  atau kurang akurat.
+- Layar "Memeriksa aplikasi" setelah login: menampilkan sapaan "Selamat pagi/siang/sore/malam,
+  <nama>", izin diminta berurutan (notifikasi → lokasi → lokasi sepanjang waktu) paling lambat
+  5 detik setelah layar dibuka, dan layar tertahan (dicek ulang tiap 5 detik) sampai izin lokasi
+  & "Izinkan sepanjang waktu" diberikan. Tombol "Lewati" dihapus.
+
+### Perbaikan
+
+- Dialog izin lokasi saat login pertama tidak lagi tertahan di belakang dialog izin notifikasi
+  (sebelumnya baru muncul setelah loading "Memeriksa aplikasi" selesai).
+- Push notification sempat muncul dua kali saat aplikasi sedang dibuka (foreground).
+
+## v1.0.0 (versionCode 9)
+
+_2026-09-23_
+
 ### Ditingkatkan
 
 - Home Komandan: "Ringkasan Situasi" jadi satu kartu hero gradient (ganti grid statistik +
@@ -269,6 +293,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   Smart Academy supaya konsisten di satu aplikasi.
 - Widget Peringatan Dini Cuaca & Gempa Terkini (di Home dan halaman detailnya) memakai gaya
   ikon gradient yang sama serta bayangan kartu yang sebelumnya belum ada.
+- Peta Personel (halaman peta penuh): tambah kolom cari nama/NRP yang langsung menyaring marker
+  di peta, legenda status jadi satu baris chip penuh-lebar (Fresh/Stale/Belum Ada Data), dan
+  kartu profil mengambang saat marker di-tap dirombak jadi tata letak baris (foto di samping
+  nama, bukan di atas) dengan tombol "Lihat Detail" bergaya gradient.
 
 ### Perbaikan
 
@@ -477,7 +505,7 @@ _27 – 30 Agustus 2026_
 - Gap pada bottom tab bar; timing spinner pull-to-refresh di Home.
 </script>
 <script>
-  var APK_NAME = "SmartBattalion-v0.8.0(8)-release.apk";
+  var APK_NAME = "SmartBattalion-v1.0.1(10)-release.apk";
 
   // ---------- theme toggle (default terang, sinkron dgn viewer API Contract) ----------
   (function () {

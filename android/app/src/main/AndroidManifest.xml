@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
@@ -53,12 +54,16 @@
         </intent-filter>
       </receiver>
 
-      <!-- Channel dipakai FCM saat menampilkan notifikasi otomatis ketika app di background/killed.
+      <!-- Channel dipakai FCM saat menampilkan notifikasi otomatis ketika app di background/killed
+           — HANYA berlaku untuk pesan bertipe `notification` (mis. disposisi, pengumuman);
+           notifikasi darurat dikirim data-only jadi selalu ditampilkan manual oleh app sendiri
+           lewat channel sesuai preferensi user (lihat src/utils/pushNotifications.ts). Nilai ini
+           HARUS sama dengan NORMAL_CHANNEL_ID di file itu.
            tools:replace dibutuhkan karena react-native-firebase/messaging sudah mendeklarasikan
            meta-data yang sama (dengan value kosong) di manifest library-nya sendiri. -->
       <meta-data
         android:name="com.google.firebase.messaging.default_notification_channel_id"
-        android:value="smart_battalion_alerts_v3"
+        android:value="smart_battalion_alerts_normal_v1"
         tools:replace="android:value" />
       <meta-data
         android:name="com.google.firebase.messaging.default_notification_icon"

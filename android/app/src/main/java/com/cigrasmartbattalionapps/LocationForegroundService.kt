@@ -43,7 +43,11 @@ class LocationForegroundService : Service() {
     private const val CHANNEL_ID = "location_tracking_channel"
     private const val UPLOAD_INTERVAL_SECONDS = 45L
     private const val MIN_UPDATE_INTERVAL_MS = 15_000L
-    private const val MIN_UPDATE_DISTANCE_M = 15f
+    // 0 (bukan filter jarak) supaya fix tetap diperbarui tiap interval walau user DIAM — tombol
+    // darurat memakai fix terakhir ini kalau umurnya <= 1 menit (lihat utils/location.ts
+    // getRecentTrackedCoordinates); dengan filter jarak, user yang tidak bergerak tidak pernah
+    // dapat fix baru dan selalu jatuh ke pencarian GPS lambat.
+    private const val MIN_UPDATE_DISTANCE_M = 0f
     private const val STALE_FIX_THRESHOLD_MS = 120_000L
 
     fun start(context: Context) {
@@ -65,8 +69,13 @@ class LocationForegroundService : Service() {
   private val locationListener = LocationListener { location ->
     val current = lastLocation
     if (current == null || isMoreUsefulLocation(location, current)) {
-      lastLocation = location
+      updateLastLocation(location)
     }
+  }
+
+  private fun updateLastLocation(location: Location) {
+    lastLocation = location
+    TrackingPrefs.setLastLocation(this, location)
   }
 
   override fun onCreate() {
@@ -145,8 +154,9 @@ class LocationForegroundService : Service() {
     handlerThread = HandlerThread("LocationTrackingThread").apply { start() }
     val looper = handlerThread!!.looper
 
-    lastLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+    val seed = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
       ?: manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+    if (seed != null) updateLastLocation(seed)
 
     // GPS_PROVIDER jauh lebih akurat (~5-20m) daripada NETWORK_PROVIDER (triangulasi wifi/seluler,
     // bisa 100m+) — dulu service ini subscribe ke SEMUA provider yang ada, jadi fix Network yang

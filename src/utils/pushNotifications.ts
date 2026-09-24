@@ -14,31 +14,45 @@ import notifee, { AndroidImportance, AndroidVisibility, AuthorizationStatus } fr
 import { registerFcmTokenApi, unregisterFcmTokenApi } from '@/services/api/device.service';
 import { clearPatrolOngoingNotification } from '@/utils/patrolNotification';
 
-// Channel Android khusus notifikasi darurat — importance HIGH + bypassDnd supaya tetap
-// berbunyi walau HP dalam mode Do Not Disturb. `sound: 'siren'` merujuk ke
-// android/app/src/main/res/raw/siren.mp3 (salinan dari src/assets/sound/Siren.mp3).
+// Channel Android bersuara sirene — importance HIGH + bypassDnd supaya tetap berbunyi walau HP
+// dalam mode Do Not Disturb. `sound: 'siren'` merujuk ke android/app/src/main/res/raw/siren.mp3
+// (salinan dari src/assets/sound/Siren.mp3). Dipakai untuk SEMUA notifikasi darurat (panic
+// button) — tidak dapat dimatikan/diganti user, disengaja supaya sinyal darurat selalu menonjol.
 //
 // PENTING: setelan channel Android (sound, importance, bypassDnd) terkunci begitu channel
 // dengan ID tertentu pernah dibuat di suatu device — panggilan createChannel() berikutnya
 // dengan ID yang sama diam-diam diabaikan meski isinya beda. Kalau perlu ubah setelan channel
-// lagi di masa depan, ganti ID ini (mis. jadi _v3) supaya Android membuat channel baru.
-const ALERT_CHANNEL_ID = 'smart_battalion_alerts_v3';
-const ALERT_SOUND = 'siren';
+// lagi di masa depan, ganti ID ini (mis. jadi _v4) supaya Android membuat channel baru.
+const SIREN_CHANNEL_ID = 'smart_battalion_alerts_v3';
+const SIREN_SOUND = 'siren';
 // 5x getar panjang (800ms) berturut-turut, dipisah jeda 300ms. Semua nilai harus > 0.
-const ALERT_VIBRATION_PATTERN = [100, 800, 300, 800, 300, 800, 300, 800, 300, 800];
+const SIREN_VIBRATION_PATTERN = [100, 800, 300, 800, 300, 800, 300, 800, 300, 800];
+
+// Channel kedua bersuara/getar bawaan sistem (bukan sirene) — dipakai untuk SEMUA notifikasi
+// non-darurat (disposisi, pengumuman, dll). Juga jadi `default_notification_channel_id` di
+// AndroidManifest.xml (channel yang dipakai Android untuk auto-display notifikasi non-darurat
+// saat app background/killed).
+const NORMAL_CHANNEL_ID = 'smart_battalion_alerts_normal_v1';
+
 const BROADCAST_TOPIC = Config.FCM_TOPIC || 'all_users';
 
-async function ensureAlertChannel(): Promise<void> {
+async function ensureAlertChannels(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await notifee.createChannel({
-    id: ALERT_CHANNEL_ID,
-    name: 'Peringatan Darurat',
+    id: SIREN_CHANNEL_ID,
+    name: 'Peringatan Darurat (Sirene)',
     importance: AndroidImportance.HIGH,
     visibility: AndroidVisibility.PUBLIC,
-    sound: ALERT_SOUND,
+    sound: SIREN_SOUND,
     vibration: true,
-    vibrationPattern: ALERT_VIBRATION_PATTERN,
+    vibrationPattern: SIREN_VIBRATION_PATTERN,
     bypassDnd: true,
+  });
+  await notifee.createChannel({
+    id: NORMAL_CHANNEL_ID,
+    name: 'Notifikasi',
+    importance: AndroidImportance.HIGH,
+    visibility: AndroidVisibility.PUBLIC,
   });
 }
 
@@ -55,36 +69,61 @@ export async function isNotificationPermissionGranted(): Promise<boolean> {
   return settings.authorizationStatus === AuthorizationStatus.AUTHORIZED;
 }
 
-async function showAlertNotification(title?: string, body?: string): Promise<void> {
+async function showAlertNotification(title: string | undefined, body: string | undefined, channelId: string): Promise<void> {
+  const isSiren = channelId === SIREN_CHANNEL_ID;
   await notifee.displayNotification({
     title,
     body,
     android: {
-      channelId: ALERT_CHANNEL_ID,
+      channelId,
       importance: AndroidImportance.HIGH,
-      sound: ALERT_SOUND,
       // Diset ulang di level notifikasi (bukan cuma channel) — beberapa ROM (mis. Samsung One
-      // UI) kadang tidak konsisten mewarisi vibrationPattern dari channel saja.
-      vibrationPattern: ALERT_VIBRATION_PATTERN,
+      // UI) kadang tidak konsisten mewarisi sound/vibrationPattern dari channel saja.
+      ...(isSiren ? { sound: SIREN_SOUND, vibrationPattern: SIREN_VIBRATION_PATTERN } : {}),
       pressAction: { id: 'default' },
     },
   });
 }
 
-// Dipakai baik oleh onMessage (foreground) maupun setBackgroundMessageHandler (index.js) —
-// FCM TIDAK otomatis menampilkan notifikasi saat app di foreground di Android, jadi ini yang
-// menampilkannya secara manual lewat channel custom di atas. Ini adalah SATU-SATUNYA jalur
-// alert darurat (termasuk untuk device yang memicu panic button sendiri — device itu juga
-// subscribe ke BROADCAST_TOPIC jadi ikut menerima FCM ini) — tidak ada lagi alert lokal instan
-// saat sinyal berhasil dikirim, jadi ada jeda selama backend memproses & mem-broadcast FCM-nya.
-export async function displayRemoteMessage(remoteMessage: RemoteMessage): Promise<void> {
-  const { notification } = remoteMessage;
-  if (!notification) return;
+// Dipakai baik oleh onMessage (foreground, `isForeground: true`) maupun
+// setBackgroundMessageHandler (index.js, background/killed — `isForeground` diabaikan/false).
+//
+// Notifikasi darurat (panic button) dikirim backend sebagai pesan DATA-ONLY (`data.type ===
+// 'emergency'`, TANPA field `notification`) — supaya Android tidak pernah auto-display-kan
+// sendiri lewat channel default saat app background/killed; app SELALU yang tampilkan manual di
+// semua state (data-only TIDAK PERNAH di-auto-display Android, apapun state-nya), jadi sirene
+// konsisten bunyi baik app lagi kebuka atau tidak.
+//
+// Tipe lain (disposisi, pengumuman, test push dari Firebase Console, dll) dikirim sebagai pesan
+// `notification` biasa. Pesan begini HANYA ditampilkan manual di sini saat `isForeground` —
+// FCM TIDAK otomatis menampilkan notifikasi saat app di foreground, jadi manual di sini memang
+// wajib. Saat app background/killed, Android SUDAH auto-display-kan pesan `notification` ini
+// sendiri lewat `default_notification_channel_id` (AndroidManifest.xml) — kalau di sini tetap
+// dipanggil juga, notifikasi yang sama muncul DOBEL (dua notifId beda, channel sama). Makanya di
+// background/killed pesan bertipe `notification` di-skip total, biar Android yang urus sendiri.
+export async function displayRemoteMessage(
+  remoteMessage: RemoteMessage,
+  options?: { isForeground?: boolean },
+): Promise<void> {
+  const { notification, data } = remoteMessage;
 
-  await showAlertNotification(notification.title, notification.body);
+  if (data?.type === 'emergency') {
+    const title = typeof data.title === 'string' ? data.title : notification?.title;
+    const body = typeof data.body === 'string' ? data.body : notification?.body;
+    await showAlertNotification(title, body, SIREN_CHANNEL_ID);
+    return;
+  }
+
+  if (!notification || !options?.isForeground) return;
+  await showAlertNotification(notification.title, notification.body, NORMAL_CHANNEL_ID);
 }
 
-let isFirebaseReady = false;
+// Single-flight: initializePushNotifications bisa dipanggil beruntun (RootNavigator memanggilnya
+// saat isLogin lalu lagi saat `roles` berubah sesudah refreshUser) sebelum setup pertama selesai.
+// Dengan flag boolean yang baru di-set di akhir, panggilan kedua ikut lolos dan mendaftarkan
+// listener onMessage KEDUA — tiap push foreground jadi tampil dobel. Semua pemanggil menunggu
+// promise yang sama.
+let firebaseReadyPromise: Promise<void> | null = null;
 let unsubscribeOnMessage: (() => void) | null = null;
 let unsubscribeOnTokenRefresh: (() => void) | null = null;
 let subscribedTopics: string[] = [];
@@ -115,26 +154,33 @@ function resolveTopics(roles: string[]): string[] {
 
 // Setup Firebase/Notifee sekali saja (izin, channel, token, listener foreground) — idempoten,
 // terpisah dari sinkronisasi topic di bawah supaya perubahan role tidak perlu setup ulang.
-async function ensureFirebaseReady(): Promise<void> {
-  if (isFirebaseReady) return;
+function ensureFirebaseReady(): Promise<void> {
+  if (!firebaseReadyPromise) {
+    firebaseReadyPromise = setupFirebase().catch(error => {
+      // Gagal (mis. Firebase belum dikonfigurasi) — reset supaya init berikutnya bisa mencoba lagi.
+      firebaseReadyPromise = null;
+      throw error;
+    });
+  }
+  return firebaseReadyPromise;
+}
 
+async function setupFirebase(): Promise<void> {
   await ensureNotificationPermission();
-  await ensureAlertChannel();
+  await ensureAlertChannels();
 
   const messaging = getMessaging();
   const token = await getToken(messaging);
   await registerFcmTokenWithBackend(token);
 
   unsubscribeOnMessage = onMessage(messaging, async remoteMessage => {
-    await displayRemoteMessage(remoteMessage);
+    await displayRemoteMessage(remoteMessage, { isForeground: true });
   });
 
   // FCM bisa merotasi token kapan saja (mis. restore app, clear data) — daftarkan yang baru.
   unsubscribeOnTokenRefresh = onTokenRefresh(messaging, async newToken => {
     await registerFcmTokenWithBackend(newToken);
   });
-
-  isFirebaseReady = true;
 }
 
 // Menyamakan topic yang di-subscribe dengan `roles` saat ini: subscribe topic yang baru muncul,
@@ -194,13 +240,15 @@ export async function teardownPushNotifications(): Promise<void> {
     registeredFcmToken = null;
   }
 
-  if (Platform.OS !== 'android' || !isFirebaseReady) return;
+  if (Platform.OS !== 'android' || !firebaseReadyPromise) return;
 
+  // Tunggu setup yang mungkin masih berjalan, supaya listener-nya tidak terdaftar SESUDAH dilepas.
+  await firebaseReadyPromise.catch(() => {});
   unsubscribeOnMessage?.();
   unsubscribeOnMessage = null;
   unsubscribeOnTokenRefresh?.();
   unsubscribeOnTokenRefresh = null;
-  isFirebaseReady = false;
+  firebaseReadyPromise = null;
 
   try {
     const messaging = getMessaging();

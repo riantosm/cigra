@@ -15,6 +15,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { logout, logoutLocal } from '@/store/slices/authSlice';
 import { colors } from '@/theme/colors';
 import { contentEnterTransition } from '@/utils/motion';
+import { isIgnoringBatteryOptimizations, requestIgnoreBatteryOptimizations } from '@/utils/batteryOptimization';
 import { isGpsEnabled, isLocationPermissionGranted, openAppSettings, openLocationSettings } from '@/utils/location';
 import { isNotificationPermissionGranted } from '@/utils/pushNotifications';
 import { appVersion } from '@/utils/version';
@@ -27,6 +28,9 @@ interface PermissionRowState {
   description: string;
   granted: boolean | null;
   onOpenSettings: () => void;
+  // Label tombol saat `granted === false` — default "Buka Pengaturan"; baris yang membuka dialog
+  // sistem langsung (bukan app Pengaturan OS) pakai label yang lebih sesuai, mis. "Izinkan".
+  actionLabel?: string;
 }
 
 export default function SettingsScreen(props: SettingsScreenProps) {
@@ -35,18 +39,21 @@ export default function SettingsScreen(props: SettingsScreenProps) {
   const [locationGranted, setLocationGranted] = useState<boolean | null>(null);
   const [gpsEnabled, setGpsEnabled] = useState<boolean | null>(null);
   const [notificationGranted, setNotificationGranted] = useState<boolean | null>(null);
+  const [batteryOptimizationIgnored, setBatteryOptimizationIgnored] = useState<boolean | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLogoutConfirmVisible, setIsLogoutConfirmVisible] = useState(false);
 
   const checkPermissions = useCallback(async () => {
-    const [location, gps, notification] = await Promise.all([
+    const [location, gps, notification, batteryIgnored] = await Promise.all([
       isLocationPermissionGranted(),
       isGpsEnabled(),
       isNotificationPermissionGranted(),
+      isIgnoringBatteryOptimizations(),
     ]);
     setLocationGranted(location);
     setGpsEnabled(gps);
     setNotificationGranted(notification);
+    setBatteryOptimizationIgnored(batteryIgnored);
   }, []);
 
   useEffect(() => {
@@ -102,6 +109,15 @@ export default function SettingsScreen(props: SettingsScreenProps) {
       granted: notificationGranted,
       onOpenSettings: openAppSettings,
     },
+    {
+      icon: 'shield-check',
+      title: 'Optimisasi Baterai',
+      description:
+        'Nonaktifkan agar sinyal darurat tetap diterima walau aplikasi ditutup lama atau HP sedang hemat baterai.',
+      granted: batteryOptimizationIgnored,
+      onOpenSettings: requestIgnoreBatteryOptimizations,
+      actionLabel: 'Izinkan',
+    },
   ];
 
   return (
@@ -139,7 +155,7 @@ export default function SettingsScreen(props: SettingsScreenProps) {
                 <Text style={styles.rowDescription}>{row.description}</Text>
                 {row.granted === false ? (
                   <Button
-                    label="Buka Pengaturan"
+                    label={row.actionLabel ?? 'Buka Pengaturan'}
                     variant="secondary"
                     onPress={row.onOpenSettings}
                     style={styles.rowAction}

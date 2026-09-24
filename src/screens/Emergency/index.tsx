@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
@@ -72,7 +72,11 @@ export default function EmergencyScreen() {
               </Defs>
               <Rect width="100%" height="100%" rx={48} ry={48} fill="url(#emergencySend)" />
             </Svg>
-            <Icon name="emergency" size={40} color={colors.dangerForeground} />
+            {isSending ? (
+              <ActivityIndicator color={colors.dangerForeground} size="large" />
+            ) : (
+              <Icon name="emergency" size={40} color={colors.dangerForeground} />
+            )}
           </PressableScale>
         </MotiView>
 
