@@ -448,7 +448,14 @@ needed (missing `.env` value).
   `notification` field) → siren channel `smart_battalion_alerts_v3` in every app state; any other
   `notification` message → normal channel `smart_battalion_alerts_normal_v1`, displayed manually **only in
   foreground** (`isForeground`) because Android auto-displays it itself in background/killed (doing both =
-  duplicate). `ensureFirebaseReady` is single-flight (`firebaseReadyPromise`) — a boolean flag set after the
+  duplicate). Siren pushes carry `data.source` — `panic_button` or `directive` (Perintah Tugas
+  high/urgent); tapping one (`pressAction` `alert-open`, handlers wired like the patrol notification:
+  `registerAlertNotificationForegroundHandler` in `App.tsx`, `handleAlertNotificationBackgroundEvent`
+  in `index.js`, `consumeAlertInitialNotification`) opens `EmergencyDetail {panic_button_id}` (no id →
+  `EmergencyList`) or, for `directive`, `Notifications` (no directive API/screen yet). FCM tokens are
+  **per device** on the backend: `POST /devices/firebase-token` sends `platform` + `device_id`
+  (`DeviceInfo.getUniqueId()`) + `device_name`; logout sends `DELETE` with `{ token }` — **never**
+  without a body (that unregisters every device of the user, incl. web/tablet). `ensureFirebaseReady` is single-flight (`firebaseReadyPromise`) — a boolean flag set after the
   awaits let RootNavigator's back-to-back `initializePushNotifications` calls register `onMessage` twice
   (duplicate foreground notifications). Settings also has an "Optimisasi Baterai" row
   (`BatteryOptimizationModule.kt` → `utils/batteryOptimization.ts`) requesting exemption so data-only pushes

@@ -1093,42 +1093,117 @@ Catatan: `status` = `fresh` | `stale` | `offline`; `location` bisa `null`.
 }
 ```
 
-Catatan: `data` tidak meng-echo `description`.
+Catatan: `data` tidak meng-echo `description`. Idempotensi 5 detik: retry dengan koordinat sama dalam 5 detik dibalas `200` (bukan `201`) tanpa membuat record baru — app tidak membedakan keduanya (sama-sama sukses). Push yang dipicu endpoint ini: §8.3.
+
 ## 8. Push Notification (FCM)
 
-> [!DONE] Dua jalur, keduanya aktif:
-> - **Broadcast lewat topic** — `initializePushNotifications(roles)` subscribe ke FCM topic per role (mis. `all_users`, `komandan`, `anggota`) lewat `@react-native-firebase/messaging`. Backend cukup mem-broadcast ke topic, tanpa perlu menyimpan token per-device.
-> - **Kirim per-pengguna** — device token FCM didaftarkan ke backend saat sesi login siap (`ensureFirebaseReady` di `utils/pushNotifications.ts`) & saat token dirotasi FCM (`onTokenRefresh`); dihapus saat logout (`teardownPushNotifications`, dipanggil sebelum token auth dibersihkan). Dipakai untuk push yang ditujukan ke satu user (mis. disposisi surat). Android-only (seluruh stack push app ini Android-only). Best-effort — kegagalan tidak memblokir alur login/logout.
->
-> Notifikasi in-app tetap dibaca dari `GET /notifications` (§3).
+Dua jalur, keduanya aktif:
 
-`POST /devices/firebase-token` — daftarkan / perbarui FCM token milik user aktif. Butuh `Authorization: Bearer`.
+- **Broadcast lewat topic** — `initializePushNotifications(roles)` subscribe ke FCM topic per role (mis. `all_users`, `komandan`, `anggota`) lewat `@react-native-firebase/messaging`. Backend cukup mem-broadcast ke topic, tanpa perlu menyimpan token per-device.
+- **Kirim per-pengguna** — device token FCM didaftarkan ke backend saat sesi login siap (`ensureFirebaseReady` di `utils/pushNotifications.ts`) & saat token dirotasi FCM (`onTokenRefresh`); dilepas saat logout (`teardownPushNotifications`, dipanggil sebelum token auth dibersihkan). Dipakai untuk push yang ditujukan ke satu user (disposisi, pengumuman, darurat). Android-only (seluruh stack push app ini Android-only). Best-effort — kegagalan tidak memblokir alur login/logout.
+
+Notifikasi in-app tetap dibaca dari `GET /notifications` (§3).
+
+### 8.1 Daftarkan Token Perangkat
+
+> [!DONE] Sejak 2026-09-26 backend menyimpan token **per perangkat** — satu user boleh punya banyak token (ponsel + tablet + web); sebelumnya token web menimpa token mobile. App mengirim `platform` + `device_id` (`DeviceInfo.getUniqueId()`) + `device_name` (`DeviceInfo.getDeviceName()`, fallback `getModel()`). Alias lama `POST /user/fcm-token` tetap ada (app memakai `/devices/firebase-token`).
+>
+> Catatan: `fcm_token` di `GET /auth/me` kini hanya token perangkat **terakhir** yang mendaftar (bisa `null`) + ada `fcm_device_count` — app tidak memakai keduanya; sumber kebenaran tetap token lokal dari SDK Firebase.
+
+`POST /devices/firebase-token` — daftarkan / perbarui token FCM perangkat ini. Butuh `Authorization: Bearer`.
 
 **Payload (body):**
 
 | Parameter | Tipe | Wajib | Keterangan |
 |---|---|---|---|
-| `fcm_token` | string | Wajib | device token dari SDK Firebase |
+| `fcm_token` | string | Wajib | device token dari SDK Firebase (backend juga menerima nama field `token`) |
+| `platform` | string | Wajib | `android` / `ios` / `web` |
+| `device_id` | string | Wajib | ID stabil perangkat — kunci baris token per perangkat |
+| `device_name` | string | Opsional | nama perangkat untuk ditampilkan (mis. "Galaxy A54 5G") |
 
 **Response `200`/`201`:**
 
 ```json
 {
   "success": true,
-  "message": "FCM token updated successfully"
+  "message": "FCM token updated successfully",
+  "subscribed": true,
+  "data": {
+    "device_count": 2
+  }
 }
 ```
 
-`DELETE /devices/firebase-token` — hapus FCM token milik user (dipanggil saat logout). Butuh `Authorization: Bearer`.
+### 8.2 Lepas Token Perangkat (logout)
 
-**Tanpa parameter.**
+> [!DONE] App **selalu** mengirim `{ "token": "<token perangkat ini>" }` supaya hanya perangkat ini yang dilepas — perangkat lain milik user tetap menerima push. Token diambil ulang dari SDK kalau pendaftaran sebelumnya gagal. Kalau token sama sekali tidak bisa didapat, DELETE **dilewati** (tidak pernah dikirim tanpa body). Alias lama `DELETE /user/fcm-token`.
+>
+> Catatan: DELETE **tanpa body** di backend = melepas **seluruh** perangkat user (perilaku lama) — app sengaja tidak memakainya.
 
-**Response `200`/`201`:**
+`DELETE /devices/firebase-token` — lepas token FCM perangkat ini. Butuh `Authorization: Bearer`.
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `token` | string | Opsional | token perangkat yang dilepas; kosong = semua perangkat user dilepas |
+
+**Response `200`:**
 
 ```json
 {
   "success": true,
-  "message": "FCM token removed successfully"
+  "message": "FCM token removed successfully",
+  "data": {
+    "removed": 1,
+    "device_count": 1
+  }
+}
+```
+
+### 8.3 Payload Push Sirene (darurat & Perintah Tugas)
+
+> [!DONE] Pesan **data-only** (tanpa field `notification`) dengan `type = "emergency"` → notifikasi channel sirene `smart_battalion_alerts_v3` di semua state app (`displayRemoteMessage`). `source` menentukan tujuan saat notifikasi di-tap (`openAlertTarget`): `panic_button` (atau tanpa `source`, payload lama) → `EmergencyDetail` `{ id: panic_button_id ?? id }`, tanpa id → `EmergencyList`; `directive` → layar Notifikasi (belum ada endpoint/layar Perintah Tugas). Payload panic sudah membawa `latitude`/`longitude`/`address`/`maps_url` — app tetap mengambil detail lengkap dari `GET /panic-buttons/{id}` (Komandan §4.2).
+>
+> Catatan: (1) backend kini juga mengirim APNs — tidak berpengaruh, push di app masih Android-only. (2) Perlu konfirmasi backend bahwa pesan Android **tetap data-only** setelah APNs ditambahkan; kalau ikut membawa `notification`, Android menampilkannya sendiri lewat channel biasa saat app di background (tanpa sirene / dobel). (3) Push Perintah Tugas biasa = `type = "directive"` + notifikasi normal (tanpa sirene). (4) Belum ada `GET /directives` / `GET /directives/{id}` — `directive_id` & `action = "open_directive"` belum bisa dibuka di app. (5) Disposisi / pengumuman: payload tidak berubah, kini terkirim ke semua perangkat user.
+
+**Tanpa parameter** (push masuk, bukan request dari app).
+
+**Payload `source = panic_button`** (semua nilai string; nilai contoh):
+
+```json
+{
+  "type": "emergency",
+  "source": "panic_button",
+  "title": "SINYAL DARURAT",
+  "body": "Serda Budi mengirim sinyal darurat di Pos Timur, Markas Batalyon",
+  "id": "161",
+  "panic_button_id": "161",
+  "personnel_id": "42",
+  "sender_name": "Budi Santoso",
+  "sender_rank": "Serda",
+  "unit": "Kompi A",
+  "latitude": "-6.2088",
+  "longitude": "106.8456",
+  "address": "Pos Timur, Markas Batalyon",
+  "maps_url": "https://maps.google.com/?q=-6.2088,106.8456",
+  "created_at": "2026-09-26T08:15:00+07:00"
+}
+```
+
+**Payload `source = directive`** (Perintah Tugas prioritas `high`/`urgent`; nilai contoh):
+
+```json
+{
+  "type": "emergency",
+  "source": "directive",
+  "title": "PERINTAH TUGAS",
+  "body": "…",
+  "directive_id": "12",
+  "directive_recipient_id": "87",
+  "priority": "urgent",
+  "due_at": "2026-09-26T12:00:00+07:00",
+  "action": "open_directive"
 }
 ```
 

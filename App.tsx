@@ -17,12 +17,21 @@ import {
   consumePatrolInitialNotification,
   registerPatrolNotificationForegroundHandler,
 } from '@/utils/patrolNotification';
+import {
+  consumeAlertInitialNotification,
+  registerAlertNotificationForegroundHandler,
+} from '@/utils/pushNotifications';
 
 function App() {
   useEffect(() => {
-    const unsubscribe = registerPatrolNotificationForegroundHandler();
+    const unsubscribePatrol = registerPatrolNotificationForegroundHandler();
+    const unsubscribeAlert = registerAlertNotificationForegroundHandler();
     consumePatrolInitialNotification();
-    return unsubscribe;
+    consumeAlertInitialNotification();
+    return () => {
+      unsubscribePatrol();
+      unsubscribeAlert();
+    };
   }, []);
 
   return (
