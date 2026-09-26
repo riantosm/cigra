@@ -94,6 +94,11 @@ axiosInstance.interceptors.response.use(
     // /auth/refresh: kegagalannya ditangani langsung oleh performRefresh, bukan lewat interceptor ini.
     const isAuthLifecycleRequest =
       url.includes('/auth/login') || url.includes('/auth/logout') || url.includes('/auth/refresh');
+    // DELETE /devices/firebase-token hanya dipanggil DI DALAM logout (teardownPushNotifications):
+    // boleh coba refresh + retry supaya perangkat tetap terlepas, tapi kalau tetap 401 jangan
+    // hapus token / memicu logout() lagi — itu yang bikin loop DELETE ↔ /auth/logout.
+    const isLogoutCleanupRequest =
+      error.config?.method === 'delete' && url.includes('/devices/firebase-token');
 
     if (error.response?.status === 401 && !isAuthLifecycleRequest) {
       const config = error.config as RetryableRequestConfig;
@@ -105,8 +110,10 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(config);
         }
       }
-      await setAuthToken(null);
-      unauthorizedHandler?.();
+      if (!isLogoutCleanupRequest) {
+        await setAuthToken(null);
+        unauthorizedHandler?.();
+      }
     }
     return Promise.reject(error);
   },

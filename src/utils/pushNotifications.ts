@@ -15,6 +15,7 @@ import DeviceInfo from 'react-native-device-info';
 
 import { ROUTES } from '@/navigation/paths';
 import { navigationRef, runWhenNavigationReady } from '@/navigation/navigationRef';
+import { getAuthToken } from '@/services/api/axiosInstance';
 import { registerFcmTokenApi, unregisterFcmTokenApi } from '@/services/api/device.service';
 import { clearPatrolOngoingNotification } from '@/utils/patrolNotification';
 
@@ -335,7 +336,10 @@ export async function teardownPushNotifications(): Promise<void> {
   // belum terjadi di sesi app ini, supaya device yang logout tidak tetap menerima push. Tanpa
   // token sama sekali → DELETE dilewati (DELETE tanpa body melepas SEMUA perangkat user).
   // Harus dipanggil SEBELUM token auth dibersihkan (lihat urutan di authSlice.logout). Best-effort.
-  const tokenToRemove = registeredFcmToken ?? (await readCurrentFcmToken());
+  // Tanpa token auth (sesi sudah dihapus, mis. logout karena 401) DELETE juga dilewati — backend
+  // pasti membalas 401 dan tidak ada gunanya.
+  const hasSession = !!(await getAuthToken());
+  const tokenToRemove = hasSession ? registeredFcmToken ?? (await readCurrentFcmToken()) : null;
   if (tokenToRemove) {
     try {
       await unregisterFcmTokenApi(tokenToRemove);

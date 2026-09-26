@@ -130,7 +130,13 @@ export const loginWithOtp = createAsyncThunk<LoginThunkResult, OtpVerifyPayload,
   },
 );
 
-export const logout = createAsyncThunk('auth/logout', async () => {
+// Single-flight: logout bisa dipicu beberapa kali hampir bersamaan (tombol Logout + handler 401
+// axios untuk tiap request yang gagal, termasuk request di dalam logout itu sendiri). Tanpa ini tiap
+// pemicu menjalankan teardown + /auth/logout sendiri-sendiri — dan kalau salah satunya 401 lagi,
+// terjadi loop DELETE /devices/firebase-token ↔ POST /auth/logout tanpa henti.
+let logoutInFlight: Promise<void> | null = null;
+
+async function performLogout(): Promise<void> {
   // teardownPushNotifications() memanggil DELETE /devices/firebase-token — jalankan selagi token
   // auth masih valid (sebelum logoutApi menginvalidasi sesi & sebelum setAuthToken(null)).
   await teardownPushNotifications();
@@ -142,6 +148,15 @@ export const logout = createAsyncThunk('auth/logout', async () => {
     await setAuthToken(null);
     await stopBackgroundLocationTracking();
   }
+}
+
+export const logout = createAsyncThunk('auth/logout', async () => {
+  if (!logoutInFlight) {
+    logoutInFlight = performLogout().finally(() => {
+      logoutInFlight = null;
+    });
+  }
+  await logoutInFlight;
 });
 
 const authSlice = createSlice({

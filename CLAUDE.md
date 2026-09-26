@@ -455,7 +455,11 @@ needed (missing `.env` value).
   `EmergencyList`) or, for `directive`, `Notifications` (no directive API/screen yet). FCM tokens are
   **per device** on the backend: `POST /devices/firebase-token` sends `platform` + `device_id`
   (`DeviceInfo.getUniqueId()`) + `device_name`; logout sends `DELETE` with `{ token }` — **never**
-  without a body (that unregisters every device of the user, incl. web/tablet). `ensureFirebaseReady` is single-flight (`firebaseReadyPromise`) — a boolean flag set after the
+  without a body (that unregisters every device of the user, incl. web/tablet), and skipped entirely
+  when there's no auth token. **Logout-loop guard:** the `logout` thunk is single-flight
+  (`logoutInFlight`), `apiSyncMiddleware` only dispatches it while `isLogin`, and a 401 on that
+  `DELETE` may refresh+retry but never calls the unauthorized handler — otherwise an expired session
+  loops `DELETE /devices/firebase-token` ↔ `POST /auth/logout` forever. `ensureFirebaseReady` is single-flight (`firebaseReadyPromise`) — a boolean flag set after the
   awaits let RootNavigator's back-to-back `initializePushNotifications` calls register `onMessage` twice
   (duplicate foreground notifications). Settings also has an "Optimisasi Baterai" row
   (`BatteryOptimizationModule.kt` → `utils/batteryOptimization.ts`) requesting exemption so data-only pushes
