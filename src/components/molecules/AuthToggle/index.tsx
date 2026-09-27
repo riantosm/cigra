@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import Icon from '@/components/atoms/Icon';
@@ -16,15 +17,18 @@ export interface AuthToggleProps<T extends string> {
   options: AuthToggleOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  // Override track — mis. latar `surface` + border `borderSoft` saat dipakai di atas latar
+  // near-white layar non-Auth (track bawaan putih transparan hanya terbaca di atas gradient Auth).
+  style?: StyleProp<ViewStyle>;
 }
 
 // Canvas-theme segmented toggle (DESIGN_SYSTEM.md §1b pill controls) — the Login "Password / Kode OTP"
 // switch. Active segment gets the primary gradient + glow; inactive segments are plain muted.
 export default function AuthToggle<T extends string>(props: AuthToggleProps<T>) {
-  const { options, value, onChange } = props;
+  const { options, value, onChange, style } = props;
 
   return (
-    <View style={styles.track}>
+    <View style={[styles.track, style]}>
       {options.map(option => {
         const isActive = option.value === value;
         return (

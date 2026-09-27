@@ -229,7 +229,8 @@ needed (missing `.env` value).
   AcademyProgramDetail, AcademyMaterial, AcademyAssessmentIntro, AcademyAttempt,
   AcademyAttemptResult, AcademyPracticalEntry, AcademyResults, AcademyResultDetail, AcademyCompetencies,
   AcademyCompetencyDetail, AcademyInsProgramDetail, AcademyInsVerificationDetail, AcademyCmdAttention,
-  AcademyCmdProgramDetail, AcademyCmdCompetency, CoopBills, CoopBillDetail, CoopReports, CoopReportDetail) and
+  AcademyCmdProgramDetail, AcademyCmdCompetency, Coop, CoopBillDetail, CoopReportDetail, CoopJuyars,
+  CoopJuyarAppoint) and
   `MainTabParamList` (tabs: Home, Riwayat, Emergency, BukuSaku, Academy),
   plus typed prop helpers (`RootStackScreenProps`, `MainTabScreenProps`).
 - `src/navigation/RootNavigator.tsx` — top-level native-stack. `Login` and `ForgotPassword` are guest-only
@@ -1207,18 +1208,19 @@ RollCall/Patrol).
 
 ### Tagihan Koperasi (`/coop-salary-report/*`)
 
-Real backend, satu menu dengan respons dinamis. Design = canvas Design terpisah "Tagihan Koperasi"
-(https://claude.ai/artifact/CLiSPgr7xWzKSaXXrwMf99, 8 artboard). Types
+Real backend, satu menu dengan respons dinamis. Design = canvas "Redesign Tagihan Koperasi"
+(https://claude.ai/artifact/XMBNgAfQrBBfSbzC7RfA1R, 15 artboard, 2026-09-26 — menggantikan canvas
+pertama CLiSPgr7xWzKSaXXrwMf99). Types
 `src/types/coopSalary.types.ts` (barrelled), service `src/services/api/coopSalary.service.ts`, helper
 `src/utils/coopSalary.ts` (urutan kanonik 7 jenis, warna `coopCategory*`, `coopCategoryLines` —
 melengkapi jadi 7 jenis, `coopDeltaFromSeries`, `COOP_TREND_META` turun=hijau/naik=amber,
 `formatRupiah`/`formatRupiahCompact`, `trendBarItems`), ekspor `src/utils/coopSalaryExport.ts`.
 **Tanpa Redux slice** — state lokal per layar (+ hook `src/hooks/useCoopMyBills.ts` untuk daftar
-`/me` berpaginasi, dipakai 2 layar).
+`/me` berpaginasi, dipakai menu `Coop`).
 
 - **Module gate** `coop_salary_report`: modul nonaktif untuk satuan → **403** di semua endpoint.
-  Home menangkapnya diam-diam dan **menyembunyikan section** (bukan pesan error);
-  `isCoopForbiddenError()` tersedia di service.
+  Home menangkapnya diam-diam dan **menyembunyikan section + item menu** (bukan pesan error); menu
+  `Coop` yang terlanjur dibuka menampilkan EmptyState berisi pesan backend (`isCoopForbiddenError()`).
 - **`GET /coop-salary-report`** (`getCoopOverviewApi`) → `{mode, categories, capabilities, identity,
   manager, member}`. `manager` terisi hanya bila `capabilities.can_view_all_reports`. `member` tetap
   terisi untuk komandan yang punya data personil (`has_own_tagihan`). Blok member di endpoint ini
@@ -1254,25 +1256,58 @@ melengkapi jadi 7 jenis, `coopDeltaFromSeries`, `COOP_TREND_META` turun=hijau/na
     PDF (rincian portrait, rekap landscape) dan Excel (`/sdcard/Download/*.xlsx`, xlsx valid).
   - Catatan respons asli: `identity.rank` selalu null → pangkat dari `rank_name` baris; `summary.latest`
     (member) dan `summary.latest_period` (manager) berisi objek baris/laporan lengkap (+`categories`).
-- **Home**: `MemberHome` — section **"Tagihan Saya"** di bawah "Aset Saya" (`screens/Home/CoopBillCard`,
-  data `/me?per_page=1` di `loadMe` allSettled; selisih % dari 2 nilai terakhir `trend.values`; empty
-  state kalau `rows=[]`). `CommanderHome` — section **"Tagihan Koperasi"** di bawah "Ringkasan Situasi"
-  (`screens/Home/CoopReportCard`: rekap periode terbaru + keterkaitan NRP + peringatan belum tertaut +
-  baris "Tagihan Saya" bila `has_own_tagihan`); komandan ber-mode member → `CoopBillCard` biasa.
-- **Layar** (root-stack, `MainLayout variant="canvas"`, tanpa guard): `CoopBills` (`coopBills`, daftar
-  `/me` via `organisms/CoopMyBillsList`), `CoopBillDetail` (`coopBillDetail` `{rowId, reportId?,
-  periodLabel?}` — tanpa `reportId` = milik sendiri + footer Unduh Excel/Cetak PDF; dengan `reportId`
-  = tampilan pengelola + badge Tertaut/Belum tertaut, tanpa ekspor, riwayat tak bisa diketuk karena
-  `history[]` tak membawa report id), `CoopReports` (`coopReports`, rekap satuan + SegmentedControl
-  Rekap Satuan/Tagihan Saya + `SearchFilterBar` dengan FilterSheet tahun dari `year_options`),
-  `CoopReportDetail` (`coopReportDetail` `{reportId, periodLabel?, canExport?}` — FilterSheet jenis/
-  status NRP/urutan, "Muat lebih banyak").
+- **Home** — kedua Home memanggil **`GET /coop-salary-report?per_page=1` saja** dan kartunya mengikuti
+  **`mode`, bukan role**: `manager` → section "Tagihan Koperasi" (`screens/Home/CoopReportCard`: rekap
+  periode terbaru + selisih vs periode lalu + peringatan NRP belum tertaut + baris "Tagihan Saya" di
+  dalam kartu yang sama bila `has_own_tagihan`); `member` → section "Tagihan Saya"
+  (`screens/Home/CoopBillCard`, blok `member`: total terbaru + selisih + rata-rata/tertinggi/periode, tanpa
+  rincian jenis). Jadi **Juyar** (prajurit ber-role `petugas_laporan_koperasi`, mode manager) di
+  `MemberHome` ikut melihat kartu rekap. Item menu: Quick Action komandan **"Tagihan Koperasi"** di slot
+  ke-7 (Peta Personel bergeser ke "Lainnya") dan shortcut **"Koperasi"** di "Akses Cepat" anggota (kini
+  grid 4 kolom) — keduanya hanya bila overview tidak 403. "Lihat Semua" → menu `Coop`.
+- **Layar** (root-stack, `MainLayout variant="canvas"`, tanpa guard):
+  - `Coop` (`coop`) — **satu pintu menu** untuk semua peran (`src/screens/Coop` + sub-folder
+    `ReportsPanel`). Mode `manager`: `AuthToggle` (prop `style` baru → track putih) Rekap Satuan /
+    Tagihan Saya — toggle hanya bila blok `member` terisi; panel Rekap = kartu rekap terbaru (TERBARU,
+    selisih dari `trend.totals`, peringatan belum tertaut) → kartu Ringkasan (pil tahun = FilterSheet
+    `year_options` → `?year=`, `TrendBarChart` + `StatDividerRow`) → "Laporan Periode" (cari = `?search=`,
+    debounce) berpaginasi. Header kanan ikon `users` → `CoopJuyars` **hanya bila
+    `capabilities.can_manage_reports`**. Mode `member` → langsung `organisms/CoopMyBillsList`
+    (`/me`): kartu periode terbaru (legend maks 4 jenis) → tren + ringkasan → riwayat periode; akun
+    Persit (`identity.source = persit`) dapat strip penanda. Akun tanpa `member` & tanpa `manager` →
+    EmptyState.
+  - `CoopBillDetail` (`coopBillDetail` `{rowId, reportId?, periodLabel?}` — tanpa `reportId` = milik
+    sendiri + footer Unduh Excel/Cetak PDF; dengan `reportId` = tampilan pengelola + badge Tertaut/Belum
+    tertaut, tanpa ekspor, riwayat tak bisa diketuk karena `history[]` tak membawa report id).
+    "Perbandingan Periode" = `TrendBarChart` (6 periode terakhir `series`, prop `highlightIndex` baru
+    menyorot periode yang dibuka + sublabel "periode ini").
+  - `CoopReportDetail` (`coopReportDetail` `{reportId, periodLabel?, canExport?}`) — FilterSheet 4 grup
+    (Jenis, Status NRP, Urutkan `name|nrp|total` — kosong = urutan berkas, Arah `asc|desc`) + baris
+    ringkasan filter aktif di bawah search, "Muat lebih banyak".
+  - `CoopJuyars` (`coopJuyars`) — `GET /coop-salary-report/juyars`, dibagi Aktif / Riwayat (`ended_at`).
+    Respons tanpa pangkat → di bawah nama tampil NRP + "Ditunjuk …" + `notes`. Tombol merah →
+    `StatusModal` konfirmasi → `POST /juyars/{juyar}/end`. **Tidak ada** aktif/nonaktif sementara.
+  - `CoopJuyarAppoint` (`coopJuyarAppoint`) — `GET /juyars/candidates?q=` (min 2 huruf, debounce 400ms;
+    `{id, name, nrp, rank, company}`, `id` = personnel_id) → radio → catatan opsional →
+    `POST /juyars {personnel_id, notes?}`. Role `petugas_laporan_koperasi` diberikan/dicabut backend
+    otomatis. Prajurit tanpa akun login ditolak backend → popup gagal berisi `message` backend.
+- **Detail personel — tab "Koperasi"** (`src/screens/CatalogDetail/PersonnelCoopTab`, tab ke-5 di
+  `PersonnelTabs`, ikon `wallet`) — dari `tagihan_koperasi` di `GET /catalog/personnel/{id}`
+  (`{summary, categories, periods}`; `categories` = **label saja**, nominal per jenis ada di tiap
+  `periods[]`). Tab disembunyikan bila null (modul nonaktif). Bentuk `periods[]` dinormalisasi
+  `normalizePersonnelCoopPeriods` (menerima `period{label,month,year}` / `period_label`, `total` /
+  `total_amount`, `categories` array atau peta), terbaru dulu. Kartu ringkasan + accordion per bulan
+  (terbaru terbuka otomatis) berisi `CoopCategoryBreakdown` full.
 - Molekul baru: `StatDividerRow`, `TrendBarChart`, `CoopCategoryBreakdown`, `CoopDeltaPill`,
   `CoopPeriodRow` (DESIGN_SYSTEM §5.17). Icon baru: `wallet`, `receipt`, `trending-down`, `printer`,
   `spreadsheet`, `sort`. Native: `HtmlPrintModule` (lihat Ekspor) — tanpa dependency baru, tapi butuh
   rebuild (`npm run android`).
-- **Belum dipakai**: `tagihan_koperasi` di `GET /catalog/personnel/{id}` (belum ada tab/section di
-  detail personel).
+- **Catatan respons asli (dicek 2026-09-26):** `report.categories` di `GET /{report}` kini bisa membawa
+  jenis ke-8 ("Koperasi", Rp 0) di luar tujuh jenis kanonik — `coopCategoryLines` menaruhnya di
+  belakang (warna `placeholder`), jadi copy UI tidak menyebut angka "7 jenis". Verified on device
+  (akun demo komandan, data asli): Home komandan, menu Coop (kedua tab), detail rekap + filter,
+  rincian anggota, Juyar (daftar + pencarian calon — POST tunjuk/akhiri **belum** dicoba), tab
+  Koperasi detail personel. `MemberHome` (mode member & Juyar) belum dicoba di device.
 
 ### Role-based Home routing
 

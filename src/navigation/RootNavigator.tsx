@@ -31,10 +31,11 @@ import AppBootstrapScreen from '@/screens/AppBootstrap';
 import AnnouncementsScreen from '@/screens/Announcements';
 import BukuSakuDetailScreen from '@/screens/BukuSakuDetail';
 import ComingSoonScreen from '@/screens/ComingSoon';
+import CoopScreen from '@/screens/Coop';
 import CoopBillDetailScreen from '@/screens/CoopBillDetail';
-import CoopBillsScreen from '@/screens/CoopBills';
+import CoopJuyarAppointScreen from '@/screens/CoopJuyarAppoint';
+import CoopJuyarsScreen from '@/screens/CoopJuyars';
 import CoopReportDetailScreen from '@/screens/CoopReportDetail';
-import CoopReportsScreen from '@/screens/CoopReports';
 import DispositionComposeScreen from '@/screens/DispositionCompose';
 import DispositionDetailScreen from '@/screens/DispositionDetail';
 import DispositionFollowUpScreen from '@/screens/DispositionFollowUp';
@@ -282,10 +283,11 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.dispositionDetail} component={DispositionDetailScreen} />
         <Stack.Screen name={ROUTES.dispositionFollowUp} component={DispositionFollowUpScreen} />
         <Stack.Screen name={ROUTES.dispositionCompose} component={DispositionComposeScreen} />
-        <Stack.Screen name={ROUTES.coopBills} component={CoopBillsScreen} />
+        <Stack.Screen name={ROUTES.coop} component={CoopScreen} />
         <Stack.Screen name={ROUTES.coopBillDetail} component={CoopBillDetailScreen} />
-        <Stack.Screen name={ROUTES.coopReports} component={CoopReportsScreen} />
         <Stack.Screen name={ROUTES.coopReportDetail} component={CoopReportDetailScreen} />
+        <Stack.Screen name={ROUTES.coopJuyars} component={CoopJuyarsScreen} />
+        <Stack.Screen name={ROUTES.coopJuyarAppoint} component={CoopJuyarAppointScreen} />
         <Stack.Screen
           name={ROUTES.dispositionRecipientSearch}
           component={DispositionRecipientSearchScreen}

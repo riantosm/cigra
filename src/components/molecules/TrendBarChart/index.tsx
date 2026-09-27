@@ -17,6 +17,9 @@ export interface TrendBarChartProps {
   items: TrendBarItem[];
   // Tinggi area batang (tanpa label). Default 112.
   barAreaHeight?: number;
+  // Batang yang disorot (default batang terakhir = periode terbaru) — mis. periode yang sedang
+  // dibuka di layar rincian, yang belum tentu periode terbaru.
+  highlightIndex?: number;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -24,10 +27,11 @@ const COLUMN_WIDTH = 72;
 const BAR_WIDTH = 40;
 
 // Grafik batang vertikal sederhana (tanpa lib chart) untuk deret per periode. Batang TERAKHIR =
-// periode terbaru, disorot `primary` + label tebal; sisanya `primarySurface`. Lebih dari muat layar
+// periode terbaru (atau `highlightIndex`), disorot `primary` + label tebal; sisanya `primarySurface`. Lebih dari muat layar
 // → scroll horizontal (dibuka di ujung kanan, periode terbaru).
 export default function TrendBarChart(props: TrendBarChartProps) {
-  const { items, barAreaHeight = 112, style } = props;
+  const { items, barAreaHeight = 112, highlightIndex, style } = props;
+  const highlighted = highlightIndex ?? items.length - 1;
   const max = Math.max(...items.map(item => item.value), 0);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
@@ -42,7 +46,7 @@ export default function TrendBarChart(props: TrendBarChartProps) {
       <View>
         <View style={[styles.barsRow, { height: barAreaHeight + 24 }]}>
           {items.map((item, index) => {
-            const isLatest = index === items.length - 1;
+            const isLatest = index === highlighted;
             const height = max > 0 ? Math.max(6, (item.value / max) * barAreaHeight) : 6;
             return (
               <View key={item.key} style={styles.column}>
@@ -59,7 +63,7 @@ export default function TrendBarChart(props: TrendBarChartProps) {
         </View>
         <View style={styles.labelsRow}>
           {items.map((item, index) => {
-            const isLatest = index === items.length - 1;
+            const isLatest = index === highlighted;
             return (
               <View key={item.key} style={styles.labelCell}>
                 <Text style={[styles.periodLabel, isLatest && styles.periodLabelLatest]} numberOfLines={1}>

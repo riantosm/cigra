@@ -14,8 +14,9 @@ export interface StatDividerItem {
 
 export interface StatDividerRowProps {
   items: StatDividerItem[];
-  // `top` = garis atas (baris penutup kartu); `both` = garis atas & bawah (baris di tengah kartu).
-  border?: 'top' | 'both';
+  // `top` = garis atas (baris penutup kartu); `both` = garis atas & bawah (baris di tengah kartu);
+  // `none` = tanpa garis (baris angka yang berdiri sendiri sebagai isi kartu).
+  border?: 'top' | 'both' | 'none';
   size?: 'sm' | 'md';
   style?: StyleProp<ViewStyle>;
 }
@@ -26,7 +27,7 @@ export default function StatDividerRow(props: StatDividerRowProps) {
   const { items, border = 'top', size = 'sm', style } = props;
 
   return (
-    <View style={[styles.row, border === 'both' && styles.rowBoth, style]}>
+    <View style={[styles.row, border === 'both' && styles.rowBoth, border === 'none' && styles.rowNone, style]}>
       {items.map((item, index) => (
         <View
           key={item.label}
@@ -53,6 +54,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft,
+  },
+  rowNone: {
+    paddingTop: 0,
+    borderTopWidth: 0,
   },
   rowBoth: {
     paddingBottom: 12,

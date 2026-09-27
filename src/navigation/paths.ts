@@ -94,8 +94,10 @@ export const ROUTES = {
   incomingLetterCreate: 'IncomingLetterCreate',
   incomingLetterDetail: 'IncomingLetterDetail',
   // --- Tagihan Koperasi ---
-  coopBills: 'CoopBills',
+  // Satu menu untuk semua peran — isinya mengikuti `mode` dari GET /coop-salary-report.
+  coop: 'Coop',
   coopBillDetail: 'CoopBillDetail',
-  coopReports: 'CoopReports',
   coopReportDetail: 'CoopReportDetail',
+  coopJuyars: 'CoopJuyars',
+  coopJuyarAppoint: 'CoopJuyarAppoint',
 } as const;

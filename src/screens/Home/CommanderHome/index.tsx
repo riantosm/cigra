@@ -27,16 +27,16 @@ import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getActivityMovementsApi } from '@/services/api/activity.service';
-import { getCoopOverviewApi, getMyCoopBillsApi } from '@/services/api/coopSalary.service';
+import { getCoopOverviewApi } from '@/services/api/coopSalary.service';
 import { getDashboardSituationApi } from '@/services/api/dashboard.service';
 import { getLocationsOverviewApi } from '@/services/api/location.service';
 import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { cardShadow, ctaPrimaryShadow, smallButtonShadow } from '@/theme/shadows';
 import { contentEnterTransition } from '@/utils/motion';
+import { isCoopManagerView } from '@/utils/coopSalary';
 import { cleanValue, formatDateTime, formatRelativeTime, joinFields } from '@/utils/format';
 import type {
-  CoopMyBills,
   CoopOverview,
   ActivityMovement,
   Announcement,
@@ -139,11 +139,10 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const [isLoadingSituation, setIsLoadingSituation] = useState(true);
   const [movements, setMovements] = useState<ActivityMovement[]>([]);
   const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
-  // Tagihan Koperasi: `coopOverview.manager` terisi → kartu rekap satuan; komandan ber-mode member
-  // → `coopMyBills` (kartu "Tagihan Saya" seperti anggota). Keduanya null → section disembunyikan
-  // (modul koperasi nonaktif untuk satuan = 403, atau akun tanpa data tagihan).
+  // Tagihan Koperasi (`GET /coop-salary-report`): mode manager → kartu rekap satuan; komandan ber-mode
+  // member → kartu "Tagihan Saya" dari blok `member`. null (403, modul nonaktif untuk satuan) →
+  // section + quick action "Tagihan Koperasi" disembunyikan.
   const [coopOverview, setCoopOverview] = useState<CoopOverview | null>(null);
-  const [coopMyBills, setCoopMyBills] = useState<CoopMyBills | null>(null);
 
   const announcements = useAppSelector(state => state.announcements.items);
 
@@ -172,17 +171,10 @@ export default function CommanderHome(props: CommanderHomeProps) {
 
   const loadCoop = useCallback(async () => {
     try {
-      const overview = await getCoopOverviewApi({ per_page: 1 });
-      setCoopOverview(overview);
-      if (!overview.manager && overview.member) {
-        setCoopMyBills(await getMyCoopBillsApi({ per_page: 1 }));
-      } else {
-        setCoopMyBills(null);
-      }
+      setCoopOverview(await getCoopOverviewApi({ per_page: 1 }));
     } catch {
       // Best-effort (termasuk 403 modul nonaktif): section Tagihan Koperasi disembunyikan.
       setCoopOverview(null);
-      setCoopMyBills(null);
     }
   }, []);
 
@@ -260,6 +252,19 @@ export default function CommanderHome(props: CommanderHomeProps) {
       gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.incomingLetterList),
     },
+    // Slot ke-7 (terlihat di grid) — hanya bila modul koperasi aktif; saat tampil, Peta Personel
+    // bergeser ke sheet "Lainnya".
+    ...(coopOverview
+      ? [
+          {
+            icon: 'wallet' as const,
+            label: 'Tagihan Koperasi',
+            color: colors.success,
+            gradientColors: [colors.gradientSuccessStart, colors.success] as const,
+            onPress: () => navigation.navigate(ROUTES.coop),
+          },
+        ]
+      : []),
     {
       icon: 'map-pin',
       label: 'Peta Personel',
@@ -383,11 +388,11 @@ export default function CommanderHome(props: CommanderHomeProps) {
             />
           )}
 
-          {coopOverview?.manager ? (
+          {coopOverview && isCoopManagerView(coopOverview) ? (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Tagihan Koperasi</Text>
-                <PressableScale onPress={() => navigation.navigate(ROUTES.coopReports)}>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coop)}>
                   <Text style={styles.sectionLink}>Lihat Semua</Text>
                 </PressableScale>
               </View>
@@ -404,16 +409,16 @@ export default function CommanderHome(props: CommanderHomeProps) {
                 style={styles.coopSection}
               />
             </>
-          ) : coopMyBills ? (
+          ) : coopOverview?.member ? (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Tagihan Saya</Text>
-                <PressableScale onPress={() => navigation.navigate(ROUTES.coopBills)}>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coop)}>
                   <Text style={styles.sectionLink}>Lihat Semua</Text>
                 </PressableScale>
               </View>
               <CoopBillCard
-                data={coopMyBills}
+                data={coopOverview.member}
                 onPress={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
                 style={styles.coopSection}
               />

@@ -9,6 +9,7 @@ import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
 import CoopCategoryBreakdown from '@/components/molecules/CoopCategoryBreakdown';
 import CoopDeltaPill from '@/components/molecules/CoopDeltaPill';
+import TrendBarChart from '@/components/molecules/TrendBarChart';
 import StatusModal from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
 import { ROUTES } from '@/navigation/paths';
@@ -21,7 +22,7 @@ import {
 import { colors } from '@/theme/colors';
 import { cardShadow, cardShadowRaised, tabBarShadow } from '@/theme/shadows';
 import type { CoopBillDetail, CoopExportFormat } from '@/types';
-import { coopCategoryLines, formatPercent, formatRupiah } from '@/utils/coopSalary';
+import { coopCategoryLines, formatPercent, shortPeriodLabel, trendBarItems } from '@/utils/coopSalary';
 import { exportCoopFile } from '@/utils/coopSalaryExport';
 import { cleanValue, extractErrorMessage, joinFields } from '@/utils/format';
 
@@ -105,11 +106,10 @@ export default function CoopBillDetailScreen(props: Props) {
   const seriesLabels = detail?.series?.labels ?? [];
   const seriesValues = detail?.series?.values ?? [];
   const seriesStart = Math.max(seriesLabels.length - MAX_SERIES, 0);
-  const series = seriesLabels.slice(seriesStart).map((label, index) => ({
-    label,
-    value: seriesValues[seriesStart + index] ?? 0,
-  }));
-  const seriesMax = Math.max(...series.map(item => item.value), 0);
+  const series = trendBarItems(seriesLabels.slice(seriesStart), seriesValues.slice(seriesStart)).map(item =>
+    item.label === shortPeriodLabel(detail?.period.label ?? '') ? { ...item, sublabel: 'periode ini' } : item,
+  );
+  const currentIndex = series.findIndex(item => item.sublabel === 'periode ini');
 
   return (
     <MainLayout
@@ -189,34 +189,11 @@ export default function CoopBillDetailScreen(props: Props) {
 
             {series.length > 1 ? (
               <Card style={styles.card}>
-                <Text style={styles.cardTitle}>Perbandingan Periode</Text>
-                <View style={styles.seriesList}>
-                  {series.map(item => {
-                    const isCurrent = item.label === detail.period.label;
-                    const width = seriesMax > 0 ? Math.max((item.value / seriesMax) * 100, 2) : 2;
-                    return (
-                      <View key={item.label} style={styles.seriesItem}>
-                        <View style={styles.seriesHead}>
-                          <Text style={[styles.seriesLabel, isCurrent && styles.seriesLabelCurrent]}>
-                            {isCurrent ? `${item.label} · periode ini` : item.label}
-                          </Text>
-                          <Text style={[styles.seriesValue, isCurrent && styles.seriesValueCurrent]}>
-                            {isCurrent ? detail.total_formatted : formatRupiah(item.value)}
-                          </Text>
-                        </View>
-                        <View style={styles.seriesTrack}>
-                          <View
-                            style={[
-                              styles.seriesFill,
-                              isCurrent ? styles.seriesFillCurrent : styles.seriesFillPast,
-                              { width: `${width}%` },
-                            ]}
-                          />
-                        </View>
-                      </View>
-                    );
-                  })}
+                <View style={styles.cardHead}>
+                  <Text style={styles.cardTitle}>Perbandingan Periode</Text>
+                  <Text style={styles.cardHint}>{series.length} periode</Text>
                 </View>
+                <TrendBarChart items={series} highlightIndex={currentIndex >= 0 ? currentIndex : undefined} />
               </Card>
             ) : null}
 
@@ -373,23 +350,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.primary,
   },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.heading, marginBottom: 14 },
-  seriesList: { gap: 12 },
-  seriesItem: { gap: 6 },
-  seriesHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  seriesLabel: { fontSize: 12, color: colors.textMuted },
-  seriesLabelCurrent: { fontWeight: '700', color: colors.heading },
-  seriesValue: { fontSize: 12, fontWeight: '600', color: colors.textMuted },
-  seriesValueCurrent: { fontWeight: '700', color: colors.primary },
-  seriesTrack: {
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: colors.neutralSurface,
-    overflow: 'hidden',
-  },
-  seriesFill: { height: '100%', borderRadius: 999 },
-  seriesFillPast: { backgroundColor: colors.notifUnreadBorder },
-  seriesFillCurrent: { backgroundColor: colors.primary },
+  cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.heading },
+  cardHint: { fontSize: 11, color: colors.placeholder },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',

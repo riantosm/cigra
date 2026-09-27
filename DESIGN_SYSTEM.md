@@ -509,6 +509,21 @@ Dari canvas "Tagihan Koperasi" (2026-09-24). Pola untuk layar yang menampilkan *
 - Nominal selalu memakai teks `*_formatted` dari backend; hanya selisih yang dihitung klien
   (`formatRupiah`, format sama: `Rp 150.000` / `-Rp 150.000`).
 
+**Redesign 2026-09-26** (canvas "Redesign Tagihan Koperasi"):
+
+- **Kartu utama menu** (periode terbaru di menu `Coop`) — kartu menonjol (`cardShadowRaised`), kicker
+  `12/700` UPPERCASE `primary` + badge `TERBARU`, nominal `30–32/800`, baris `CoopDeltaPill` berlabel
+  lengkap (`-Rp 150.000 · -37,5%`, `coopDeltaPillLabel`) + "vs {periode}", isi (alokasi compact maks 4
+  jenis / peringatan amber), lalu **baris link penutup** bergaris atas (`13/600 primary` + chevron) —
+  seluruh kartu satu `PressableScale`.
+- **Kartu Home mode manager** (`CoopReportCard`) — rekap + baris "Tagihan Saya" digabung **dalam satu
+  kartu** (dipisah garis `borderSoft`), bukan kartu terpisah.
+- **Toggle pill di layar non-Auth** — `AuthToggle` dengan prop `style` = track `surface` + border
+  `borderSoft` + `smallButtonShadow` (track bawaan putih transparan hanya terbaca di atas gradient Auth).
+- **Accordion per periode** (tab Koperasi detail personel) — kartu per bulan: chip tanggal + judul +
+  "N dari M jenis" + nominal + chevron atas/bawah; isi = `CoopCategoryBreakdown` full di bawah garis.
+- **Akses Cepat anggota** kini grid 4 kolom (`ShortcutButton` tetap tanpa kartu, `width: 25%`, `rowGap 12`).
+
 ### 5.18 Kekuatan Apel — agenda, isi per kompi, pengaturan
 
 Dari canvas "Redesign Kekuatan Apel" (2026-09-26). Bagian bersama ada di `src/screens/RollCall/shared`.

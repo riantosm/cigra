@@ -246,3 +246,47 @@ export interface CoopReportDetail {
 }
 
 export type CoopExportFormat = 'excel' | 'pdf';
+
+// --- Penunjukan Juyar (pengelola Tagihan Satuan) — `/coop-salary-report/juyars/*` ---
+// Menunjuk memberi role `petugas_laporan_koperasi`, mengakhiri mencabutnya (otomatis di backend).
+
+export interface CoopJuyar {
+  id: number;
+  personnel_id: number;
+  name: string;
+  nrp: string | null;
+  is_active: boolean;
+  assigned_at: string | null;
+  ended_at: string | null;
+  notes: string | null;
+}
+
+// `GET /coop-salary-report/juyars/candidates?q=` — `id` = personnel_id untuk POST penunjukan.
+export interface CoopJuyarCandidate {
+  id: number;
+  name: string;
+  nrp: string | null;
+  rank: string | null;
+  company: string | null;
+}
+
+// --- `tagihan_koperasi` di `GET /catalog/personnel/{id}` (null bila modul nonaktif) ---
+// `categories` = label tujuh jenis (tanpa nominal); nominal per jenis ada di tiap `periods[]`.
+// Bentuk `periods[]` longgar — dinormalisasi `normalizePersonnelCoopPeriods` di utils/coopSalary.ts.
+
+export interface CoopPersonnelSummary {
+  periods: number;
+  total_amount: number;
+  total_amount_formatted: string;
+  average_amount: number;
+  average_amount_formatted: string;
+  highest_amount: number;
+  highest_amount_formatted: string;
+  latest_period?: Record<string, unknown> | null;
+}
+
+export interface CoopPersonnelTagihan {
+  summary: CoopPersonnelSummary;
+  categories: CoopCategoryRef[];
+  periods: Record<string, unknown>[];
+}

@@ -16,6 +16,7 @@ import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import QrIdentityModal from '@/components/organisms/QrIdentityModal';
 import AssetCard from '@/screens/Home/MemberHome/AssetCard';
 import CoopBillCard from '@/screens/Home/CoopBillCard';
+import CoopReportCard from '@/screens/Home/CoopReportCard';
 import FamilyMemberRow from '@/components/molecules/FamilyMemberRow';
 import AssetDetailSheet from '@/screens/Home/MemberHome/AssetDetailSheet';
 import type { AssetDetailSheetData } from '@/screens/Home/MemberHome/AssetDetailSheet';
@@ -39,14 +40,14 @@ import {
   getMyMovementsApi,
   getMyStatusApi,
 } from '@/services/api/me.service';
-import { getMyCoopBillsApi } from '@/services/api/coopSalary.service';
+import { getCoopOverviewApi } from '@/services/api/coopSalary.service';
 import { getActivePatrolSessionApi } from '@/services/api/patrol.service';
 import { colors } from '@/theme/colors';
 import { cardShadow, cardShadowRaised } from '@/theme/shadows';
 import type {
   Announcement,
   AuthUser,
-  CoopMyBills,
+  CoopOverview,
   MeAssets,
   MeIdCard,
   MeMovement,
@@ -56,6 +57,7 @@ import type {
 } from '@/types';
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import type { IconName } from '@/components/atoms/Icon';
+import { isCoopManagerView } from '@/utils/coopSalary';
 import { cleanValue, formatDateShort, formatDateTime, formatRelativeTime, joinFields, titleCase } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 import { patrolDurationLabel, patrolProgressPercent } from '@/utils/patrol';
@@ -255,7 +257,10 @@ export default function MemberHome(props: MemberHomeProps) {
   const [movements, setMovements] = useState<MeMovement[]>([]);
   const [activePatrol, setActivePatrol] = useState<PatrolSession | null>(null);
   // null = section "Tagihan Saya" disembunyikan (modul koperasi nonaktif/403, belum dimuat, gagal).
-  const [coopBills, setCoopBills] = useState<CoopMyBills | null>(null);
+  // Tagihan Koperasi (`GET /coop-salary-report`): kartu mengikuti `mode`, bukan role — Juyar
+  // (petugas_laporan_koperasi) ber-mode manager dan melihat kartu rekap satuan. null = modul
+  // nonaktif (403) → section + shortcut Koperasi disembunyikan.
+  const [coopOverview, setCoopOverview] = useState<CoopOverview | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const weatherRef = useRef<HomeWeatherWidgetHandle>(null);
   const insets = useSafeAreaInsets();
@@ -286,14 +291,14 @@ export default function MemberHome(props: MemberHomeProps) {
       getMyStatusApi(),
       getMyAssetsApi(),
       getMyMovementsApi({ per_page: 3 }),
-      getMyCoopBillsApi({ per_page: 1 }),
+      getCoopOverviewApi({ per_page: 1 }),
     ]);
     if (idCardResult.status === 'fulfilled') setIdCard(idCardResult.value);
     if (statusResult.status === 'fulfilled') setStatus(statusResult.value);
     if (assetsResult.status === 'fulfilled') setAssets(assetsResult.value);
     if (movementsResult.status === 'fulfilled') setMovements(movementsResult.value.items);
     // Modul koperasi bisa nonaktif untuk satuan (403) → section disembunyikan, bukan error.
-    setCoopBills(coopResult.status === 'fulfilled' ? coopResult.value : null);
+    setCoopOverview(coopResult.status === 'fulfilled' ? coopResult.value : null);
   }, []);
 
   useEffect(() => {
@@ -427,6 +432,16 @@ export default function MemberHome(props: MemberHomeProps) {
       label: 'Disposisi',
       onPress: () => navigation.navigate(ROUTES.dispositionList),
     },
+    ...(coopOverview
+      ? [
+          {
+            icon: 'wallet' as const,
+            color: colors.success,
+            label: 'Koperasi',
+            onPress: () => navigation.navigate(ROUTES.coop),
+          },
+        ]
+      : []),
     {
       icon: 'megaphone' as const,
       color: colors.warning,
@@ -507,16 +522,36 @@ export default function MemberHome(props: MemberHomeProps) {
             />
           </View>
 
-          {coopBills ? (
+          {coopOverview && isCoopManagerView(coopOverview) ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Tagihan Koperasi</Text>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coop)}>
+                  <Text style={styles.sectionLink}>Lihat Semua</Text>
+                </PressableScale>
+              </View>
+              <CoopReportCard
+                overview={coopOverview}
+                onPressReport={(reportId, periodLabel) =>
+                  navigation.navigate(ROUTES.coopReportDetail, {
+                    reportId,
+                    periodLabel,
+                    canExport: coopOverview.capabilities.can_export,
+                  })
+                }
+                onPressOwnBill={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
+              />
+            </>
+          ) : coopOverview?.member ? (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Tagihan Saya</Text>
-                <PressableScale onPress={() => navigation.navigate(ROUTES.coopBills)}>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coop)}>
                   <Text style={styles.sectionLink}>Lihat Semua</Text>
                 </PressableScale>
               </View>
               <CoopBillCard
-                data={coopBills}
+                data={coopOverview.member}
                 onPress={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
               />
             </>
@@ -768,12 +803,15 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     paddingVertical: 16,
   },
+  // Grid 4 kolom (baris kedua muncul bila shortcut > 4 — Koperasi / Apel menambah jumlahnya).
   shortcutRow: {
     flexDirection: 'row',
-    gap: 6,
+    flexWrap: 'wrap',
+    rowGap: 12,
   },
   shortcutCell: {
-    flex: 1,
+    width: '25%',
+    paddingHorizontal: 3,
   },
   patrolChipWrap: {
     position: 'absolute',
