@@ -221,8 +221,10 @@ needed (missing `.env` value).
 - `src/navigation/types.ts` — `RootStackParamList` (stack: Login, ForgotPassword, ChangePassword, AppBootstrap, Main,
   CatalogList, CatalogDetail, Profile, EditProfile, Settings, ComingSoon, PersonnelMap, PersonnelTracking, Notifications,
   EmergencyList, EmergencyDetail, EmergencyContacts, Announcements, MyMovements, ActivityMovements, SendAnnouncement, AlarmSatuan, HealthDashboard, HealthPersonnelSearch,
-  HealthPersonnelProfile, HealthRecordInput, HealthRecordDetail, HealthMyHistory, RollCallList, RollCallCreate,
-  RollCallDetail, RollCallSearch, RollCallScan, RollCallEntry, Patrol, PatrolRouteDetail,
+  HealthPersonnelProfile, HealthRecordInput, HealthRecordDetail, HealthMyHistory, RollCallAgendas,
+  RollCallAgendaCreate, RollCallAgendaDetail, RollCallCompanyAgendas, RollCallCompanyForm, RollCallSettings,
+  RollCallSessions, RollCallSessionForm, RollCallOfficers, RollCallRepresentatives, RollCallAppoint,
+  RollCallStats, Patrol, PatrolRouteDetail,
   PatrolActive, PatrolScan, PatrolPhoto, PatrolMonitoring, PatrolMonitoringDetail, BukuSakuDetail, AcademyRoot,
   AcademyProgramDetail, AcademyMaterial, AcademyAssessmentIntro, AcademyAttempt,
   AcademyAttemptResult, AcademyPracticalEntry, AcademyResults, AcademyResultDetail, AcademyCompetencies,
@@ -832,8 +834,8 @@ Backend endpoint is **live** and matches `documentation/API_CONTRACT.md` §1 (en
 
 `src/screens/Home/CommanderHome/index.tsx` — the "Quick Action" grid is the entry point to the 5 catalog
 directories **and** other shortcuts. `quickActions` order: Distribusi Personel, Keluarga (Persit),
-Kirim Pengumuman → `ROUTES.sendAnnouncement`, **Kekuatan Apel → `ROUTES.rollCallList`** (inserted at
-index 3 **only when `user.roles` includes `instruktur_apel`** — see "Kekuatan Apel" below),
+Kirim Pengumuman → `ROUTES.sendAnnouncement`, **Kekuatan Apel → `ROUTES.rollCallAgendas`** (index 3,
+always shown — every komandan may open/close agenda apel; see "Kekuatan Apel" below),
 **Monitoring Patroli → `ROUTES.patrolMonitoring`** (always shown for `komandan` — see "Patroli" below;
 komandan only monitors, never patrols), Peta
 Personel → `ROUTES.personnelTracking`, Kendaraan, Kategori Senjata, Distribusi Senjata, Alarm Satuan →
@@ -876,75 +878,83 @@ All refetched on pull-to-refresh; announcements + notifications loaded by `Home/
 matches `screens/Announcements` and `SendAnnouncement` (`SendAnnouncement`/`typeMeta` there still
 flat-only — not yet migrated to gradient chips, out of scope of the 2026-09-22 pass).
 
-### Kekuatan Apel (roll call — komandan)
+### Kekuatan Apel (agenda piket + pengisian per kompi)
 
-Real backend (`/roll-calls/*` — see `API_CONTRACT.md` §"Kekuatan Apel"). Entry point: the "Kekuatan Apel"
-quick action on `CommanderHome` — **only rendered when `user.roles` includes `instruktur_apel`**
-(`canManageRollCall`; backend also 403s). Types `src/types/rollCall.types.ts` (barrelled), service
-`src/services/api/rollCall.service.ts`, formatting helpers `src/utils/rollCall.ts`. No Redux slice —
-every screen holds its own local state + calls the service (same pattern as `EmergencyList`/`EmergencyDetail`).
+Real backend `/roll-calls/*` (rewritten 2026-09-26 — the old session/entries/close/QR flow and its six
+`RollCall{List,Create,Detail,Search,Scan,Entry}` screens are **gone**). See `API_CONTRACT.md` Komandan §8 and
+the Claude Design canvas "Redesign Kekuatan Apel" (https://claude.ai/artifact/BGMHjdRzfkhaTf3e5cCJzN, 21
+artboards). Types `src/types/rollCall.types.ts` (barrelled), service `src/services/api/rollCall.service.ts`,
+helpers `src/utils/rollCall.ts`. **No Redux slice** — each screen holds local state, refetches on focus.
 
-- **`src/services/api/rollCall.service.ts`** — `getRollCallsApi({page,per_page})` (`GET /roll-calls`, the
-  response is a **Laravel paginator** nested under `data` — `data.data` is the array, pagination fields are
-  on `data` itself; the service normalises it to `{items, meta: PaginationMeta}`, computing `last_page` when
-  absent), `createRollCallApi({date:'YYYY-MM-DD', time:'HH:MM', name?})` (`POST /roll-calls`),
-  `getRollCallDetailApi(id)` (`GET /roll-calls/{s}` → `{session, recap, breakdown[], present[], absent[],
-  unmarked[]}`), `submitRollCallEntryApi(id, {personnel_id, status:'present'|'absent', absence_reason_id?,
-  note?})` (`POST /roll-calls/{s}/entries`), `closeRollCallApi(id)` (`POST /roll-calls/{s}/close`),
-  `getAbsenceReasonsApi()` (`GET /roll-calls/absence-reasons`), `searchRollCallPersonnelApi(q)`
-  (`GET /roll-calls/personnel/search?q=`). `{session}` path param = the numeric session `id`.
-- Screens (all plain root-stack, no guard, `MainLayout variant="canvas"` except Scan; routes
-  `rollCallList` / `rollCallCreate` / `rollCallDetail` / `rollCallSearch` / `rollCallScan` / `rollCallEntry`
-  in `ROUTES` + `RootStackParamList` + `RootNavigator`):
-  - `RollCallList` — `GET /roll-calls` paginated list + pull-to-refresh + "muat lebih banyak", `useFocusEffect`
-    refetch (so a just-created/closed session updates on return). **Pinned bottom footer** `GradientButton`
-    "Buat Sesi Apel" (`floatingSurface` + `tabBarShadow`) → `rollCallCreate`. List header = a "N sesi apel
-    sedang berlangsung" strip (green dot when `openCount > 0`). Each card: name + status badge, date + time,
-    divider, then a recap row **"N hadir · N tidak hadir · N belum"** from `item.recap` (per-item `recap`
-    added by backend 2026-09-02, `RollCallSession.recap?`; falls back to a "Lihat detail & rekap" link when
-    absent). Row → `rollCallDetail` `{ id }`.
-  - `RollCallCreate` — name `TextField` + preset chips (Apel Pagi/Siang/Sore/Malam Satuan), `DateTimeField`
-    date + time (merged into one `Date`, serialized `YYYY-MM-DD` / `HH:MM`), pinned footer `GradientButton`,
-    `StatusModal` success → `goBack()`.
-  - `RollCallDetail` — status card + recap card (big % via `attendanceColor`, progress bar, 3 stat tiles,
-    `breakdown[]` chips). When `session.status === 'open'`: **Input Absen** button opens a single `BottomSheet`
-    (Hadir / Tidak Hadir) that navigates **straight to `rollCallSearch`** with `{ sessionId, status }` (no
-    method-picker step — Scan QR is reached from a QR icon in that screen's header). **Tutup Sesi** button →
-    `StatusModal` confirm (variant error, 2 buttons) → `closeRollCallApi` → reload + result `StatusModal`.
-    "Daftar Keterangan Absen" = the shared **`molecules/SegmentedControl`** (icons + pill, same as
-    SendAnnouncement) over Hadir · N / Absen · N / Belum · N, listing `present[]` / `absent[]` / `unmarked[]`
-    — absent rows show `absence_reason.name` (falls back to `note`) as a warning `Badge`, no catatan/note body
-    line. **Every row is tappable** → a `BottomSheet` (`selectedPerson`) showing name/NRP/status + reason +
-    catatan, all from the already-loaded list data (no fetch) (per user 2026-09-02).
-  - `RollCallSearch` — builds the **full roster from `GET /roll-calls/{s}`** (`present + absent + unmarked`),
-    no search endpoint / no min-length: shows everyone immediately, **client-side** filter on name/NRP,
-    sorted unmarked → absent → present. Each row shows a status `Badge` (Hadir/Tidak Hadir/Belum). For
-    `status === 'present'` tapping an unmarked/absent row **submits `present` inline** (optimistic local
-    status update) so you can mark many fast; for `status === 'absent'` it navigates to `rollCallEntry`.
-    Keyboard: container `paddingBottom: useKeyboardHeight()` + `FlatList keyboardDismissMode="on-drag"` so
-    no row hides behind the keyboard. `MainLayout` `right` = a **QR icon** (`Icon` `qr-code`, added to the
-    set) → `rollCallScan` with the same `{ sessionId, status }`.
-  - `RollCallScan` — reached from the QR icon in `RollCallSearch`'s header. **`react-native-vision-camera`**
-    QR scanner (`useCodeScanner({codeTypes:['qr']})`).
-    Permission via `src/utils/cameraPermission.ts` (`requestCameraPermission()` → `'granted'|'denied'|
-    'blocked'` — `blocked` = OS won't prompt again): on mount it prompts; `denied`/`blocked` → a `StatusModal`
-    ("Buka Pengaturan" via `openCameraSettings()` = `openAppSettings()` for `blocked`, "Coba Lagi" for
-    `denied`); re-checks on `AppState` `active` (return from Settings). `nrpFromQr` accepts a bare NRP or a
-    JSON payload with `service_number`/`nrp`; resolves to `personnel_id` via the search endpoint (exact
-    `service_number` match, else first hit). `present` → submit inline + on-camera toast + counter, stays to
-    scan more; `absent` → navigate to `rollCallEntry`. `busyRef` + 1.6s cooldown debounces repeated scans of
-    one code. Camera `isActive` gated on `useIsFocused()`.
-  - `RollCallEntry` — the keterangan form. Status `present`/`absent` segment (default from route param).
-    For `absent`: reason chips from `GET /roll-calls/absence-reasons`; a reason whose name matches `/lain/i`
-    ("Lainnya") **reveals a required free-text `note` field** (there is no always-visible catatan field).
-    Below the chips: the selected reason's `description` (from `absence-reasons`, `AbsenceReason.description`,
-    only when non-null) + a static faint hint that picking "Lainnya" opens the free-text field.
-    Submits `submitRollCallEntryApi` → `StatusModal` → `goBack()`.
-- **Native deps this added** (need `pod install` for iOS — already broken independently — + a full rebuild;
-  Android autolinks): `react-native-vision-camera` v4. `minSdkVersion` bumped `24 → 26` in
-  `android/build.gradle` (VisionCamera requirement); `VisionCamera_enableCodeScanner=true` in
-  `android/gradle.properties` (bundles the MLKit barcode model so scanning works offline); `CAMERA`
-  permission + `<uses-feature camera.any required=false>` added to `AndroidManifest.xml`.
+- **Mechanism / roles:** komandan or a **petugas piket** (role `piket`) opens an **agenda** (sesi + date +
+  wave) → each kompi's **perwakilan** (role `perwakilan_kompi`) fills in its members' attendance → piket reads
+  the summary and **finishes** it (reopen allowed). An agenda auto-locks (`is_locked`) once the session's
+  `end_time` passes. A kompi only fills its own unit, except komandan. Both roles are **granted/revoked by the
+  backend automatically** when someone is appointed/ended in Pengaturan Apel. Role names live in
+  `utils/rollCall.ts` (`ROLL_CALL_OFFICER_ROLE`, `ROLL_CALL_REPRESENTATIVE_ROLE`, `canManageRollCall(roles)` =
+  komandan || piket, `isRollCallRepresentative(roles)`).
+- **Entry points:** `CommanderHome` quick action "Kekuatan Apel" (every komandan) → `rollCallAgendas`;
+  `MemberHome` "Akses Cepat" shortcut "Apel" (only for `piket` → `rollCallAgendas`, or `perwakilan_kompi` →
+  `rollCallCompanyAgendas`).
+- **Response keys are mostly English**, but the live backend (checked on device 2026-09-26) still sends
+  `totals` as `{ kompi, anggota, hadir, tidak_hadir, persen }` (service `normalizeTotals` accepts both),
+  `progress.sudah/belum/persen`, `status: "finished"` for a closed agenda, and stats `by_company[]` as
+  `{ unit_id, company, members, submitted, pending, present, absent, percentage|null }` (doc said `unit`).
+  POST body is `alasan[pid]` / `alasan_lainnya[pid]` / `catatan[pid]` (sent as JSON objects keyed by
+  personnel_id — Laravel reads them like `alasan[45]`). For komandan, `represented_company` lists **all**
+  kompi — used as the Representatives fallback when no agenda exists yet. Final kompi paths are
+  **`/roll-calls/companies`** + `/roll-calls/agenda/{agenda}/companies/{unit}`.
+- **Screens** (all under `src/screens/RollCall/*`, plain root-stack, no guard, `MainLayout variant="canvas"`;
+  shared bits — `SectionHeader`, `ProgressBar`, `AgendaStateBadge`, `InfoHint`, `InfoCallout`,
+  `ToggleSwitch` (RN `Switch`), `sharedStyles` — in `RollCall/shared`):
+  - `Agendas` (`rollCallAgendas`) — `GET /roll-calls` + `GET /roll-calls/stats` (`allSettled`). Stats strip →
+    `Stats`; strip "Kompi yang Anda wakili" when `is_representative`; running agendas as big cards (progress,
+    `StatDividerRow`, "N kompi belum mengirim"), history grouped by date with TERBUKA/TERKUNCI/DITUTUP badges
+    (`agendaState()` → `AGENDA_STATE_META`). Gear icon + footer "Buka Agenda Apel" only when
+    `can_create_agenda`. Row → `AgendaDetail` with the list's `deadline` as a param.
+  - `AgendaCreate` — sessions from `GET /roll-calls/sessions` (active only, sorted, time range shown; "Kelola
+    sesi" link), `DateTimeField` date, wave stepper 1–10, notes → `POST /roll-calls/agenda` → `replace` to
+    `AgendaDetail`.
+  - `AgendaDetail` (`{ id, deadline? }`) — `GET /roll-calls/agenda/{id}`. `deadline` is **only** from the nav
+    param (the endpoint doesn't return it) and hidden when absent. Recap split Belum / Sudah Mengirim (pending
+    rows tappable → `CompanyForm` **only for komandan**), absence chips aggregated client-side from `absent[]`
+    (filter + "Lihat semua"). Footer (komandan/piket): "Tutup Agenda" (confirm `StatusModal`) → `/finish`, or
+    "Buka Kembali Agenda" → `/reopen` when closed.
+    Below the hero (komandan/piket only) a **"Laporan Piket Batalyon"** card: "Kirim ke WhatsApp"
+    (`GradientButton tone="success"`) / "Bagikan" fetch `GET /roll-calls/agenda/{id}/report` **on each tap**
+    and hand its ready-made `text` (same as the web's "Copy untuk WhatsApp") to `src/utils/share.ts` —
+    `sendTextToWhatsApp` (`Linking.openURL('whatsapp://send?text=…')`, falls back to `Share.share` if it
+    throws) / `shareText`. No clipboard lib is installed (a "Salin" button would need
+    `@react-native-clipboard/clipboard` + a native rebuild). The report's structured data is typed
+    (`RollCallAgendaReport`) but not rendered.
+  - `CompanyAgendas` — `GET /roll-calls/companies` (no deadline in this payload → none shown). "Perlu Diisi"
+    (open + unsubmitted) hero cards with CTA per unit, then "Sudah Dikirim" grouped by date.
+  - `CompanyForm` (`{ agendaId, unitId, companyName? }`) — `GET .../companies/{unit}` + `GET
+    /roll-calls/absence-reasons` (for `note_label`). Two modes (`SegmentedControl`) only change the default:
+    **Catat Tidak Hadir** = unmarked members count as present, **Catat Hadir** = unmarked count as absent
+    (`present: null` = unmarked). Members grouped by `unit` in a `FlatList`, memoised `MemberRow`, search
+    over name/NRP. Absent rows show an alasan pill → `BottomSheet` (reasons + "Lainnya" free text + optional
+    catatan; keyboard lifts the sheet via `useKeyboardHeight`). In absent mode ticking a member opens the
+    sheet straight away. Submit disabled while any absentee lacks a reason; `is_locked` → read-only rows.
+  - `Settings` (hub) → `Sessions` (list + `ToggleSwitch` toggle, optimistic) / `SessionForm` (create, or PATCH
+    only changed fields; delete → backend refuses if used, message suggests deactivating) · `Officers`
+    (active/inactive groups, switch + end button with confirm; "Tunjuk" only for komandan) ·
+    `Representatives` — **no units endpoint exists**, so the kompi list = `recap[]` of the **latest agenda**
+    merged with `GET /roll-calls/representatives` by `unit_id` (empty state + "Buka Agenda Apel" CTA before
+    the first agenda). Row ⋮ → `BottomSheet` with Ganti / Nonaktifkan-Aktifkan / Akhiri.
+  - `Appoint` (`{ kind: 'officer' }` or `{ kind: 'representative', unitId, companyName, current? }`) —
+    `GET /roll-calls/personnel-search?q=` (debounce 400ms, min 2 chars); `id` is used as `user_id`. Appointing
+    for a kompi that already has a representative **auto-replaces** it (backend) → a confirm popup first.
+    `username` is shown as-is (can be a 16-digit number; lists carry no rank).
+  - `Stats` — `GET /roll-calls/stats?from&to` with Bulan ini / 7 hari / 30 hari / Pilih tanggal; stacked
+    absence-reason bar (colours = `ROLL_CALL_REASON_PALETTE`, existing tokens only) + per-kompi % (lowest
+    first, computed client-side).
+- New `Icon` names: `plus`, `minus`, `user-check`, `user-x`, `user-plus`, `more-vertical`, `swap`, `unlock`,
+  `share`.
+- JS-only change (no native deps). `react-native-vision-camera` v4 (minSdk 26, `VisionCamera_enableCodeScanner`,
+  `CAMERA` permission) was originally added for the old apel QR scan and is **still needed by Patroli**.
+- Push notifications for "agenda opened" / "all kompi submitted" come from the backend; no in-app deep link
+  is wired for them yet (unknown `action.type`).
 
 ### Patroli (patrol routes + checkpoints)
 
@@ -954,7 +964,7 @@ flow (monitor only, never patrols) reached from the **`CommanderHome` "Monitorin
 action. Design source = the "Patroli" page in the Claude Design canvas (see the
 `reference_design_canvas` memory). Types `src/types/patrol.types.ts` (barrelled), service
 `src/services/api/patrol.service.ts`, helpers `src/utils/patrol.ts`. No Redux slice — every screen holds
-local state (same pattern as RollCall*).
+local state (same pattern as the RollCall screens).
 
 - **API — `/patrols/*` (endpoints confirmed live 2026-09-07; response bodies from the user).** Envelope
   is `{success, data}` (`ApiResponse<T>`). Backend has the routes wired but **no patrol data seeded yet**
@@ -998,7 +1008,7 @@ local state (same pattern as RollCall*).
   `paddingBottom` bumped +76 so bottom content clears it) → tap → `patrolActive`. (`CommanderHome` has
   no chip / no active-session fetch — komandan never patrols.)
 - **Home entry (komandan):** the `CommanderHome` "Monitoring Patroli" quick action (`icon: 'route'`,
-  after the role-gated "Kekuatan Apel" slot) opens `PatrolMonitoring` — a read-only KPI + session-list
+  after the "Kekuatan Apel" slot) opens `PatrolMonitoring` — a read-only KPI + session-list
   screen (`getPatrolMonitoringApi`): 3 KPI cards (Total / Berjalan / Selesai — held to the unfiltered
   `summary` so they stay stable across filter changes), a `SegmentedControl` (Semua / Berjalan /
   Selesai → server `status` param), a `FlatList` of session cards (officer + NRP, route + `CodeChip`,
@@ -1247,6 +1257,7 @@ the "Terakhir sinkron" timestamp on completion; it no longer navigates to `Setti
 "Lihat Semua" → `ComingSoon`), **"Keluarga (Persit)"** (only when `user.family` is non-empty), "Aktivitas
 Terbaru" (`TimelineRow` list), "Pengumuman Terbaru" (`NoticeRow`
 list, "Lihat Semua" → `ROUTES.announcements`), and "Akses Cepat" (`ShortcutButton` row: Buku Saku,
+Patroli, **Apel** (only for role `piket` / `perwakilan_kompi` — see "Kekuatan Apel"), Disposisi,
 Pengumuman → `ROUTES.announcements`, Kontak Darurat). "Aktivitas Terbaru → Lihat Semua" → `ROUTES.myMovements`
 (`src/screens/MyMovements/index.tsx` — `GET /me/movements` paginated list, `TimelineRow` rows, pull-to-refresh
 + "muat lebih banyak"; `meta` may be absent → fall back to "last page returned a full 20"). The "Kontak

@@ -97,8 +97,9 @@ lokasi milik sendiri, foto, kirim sinyal darurat).
 ```
 
 - `user.roles` menentukan Home yang dirender: `komandan` → CommanderHome, `petugas_kesehatan`
-  → HealthOfficerHome, selain itu → MemberHome. `instruktur_apel` di `roles` memunculkan quick
-  action Kekuatan Apel.
+  → HealthOfficerHome, selain itu → MemberHome. `piket` / `perwakilan_kompi` di `roles`
+  memunculkan shortcut "Apel" di Home Anggota (keduanya diberikan otomatis saat ditunjuk, lihat
+  Komandan 8.10 / 8.11); komandan selalu punya quick action Kekuatan Apel.
 - `user.personnel` = `null` untuk akun non-prajurit (mis. `petkes` / admin) — sebagian layar
   anggota menyembunyikan dirinya kalau `personnel` kosong. Diverifikasi via API live 2026-09-02.
 - `is_active` datang sebagai **`0`/`1` (int)**, bukan boolean — FE pakai truthiness, aman.
@@ -710,7 +711,7 @@ Notifikasi in-app tetap dibaca dari `GET /notifications` (§3).
 
 # Komandan
 
-Endpoint untuk role `komandan` (sebagian juga `instruktur_apel`). Backend **wajib** menegakkan
+Endpoint untuk role `komandan` (Kekuatan Apel juga untuk `piket` / `perwakilan_kompi`). Backend **wajib** menegakkan
 izinnya — pembatasan di app hanya UI.
 
 ## 1. Ringkasan Situasi
@@ -1760,97 +1761,11 @@ Catatan: `data` bisa **`null`** (belum pernah ada aktivasi). `broadcast_status`:
 
 ## 8. Kekuatan Apel
 
-### 8.1 Daftar Sesi Apel
+### 8.1 Daftar Agenda Apel
 
-> [!DONE] Roll-call/apel — quick action "Kekuatan Apel" di Home Komandan, **hanya untuk role `instruktur_apel`** (backend menegakkan). 6 layar `RollCall*`, `services/api/rollCall.service.ts`. `{session}` di endpoint = id numerik sesi. Layar `RollCallList`: daftar berpaginasi + tarik-untuk-refresh + "muat lebih banyak", diuji di device.
+> [!PARTIAL] Alur baru sejak 2026-09-26: komandan / petugas piket (role `piket`) membuka **agenda**, perwakilan tiap kompi (role `perwakilan_kompi`) mengisi kehadiran kompinya, lalu piket menutup agenda. Kedua role diberikan otomatis saat ditunjuk (8.10 / 8.11). Pintu masuk: quick action "Kekuatan Apel" di Home Komandan (semua komandan) + shortcut "Apel" di Home Anggota untuk `piket` / `perwakilan_kompi`. Layar `screens/RollCall/Agendas`, service `services/api/rollCall.service.ts`. **Sudah di-wire, belum diuji end-to-end di device.** Endpoint lama (`/roll-calls/{session}/entries`, `/close`, `/personnel/search`) tidak dipakai lagi.
 
-`GET /roll-calls` — paginated (Laravel paginator di dalam `data`).
-
-**Query:**
-
-| Parameter | Tipe | Wajib | Keterangan |
-|---|---|---|---|
-| `page` | integer | Opsional | — |
-| `per_page` | integer | Opsional | — |
-
-**Response `200`:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "current_page": 1,
-    "data": [
-      {
-        "id": 1,
-        "tenant_id": 1,
-        "date": "2026-08-28",
-        "time": "07:00:00",
-        "name": "Apel Pagi Satuan",
-        "status": "open",
-        "created_by": 2,
-        "closed_by": null,
-        "closed_at": null,
-        "created_at": "...",
-        "updated_at": "...",
-        "recap": {
-          "total": 41,
-          "present": 0,
-          "absent": 2,
-          "unmarked": 39,
-          "percentage": 0
-        }
-      }
-    ],
-    "total": 1
-  }
-}
-```
-FE menormalkan jadi `{ items, meta: { current_page, last_page, per_page, total } }` — `last_page`/`per_page`
-dihitung sendiri kalau backend tidak mengirimnya. Tiap item punya `recap` opsional (bentuk = 8.3) → kartu
-daftar menampilkan "N hadir · N tidak hadir · N belum" tanpa buka detail.
-
-### 8.2 Buka Sesi Apel Baru
-
-> [!DONE] Bug 500 sudah diperbaiki backend. Diverifikasi via API live 2026-09-02: `POST /roll-calls` → `201` `{ success, message: "Sesi kekuatan apel berhasil dibuka.", data: <sesi> }`, sesi hasilnya muncul di `GET /roll-calls` (`created_by` = user pembuat).
-
-`POST /roll-calls`
-
-**Payload (body):**
-
-| Parameter | Tipe | Wajib | Keterangan |
-|---|---|---|---|
-| `date` | string | Wajib | `YYYY-MM-DD` |
-| `time` | string | Wajib | `HH:MM` |
-| `name` | string | Opsional | nama sesi apel |
-
-**Response `201`:**
-
-```json
-{
-  "success": true,
-  "message": "Sesi kekuatan apel berhasil dibuka.",
-  "data": {
-    "id": 6,
-    "tenant_id": 1,
-    "date": "2026-09-04T17:00:00.000000Z",
-    "time": "06:30",
-    "name": "Apel Siang Satuan",
-    "status": "open",
-    "created_by": 205,
-    "created_at": "2026-09-02T10:14:24.000000Z",
-    "updated_at": "2026-09-02T10:14:24.000000Z"
-  }
-}
-```
-
-Catatan: `date` disimpan sebagai **datetime ISO UTC** (`…T17:00:00.000000Z` = tengah malam WIB), bukan `"YYYY-MM-DD"` yang dikirim — FE parse via `new Date(...)` + `toLocaleDateString('id-ID')`.
-
-### 8.3 Detail & Rekap Sesi
-
-> [!DONE] Dipakai di `RollCallDetail` (kartu status + rekap + daftar Hadir/Absen/Belum) & jadi sumber roster untuk `RollCallSearch`. Diverifikasi via API live 2026-09-02: `recap` **sudah konsisten** dengan panjang array — sesi uji: `recap {present:30, absent:2, unmarked:9}` cocok dengan `present[].length`/`absent[].length`/`unmarked[].length`. Inkonsistensi lama sudah diperbaiki backend.
-
-`GET /roll-calls/{session}`
+`GET /roll-calls`
 
 **Tanpa parameter.**
 
@@ -1860,136 +1775,66 @@ Catatan: `date` disimpan sebagai **datetime ISO UTC** (`…T17:00:00.000000Z` = 
 {
   "success": true,
   "data": {
-    "session": {
-      "id": 1,
-      "tenant_id": 1,
-      "date": "2026-09-01T17:00:00.000000Z",
-      "time": "07:00:00",
-      "name": "Apel Pagi Satuan",
-      "status": "open"
-    },
-    "recap": {
-      "total": 41,
-      "present": 30,
-      "absent": 2,
-      "unmarked": 9,
-      "percentage": 73.2
-    },
-    "breakdown": [
+    "can_create_agenda": true,
+    "is_representative": false,
+    "represented_company": [{ "id": 124, "name": "Kima" }],
+    "agendas": [
       {
-        "name": "Dinas",
-        "count": 1
-      },
-      {
-        "name": "Izin",
-        "count": 1
-      }
-    ],
-    "present": [
-      {
-        "id": 10,
-        "roll_call_session_id": 2,
-        "personnel_id": 45,
-        "status": "present",
-        "absence_reason_id": null,
-        "note": null,
-        "input_by_user_id": 205,
-        "personnel": {
-          "id": 45,
-          "full_name": "Andi Pratama",
-          "service_number": "123456",
-          "rank": {
-            "…": "objek pangkat"
-          },
-          "current_assignment": {
-            "…": ""
-          }
-        }
-      }
-    ],
-    "absent": [
-      {
-        "id": 38,
-        "personnel_id": 77,
-        "status": "absent",
-        "absence_reason_id": 3,
-        "note": null,
-        "absence_reason": {
-          "id": 3,
-          "name": "Dinas",
-          "description": "…",
-          "sort_order": 3
-        },
-        "personnel": {
-          "…": "objek Personnel lengkap"
-        }
-      }
-    ],
-    "unmarked": [
-      {
-        "id": 47,
-        "full_name": "Candra Wijaya",
-        "service_number": "123458",
-        "…": "objek Personnel lengkap"
+        "id": 2,
+        "session": "Apel Malam",
+        "date": "2026-09-25",
+        "wave": 1,
+        "status": "open",
+        "is_locked": false,
+        "deadline": "2026-09-25T21:30:00+07:00",
+        "progress": { "sudah": 1, "total": 11, "persen": 9, "belum": 10 },
+        "totals": { "company": 1, "members": 1, "present": 1, "absent": 0, "persen": 100 },
+        "my_submission": [{ "unit_id": 2, "is_submitted": true, "present": 1, "absent": 0 }]
       }
     ]
   }
 }
 ```
 
-- `present[]` / `absent[]` = objek entry (`id`, `roll_call_session_id`, `personnel_id`, `status`,
-  `absence_reason_id`, `note`, `input_by_user_id`, `+ personnel`). `unmarked[]` = objek Personnel
-  langsung (`id` = personnel_id), bukan objek entry.
-- `personnel` di present/absent/unmarked adalah **objek Personnel lengkap** (`rank_id`, `rank` object,
-  `current_assignment`, `photo_path`, `foto`, `birth_date`, dst.) — FE membaca `full_name`,
-  `service_number`, dan sejak 2026-09-11 juga `foto` (avatar asli di `RollCallDetail`/`RollCallSearch`/
-  `RollCallEntry`, fallback ke `photo`/`photo_path` kalau `foto` tidak ada).
-- `absent[].absence_reason` = objek reason lengkap (`id`, `name`, `description`, `sort_order`, …) — FE
-  membaca `name`. `breakdown[]` = `{ name, count }` per keterangan absen.
+- `can_create_agenda` → tombol "Buka Agenda Apel" + ikon Pengaturan. `is_representative` → strip "Kompi yang Anda wakili".
+- Status badge: `TERBUKA` = `status: open` & `!is_locked` · `TERKUNCI` = `open` & `is_locked` (lewat `deadline`) · `DITUTUP` = status lain.
+- `totals` hanya dari kompi yang **sudah** mengirim. `deadline` dibawa ke layar Rangkuman lewat param navigasi (8.3 tidak membawanya).
+- **Respons asli (dicek di device 2026-09-26) berbeda dari dokumen:** `totals` masih berkey Indonesia —
+  `{ "kompi": 1, "anggota": 1, "hadir": 0, "tidak_hadir": 1, "persen": 0 }` — dan agenda yang ditutup
+  ber-`status: "finished"`. `progress.sudah/belum/persen` juga masih Indonesia. FE menerima kedua versi key.
+- Untuk komandan, `represented_company` berisi **semua** kompi (dipakai FE sebagai cadangan daftar kompi di
+  8.11 bila belum ada agenda).
 
-### 8.4 Input Kehadiran Anggota
+### 8.2 Buka Agenda Apel
 
-> [!DONE] Alur: Detail sesi → "Input Absen" (Hadir / Tidak Hadir) → layar Cari Personel (`RollCallSearch`) → Scan QR (`RollCallScan`, ikon di header; `react-native-vision-camera` + izin kamera) atau isi manual (`RollCallEntry`). Diuji di device (Hadir & Tidak Hadir) + verifikasi API live 2026-09-02: `200` `{ success, message: "Status personel berhasil disimpan.", data: <entry> }`, tercatat di rekap sesi.
+> [!PARTIAL] Layar `RollCall/AgendaCreate` — pilihan sesi dari 8.9 (hanya `is_active`), tanggal, gelombang (1–10), catatan. Sukses → `replace` ke Rangkuman. Belum diuji di device.
 
-`POST /roll-calls/{session}/entries` — `{session}` = id numerik sesi.
+`POST /roll-calls/agenda`
 
 **Payload (body):**
 
 | Parameter | Tipe | Wajib | Keterangan |
 |---|---|---|---|
-| `personnel_id` | integer | Wajib | ID internal Personnel (dari 8.3 / 8.7) |
-| `status` | string | Wajib | `present` / `absent` |
-| `absence_reason_id` | integer | Wajib jika `absent` | id dari 8.6 |
-| `note` | string | Opsional | FE mengisi saat keterangan = "Lainnya" |
+| `roll_call_session_type_id` | integer | Wajib | id sesi piket (8.9) |
+| `date` | string | Wajib | `YYYY-MM-DD` |
+| `wave` | integer | Opsional | gelombang bila sesi sama diadakan >1× sehari (bawaan 1) |
+| `notes` | string | Opsional | catatan agenda |
 
-**Response `200`:**
+**Response `201`:**
 
 ```json
 {
   "success": true,
-  "message": "Status personel berhasil disimpan.",
-  "data": {
-    "id": 19,
-    "tenant_id": 1,
-    "roll_call_session_id": 2,
-    "personnel_id": 9,
-    "status": "absent",
-    "absence_reason_id": 8,
-    "note": "Kabur",
-    "input_by_user_id": 205,
-    "deleted_at": null,
-    "created_at": "2026-09-02T06:24:17.000000Z",
-    "updated_at": "2026-09-02T10:30:50.000000Z"
-  }
+  "message": "Agenda apel dibuka. Notifikasi dikirim ke perwakilan kompi.",
+  "data": { "id": 3 }
 }
 ```
 
-Catatan: entry `present` bisa tanpa `note`/`deleted_at`; `absent` menyertakannya.
-### 8.5 Tutup Sesi Apel
+### 8.3 Rangkuman Agenda
 
-> [!DONE] Tombol "Tutup Sesi" di `RollCallDetail` (khusus sesi `open`, konfirmasi dulu). Diuji di device + verifikasi API live 2026-09-02 — `200` `{ success, message: "Sesi kekuatan apel berhasil ditutup.", data: <sesi lengkap status:"closed"> }`.
+> [!PARTIAL] Layar `RollCall/AgendaDetail` — satu layar untuk agenda terbuka & ditutup. `recap[]` dibagi "Belum Mengirim" / "Sudah Mengirim"; chip jumlah per alasan dihitung klien dari `absent[]`. Baris kompi yang belum mengirim bisa diketuk untuk mengisi **hanya oleh komandan**. Belum diuji di device.
 
-`POST /roll-calls/{session}/close` — mengunci sesi.
+`GET /roll-calls/agenda/{agenda}`
 
 **Tanpa parameter.**
 
@@ -1998,29 +1843,160 @@ Catatan: entry `present` bisa tanpa `note`/`deleted_at`; `absent` menyertakannya
 ```json
 {
   "success": true,
-  "message": "Sesi kekuatan apel berhasil ditutup.",
   "data": {
-    "id": 6,
-    "tenant_id": 1,
-    "date": "2026-09-04T17:00:00.000000Z",
-    "time": "06:30:00",
-    "name": "Apel Siang Satuan",
-    "status": "closed",
-    "created_by": 205,
-    "closed_by": 205,
-    "closed_at": "2026-09-02T10:14:25.000000Z",
-    "deleted_at": null,
-    "created_at": "2026-09-02T10:14:24.000000Z",
-    "updated_at": "2026-09-02T10:14:25.000000Z"
+    "id": 2,
+    "session": "Apel Malam",
+    "date": "2026-09-25",
+    "wave": 1,
+    "status": "open",
+    "is_locked": false,
+    "progress": { "sudah": 1, "total": 11, "persen": 9, "belum": 10 },
+    "totals": { "company": 1, "members": 1, "present": 1, "absent": 0, "persen": 100 },
+    "recap": [
+      {
+        "unit_id": 124,
+        "company": "Kima",
+        "submitted": false,
+        "members": 79,
+        "present": 0,
+        "absent": 0,
+        "submitted_by": null,
+        "submitted_at": null
+      }
+    ],
+    "absent": [
+      {
+        "name": "Budi Santoso",
+        "nrp": "123457",
+        "rank": "Sersan Dua",
+        "company": "Kima",
+        "absence_reason": "Sakit",
+        "note": "Demam"
+      }
+    ]
   }
 }
 ```
 
-Catatan: `data` = objek sesi lengkap (FE `RollCallCloseResult` cuma pakai `id`/`status`/`closed_by`/`closed_at`).
+Tidak membawa `deadline` → baris "Batas pengisian" hanya tampil bila dibuka dari 8.1 (param navigasi).
+Respons asli: `totals` berkey Indonesia (sama seperti 8.1); `recap[].members` = `0` untuk kompi yang belum
+mengirim (FE menampilkan "Belum mengirim").
 
-### 8.6 Daftar Keterangan Absen
+### 8.4 Tutup & Buka Kembali Agenda
 
-> [!DONE] Mengisi chip keterangan di `RollCallEntry`. Terpakai saat input "Tidak Hadir" yang diuji di device + verifikasi API live 2026-09-02.
+> [!PARTIAL] Tombol "Tutup Agenda" (popup konfirmasi, menyebut jumlah kompi yang belum mengirim) dan "Buka Kembali Agenda" di Rangkuman — komandan & piket saja. Belum diuji di device.
+
+`POST /roll-calls/agenda/{agenda}/finish` · `POST /roll-calls/agenda/{agenda}/reopen`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{ "success": true, "message": "Agenda apel ditutup dan terkunci." }
+```
+
+`reopen` → `message: "Agenda apel dibuka kembali."`
+
+### 8.5 Daftar Agenda Kompi (Perwakilan)
+
+> [!PARTIAL] Layar `RollCall/CompanyAgendas` — "Perlu Diisi" (agenda terbuka yang belum dikirim) + "Sudah Dikirim". Tanpa batas waktu (endpoint ini tidak membawa `deadline`). Belum diuji di device.
+
+`GET /roll-calls/companies`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "company": [{ "id": 124, "name": "Kima" }],
+    "agendas": [
+      {
+        "id": 2,
+        "session": "Apel Malam",
+        "date": "2026-09-25",
+        "wave": 1,
+        "is_locked": false,
+        "submission": [{ "unit_id": 124, "is_submitted": false, "present": 0, "absent": 0 }]
+      }
+    ]
+  }
+}
+```
+
+### 8.6 Form Pengisian Kompi
+
+> [!PARTIAL] Layar `RollCall/CompanyForm` — anggota dikelompokkan per `unit`, pencarian nama/NRP, dua mode pencatatan (Catat Tidak Hadir: semua dianggap hadir · Catat Hadir: semua dianggap tidak hadir). `present: null` = belum diisi, ikut mode. `agenda.is_locked` → form read-only. Belum diuji di device.
+
+`GET /roll-calls/agenda/{agenda}/companies/{unit}`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "agenda": { "id": 2, "session": "Apel Malam", "date": "2026-09-25", "is_locked": false },
+    "company": { "id": 124, "name": "Kima" },
+    "saved_mode": "present",
+    "is_submitted": false,
+    "members": [
+      {
+        "personnel_id": 45,
+        "name": "Andi Pratama",
+        "nrp": "123456",
+        "rank": "Sersan Satu",
+        "unit": "Kima",
+        "present": null,
+        "absence_reason_id": null,
+        "absence_reason_other": null,
+        "note": null
+      }
+    ],
+    "absence_reason": [
+      { "id": 1, "name": "Izin" },
+      { "id": 2, "name": "Sakit" }
+    ]
+  }
+}
+```
+
+### 8.7 Kirim Apel Kompi
+
+> [!PARTIAL] Tombol "Kirim Apel Kompi" / "Kirim Perbaikan" — nonaktif selama ada anggota tidak hadir tanpa alasan. Boleh dikirim ulang selama agenda belum terkunci. Body dikirim sebagai JSON; field per anggota berupa objek ber-key `personnel_id` (dibaca Laravel sama dengan `alasan[45]`). Belum diuji di device.
+
+`POST /roll-calls/agenda/{agenda}/companies/{unit}`
+
+**Payload (body):**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `mode` | string | Wajib | `present` / `absent` |
+| `present` | array | Wajib | id personel yang **hadir**; yang tidak ada di daftar = tidak hadir |
+| `alasan[personnel_id]` | integer \| string | Wajib per yang tidak hadir | id keterangan (8.8) atau `"lainnya"` |
+| `alasan_lainnya[personnel_id]` | string | Opsional | teks bebas bila `"lainnya"` |
+| `catatan[personnel_id]` | string | Opsional | catatan per anggota |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "message": "Apel kompi Kima berhasil dikirim.",
+  "data": { "submitted_companies": 1, "total_companies": 11 }
+}
+```
+
+Key body `alasan` / `alasan_lainnya` / `catatan` masih berbahasa Indonesia (belum diubah ke Inggris seperti response).
+
+### 8.8 Keterangan Tidak Hadir
+
+> [!PARTIAL] Dipakai di sheet "Alasan Tidak Hadir" — `note_label` tampil sebagai keterangan di bawah nama alasan. Opsi "Lainnya" ditambahkan FE. Belum diuji di device.
 
 `GET /roll-calls/absence-reasons`
 
@@ -2032,34 +2008,160 @@ Catatan: `data` = objek sesi lengkap (FE `RollCallCloseResult` cuma pakai `id`/`
 {
   "success": true,
   "data": [
+    { "id": 1, "name": "Izin", "note_label": "Meninggalkan dinas dengan izin sah" },
+    { "id": 2, "name": "Sakit", "note_label": null }
+  ]
+}
+```
+
+### 8.9 Sesi Piket
+
+> [!PARTIAL] Layar `RollCall/Sessions` + `RollCall/SessionForm` (Pengaturan Apel → Sesi Piket; komandan & piket). Switch = toggle; ubah mengirim hanya kolom yang berubah; hapus ditolak bila sesi sudah dipakai agenda (FE menyarankan nonaktifkan). Belum diuji di device.
+
+`GET /roll-calls/sessions` · `POST /roll-calls/sessions` · `PATCH /roll-calls/sessions/{session}` · `POST /roll-calls/sessions/{session}/toggle` · `DELETE /roll-calls/sessions/{session}`
+
+**Payload (body) — POST / PATCH:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `name` | string | Wajib (POST) | mis. Apel Pagi |
+| `code` | string | Opsional | kode singkat, mis. APPAG |
+| `start_time` | string | Wajib (POST) | `HH:MM` |
+| `end_time` | string | Wajib (POST) | `HH:MM`, setelah `start_time` |
+| `description` | string | Opsional | — |
+| `sort_order` | integer | Opsional | urutan tampil |
+| `is_active` | boolean | Opsional | bawaan `true` |
+
+**Response `200` (GET):**
+
+```json
+{
+  "success": true,
+  "data": [
     {
       "id": 1,
-      "name": "Izin",
-      "description": "Meninggalkan dinas/apel dengan izin atasan yang sah.",
+      "name": "Apel Pagi",
+      "code": "APPAG",
+      "start_time": "07:30:00",
+      "end_time": "09:00:00",
+      "description": null,
       "sort_order": 1,
-      "is_active": true,
-      "tenant_id": 1,
-      "deleted_at": null,
-      "created_at": "2026-08-28T03:55:45.000000Z",
-      "updated_at": "2026-08-28T03:55:45.000000Z"
+      "is_active": true
     }
   ]
 }
 ```
 
-Catatan: (FE cuma pakai `id`, `name`, `description`). 8 keterangan: Izin, Sakit, Dinas, Cuti, Pendidikan, Lepas Dinas, Tanpa Keterangan, Lainnya. `name` mengandung "lain" → memunculkan kolom teks bebas → dikirim sebagai `note`.
+POST/PATCH → `data: { id, name }`; toggle → `data: { id, is_active }`; DELETE → `{ success, message }`.
 
-### 8.7 Smart Search Personnel
+### 8.10 Petugas Piket Batalyon
 
-> [!DONE] Dipakai untuk resolusi `personnel_id` di `RollCallScan` (cocokkan `service_number` dari payload QR) dan sebagai fallback pencarian. Terpakai di alur input yang diuji di device.
+> [!PARTIAL] Layar `RollCall/Officers` + `RollCall/Appoint` (mode petugas). Tunjuk hanya komandan (tombol disembunyikan untuk piket). Menunjuk memberi role `piket`, menonaktifkan / mengakhiri mencabutnya. Di bawah nama tampil `username` apa adanya (tanpa pangkat — tidak ada di response). Belum diuji di device.
 
-`GET /roll-calls/personnel/search?q={keyword}` — cari anggota aktif dalam satuan (nama/NRP), real-time.
+`GET /roll-calls/officers` · `POST /roll-calls/officers` · `POST /roll-calls/officers/{officer}/toggle` · `DELETE /roll-calls/officers/{officer}`
+
+**Payload (body) — POST:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `user_id` | integer | Wajib | id dari 8.13 |
+
+**Response `200` (GET):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 3,
+      "user_id": 9,
+      "name": "Budi Santoso",
+      "username": "123457",
+      "is_active": true,
+      "appointed_at": "2026-09-26T17:46:30+07:00"
+    }
+  ]
+}
+```
+
+### 8.11 Perwakilan Kompi
+
+> [!PARTIAL] Layar `RollCall/Representatives` + `RollCall/Appoint` (mode perwakilan). **Belum ada endpoint daftar kompi**, jadi daftar kompi diambil dari `recap[]` agenda terakhir (8.1 → 8.3) lalu digabung dengan list ini lewat `unit_id` — kosong sebelum agenda pertama dibuka. Menunjuk orang baru untuk kompi yang sudah punya perwakilan **otomatis menggantikan** yang lama (FE memberi popup konfirmasi). `username` tampil apa adanya. Belum diuji di device.
+
+`GET /roll-calls/representatives` · `POST /roll-calls/representatives` · `POST /roll-calls/representatives/{representative}/toggle` · `DELETE /roll-calls/representatives/{representative}`
+
+**Payload (body) — POST:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `unit_id` | integer | Wajib | kompi yang diwakili |
+| `user_id` | integer | Wajib | id dari 8.13 |
+
+**Response `200` (GET):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "unit_id": 124,
+      "company": "Kima",
+      "user_id": 10,
+      "name": "Andi Pratama",
+      "username": "1726107060080973",
+      "is_active": true
+    }
+  ]
+}
+```
+
+### 8.12 Statistik Apel
+
+> [!PARTIAL] Strip "Statistik <bulan>" di Daftar Agenda + layar `RollCall/Stats` (Bulan ini / 7 hari / 30 hari / pilih tanggal). Persen per kompi dihitung klien, terendah di atas. Belum diuji di device.
+
+`GET /roll-calls/stats`
 
 **Query:**
 
 | Parameter | Tipe | Wajib | Keterangan |
 |---|---|---|---|
-| `q` | string | Wajib | nama / NRP (real-time) |
+| `from` | date | Opsional | `YYYY-MM-DD`, bawaan awal bulan ini |
+| `to` | date | Opsional | `YYYY-MM-DD`, bawaan hari ini |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "period": { "from": "2026-09-01", "to": "2026-09-30" },
+    "agendas": 12,
+    "present": 480,
+    "absent": 20,
+    "percentage": 96,
+    "by_company": [{ "unit": "Kima", "present": 78, "absent": 4 }],
+    "absence_reasons": [{ "reason": "Sakit", "total": 12 }]
+  }
+}
+```
+
+**Respons asli (dicek di device 2026-09-26) berbeda:** item `by_company` =
+`{ "unit_id": 124, "company": "Kima", "members": 82, "submitted": 0, "pending": 1, "present": 0, "absent": 0, "percentage": null }`
+(bukan `unit`), plus key tambahan di root: `reported`, `personnel`, `by_agenda`, `by_session`. FE memakai
+`company` (cadangan `unit`); kompi tanpa kiriman ditampilkan "–".
+
+### 8.13 Cari Prajurit
+
+> [!PARTIAL] Pencarian di layar Tunjuk (debounce 400 ms, minimal 2 huruf). `id` hasil dipakai sebagai `user_id` saat menunjuk (asumsi FE). Belum diuji di device.
+
+`GET /roll-calls/personnel-search`
+
+**Query:**
+
+| Parameter | Tipe | Wajib | Keterangan |
+|---|---|---|---|
+| `q` | string | Wajib | nama / NRP, minimal 2 huruf |
 
 **Response `200`:**
 
@@ -2068,30 +2170,87 @@ Catatan: (FE cuma pakai `id`, `name`, `description`). 8 keterangan: Izin, Sakit,
   "success": true,
   "data": [
     {
-      "id": 9,
-      "tenant_id": 1,
-      "user_id": 10,
-      "service_number": "63813596",
-      "full_name": "Adiarja Sihotang",
-      "rank_id": 7,
-      "birth_place": "Bukittinggi",
-      "birth_date": "1976-07-18T17:00:00.000000Z",
-      "blood_type": "B",
-      "gender": "male",
-      "status": "active",
-      "rank": {
-        "id": 7,
-        "name": "SERKA"
-      },
-      "current_assignment": {
-        "unit": "Kompi A"
-      }
+      "id": 569,
+      "name": "Erik Angga Sugiarto",
+      "username": "1726107060080973",
+      "rank": "Prajurit Dua",
+      "company": "Kipan A"
     }
   ]
 }
 ```
 
-Catatan: backend kirim objek Personnel penuh; FE baca `id` (dipakai sebagai `personnel_id`), `full_name`, `service_number`, dan sejak 2026-09-11 juga `foto` (dipakai `RollCallScan` untuk teruskan avatar ke `RollCallEntry`).
+### 8.14 Laporan Piket Batalyon
+
+> [!PARTIAL] Kartu "Laporan Piket Batalyon" di Rangkuman (`RollCall/AgendaDetail`, komandan & piket saja): tombol "Kirim ke WhatsApp" (membuka WhatsApp dengan teks terisi lewat `whatsapp://send?text=`; bila gagal jatuh ke share sheet) dan "Bagikan" (share sheet sistem). Laporan diambil ulang tiap tombol ditekan. **FE hanya memakai `text`** (sama persis dengan tombol "Copy untuk WhatsApp" di web). Belum diuji di device — saat dicek belum ada agenda di server.
+
+`GET /roll-calls/agenda/{agenda}/report`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "agenda": {
+      "id": 4,
+      "sesi": "Apel Pagi",
+      "tanggal": "2026-09-26",
+      "tanggal_teks": "26 September 2026",
+      "gelombang": 1,
+      "status": "open",
+      "terkunci": false,
+      "batas_waktu": "2026-09-26 23:59",
+      "dibuka_oleh": "DEMO Komandan",
+      "ditutup_oleh": null
+    },
+    "strength": {
+      "actual_strength": 449,
+      "companies_total": 12,
+      "companies_reported": 1,
+      "companies_pending": 11,
+      "reported_members": 1,
+      "present": 0,
+      "absent": 1,
+      "present_percent": 0
+    },
+    "per_company": [
+      {
+        "unit_id": 2,
+        "company": "Kompi Senapan A",
+        "is_reported": true,
+        "reported_by": "DEMO Komandan",
+        "submitted_at": "21:50",
+        "members": 1,
+        "present": 0,
+        "absent": 1,
+        "present_percent": 0
+      }
+    ],
+    "absentees": [
+      {
+        "personnel_id": 5,
+        "rank": "Sersan Dua",
+        "name": "Demo Personnel",
+        "service_number": "DEMO-0002",
+        "company": "Kompi Senapan A",
+        "reason": "Latihan di luar satuan",
+        "note": "Diketahui komandan"
+      }
+    ],
+    "absent_by_reason": { "Latihan di luar satuan": 1 },
+    "by_rank_group": { "Bintara": { "hadir": 0, "tidak_hadir": 1, "total": 1 } },
+    "officers": { "piket": [], "perwakilan": [] },
+    "text": "Selamat malam, Komandan. Izin melaporkan Piket Batalyon sesi Apel Pagi tanggal 26 September 2026...."
+  }
+}
+```
+
+- Blok `agenda` berkey Indonesia (`sesi`, `tanggal`, `terkunci`, `batas_waktu`), beda dengan 8.3.
+- Per golongan dihitung dari kompi yang sudah melapor; belum ada yang melapor → `absentees` & `by_rank_group` kosong.
+- Data terstruktur (`strength`, `per_company`, `by_rank_group`, …) sudah diketik di `RollCallAgendaReport` tapi belum ditampilkan.
 
 ## 9. Buku Saku (E-Book)
 
@@ -2415,7 +2574,7 @@ Catatan: FE mengizinkan selesai walau `completed_checkpoints < total_checkpoints
 
 **Response detail `200`:** `{ success:true, data:<sesi, bentuk = 10.2 + "officer"> }`. `GET /patrols/sessions/{id}` untuk id yang tidak ada → `404`.
 
-Catatan: `history` `data` = array polos + `meta` sibling (bukan Laravel paginator bersarang seperti `/roll-calls`). `getPatrolHistoryApi` mengembalikan array `PatrolSession[]` (`meta` di-drop untuk sekarang).
+Catatan: `history` `data` = array polos + `meta` sibling (bukan Laravel paginator bersarang). `getPatrolHistoryApi` mengembalikan array `PatrolSession[]` (`meta` di-drop untuk sekarang).
 
 ### 10.6 Check-in Checkpoint (Scan QR + Selfie)
 

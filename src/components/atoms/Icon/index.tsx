@@ -80,7 +80,16 @@ export type IconName =
   | 'trending-down'
   | 'printer'
   | 'spreadsheet'
-  | 'sort';
+  | 'sort'
+  | 'plus'
+  | 'minus'
+  | 'user-check'
+  | 'user-x'
+  | 'user-plus'
+  | 'more-vertical'
+  | 'swap'
+  | 'unlock'
+  | 'share';
 
 export interface IconProps {
   name: IconName;
@@ -197,6 +206,17 @@ const pathByName: Record<IconName, string> = {
     'M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M6 14h12v7H6Z',
   spreadsheet: 'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5ZM14 3v5h5M8 13h8M8 17h8M12 11v8',
   sort: 'M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3',
+  plus: 'M12 5v14M5 12h14',
+  minus: 'M5 12h14',
+  'user-check': 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21a7 7 0 0 1 14 0M16 11l2 2 4-4',
+  'user-x': 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21a7 7 0 0 1 14 0M17 8l4 4M21 8l-4 4',
+  'user-plus': 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 21a7 7 0 0 1 14 0M19 8v6M16 11h6',
+  'more-vertical':
+    'M12 6.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM12 19.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z',
+  swap: 'M17 3l4 4-4 4M21 7H9M7 21l-4-4 4-4M3 17h12',
+  unlock: 'M7 11V8a5 5 0 0 1 9.6-2M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z',
+  share:
+    'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8.6 13.5l6.8 4M15.4 6.5l-6.8 4',
 };
 
 export default function Icon(props: IconProps) {

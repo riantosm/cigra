@@ -400,8 +400,8 @@ ada di `theme/colors.ts` (`gradientPersonnelStart/End`, `gradientFamilyStart/End
 
 **Rollout 2026-09-22 (lanjutan) — chip flat lain di seluruh app ikut dikonversi**, supaya satu
 gaya konsisten di mana pun ada icon-chip (bukan cuma Home): `SendAnnouncement` (`FieldHeader` tiap
-field form + kartu Riwayat Terkirim), `RollCallDetail` ("Input Absen" `ChoiceRow` Hadir/Tidak
-Hadir), `RollCallEntry` (chip "Status Kehadiran" & "Keterangan"), `BukuSaku` (`rowIcon` tiap bab) +
+field form + kartu Riwayat Terkirim), layar Kekuatan Apel versi lama (sejak 2026-09-26 diganti alur
+agenda, lihat §5.18), `BukuSaku` (`rowIcon` tiap bab) +
 `BukuSakuDetail` (`recordIcon` marker `record_display`), `molecules/HealthRecordCard` (dipakai
 `HealthMyHistory`/`HealthDashboard`/`HealthPersonnelProfile` — chip `heartbeat` jadi gradient
 health), `MemberHome` (`ShortcutButton` "Akses Cepat", `StatusTile` "Status Saya", `NoticeRow`
@@ -414,7 +414,7 @@ success/danger, `AcademyProgramDetail` node timeline "selesai" jadi gradient suc
 (dari array/lookup status→warna yang sudah dipakai lebih dulu) jadi pasangan gradient tanpa perlu
 menulis ulang tiap lookup — dipakai di `MemberHome`'s 4 baris. Tidak disentuh (out of scope): grid
 Quick Action `HealthOfficerHome`-nya sendiri sebenarnya sudah dikonversi di rollout awal;
-`molecules/EmptyState`, `RollCallList`/`RollCallScan`/`RollCallSearch`, dan hampir semua layar
+`molecules/EmptyState`, dan hampir semua layar
 Academy assessment/attempt (tak punya pola icon-chip flat — ikonnya inline di pill/banner, bukan
 kotak/lingkaran ber-tint terpisah) sengaja dibiarkan flat.
 
@@ -508,6 +508,33 @@ Dari canvas "Tagihan Koperasi" (2026-09-24). Pola untuk layar yang menampilkan *
   Batang flat — tidak pakai gradient (§7).
 - Nominal selalu memakai teks `*_formatted` dari backend; hanya selisih yang dihitung klien
   (`formatRupiah`, format sama: `Rp 150.000` / `-Rp 150.000`).
+
+### 5.18 Kekuatan Apel — agenda, isi per kompi, pengaturan
+
+Dari canvas "Redesign Kekuatan Apel" (2026-09-26). Bagian bersama ada di `src/screens/RollCall/shared`.
+
+- **Badge status agenda** (`AgendaStateBadge`): `TERBUKA` = Badge `success` (titik) · `TERKUNCI` (lewat
+  jam berakhir sesi) = `neutral` + ikon `clock` · `DITUTUP` = `neutral` + ikon `lock`.
+- **Kartu agenda berjalan**: kartu menonjol (`cardShadowRaised`), badge + "Batas HH.MM", judul sesi `20/800`,
+  progres kompi (teks + persen `primary` + `ProgressBar` 8px di track `chipSurface`), `StatDividerRow`
+  (Anggota / Hadir / Tidak Hadir / Kehadiran), lalu baris penutup amber "N kompi belum mengirim" / hijau
+  "Semua kompi sudah mengirim" + link "Rangkuman ›".
+- **Warna persen kehadiran** (`attendanceColor`): ≥90 `success`, ≥75 `warningText`, di bawahnya `danger`.
+- **Baris anggota di form kompi**: avatar gradient (biru = hadir, amber `gradientWarnStart→warning` = tidak
+  hadir) + nama/pangkat·NRP + kotak centang 26 radius 8. Mode "Catat Tidak Hadir" → kotak terisi amber +
+  ikon `close`; mode "Catat Hadir" → terisi `success` + `check`. Yang tidak hadir punya **pill alasan** di
+  bawahnya: kosong = border putus-putus `warning` + "Pilih alasan"; terisi = `warningSurface` + teks
+  `warningText` + ikon `edit`. Satu kompi = rangkaian baris yang menyambung jadi satu kartu (baris pertama/
+  terakhir yang membulat), bukan kartu per anggota.
+- **Pilihan tunggal (radio row)** — sesi piket, alasan, hasil pencarian prajurit: baris radius 14; aktif =
+  `notifUnreadSurface` + border `notifUnreadBorder` + radio `primary` (ring 2px + titik 10).
+- **Switch aktif/nonaktif** (`ToggleSwitch`): RN `Switch`, track `primary` / `dividerOnGradient`, thumb
+  `surface`. Baris nonaktif dipudarkan (opacity 0.55–0.7), avatar ungu nonaktif (§5.8).
+- **Aksi destruktif di baris** (akhiri penugasan): kotak 40 `dangerSurfaceSoft` + ikon `user-x` `danger`,
+  selalu lewat `StatusModal` konfirmasi varian error. Menu banyak aksi per baris = tombol `more-vertical`
+  (kotak `chipSurface`) → `BottomSheet` berisi baris aksi (chip ikon 36 + judul + deskripsi).
+- **Bar sebaran alasan** (Statistik): bar bertumpuk tanpa lib chart (gap 2, pill) + legenda titik 8.
+  Warna = `ROLL_CALL_REASON_PALETTE` (token aksen yang sudah ada, urut dari alasan terbanyak).
 
 ---
 

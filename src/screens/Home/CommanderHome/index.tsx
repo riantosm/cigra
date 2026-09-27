@@ -123,8 +123,8 @@ function movementDetail(item: ActivityMovement): string {
 }
 
 // Grid Home = 2 baris x 4 kartu: 7 quick action pertama + kartu "Lainnya" (bottom sheet berisi
-// sisanya). "Kekuatan Apel" (index 3, role instruktur apel saja) + "Patroli" (semua komandan)
-// menggeser kartu di ekornya ("Distribusi Senjata", dst.) ke dalam sheet "Lainnya".
+// sisanya). "Kekuatan Apel" (index 3) + "Patroli" menggeser kartu di ekornya ("Distribusi
+// Senjata", dst.) ke dalam sheet "Lainnya".
 const VISIBLE_QUICK_ACTION_COUNT = 7;
 
 export default function CommanderHome(props: CommanderHomeProps) {
@@ -215,12 +215,8 @@ export default function CommanderHome(props: CommanderHomeProps) {
   const syncedLabel = lastSyncedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const bottomPadding = useTabScreenBottomPadding();
 
-  // "Kekuatan Apel" hanya untuk user dengan role instruktur apel (backend juga menegakkan 403).
-  const canManageRollCall = (user?.roles ?? []).includes('instruktur_apel');
-
-  // Urutan grid (7 pertama tampil + kartu "Lainnya" untuk sisanya). "Kekuatan Apel" hanya
-  // disisipkan (slot ke-4) untuk role instruktur apel — saat tampil, "Distribusi Senjata"
-  // bergeser ke dalam sheet "Lainnya".
+  // Urutan grid (7 pertama tampil + kartu "Lainnya" untuk sisanya). "Kekuatan Apel" selalu
+  // tampil untuk komandan (komandan boleh membuka/menutup agenda apel).
   const quickActions: QuickActionButtonProps[] = [
     {
       icon: 'profile',
@@ -243,17 +239,13 @@ export default function CommanderHome(props: CommanderHomeProps) {
       gradientColors: [colors.gradientWarnStart, colors.warning],
       onPress: () => navigation.navigate(ROUTES.sendAnnouncement),
     },
-    ...(canManageRollCall
-      ? [
-          {
-            icon: 'clipboard-check' as const,
-            label: 'Kekuatan Apel',
-            color: colors.primary,
-            gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd] as const,
-            onPress: () => navigation.navigate(ROUTES.rollCallList),
-          },
-        ]
-      : []),
+    {
+      icon: 'clipboard-check',
+      label: 'Kekuatan Apel',
+      color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
+      onPress: () => navigation.navigate(ROUTES.rollCallAgendas),
+    },
     {
       icon: 'route',
       label: 'Monitoring Patroli',

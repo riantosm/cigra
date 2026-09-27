@@ -35,6 +35,11 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   "Tagihan Koperasi" di Home komandan (rekap satuan, di bawah Ringkasan Situasi), plus layar
   daftar periode, rincian per jenis tagihan dengan perbandingan bulan lalu, rekap per periode,
   dan ekspor Excel / cetak PDF.
+- Kekuatan Apel versi baru: piket batalyon membuka agenda per sesi, perwakilan tiap kompi
+  mengisi kehadiran kompinya (catat yang hadir atau yang tidak hadir, alasan wajib), lalu piket
+  memantau rangkuman dan menutup agenda. Ada juga pengaturan sesi piket, penunjukan petugas piket
+  dan perwakilan kompi, statistik kehadiran per periode, serta tombol kirim Laporan Piket
+  Batalyon ke WhatsApp dari rangkuman agenda.
 
 ### Ditingkatkan
 

@@ -21,6 +21,7 @@ import AssetDetailSheet from '@/screens/Home/MemberHome/AssetDetailSheet';
 import type { AssetDetailSheetData } from '@/screens/Home/MemberHome/AssetDetailSheet';
 import NoticeRow from '@/screens/Home/MemberHome/NoticeRow';
 import ShortcutButton from '@/screens/Home/MemberHome/ShortcutButton';
+import { canManageRollCall, isRollCallRepresentative } from '@/utils/rollCall';
 import StatusTile from '@/screens/Home/MemberHome/StatusTile';
 import TimelineRow from '@/screens/Home/MemberHome/TimelineRow';
 import HomeHeader from '@/screens/Home/HomeHeader';
@@ -405,6 +406,21 @@ export default function MemberHome(props: MemberHomeProps) {
       label: 'Patroli',
       onPress: () => navigation.navigate(ROUTES.patrol),
     },
+    // Kekuatan Apel — hanya untuk petugas piket (kelola agenda) atau perwakilan kompi (isi
+    // kehadiran kompinya). Role ini diberikan otomatis saat ditunjuk di Pengaturan Apel.
+    ...(canManageRollCall(user?.roles) || isRollCallRepresentative(user?.roles)
+      ? [
+          {
+            icon: 'clipboard-check' as const,
+            color: colors.primary,
+            label: 'Apel',
+            onPress: () =>
+              canManageRollCall(user?.roles)
+                ? navigation.navigate(ROUTES.rollCallAgendas)
+                : navigation.navigate(ROUTES.rollCallCompanyAgendas),
+          },
+        ]
+      : []),
     {
       icon: 'mail' as const,
       color: colors.primary,
