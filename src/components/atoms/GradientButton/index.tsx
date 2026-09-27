@@ -15,8 +15,9 @@ export interface GradientButtonProps extends Omit<PressableProps, 'children' | '
   label: string;
   tone?: GradientButtonTone;
   loading?: boolean;
-  /** Optional icon shown before the label (18px, white). */
+  /** Optional icon (18px, white), before the label unless `iconPosition="end"`. */
   icon?: IconName;
+  iconPosition?: 'start' | 'end';
   /** Pill height. Defaults to `56` (DESIGN_SYSTEM §5.6); StatusModal passes `52` (§5.15). */
   height?: number;
   style?: StyleProp<ViewStyle>;
@@ -40,7 +41,17 @@ const toneShadow: Record<GradientButtonTone, string> = {
 // 16/700 white label. The plain `Button` atom stays for the not-yet-migrated screens.
 const GradientButton = forwardRef<ComponentRef<typeof Pressable>, GradientButtonProps>(
   function GradientButtonImpl(props, ref) {
-    const { label, tone = 'primary', loading = false, disabled = false, icon, height, style, ...rest } = props;
+    const {
+      label,
+      tone = 'primary',
+      loading = false,
+      disabled = false,
+      icon,
+      iconPosition = 'start',
+      height,
+      style,
+      ...rest
+    } = props;
     const isDisabled = disabled || loading;
     const [from, to] = toneStops[tone];
 
@@ -65,8 +76,13 @@ const GradientButton = forwardRef<ComponentRef<typeof Pressable>, GradientButton
           <ActivityIndicator color={colors.primaryForeground} />
         ) : (
           <>
-            {icon ? <Icon name={icon} size={18} color={colors.primaryForeground} /> : null}
+            {icon && iconPosition === 'start' ? (
+              <Icon name={icon} size={18} color={colors.primaryForeground} />
+            ) : null}
             <Text style={styles.label}>{label}</Text>
+            {icon && iconPosition === 'end' ? (
+              <Icon name={icon} size={18} color={colors.primaryForeground} />
+            ) : null}
           </>
         )}
       </PressableScale>

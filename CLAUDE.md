@@ -389,33 +389,68 @@ needed (missing `.env` value).
   (`getMyHealthHistoryApi`, response `data.personnel` + `data.records[]`, paginated via `meta`), member
   identity header + `HealthRecordCard` list + client-side "muat lebih banyak" + pull-to-refresh, each
   row → `healthRecordDetail`. See the "Health module" section below.
-- **Buku Saku (E-Book)** — real backend `/handbook/*` (see `documentation/API_CONTRACT.md`). Service
-  `src/services/api/handbook.service.ts` (`getHandbookChaptersApi` → `GET /handbook/chapters`,
-  `getHandbookArticleApi(id)` → `GET /handbook/articles/{id}`). Types `src/types/bukuSaku.types.ts`
-  (barrelled): `HandbookChapter` (`{ id, title, icon, sort_order, articles_count, articles[] }`),
+- **Buku Saku (E-Book)** — real backend `/handbook/*` (see `documentation/API_CONTRACT.md` §9;
+  redesigned 2026-09-26 from the Claude Design canvas "Redesign Buku Saku"
+  https://claude.ai/artifact/RguwtbrvnAUKnWgWJJtf4t). Service `src/services/api/handbook.service.ts`
+  (`getHandbookChaptersApi` → `GET /handbook/chapters`, `getHandbookArticleApi(id)` →
+  `GET /handbook/articles/{id}`). Types `src/types/bukuSaku.types.ts` (barrelled): `HandbookChapter`,
   `HandbookArticleRef` (`{ id, title, page_number, type, record_type }`), `HandbookArticleDetail`
-  (adds `chapter_id` / `chapter_title` / `content`). `type` is `'article'` (Rich Text HTML in
-  `content`) or `'record_display'` (a marker for a prajurit record view — `record_type` names it;
-  no data view in-app yet). No Redux slice — each screen holds local state. The old dummy
-  (`data/bukuSakuGuides.ts`, `screens/BukuSaku/categoryMeta.ts`, `BukuSakuGuide`/`BukuSakuAttachment`
-  types) is gone.
+  (+ `chapter_id` / `chapter_title` / `content` / `biodata` / `ability_records`), `HandbookBiodata`,
+  `HandbookAbilityRecord`. **One detail endpoint, three page kinds** — `record_type` decides which
+  field is filled: `null` → `content` (HTML; `type` is `'content'` in detail but may still be
+  `'article'` in the chapters list — treated the same), `biodata` → `biodata`, `ability:<id>` →
+  `ability_records` = the **full assessment history** for that ability, newest first (changed
+  2026-09-26 — each entry carries `submitted_value` / `final_value` / `value` / `status` /
+  `assessment_date` / `instructor` / `instructor_note` / `rejection_reason` / `verified_at`; no more
+  `history_count`; a never-assessed ability sends `[]`).
+  Helpers `src/utils/handbook.ts`: `handbookPageKind` (`content | biodata | ability | record`),
+  `HANDBOOK_PAGE_KICKER` / `HANDBOOK_PAGE_META`, `chapterHasRecords`, `sortedPages`, `abilityHistory`
+  (drops legacy `not_assessed` entries, sorts newest first), `abilityFinalValue` (`final_value`, or
+  `value` for the old single-entry shape), `abilityNameFromTitle`,
+  `abilityStatusMeta` (`approved` Terverifikasi / `pending` Menunggu Verifikasi / `revision` Perlu
+  Revisi → Badge), `formatAbilityValue` + `isTextValuation` (`level` / `pass_fail` = text values,
+  Title Cased), `abilityValueSize`, `ageInYears`, `tenureLabel`. No Redux slice — each screen holds
+  local state.
 - `src/screens/BukuSaku/index.tsx` — the `BukuSaku` bottom-tab screen. `HomeHeader` + big title +
-  `molecules/SearchFilterBar` (client-side filter over chapter title **and** its article titles) +
-  "DAFTAR BAB" list. `GET /handbook/chapters` on mount + pull-to-refresh, sorted by `sort_order`.
-  Each row = icon-chip (`screens/BukuSaku/chapterIcon.ts` `handbookIcon(icon)` maps the backend's
-  free-string `icon` → an `IconName`, fallback `handbook`) + chapter title + "`N` halaman" + chevron
-  → `navigation.navigate(bukuSakuDetail, { chapter })`.
-- `src/screens/BukuSakuDetail/index.tsx` — root-stack screen (`ROUTES.bukuSakuDetail`, no guard,
-  reached from the tab via a composite nav type). Route params `{ chapter: HandbookChapter;
-  initialArticleId?: number }` — the whole chapter is passed so next/back works with no extra chapters
-  call. Reads one **page/materi per screen** (E-Book style): `chapter.articles` sorted by
-  `page_number`, local `index` state, `GET /handbook/articles/{id}` for the current page (re-fetch +
-  scroll-to-top on nav). `MainLayout variant="canvas"` (title = chapter title, subtitle =
-  "Halaman `X` dari `N`") + back. Body: page kicker + article title + divider, then: `type
-  === 'article'` → `molecules/RichTextContent` renders `content`; `type === 'record_display'` → a
-  marker card ("Rekam nilai prajurit" + `record_type` + "belum tersedia" note). Pinned footer =
-  "Sebelumnya" (ghost) / "Selanjutnya" (primary) pills, disabled at the ends. No attachments, no
-  author footer.
+  `molecules/SearchFilterBar` + "DAFTAR BAB" list. `GET /handbook/chapters` on mount +
+  pull-to-refresh, sorted by `sort_order`. Each chapter card = icon-chip (`screens/BukuSaku/chapterIcon.ts`
+  `handbookIcon(icon)` maps the backend's free-string `icon` → an `IconName`, fallback `handbook`) +
+  title + "`N` halaman" + a "Data pribadi" `Badge` when the chapter has `record_display` pages →
+  `navigate(bukuSakuDetail, { chapter })`. While searching the header reads "HASIL PENCARIAN" +
+  "`N` bab · `M` halaman", and pages whose title matches are listed **under their chapter** (match
+  highlighted in `primarySurface`) → `navigate(bukuSakuDetail, { chapter, initialArticleId })`.
+- `src/screens/BukuSakuDetail/index.tsx` — root-stack screen (`ROUTES.bukuSakuDetail`, no guard).
+  Route params `{ chapter: HandbookChapter; initialArticleId?: number }` — the whole chapter is passed
+  so next/back + the TOC work with no extra chapters call. One page per screen: pages sorted by
+  `page_number`, local `index`, `GET /handbook/articles/{id}` per page (re-fetch + scroll-to-top; the
+  previous page's article is never shown while the next one loads — `shown` guard on `article.id`).
+  `MainLayout variant="canvas" compactTitle` (chapter title 17/800, 2 lines; subtitle "Halaman `X`
+  dari `N`") + a 40×40 `list` icon button (header `right`) opening `BukuSakuDetail/TocSheet`
+  (`BottomSheet` "Daftar Materi", current page highlighted, tap = jump). Body = white page card:
+  kicker (MATERI / BIODATA / REKAM NILAI) + page title + divider, then per kind:
+  `RichTextContent` · `BukuSakuDetail/BiodataPage` · `BukuSakuDetail/AbilityPage` · a fallback card
+  for an unknown `record_type`. Pinned footer: secondary "Sebelumnya" pill + `GradientButton`
+  "Selanjutnya →" (`iconPosition="end"`), replaced by a flat disabled pill on the last page.
+  - `BiodataPage` — identity block (72px rounded photo via `SecureImage`, fallback `GradientAvatar
+    radius={16}`; name, monospace NRP; chips pangkat / jabatan / satuan + "Aktif" Badge), a
+    `StatDividerRow` (Umur / Lama menjabat / Keluarga), then "DATA PRIBADI" / "DATA KEDINASAN" /
+    "DATA KELUARGA" sections (2-column label-over-value grid). Handbook `biodata` only carries
+    photo/name/NRP/rank/unit (`position` optional), so birth data, gender, blood type, phone,
+    address, assignment start + status and family come from `state.auth.user` (`/auth/me`) —
+    **only when `biodata.personnel_id === user.personnel.id`** (never mixes another person's data).
+    Family rows = `FamilyMemberRow` → `meFamilyDetail`.
+  - `AbilityPage` (`{ title, records }`) — ability strip (`target` gradient chip + name + "kategori ·
+    satuan X"; name falls back to the page title when `records` is empty), a summary `StatDividerRow`
+    (Penilaian `N×` · Nilai terakhir = `records[0].value`, dropped when it's long text · Terverifikasi =
+    count of `approved`), then "Riwayat Penilaian" = `records.map(AssessmentCard)`: status Badge + date,
+    "Nilai akhir" (`abilityFinalValue`, "–" + "belum ada nilai akhir" when null) sized by content via
+    `abilityValueSize` (number 32/800 + unit · short text 24/800 · long text such as an equipment list →
+    wrapping 16/700 paragraph; unit only next to numbers), Nilai diajukan / Diverifikasi (`verified_at`,
+    hidden for `pending`) as a `StatDividerRow` — or a stacked label-over-value list when the submitted
+    value is >14 chars — "Instruktur: …", "CATATAN INSTRUKTUR" box, and a red "Alasan: …" box for
+    `rejection_reason`. Empty history → dashed empty state "Belum ada nilai". Page loads retry once
+    automatically on a network error (no response) and show "Koneksi ke server terputus…" if it fails
+    again; stale responses are ignored.
 - `src/components/molecules/RichTextContent/index.tsx` — minimal dependency-free HTML → RN renderer
   for the WYSIWYG `content` (p, h1–h6, ul/ol/li, blockquote, pre, strong/b, em/i, u/s, a, br, hr,
   img, span/div; unknown tags unwrapped, entities decoded). Own tiny tokenizer → node tree; inline

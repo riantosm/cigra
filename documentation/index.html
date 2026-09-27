@@ -2755,9 +2755,12 @@ POST/PATCH → `data: { id, name }`; toggle → `data: { id, is_active }`; DELET
 
 ## 9. Buku Saku (E-Book)
 
+Satu endpoint detail (`GET /handbook/articles/{id}`), tiga jenis halaman. `record_type` menentukan isinya — hanya SATU yang terisi:
+`null` (materi, `type: content`) → `content` · `biodata` → `biodata` · `ability:<id>` → `ability_records`.
+
 ### 9.1 Daftar Bab & Daftar Isi
 
-> [!DONE] Dipakai di tab `BukuSaku` (`getHandbookChaptersApi`) — daftar "DAFTAR BAB" + pencarian judul bab/materi. Seluruh daftar isi (materi tiap bab) sudah ikut di response ini, jadi `BukuSakuDetail` tidak perlu request tambahan untuk navigasi antar-halaman.
+> [!DONE] Dipakai di tab `BukuSaku` (`getHandbookChaptersApi`) — "DAFTAR BAB" + pencarian judul bab **dan** judul halaman (halaman yang cocok tampil di bawah babnya, ketuk → langsung ke halaman itu). Bab yang punya halaman `record_display` diberi label "Data pribadi". Seluruh daftar isi sudah ikut di response ini, jadi `BukuSakuDetail` tidak perlu request tambahan untuk navigasi antar-halaman / sheet "Daftar Materi".
 
 `GET /handbook/chapters`
 
@@ -2770,25 +2773,25 @@ POST/PATCH → `data: { id, name }`; toggle → `data: { id, is_active }`; DELET
   "success": true,
   "data": [
     {
-      "id": 3,
-      "title": "SOP Piket & Jaga",
+      "id": 1,
+      "title": "BAB I: PEDOMAN DASAR & DOKTRIN MILITER",
       "icon": "shield",
       "sort_order": 1,
-      "articles_count": 4,
+      "articles_count": 7,
       "articles": [
         {
-          "id": 12,
-          "title": "Ketentuan Umum Piket",
+          "id": 1,
+          "title": "PANCASILA",
           "page_number": 1,
           "type": "article",
           "record_type": null
         },
         {
-          "id": 13,
-          "title": "Biodata Prajurit",
-          "page_number": 2,
+          "id": 15,
+          "title": "BIODATA DIRI PRAJURIT",
+          "page_number": 15,
           "type": "record_display",
-          "record_type": "personnel_biodata"
+          "record_type": "biodata"
         }
       ]
     }
@@ -2797,13 +2800,13 @@ POST/PATCH → `data: { id, name }`; toggle → `data: { id, is_active }`; DELET
 ```
 
 Catatan:
-- FE mengurutkan `data[]` berdasarkan `sort_order`, dan `articles[]` berdasarkan `page_number`.
-- `icon` string bebas dari backend (mis. `shield`) — FE memetakannya ke ikon lewat `handbookIcon()` (fallback ikon `handbook`).
-- `type`: `article` = halaman Rich Text (isi HTML diambil di 9.2) · `record_display` = halaman penanda tampilan rekam nilai prajurit; `record_type` menyebut jenisnya, belum ada tampilan datanya di app.
+- FE mengurutkan `data[]` berdasarkan `sort_order`, dan `articles[]` berdasarkan `page_number`. "Halaman X dari N" di detail = urutan di daftar isi, bukan `page_number`.
+- `icon` string bebas dari backend (mis. `shield`, `clipboard-check`) — FE memetakannya ke ikon lewat `handbookIcon()` (fallback ikon `handbook`).
+- `type` halaman materi di daftar ini masih bisa `article`, sementara detail (9.2) mengirim `content` — FE memperlakukan keduanya sama.
 
-### 9.2 Detail Halaman / Materi
+### 9.2 Halaman Materi
 
-> [!DONE] Dipakai di `BukuSakuDetail` (`getHandbookArticleApi`) — dibaca satu halaman per layar (gaya E-Book), di-fetch ulang tiap pindah halaman.
+> [!DONE] `BukuSakuDetail` — halaman materi biasa (`record_type: null`), dibaca satu halaman per layar. Isi HTML dirender `RichTextContent`.
 
 `GET /handbook/articles/{id}`
 
@@ -2818,20 +2821,129 @@ Catatan:
   "success": true,
   "data": {
     "id": 12,
-    "chapter_id": 3,
-    "chapter_title": "SOP Piket & Jaga",
-    "title": "Ketentuan Umum Piket",
-    "page_number": 1,
-    "type": "article",
+    "chapter_id": 2,
+    "chapter_title": "BAB II: KEMAMPUAN DASAR",
+    "title": "Lari 12 Menit",
+    "page_number": 14,
+    "type": "content",
     "record_type": null,
-    "content": "<h2>Ketentuan Umum</h2><p>Setiap prajurit ...</p>"
+    "content": "<p>Lari 12 menit mengukur daya tahan prajurit...</p>",
+    "biodata": null,
+    "ability_records": []
   }
 }
 ```
 
 Catatan:
-- `content` = Rich Text HTML untuk `type === 'article'`, `null` untuk `record_display`. FE merender HTML lewat `RichTextContent` (tanpa WebView / lib tambahan).
-- URL gambar di dalam `content` mengarah ke `/api/secure-files/...` (contoh backend `http://localhost:8000`) — FE menormalkan ke base URL API lalu merender lewat `SecureImage` (dengan header `Authorization`).
+- `content` = Rich Text HTML, dirender tanpa WebView / lib tambahan. URL gambar di dalamnya mengarah ke `/api/secure-files/...` — FE menormalkan ke base URL API lalu merender lewat `SecureImage` (dengan header `Authorization`).
+
+### 9.3 Halaman Biodata
+
+> [!DONE] `BukuSakuDetail` → `BiodataPage` (`record_type: biodata`) — identitas prajurit yang sedang membuka. Umur, Lama menjabat, Data Pribadi, Data Kedinasan (mulai penugasan, status), dan Data Keluarga dilengkapi dari profil `/auth/me` yang sudah ada di app — hanya bila `personnel_id` sama dengan `user.personnel.id`.
+
+`GET /handbook/articles/{id}`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 56,
+    "chapter_id": 4,
+    "chapter_title": "BAB IV: LEMBAR CATATAN & REKAM NILAI PRAJURIT",
+    "title": "BIODATA DIRI PRAJURIT",
+    "page_number": 1,
+    "type": "record_display",
+    "record_type": "biodata",
+    "content": null,
+    "biodata": {
+      "personnel_id": 5,
+      "name": "Demo Personnel",
+      "nrp": "DEMO-0002",
+      "rank": "Sersan Dua",
+      "position": "Anggota",
+      "unit": "Kompi Senapan A",
+      "photo_url": "https://nagarunting.com/admin/secure-files/personnel/photos/DEMO-0002.png"
+    },
+    "ability_records": []
+  }
+}
+```
+
+Catatan:
+- `position` ada di contoh kontrak tapi tidak ikut di response asli (dicek 26 Sep 2026, akun demokomandan) — FE jatuh ke `current_assignment.position` dari `/auth/me`.
+- `photo_url` dirender lewat `SecureImage`; gagal dimuat → avatar inisial.
+
+### 9.4 Halaman Nilai Kemampuan
+
+> [!DONE] `BukuSakuDetail` → `AbilityPage` (`record_type: ability:<id>`) — `ability_records` = **riwayat semua penilaian** satu kemampuan (terbaru dulu), dirender `.map` jadi satu kartu per penilaian di bawah ringkasan (jumlah penilaian, nilai terakhir, jumlah terverifikasi). Bentuk berubah 26 Sep 2026 — sebelumnya satu entri + `history_count`.
+
+`GET /handbook/articles/{id}`
+
+**Tanpa parameter.**
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 64,
+    "chapter_id": 4,
+    "chapter_title": "BAB IV: LEMBAR CATATAN & REKAM NILAI PRAJURIT",
+    "title": "NILAI — Menembak 3 Sikap",
+    "page_number": 9,
+    "type": "record_display",
+    "record_type": "ability:22",
+    "content": null,
+    "biodata": null,
+    "ability_records": [
+      {
+        "ability_id": 22,
+        "name": "Menembak 3 Sikap",
+        "category": "Menembak",
+        "valuation_type": "numeric",
+        "unit": "nilai (maks 300)",
+        "submitted_value": "252",
+        "final_value": null,
+        "value": "252",
+        "status": "revision",
+        "assessment_date": "2026-08-14",
+        "instructor": "DEMO Komandan",
+        "instructor_note": "Nilai tembak cepat perlu dicek ulang.",
+        "rejection_reason": "Perlu verifikasi ulang tembak cepat.",
+        "verified_at": "2026-09-26 13:56:41"
+      },
+      {
+        "ability_id": 22,
+        "name": "Menembak 3 Sikap",
+        "category": "Menembak",
+        "valuation_type": "numeric",
+        "unit": "nilai (maks 300)",
+        "submitted_value": "243",
+        "final_value": "243",
+        "value": "243",
+        "status": "approved",
+        "assessment_date": "2026-06-25",
+        "instructor": "DEMO Komandan",
+        "instructor_note": "Ada peningkatan pada tembak reaksi.",
+        "rejection_reason": null,
+        "verified_at": "2026-09-26 13:56:41"
+      }
+    ]
+  }
+}
+```
+
+Catatan:
+- Kemampuan yang belum pernah dinilai → `ability_records: []` → state kosong "Belum ada nilai" (nama kemampuan diambil dari `title`).
+- `status`: `approved` → "Terverifikasi" · `pending` → "Menunggu Verifikasi" · `revision` → "Perlu Revisi" (+ kotak "Alasan" dari `rejection_reason`).
+- "Nilai akhir" = `final_value` (`null` → "–"). `value` = nilai yang berlaku (`final_value`, atau `submitted_value` bila belum ada) — dipakai untuk "Nilai terakhir" di ringkasan. "Diverifikasi" = `verified_at`, disembunyikan untuk `pending`.
+- `valuation_type`: `numeric` / `count` / `duration` (angka + `unit`) · `level` / `pass_fail` (teks, mis. `baik` → "Baik"). Data asli juga berisi nilai teks bebas dengan `unit` seperti `tingkat`, `kategori` (nilai "A"), dan `daftar` (mis. "Helm, rompi taktis, webbing, ransel").
+- FE mengatur ukuran nilai dari isinya (angka besar / teks pendek / teks panjang yang membungkus). `unit` hanya ditempel ke nilai berupa angka.
 
 ## 10. Patroli
 

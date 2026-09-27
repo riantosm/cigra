@@ -40,6 +40,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
   memantau rangkuman dan menutup agenda. Ada juga pengaturan sesi piket, penunjukan petugas piket
   dan perwakilan kompi, statistik kehadiran per periode, serta tombol kirim Laporan Piket
   Batalyon ke WhatsApp dari rangkuman agenda.
+- Buku Saku kini menampilkan lembar pribadi prajurit: halaman biodata (identitas, data pribadi,
+  kedinasan, keluarga) dan riwayat penilaian tiap kemampuan beserta status verifikasi, catatan
+  instruktur, dan alasan penolakan. Ada juga daftar
+  materi untuk lompat ke halaman mana pun, dan hasil pencarian langsung membuka halaman yang cocok.
 
 ### Ditingkatkan
 

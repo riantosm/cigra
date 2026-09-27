@@ -20,10 +20,12 @@ export interface MainLayoutProps extends PropsWithChildren {
    * + borderless big-title header (DESIGN_SYSTEM.md §1b/§5.1). New screens opt in.
    */
   variant?: 'plain' | 'canvas';
+  /** Canvas only — see `NavBar`'s `compactTitle` (17/800, up to 2 lines). */
+  compactTitle?: boolean;
 }
 
 export default function MainLayout(props: MainLayoutProps) {
-  const { title, subtitle, right, onBack, children, variant = 'plain' } = props;
+  const { title, subtitle, right, onBack, children, variant = 'plain', compactTitle } = props;
   const isFocused = useIsFocused();
   const isCanvas = variant === 'canvas';
 
@@ -38,6 +40,7 @@ export default function MainLayout(props: MainLayoutProps) {
         right={right}
         onBack={onBack}
         variant={variant}
+        compactTitle={compactTitle}
       />
       <MotiView
         key={isFocused ? 'focused' : 'blurred'}

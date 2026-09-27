@@ -12,6 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 
+import Badge from '@/components/atoms/Badge';
 import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
@@ -27,8 +28,9 @@ import { getHandbookChaptersApi } from '@/services/api/handbook.service';
 import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
-import type { HandbookChapter } from '@/types';
+import type { HandbookArticleRef, HandbookChapter } from '@/types';
 import { extractErrorMessage } from '@/utils/format';
+import { HANDBOOK_PAGE_META, chapterHasRecords, handbookPageKind, sortedPages } from '@/utils/handbook';
 import { contentEnterTransition } from '@/utils/motion';
 
 type BukuSakuNavigationProp = CompositeNavigationProp<
@@ -42,7 +44,8 @@ export interface BukuSakuScreenProps {
 
 // Tab "Buku Saku" — daftar isi E-Book: daftar Bab dari `GET /handbook/chapters`. Ketuk sebuah
 // Bab untuk membuka halaman-halamannya (navigasi next/back di `BukuSakuDetail`). Pencarian
-// client-side atas judul Bab & judul halaman di dalamnya.
+// client-side atas judul Bab & judul halaman; halaman yang cocok tampil di bawah babnya dan
+// langsung membuka halaman itu (`initialArticleId`).
 export default function BukuSakuScreen(props: BukuSakuScreenProps) {
   const { navigation } = props;
   const user = useAppSelector(state => state.auth.user);
@@ -74,15 +77,19 @@ export default function BukuSakuScreen(props: BukuSakuScreenProps) {
     load('initial');
   }, [load]);
 
-  const filtered = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-    if (!keyword) return chapters;
-    return chapters.filter(
-      chapter =>
-        chapter.title.toLowerCase().includes(keyword) ||
-        chapter.articles.some(article => article.title.toLowerCase().includes(keyword)),
-    );
-  }, [query, chapters]);
+  const keyword = query.trim().toLowerCase();
+
+  const results = useMemo<ChapterResult[]>(() => {
+    if (!keyword) return chapters.map(chapter => ({ chapter, matches: [] }));
+    return chapters
+      .map(chapter => ({
+        chapter,
+        matches: sortedPages(chapter).filter(page => page.title.toLowerCase().includes(keyword)),
+      }))
+      .filter(({ chapter, matches }) => matches.length > 0 || chapter.title.toLowerCase().includes(keyword));
+  }, [keyword, chapters]);
+
+  const matchedPageCount = results.reduce((sum, result) => sum + result.matches.length, 0);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -119,13 +126,21 @@ export default function BukuSakuScreen(props: BukuSakuScreenProps) {
             style={styles.search}
           />
 
-          <Text style={styles.sectionLabel}>DAFTAR BAB</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>{keyword ? 'HASIL PENCARIAN' : 'DAFTAR BAB'}</Text>
+            {keyword && results.length > 0 ? (
+              <Text style={styles.sectionCount}>
+                {results.length} bab
+                {matchedPageCount > 0 ? ` · ${matchedPageCount} halaman` : ''}
+              </Text>
+            ) : null}
+          </View>
 
           {isLoading ? (
             <ActivityIndicator style={styles.loader} color={colors.primary} />
           ) : errorMessage ? (
             <EmptyState icon="info" title="Gagal memuat" message={errorMessage} />
-          ) : filtered.length === 0 ? (
+          ) : results.length === 0 ? (
             <EmptyState
               icon={query.trim() ? 'search' : 'handbook'}
               title={query.trim() ? 'Tidak ditemukan' : 'Belum ada materi'}
@@ -137,35 +152,100 @@ export default function BukuSakuScreen(props: BukuSakuScreenProps) {
             />
           ) : (
             <View style={styles.list}>
-              {filtered.map(chapter => (
-                <PressableScale
-                  key={chapter.id}
-                  scaleTo={0.98}
-                  contentStyle={styles.row}
-                  onPress={() =>
-                    navigation.navigate(ROUTES.bukuSakuDetail, { chapter })
-                  }>
-                  <GradientIconChip
-                    icon={handbookIcon(chapter.icon)}
-                    colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
-                    size={42}
-                    iconSize={20}
-                    radius={13}
-                  />
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>{chapter.title}</Text>
-                    <Text style={styles.rowMeta}>
-                      {chapter.articles_count || chapter.articles.length} halaman
-                    </Text>
-                  </View>
-                  <Icon name="chevron-right" size={18} color={colors.placeholder} />
-                </PressableScale>
+              {results.map(({ chapter, matches }) => (
+                <View key={chapter.id} style={styles.card}>
+                  <PressableScale
+                    scaleTo={0.98}
+                    contentStyle={styles.row}
+                    onPress={() => navigation.navigate(ROUTES.bukuSakuDetail, { chapter })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Buka ${chapter.title}`}>
+                    <GradientIconChip
+                      icon={handbookIcon(chapter.icon)}
+                      colors={[colors.gradientPersonnelStart, colors.gradientPersonnelEnd]}
+                      size={42}
+                      iconSize={20}
+                      radius={13}
+                    />
+                    <View style={styles.rowBody}>
+                      <Text style={styles.rowTitle}>{chapter.title}</Text>
+                      <View style={styles.rowMetaLine}>
+                        <Text style={styles.rowMeta}>
+                          {chapter.articles_count || chapter.articles.length} halaman
+                        </Text>
+                        {chapterHasRecords(chapter) ? (
+                          <Badge label="Data pribadi" variant="primary" icon="profile" style={styles.recordBadge} />
+                        ) : null}
+                      </View>
+                    </View>
+                    <Icon name="chevron-right" size={18} color={colors.placeholder} />
+                  </PressableScale>
+
+                  {matches.length > 0 ? (
+                    <View style={styles.matchList}>
+                      {matches.map(page => (
+                        <PressableScale
+                          key={page.id}
+                          scaleTo={0.98}
+                          contentStyle={styles.matchRow}
+                          onPress={() =>
+                            navigation.navigate(ROUTES.bukuSakuDetail, {
+                              chapter,
+                              initialArticleId: page.id,
+                            })
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Buka halaman ${page.title}`}>
+                          <View style={styles.matchNumber}>
+                            <Text style={styles.matchNumberText}>{pageIndexOf(chapter, page) + 1}</Text>
+                          </View>
+                          <View style={styles.rowBody}>
+                            <HighlightedTitle title={page.title} keyword={keyword} />
+                            <Text style={styles.matchMeta}>{HANDBOOK_PAGE_META[handbookPageKind(page)]}</Text>
+                          </View>
+                          <Icon name="chevron-right" size={16} color={colors.placeholder} />
+                        </PressableScale>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
               ))}
             </View>
           )}
         </MotiView>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+interface ChapterResult {
+  chapter: HandbookChapter;
+  // Halaman yang judulnya cocok dengan kata kunci (kosong kalau tidak sedang mencari).
+  matches: HandbookArticleRef[];
+}
+
+// Nomor halaman di dalam bab = urutan di daftar isi (sama dengan "Halaman X dari N" di detail).
+function pageIndexOf(chapter: HandbookChapter, page: HandbookArticleRef): number {
+  return sortedPages(chapter).findIndex(item => item.id === page.id);
+}
+
+// Judul halaman dengan bagian yang cocok diberi latar biru muda.
+function HighlightedTitle(props: { title: string; keyword: string }) {
+  const { title, keyword } = props;
+  const at = title.toLowerCase().indexOf(keyword);
+  if (!keyword || at < 0) {
+    return (
+      <Text style={styles.matchTitle} numberOfLines={1}>
+        {title}
+      </Text>
+    );
+  }
+  return (
+    <Text style={styles.matchTitle} numberOfLines={1}>
+      {title.slice(0, at)}
+      <Text style={styles.matchHighlight}>{title.slice(at, at + keyword.length)}</Text>
+      {title.slice(at + keyword.length)}
+    </Text>
   );
 }
 
@@ -193,12 +273,21 @@ const styles = StyleSheet.create({
   search: {
     marginBottom: 16,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
   sectionLabel: {
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.4,
     color: colors.primary,
-    marginBottom: 10,
+  },
+  sectionCount: {
+    fontSize: 12,
+    color: colors.textMuted,
   },
   loader: {
     marginTop: 32,
@@ -206,16 +295,19 @@ const styles = StyleSheet.create({
   list: {
     gap: 10,
   },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+    ...cardShadow,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     padding: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surface,
-    ...cardShadow,
   },
   rowBody: {
     flex: 1,
@@ -227,8 +319,59 @@ const styles = StyleSheet.create({
     color: colors.heading,
     lineHeight: 18,
   },
+  rowMetaLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 2,
+  },
   rowMeta: {
     fontSize: 12,
+    color: colors.textMuted,
+  },
+  recordBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  matchList: {
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+    backgroundColor: colors.attachmentRowSurface,
+  },
+  matchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+  },
+  matchNumber: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+  },
+  matchNumberText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  matchTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.heading,
+  },
+  matchHighlight: {
+    backgroundColor: colors.primarySurface,
+  },
+  matchMeta: {
+    fontSize: 11,
     color: colors.textMuted,
   },
 });

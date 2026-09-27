@@ -89,6 +89,7 @@ export type IconName =
   | 'more-vertical'
   | 'swap'
   | 'unlock'
+  | 'list'
   | 'share';
 
 export interface IconProps {
@@ -217,6 +218,7 @@ const pathByName: Record<IconName, string> = {
   unlock: 'M7 11V8a5 5 0 0 1 9.6-2M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z',
   share:
     'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8.6 13.5l6.8 4M15.4 6.5l-6.8 4',
+  list: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
 };
 
 export default function Icon(props: IconProps) {

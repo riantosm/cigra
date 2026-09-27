@@ -212,7 +212,7 @@ Dipakai di semua layar non-tab (`MainLayout`). Format:
 - Header **tidak** punya garis bawah / latar nav-bar — duduk langsung di atas latar gradient.
   Padding `20px 20px 12px`.
 - Ikon kanan: tombol kotak putih yang sama (`40×40`, radius `12`, shadow), ikon warna `primary`
-  `20`. **Saat ini hanya layar Profile yang punya ikon kanan** (gerigi → Settings).
+  `20`. Contoh: Profile (gerigi → Settings), halaman Buku Saku (`list` → Daftar Materi, §5.19).
 
 ### 5.2 Home header (tab screen)
 
@@ -535,6 +535,42 @@ Dari canvas "Redesign Kekuatan Apel" (2026-09-26). Bagian bersama ada di `src/sc
   (kotak `chipSurface`) → `BottomSheet` berisi baris aksi (chip ikon 36 + judul + deskripsi).
 - **Bar sebaran alasan** (Statistik): bar bertumpuk tanpa lib chart (gap 2, pill) + legenda titik 8.
   Warna = `ROLL_CALL_REASON_PALETTE` (token aksen yang sudah ada, urut dari alasan terbanyak).
+
+### 5.19 Buku Saku — halaman E-Book (materi, biodata, nilai kemampuan)
+
+Dari canvas "Redesign Buku Saku" (2026-09-26). Komponen di `src/screens/BukuSakuDetail/*`.
+
+- **Header judul panjang**: `MainLayout variant="canvas" compactTitle` — judul `17/800`, boleh 2 baris
+  (default canvas `22/800` satu baris). Ikon kanan = tombol kotak putih `40×40` ikon `list` `primary`
+  → sheet "Daftar Materi".
+- **Kartu halaman**: satu kartu (§5.3) per halaman — kicker `11/700` UPPERCASE `primary`
+  letter-spacing `0.6` (MATERI / BIODATA / REKAM NILAI) + judul halaman `20/800` + garis `borderSoft`,
+  lalu isi. Blok di dalam kartu = border `borderSoft` radius `14` **tanpa** shadow; blok "identitas"
+  dan strip kemampuan berlatar `attachmentRowSurface`.
+- **Section data** (biodata): header strip `attachmentRowSurface` + ikon `16` + judul `12/700`
+  UPPERCASE `primary`, lalu grid 2 kolom label-atas-nilai (label `12` muted, nilai `14/600`); baris
+  alamat penuh selebar kartu. NRP memakai font monospace.
+- **Nilai kemampuan** (riwayat): strip kemampuan → kotak ringkasan `StatDividerRow` (Penilaian N× /
+  Nilai terakhir / Terverifikasi) → judul "Riwayat Penilaian" `14/700` → satu kartu per penilaian
+  (border `borderSoft` radius `14`, tanpa shadow, gap `10`, terbaru dulu). Isi kartu: Badge status
+  (`success` Terverifikasi + `check`, `warning` Menunggu Verifikasi + `clock`, `danger` Perlu Revisi +
+  `alert-triangle`) + tanggal; "Nilai akhir" ukurannya mengikuti isi (`abilityValueSize`): angka `32/800`
+  + satuan `14/600` muted · teks pendek ≤16 huruf `24/800` · teks panjang paragraf `16/700` yang
+  membungkus; kosong → "–" warna `dividerOnGradient` + keterangan. Lalu `StatDividerRow` Nilai diajukan /
+  Diverifikasi (daftar label-atas-nilai kalau nilai diajukan >14 huruf), baris "Instruktur: **nama**"
+  `12` muted + ikon `profile`, kotak catatan instruktur (`pageGradientMid`, label `11/700` UPPERCASE),
+  dan kotak alasan penolakan (`dangerSurfaceSoft` + border `dangerBorderSoft`, teks `dangerText`,
+  "Alasan:" tebal). Belum pernah dinilai → kotak putus-putus `border` di atas `pageGradientStart` + chip
+  ikon `chipSurface` 52.
+- **Footer halaman**: "Sebelumnya" = pill sekunder (§5.6) · "Selanjutnya" = `GradientButton` dengan
+  ikon di kanan (`iconPosition="end"`); di halaman terakhir diganti pill datar `chipSurface` + teks
+  `placeholder`.
+- **Sheet Daftar Materi**: baris radius `14` = nomor bulat `28` (`chipSurface`/`primary` teks) + judul
+  1 baris + jenis halaman; baris aktif = `notifUnreadSurface` + border `notifUnreadBorder` + nomor
+  terisi `primary` + label "Dibaca".
+- **Hasil pencarian daftar bab**: halaman yang cocok berjejer di bawah kartu babnya (strip
+  `attachmentRowSurface`, garis atas `borderSoft`), nomor halaman dalam kotak putih `26` radius `8`,
+  potongan teks yang cocok diberi latar `primarySurface`.
 
 ---
 
