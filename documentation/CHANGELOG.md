@@ -29,31 +29,35 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v1.1.0 (versionCode 11)
+
+_2026-09-27_
+
 ### Baru
 
-- Tagihan Koperasi: satu menu (Quick Action komandan, Akses Cepat anggota, dan kartu di Home) yang
-  isinya menyesuaikan akun — rekap satuan untuk pengelola, tagihan sendiri untuk anggota — dengan
-  rincian per jenis, perbandingan antarperiode, ekspor Excel / cetak PDF, penunjukan Juyar
-  (pengelola tagihan satuan), dan tab Koperasi di detail personel.
+- Tagihan Koperasi: satu menu (dari Home, Quick Action, atau Akses Cepat) yang isinya menyesuaikan
+  akun — rekap satuan untuk pengelola, tagihan sendiri untuk anggota — dengan rincian per jenis,
+  perbandingan antarperiode, ekspor Excel / cetak PDF, penunjukan Juyar (pengelola tagihan
+  satuan), dan tab Koperasi di detail personel.
 - Kekuatan Apel versi baru: piket batalyon membuka agenda per sesi, perwakilan tiap kompi
-  mengisi kehadiran kompinya (catat yang hadir atau yang tidak hadir, alasan wajib), lalu piket
-  memantau rangkuman dan menutup agenda. Ada juga pengaturan sesi piket, penunjukan petugas piket
-  dan perwakilan kompi, statistik kehadiran per periode, serta tombol kirim Laporan Piket
-  Batalyon ke WhatsApp dari rangkuman agenda.
+  mengisi kehadiran kompinya (alasan wajib bagi yang tidak hadir), lalu piket memantau rangkuman
+  dan menutup agenda. Ada juga pengaturan sesi, penunjukan piket & perwakilan kompi, statistik
+  kehadiran, dan kirim Laporan Piket Batalyon ke WhatsApp.
 - Buku Saku kini menampilkan lembar pribadi prajurit: halaman biodata (identitas, data pribadi,
   kedinasan, keluarga) dan riwayat penilaian tiap kemampuan beserta status verifikasi, catatan
-  instruktur, dan alasan penolakan. Ada juga daftar
-  materi untuk lompat ke halaman mana pun, dan hasil pencarian langsung membuka halaman yang cocok.
+  instruktur, dan alasan penolakan. Ada juga daftar materi untuk lompat ke halaman mana pun, dan
+  hasil pencarian langsung membuka halaman yang cocok.
 
 ### Ditingkatkan
 
-- Notifikasi sinyal darurat kini langsung membuka detail sinyal darurat saat diketuk (sebelumnya
-  hanya membuka aplikasi); sirene Perintah Tugas membuka layar Notifikasi.
+- Mengetuk notifikasi sinyal darurat kini langsung membuka detailnya (sebelumnya hanya membuka
+  aplikasi); sirene Perintah Tugas membuka layar Notifikasi.
 
 ### Perbaikan
 
 - Logout di HP tidak lagi ikut memutus notifikasi di perangkat lain milik akun yang sama
   (tablet / web); token notifikasi kini didaftarkan per perangkat.
+- Sesi yang kedaluwarsa tidak lagi membuat aplikasi terus-menerus mencoba logout di latar belakang.
 
 ## v1.0.1 (versionCode 10)
 
