@@ -930,7 +930,7 @@ helpers `src/utils/rollCall.ts`. **No Redux slice** — each screen holds local 
   `utils/rollCall.ts` (`ROLL_CALL_OFFICER_ROLE`, `ROLL_CALL_REPRESENTATIVE_ROLE`, `canManageRollCall(roles)` =
   komandan || piket, `isRollCallRepresentative(roles)`).
 - **Entry points:** `CommanderHome` quick action "Kekuatan Apel" (every komandan) → `rollCallAgendas`;
-  `MemberHome` "Akses Cepat" shortcut "Apel" (only for `piket` → `rollCallAgendas`, or `perwakilan_kompi` →
+  `MemberHome` "Quick Action" card "Apel" (only for `piket` → `rollCallAgendas`, or `perwakilan_kompi` →
   `rollCallCompanyAgendas`).
 - **Response keys are mostly English**, but the live backend (checked on device 2026-09-26) still sends
   `totals` as `{ kompi, anggota, hadir, tidak_hadir, persen }` (service `normalizeTotals` accepts both),
@@ -995,7 +995,7 @@ helpers `src/utils/rollCall.ts`. **No Redux slice** — each screen holds local 
 ### Patroli (patrol routes + checkpoints)
 
 **Two POVs:** the **anggota** flow (do a patrol — route list → route detail → scan QR + selfie check-in →
-complete) reached from the **`MemberHome` "Akses Cepat"** "Patroli" shortcut; and the **komandan**
+complete) reached from the **`MemberHome` "Quick Action"** "Patroli" card; and the **komandan**
 flow (monitor only, never patrols) reached from the **`CommanderHome` "Monitoring Patroli"** quick
 action. Design source = the "Patroli" page in the Claude Design canvas (see the
 `reference_design_canvas` memory). Types `src/types/patrol.types.ts` (barrelled), service
@@ -1038,7 +1038,7 @@ local state (same pattern as the RollCall screens).
     helper returns `{summary, sessions, meta}`. `status` (`in_progress`|`completed`) filters the list
     **and** `summary`. `PatrolMonitoringSession` carries `duration_minutes`, `progress_percentage`,
     `has_location_anomaly`, `officer:{…}`, and `logs[]` with `photo_url` (a ready URL, not a path).
-- **Home entry (anggota):** the `MemberHome` "Akses Cepat" "Patroli" shortcut (`icon: 'route'`) opens
+- **Home entry (anggota):** the `MemberHome` "Quick Action" "Patroli" card (`icon: 'route'`) opens
   `Patrol`. Whenever `getActivePatrolSessionApi()` returns a session, **`MemberHome`** shows a
   **floating "Patroli berjalan" chip** above the tab bar (`useFocusEffect` refetch; scroll
   `paddingBottom` bumped +76 so bottom content clears it) → tap → `patrolActive`. (`CommanderHome` has
@@ -1202,7 +1202,7 @@ RollCall/Patrol).
     spt IncomingLetterCreate) — jadi back dari detail kembali ke daftar Surat Masuk, bukan ke form.
 - **Entry point:** Quick Action "Disposisi Surat" (`icon:'mail'`) di `CommanderHome` → **`incomingLetterList`**
   (alur komandan berbasis surat; CommanderHome sudah di-gate role `komandan`). Shortcut "Disposisi" di baris
-  "Akses Cepat" `MemberHome` → `dispositionList` (kotak masuk). Notifikasi FCM: `action.type` `disposition`
+  "Quick Action" `MemberHome` → `dispositionList` (kotak masuk). Notifikasi FCM: `action.type` `disposition`
   → `dispositionDetail`, `disposition_list` → `dispositionList` (di `screens/Notifications` `actionFor`).
 - `Icon` dapat nama baru `edit` (pensil). `notification.types.ts` `AppNotificationType` +`'disposition'`.
 
@@ -1263,8 +1263,7 @@ melengkapi jadi 7 jenis, `coopDeltaFromSeries`, `COOP_TREND_META` turun=hijau/na
   (`screens/Home/CoopBillCard`, blok `member`: total terbaru + selisih + rata-rata/tertinggi/periode, tanpa
   rincian jenis). Jadi **Juyar** (prajurit ber-role `petugas_laporan_koperasi`, mode manager) di
   `MemberHome` ikut melihat kartu rekap. Item menu: Quick Action komandan **"Tagihan Koperasi"** di slot
-  ke-7 (Peta Personel bergeser ke "Lainnya") dan shortcut **"Koperasi"** di "Akses Cepat" anggota (kini
-  grid 4 kolom) — keduanya hanya bila overview tidak 403. "Lihat Semua" → menu `Coop`.
+  ke-7 (Peta Personel bergeser ke "Lainnya") dan kartu **"Koperasi"** di "Quick Action" anggota — keduanya hanya bila overview tidak 403. "Lihat Semua" → menu `Coop`.
 - **Layar** (root-stack, `MainLayout variant="canvas"`, tanpa guard):
   - `Coop` (`coop`) — **satu pintu menu** untuk semua peran (`src/screens/Coop` + sub-folder
     `ReportsPanel`). Mode `manager`: `AuthToggle` (prop `style` baru → track putih) Rekap Satuan /
@@ -1322,16 +1321,21 @@ handles any role string, so `petugas_kesehatan` gets its own topic automatically
 `src/screens/Home/MemberHome/index.tsx` — the default Home (picked in `Home/index.tsx` when the user's
 roles don't include `komandan` or `petugas_kesehatan`). Sections top-to-bottom: a tappable "Sistem terhubung / Terakhir sinkron"
 strip (taps trigger the same `handleRefresh` as pull-to-refresh — session + own-location refetch — and update
-the "Terakhir sinkron" timestamp on completion; it no longer navigates to `Settings`), the **Kartu Anggota** (`src/components/organisms/MemberIdCard`), "Status Saya"
+the "Terakhir sinkron" timestamp on completion; it no longer navigates to `Settings`), the weather widget,
+**"Quick Action"** (same look as CommanderHome's grid — `screens/Home/QuickActionButton` cards with
+`gradientColors`, rows of 4, **max 2 rows**: when there are > 8 actions the first 7 show + a "Lainnya" card
+opening `QuickActionSheet`; items: Buku Saku, Patroli, **Apel** (only for role `piket` / `perwakilan_kompi`
+— see "Kekuatan Apel"), Disposisi, **Koperasi** (only when the coop overview isn't 403), Pengumuman →
+`ROUTES.announcements`, Kontak Darurat; gradients match the same item on CommanderHome), the **Kartu Anggota**
+(`src/components/organisms/MemberIdCard`), "Status Saya"
 (horizontal-scroll `StatusTile` row, "Lihat Detail" → `ROUTES.profile`), "Aset Saya" (two `AssetCard`s,
 "Lihat Semua" → `ComingSoon`), **"Keluarga (Persit)"** (only when `user.family` is non-empty), "Aktivitas
 Terbaru" (`TimelineRow` list), "Pengumuman Terbaru" (`NoticeRow`
-list, "Lihat Semua" → `ROUTES.announcements`), and "Akses Cepat" (`ShortcutButton` row: Buku Saku,
-Patroli, **Apel** (only for role `piket` / `perwakilan_kompi` — see "Kekuatan Apel"), Disposisi,
-Pengumuman → `ROUTES.announcements`, Kontak Darurat). "Aktivitas Terbaru → Lihat Semua" → `ROUTES.myMovements`
+list, "Lihat Semua" → `ROUTES.announcements`). (The old bottom "Akses Cepat" `ShortcutButton` row is
+gone — replaced by "Quick Action" above.) "Aktivitas Terbaru → Lihat Semua" → `ROUTES.myMovements`
 (`src/screens/MyMovements/index.tsx` — `GET /me/movements` paginated list, `TimelineRow` rows, pull-to-refresh
 + "muat lebih banyak"; `meta` may be absent → fall back to "last page returned a full 20"). The "Kontak
-Darurat" shortcut opens `ROUTES.emergencyContacts` (see below).
+Darurat" card opens `ROUTES.emergencyContacts` (see below).
 
 - **`src/services/api/me.service.ts`** — the "milik saya" endpoints for this screen, all scoped to the
   logged-in user (no NRP path param): `getMyIdCardApi` (`GET /me/id-card`), `getMyStatusApi`
@@ -1384,7 +1388,7 @@ Darurat" shortcut opens `ROUTES.emergencyContacts` (see below).
   `FamilyMemberRow` + `meFamilyDetail` nav) between "Penugasan Saat Ini" and "Peran & Akses", shown only
   when `user.family` is non-empty.
 - `src/screens/EmergencyContacts/index.tsx` — plain root-stack screen (`ROUTES.emergencyContacts`, no
-  guard, reached from the MemberHome "Kontak Darurat" shortcut). `MainLayout variant="canvas"` + back,
+  guard, reached from the MemberHome "Kontak Darurat" quick action). `MainLayout variant="canvas"` + back,
   `GET /emergency-contacts` grouped by `category` (command/medical/security/general, unknown → "Lainnya"),
   each row a `PressableScale` opening `tel:` (`Linking.openURL`, phone digit-sanitised). Pull-to-refresh,
   `EmptyState` when the list is empty.
@@ -1511,7 +1515,7 @@ Consumers: `MemberIdCard`, `HomeHeader`, `Profile`, `CatalogDetail` header. `res
   covered automatically) also gets a gradient chip (`mail` icon, personnel gradient); `system` stays
   the old flat tint chip on purpose (no strong colour identity).
 - `src/screens/Announcements/index.tsx` — `ROUTES.announcements`, opened from "Lihat Semua" under
-  "Pengumuman Terbaru" on **both** Homes + the MemberHome "Pengumuman" shortcut (no longer points at
+  "Pengumuman Terbaru" on **both** Homes + the MemberHome "Pengumuman" quick action (no longer points at
   Notifications). Full `GET /announcements` list via `announcementSlice` — pull-to-refresh, "muat lebih
   banyak", each row clamped + tap → `MessageDetailSheet` (title + full body + sender/time/`scope_label`).
   Row icon = `atoms/GradientIconChip` (`typeMeta.*.gradient`, DESIGN_SYSTEM.md §5.13b) — no flat

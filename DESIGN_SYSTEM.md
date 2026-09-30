@@ -404,7 +404,7 @@ field form + kartu Riwayat Terkirim), layar Kekuatan Apel versi lama (sejak 2026
 agenda, lihat §5.18), `BukuSaku` (`rowIcon` tiap bab) +
 `BukuSakuDetail` (`recordIcon` marker `record_display`), `molecules/HealthRecordCard` (dipakai
 `HealthMyHistory`/`HealthDashboard`/`HealthPersonnelProfile` — chip `heartbeat` jadi gradient
-health), `MemberHome` (`ShortcutButton` "Akses Cepat", `StatusTile` "Status Saya", `NoticeRow`
+health), `MemberHome` (`StatusTile` "Status Saya", `NoticeRow`
 "Pengumuman Terbaru", `TimelineRow` "Aktivitas Terbaru", chip patroli mengambang), dan hampir
 seluruh Smart Academy (`AcademyMemberHome` pendingIcon, `AcademyInstructorHome` progIcon/verifIcon,
 `AcademyCommanderOverview`+`AcademyCmdAttention` attentionIcon per-status, `AcademyCmdCompetency`
@@ -522,7 +522,9 @@ Dari canvas "Tagihan Koperasi" (2026-09-24). Pola untuk layar yang menampilkan *
   `borderSoft` + `smallButtonShadow` (track bawaan putih transparan hanya terbaca di atas gradient Auth).
 - **Accordion per periode** (tab Koperasi detail personel) — kartu per bulan: chip tanggal + judul +
   "N dari M jenis" + nominal + chevron atas/bawah; isi = `CoopCategoryBreakdown` full di bawah garis.
-- **Akses Cepat anggota** kini grid 4 kolom (`ShortcutButton` tetap tanpa kartu, `width: 25%`, `rowGap 12`).
+- **Quick Action anggota** (2026-09-27, menggantikan baris "Akses Cepat" + `ShortcutButton` yang dihapus) —
+  memakai grid yang sama persis dengan CommanderHome: kartu `QuickActionButton` + `gradientColors`, 4 per
+  baris (`flex: 1` + spacer), maks 2 baris (> 8 aksi → 7 + "Lainnya"), diletakkan di atas Kartu Anggota.
 
 ### 5.18 Kekuatan Apel — agenda, isi per kompi, pengaturan
 

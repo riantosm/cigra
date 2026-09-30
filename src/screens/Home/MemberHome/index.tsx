@@ -21,13 +21,15 @@ import FamilyMemberRow from '@/components/molecules/FamilyMemberRow';
 import AssetDetailSheet from '@/screens/Home/MemberHome/AssetDetailSheet';
 import type { AssetDetailSheetData } from '@/screens/Home/MemberHome/AssetDetailSheet';
 import NoticeRow from '@/screens/Home/MemberHome/NoticeRow';
-import ShortcutButton from '@/screens/Home/MemberHome/ShortcutButton';
 import { canManageRollCall, isRollCallRepresentative } from '@/utils/rollCall';
 import StatusTile from '@/screens/Home/MemberHome/StatusTile';
 import TimelineRow from '@/screens/Home/MemberHome/TimelineRow';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import HomeWeatherWidget from '@/screens/Home/HomeWeatherWidget';
 import type { HomeWeatherWidgetHandle } from '@/screens/Home/HomeWeatherWidget';
+import QuickActionButton from '@/screens/Home/QuickActionButton';
+import type { QuickActionButtonProps } from '@/screens/Home/QuickActionButton';
+import QuickActionSheet from '@/screens/Home/QuickActionSheet';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
@@ -242,6 +244,11 @@ function clockLabel(iso: string | null | undefined): string {
   return parsed.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Grid "Quick Action" = maks 2 baris x 4 kartu (sama dengan CommanderHome). Kalau aksinya > 8,
+// 7 pertama tampil + kartu "Lainnya" (bottom sheet berisi semuanya).
+const QUICK_ACTION_COLUMNS = 4;
+const MAX_QUICK_ACTION_CELLS = QUICK_ACTION_COLUMNS * 2;
+
 export default function MemberHome(props: MemberHomeProps) {
   const { user, navigation, onRefresh } = props;
   const baseBottomPadding = useTabScreenBottomPadding();
@@ -249,6 +256,7 @@ export default function MemberHome(props: MemberHomeProps) {
   const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
   const [assetSheet, setAssetSheet] = useState<AssetDetailSheetData | null>(null);
   const [isQrModalVisible, setIsQrModalVisible] = useState(false);
+  const [isQuickActionSheetVisible, setIsQuickActionSheetVisible] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
   const [idCard, setIdCard] = useState<MeIdCard | null>(null);
@@ -398,17 +406,20 @@ export default function MemberHome(props: MemberHomeProps) {
     navigation.navigate(ROUTES.myMovements);
   }
 
-  const shortcuts = [
+  // Warna/gradient disamakan dengan item padanannya di Quick Action CommanderHome.
+  const quickActions: QuickActionButtonProps[] = [
     {
-      icon: 'handbook' as const,
-      color: colors.success,
+      icon: 'handbook',
       label: 'Buku Saku',
+      color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.bukuSaku),
     },
     {
-      icon: 'route' as const,
-      color: colors.primary,
+      icon: 'route',
       label: 'Patroli',
+      color: colors.success,
+      gradientColors: [colors.gradientSuccessStart, colors.success],
       onPress: () => navigation.navigate(ROUTES.patrol),
     },
     // Kekuatan Apel — hanya untuk petugas piket (kelola agenda) atau perwakilan kompi (isi
@@ -417,8 +428,9 @@ export default function MemberHome(props: MemberHomeProps) {
       ? [
           {
             icon: 'clipboard-check' as const,
-            color: colors.primary,
             label: 'Apel',
+            color: colors.primary,
+            gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd] as const,
             onPress: () =>
               canManageRollCall(user?.roles)
                 ? navigation.navigate(ROUTES.rollCallAgendas)
@@ -427,34 +439,55 @@ export default function MemberHome(props: MemberHomeProps) {
         ]
       : []),
     {
-      icon: 'mail' as const,
-      color: colors.primary,
+      icon: 'mail',
       label: 'Disposisi',
+      color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.dispositionList),
     },
     ...(coopOverview
       ? [
           {
             icon: 'wallet' as const,
-            color: colors.success,
             label: 'Koperasi',
+            color: colors.success,
+            gradientColors: [colors.gradientSuccessStart, colors.success] as const,
             onPress: () => navigation.navigate(ROUTES.coop),
           },
         ]
       : []),
     {
-      icon: 'megaphone' as const,
-      color: colors.warning,
+      icon: 'megaphone',
       label: 'Pengumuman',
+      color: colors.warning,
+      gradientColors: [colors.gradientWarnStart, colors.warning],
       onPress: () => navigation.navigate(ROUTES.announcements),
     },
     {
-      icon: 'phone' as const,
-      color: colors.danger,
+      icon: 'phone',
       label: 'Kontak Darurat',
+      color: colors.danger,
+      gradientColors: [colors.gradientDangerStart, colors.danger],
       onPress: () => navigation.navigate(ROUTES.emergencyContacts),
     },
   ];
+  const hasMoreQuickActions = quickActions.length > MAX_QUICK_ACTION_CELLS;
+  const gridActions: QuickActionButtonProps[] = hasMoreQuickActions
+    ? [
+        ...quickActions.slice(0, MAX_QUICK_ACTION_CELLS - 1),
+        {
+          icon: 'grid',
+          label: 'Lainnya',
+          color: colors.primary,
+          gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
+          onPress: () => setIsQuickActionSheetVisible(true),
+        },
+      ]
+    : quickActions;
+  const quickActionRows: QuickActionButtonProps[][] = [];
+  for (let i = 0; i < gridActions.length; i += QUICK_ACTION_COLUMNS) {
+    quickActionRows.push(gridActions.slice(i, i + QUICK_ACTION_COLUMNS));
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -477,6 +510,30 @@ export default function MemberHome(props: MemberHomeProps) {
           <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
 
           <HomeWeatherWidget ref={weatherRef} style={styles.weatherWidget} />
+
+          <View style={[styles.sectionHeader, styles.sectionHeaderFirst]}>
+            <Text style={styles.sectionTitle}>Quick Action</Text>
+          </View>
+          <View style={styles.quickActionGrid}>
+            {quickActionRows.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.quickActionRow}>
+                {row.map(action => (
+                  <QuickActionButton
+                    key={action.label}
+                    icon={action.icon}
+                    label={action.label}
+                    color={action.color}
+                    gradientColors={action.gradientColors}
+                    onPress={action.onPress}
+                    style={styles.quickActionCell}
+                  />
+                ))}
+                {Array.from({ length: QUICK_ACTION_COLUMNS - row.length }).map((_, spacerIndex) => (
+                  <View key={`spacer-${spacerIndex}`} style={styles.quickActionCell} />
+                ))}
+              </View>
+            ))}
+          </View>
 
           <MemberIdCard
             photoPath={personnel?.photo}
@@ -638,22 +695,6 @@ export default function MemberHome(props: MemberHomeProps) {
               ))
             )}
           </View>
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Akses Cepat</Text>
-          </View>
-          <View style={styles.shortcutRow}>
-            {shortcuts.map(shortcut => (
-              <ShortcutButton
-                key={shortcut.label}
-                icon={shortcut.icon}
-                color={shortcut.color}
-                label={shortcut.label}
-                onPress={shortcut.onPress}
-                style={styles.shortcutCell}
-              />
-            ))}
-          </View>
         </MotiView>
       </ScrollView>
 
@@ -702,6 +743,12 @@ export default function MemberHome(props: MemberHomeProps) {
       />
 
       <AssetDetailSheet data={assetSheet} onClose={() => setAssetSheet(null)} />
+
+      <QuickActionSheet
+        visible={isQuickActionSheetVisible}
+        actions={quickActions}
+        onRequestClose={() => setIsQuickActionSheetVisible(false)}
+      />
 
       <MessageDetailSheet
         visible={selectedNotice !== null}
@@ -755,6 +802,10 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12,
   },
+  // Section pertama (Quick Action) langsung di bawah widget cuaca — tanpa marginTop section.
+  sectionHeaderFirst: {
+    marginTop: 0,
+  },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
@@ -803,15 +854,16 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     paddingVertical: 16,
   },
-  // Grid 4 kolom (baris kedua muncul bila shortcut > 4 — Koperasi / Apel menambah jumlahnya).
-  shortcutRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: 12,
+  quickActionGrid: {
+    gap: 10,
+    marginBottom: 24,
   },
-  shortcutCell: {
-    width: '25%',
-    paddingHorizontal: 3,
+  quickActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  quickActionCell: {
+    flex: 1,
   },
   patrolChipWrap: {
     position: 'absolute',
