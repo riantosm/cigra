@@ -31,10 +31,11 @@ import AppBootstrapScreen from '@/screens/AppBootstrap';
 import AnnouncementsScreen from '@/screens/Announcements';
 import BukuSakuDetailScreen from '@/screens/BukuSakuDetail';
 import ComingSoonScreen from '@/screens/ComingSoon';
+import CoopScreen from '@/screens/Coop';
 import CoopBillDetailScreen from '@/screens/CoopBillDetail';
-import CoopBillsScreen from '@/screens/CoopBills';
+import CoopJuyarAppointScreen from '@/screens/CoopJuyarAppoint';
+import CoopJuyarsScreen from '@/screens/CoopJuyars';
 import CoopReportDetailScreen from '@/screens/CoopReportDetail';
-import CoopReportsScreen from '@/screens/CoopReports';
 import DispositionComposeScreen from '@/screens/DispositionCompose';
 import DispositionDetailScreen from '@/screens/DispositionDetail';
 import DispositionFollowUpScreen from '@/screens/DispositionFollowUp';
@@ -68,12 +69,18 @@ import PersonnelMapScreen from '@/screens/PersonnelMap';
 import PersonnelTrackingScreen from '@/screens/PersonnelTracking';
 import EditProfileScreen from '@/screens/EditProfile';
 import ProfileScreen from '@/screens/Profile';
-import RollCallCreateScreen from '@/screens/RollCallCreate';
-import RollCallDetailScreen from '@/screens/RollCallDetail';
-import RollCallEntryScreen from '@/screens/RollCallEntry';
-import RollCallListScreen from '@/screens/RollCallList';
-import RollCallScanScreen from '@/screens/RollCallScan';
-import RollCallSearchScreen from '@/screens/RollCallSearch';
+import RollCallAgendaCreateScreen from '@/screens/RollCall/AgendaCreate';
+import RollCallAgendaDetailScreen from '@/screens/RollCall/AgendaDetail';
+import RollCallAgendasScreen from '@/screens/RollCall/Agendas';
+import RollCallAppointScreen from '@/screens/RollCall/Appoint';
+import RollCallCompanyAgendasScreen from '@/screens/RollCall/CompanyAgendas';
+import RollCallCompanyFormScreen from '@/screens/RollCall/CompanyForm';
+import RollCallOfficersScreen from '@/screens/RollCall/Officers';
+import RollCallRepresentativesScreen from '@/screens/RollCall/Representatives';
+import RollCallSessionFormScreen from '@/screens/RollCall/SessionForm';
+import RollCallSessionsScreen from '@/screens/RollCall/Sessions';
+import RollCallSettingsScreen from '@/screens/RollCall/Settings';
+import RollCallStatsScreen from '@/screens/RollCall/Stats';
 import SendAnnouncementScreen from '@/screens/SendAnnouncement';
 import SettingsScreen from '@/screens/Settings';
 import EarthquakeScreen from '@/screens/Earthquake';
@@ -250,12 +257,18 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.healthRecordInput} component={HealthRecordInputScreen} />
         <Stack.Screen name={ROUTES.healthRecordDetail} component={HealthRecordDetailScreen} />
         <Stack.Screen name={ROUTES.healthMyHistory} component={HealthMyHistoryScreen} />
-        <Stack.Screen name={ROUTES.rollCallList} component={RollCallListScreen} />
-        <Stack.Screen name={ROUTES.rollCallCreate} component={RollCallCreateScreen} />
-        <Stack.Screen name={ROUTES.rollCallDetail} component={RollCallDetailScreen} />
-        <Stack.Screen name={ROUTES.rollCallSearch} component={RollCallSearchScreen} />
-        <Stack.Screen name={ROUTES.rollCallScan} component={RollCallScanScreen} />
-        <Stack.Screen name={ROUTES.rollCallEntry} component={RollCallEntryScreen} />
+        <Stack.Screen name={ROUTES.rollCallAgendas} component={RollCallAgendasScreen} />
+        <Stack.Screen name={ROUTES.rollCallAgendaCreate} component={RollCallAgendaCreateScreen} />
+        <Stack.Screen name={ROUTES.rollCallAgendaDetail} component={RollCallAgendaDetailScreen} />
+        <Stack.Screen name={ROUTES.rollCallCompanyAgendas} component={RollCallCompanyAgendasScreen} />
+        <Stack.Screen name={ROUTES.rollCallCompanyForm} component={RollCallCompanyFormScreen} />
+        <Stack.Screen name={ROUTES.rollCallSettings} component={RollCallSettingsScreen} />
+        <Stack.Screen name={ROUTES.rollCallSessions} component={RollCallSessionsScreen} />
+        <Stack.Screen name={ROUTES.rollCallSessionForm} component={RollCallSessionFormScreen} />
+        <Stack.Screen name={ROUTES.rollCallOfficers} component={RollCallOfficersScreen} />
+        <Stack.Screen name={ROUTES.rollCallRepresentatives} component={RollCallRepresentativesScreen} />
+        <Stack.Screen name={ROUTES.rollCallAppoint} component={RollCallAppointScreen} />
+        <Stack.Screen name={ROUTES.rollCallStats} component={RollCallStatsScreen} />
         <Stack.Screen name={ROUTES.patrol} component={PatrolScreen} />
         <Stack.Screen name={ROUTES.patrolRouteDetail} component={PatrolRouteDetailScreen} />
         <Stack.Screen name={ROUTES.patrolActive} component={PatrolActiveScreen} />
@@ -270,10 +283,11 @@ export default function RootNavigator() {
         <Stack.Screen name={ROUTES.dispositionDetail} component={DispositionDetailScreen} />
         <Stack.Screen name={ROUTES.dispositionFollowUp} component={DispositionFollowUpScreen} />
         <Stack.Screen name={ROUTES.dispositionCompose} component={DispositionComposeScreen} />
-        <Stack.Screen name={ROUTES.coopBills} component={CoopBillsScreen} />
+        <Stack.Screen name={ROUTES.coop} component={CoopScreen} />
         <Stack.Screen name={ROUTES.coopBillDetail} component={CoopBillDetailScreen} />
-        <Stack.Screen name={ROUTES.coopReports} component={CoopReportsScreen} />
         <Stack.Screen name={ROUTES.coopReportDetail} component={CoopReportDetailScreen} />
+        <Stack.Screen name={ROUTES.coopJuyars} component={CoopJuyarsScreen} />
+        <Stack.Screen name={ROUTES.coopJuyarAppoint} component={CoopJuyarAppointScreen} />
         <Stack.Screen
           name={ROUTES.dispositionRecipientSearch}
           component={DispositionRecipientSearchScreen}

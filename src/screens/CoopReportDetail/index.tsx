@@ -29,38 +29,60 @@ type Props = RootStackScreenProps<typeof ROUTES.coopReportDetail>;
 const PER_PAGE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
 
-const SORT_PARAMS: Record<string, Pick<CoopReportDetailParams, 'sort' | 'direction'>> = {
-  total_desc: { sort: 'total', direction: 'desc' },
-  total_asc: { sort: 'total', direction: 'asc' },
-  name_asc: { sort: 'name', direction: 'asc' },
-  nrp_asc: { sort: 'nrp', direction: 'asc' },
+const SORT_LABELS: Record<string, string> = { name: 'Nama', nrp: 'NRP', total: 'Total tagihan' };
+const DIRECTION_LABELS: Record<string, { asc: string; desc: string }> = {
+  name: { asc: 'A–Z', desc: 'Z–A' },
+  nrp: { asc: 'naik', desc: 'turun' },
+  total: { asc: 'terkecil dulu', desc: 'terbesar dulu' },
+  row_number: { asc: 'awal berkas dulu', desc: 'akhir berkas dulu' },
 };
 
+const CATEGORY_OPTIONS = coopCategoryLines([]).map(line => ({ label: line.label, value: line.key }));
+const LINKAGE_OPTIONS = [
+  { label: 'Tertaut', value: 'linked' },
+  { label: 'Belum tertaut', value: 'unlinked' },
+];
+
+// Tanpa pilihan urutan = urutan baris di berkas rekap (`row_number`, bawaan backend).
 const FILTER_FIELDS: FilterField[] = [
-  {
-    key: 'category',
-    label: 'Jenis Tagihan',
-    options: coopCategoryLines([]).map(line => ({ label: line.label, value: line.key })),
-  },
-  {
-    key: 'linkage',
-    label: 'Status NRP',
-    options: [
-      { label: 'Tertaut', value: 'linked' },
-      { label: 'Belum tertaut', value: 'unlinked' },
-    ],
-  },
+  { key: 'category', label: 'Jenis Tagihan', options: CATEGORY_OPTIONS },
+  { key: 'linkage', label: 'Status NRP', options: LINKAGE_OPTIONS },
   {
     key: 'sort',
     label: 'Urutkan',
     options: [
-      { label: 'Total terbesar', value: 'total_desc' },
-      { label: 'Total terkecil', value: 'total_asc' },
-      { label: 'Nama A–Z', value: 'name_asc' },
-      { label: 'NRP', value: 'nrp_asc' },
+      { label: 'Nama', value: 'name' },
+      { label: 'NRP', value: 'nrp' },
+      { label: 'Total tagihan', value: 'total' },
+    ],
+  },
+  {
+    key: 'direction',
+    label: 'Arah',
+    options: [
+      { label: 'Naik', value: 'asc' },
+      { label: 'Turun', value: 'desc' },
     ],
   },
 ];
+
+// "Urutan berkas · semua jenis · semua status NRP" / "Total tagihan, terbesar dulu · Toko · Belum tertaut".
+function filterSummary(filters: Record<string, string>): string {
+  const sortKey = filters.sort ?? 'row_number';
+  const sortName = SORT_LABELS[sortKey] ?? 'Urutan berkas';
+  const directionName = filters.direction
+    ? DIRECTION_LABELS[sortKey]?.[filters.direction as 'asc' | 'desc']
+    : sortKey === 'total'
+      ? DIRECTION_LABELS.total.asc
+      : null;
+  const category = CATEGORY_OPTIONS.find(option => option.value === filters.category)?.label;
+  const linkage = LINKAGE_OPTIONS.find(option => option.value === filters.linkage)?.label;
+  return joinFields(
+    directionName ? `${sortName}, ${directionName}` : sortName,
+    category ?? 'semua jenis',
+    linkage ?? 'semua status NRP',
+  );
+}
 
 function personLabel(rank: string | null | undefined, name: string): string {
   return [cleanValue(rank), cleanValue(name)].filter(Boolean).join(' ') || name;
@@ -107,7 +129,8 @@ export default function CoopReportDetailScreen(props: Props) {
           search,
           category: filters.category,
           linkage: filters.linkage as CoopReportDetailParams['linkage'],
-          ...(filters.sort ? SORT_PARAMS[filters.sort] : {}),
+          sort: filters.sort as CoopReportDetailParams['sort'],
+          direction: filters.direction as CoopReportDetailParams['direction'],
         });
         setDetail(result);
         setRows(previous =>
@@ -260,6 +283,12 @@ export default function CoopReportDetailScreen(props: Props) {
               activeFilterCount={activeFilterCount}
               style={styles.search}
             />
+            <View style={styles.filterSummary}>
+              <Icon name="sort" size={13} color={colors.textMuted} />
+              <Text style={styles.filterSummaryText} numberOfLines={1}>
+                {filterSummary(filters)}
+              </Text>
+            </View>
 
             {isListLoading ? (
               <ActivityIndicator style={styles.listLoader} color={colors.primary} />
@@ -459,7 +488,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.heading },
   sectionMeta: { fontSize: 12, color: colors.textMuted },
-  search: { marginBottom: 12 },
+  search: { marginBottom: 10 },
+  filterSummary: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 2, marginBottom: 12 },
+  filterSummaryText: { flex: 1, fontSize: 12, color: colors.textMuted },
   listLoader: { marginVertical: 24 },
   emptyRows: {
     marginVertical: 24,

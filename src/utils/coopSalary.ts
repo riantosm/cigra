@@ -4,10 +4,21 @@ import type {
   CoopCategoryAmount,
   CoopCategoryKey,
   CoopCategoryRef,
+  CoopOverview,
   CoopTrendDirection,
 } from '@/types';
 
 // Helper tampilan Tagihan Koperasi (`/coop-salary-report/*`).
+
+// Tampilan pengelola (rekap satuan) hanya bila backend memberi hak rekap: `mode` = `manager`,
+// `capabilities.can_view_all_reports` tidak false, dan blok `manager` terisi. Jangan memutuskan dari
+// ada-tidaknya blok `manager` saja — akun yang role Juyar-nya baru dicabut bisa masih menerima blok
+// itu padahal `mode` sudah `member` (dipakai menu `Coop` dan kartu Tagihan Koperasi di kedua Home).
+export function isCoopManagerView(overview: CoopOverview | null | undefined): boolean {
+  if (!overview?.manager) return false;
+  if (overview.mode !== 'manager') return false;
+  return overview.capabilities?.can_view_all_reports !== false;
+}
 
 // Urutan kanonik tujuh jenis tagihan (sama seperti kolom di berkas rekap / web admin).
 export const COOP_CATEGORY_ORDER: CoopCategoryKey[] = [
@@ -199,4 +210,99 @@ export function trendBarItems(
     valueLabel: formatRupiahCompact(safeValues[index] ?? 0),
     sublabel: sublabels?.[index],
   }));
+}
+
+// Label pill selisih: "-Rp 150.000 · -37,5%" (turun) / "+Rp 50.000 · +12%" (naik).
+export function coopDeltaPillLabel(delta: CoopDelta): string {
+  if (delta.trend === 'flat') return 'Tetap';
+  const sign = delta.delta < 0 ? '-' : '+';
+  return `${sign}${formatRupiah(Math.abs(delta.delta))} · ${sign}${formatPercent(delta.percent)}`;
+}
+
+// Kalimat selisih di bawah nominal: "Turun Rp 150.000 dari Agustus 2026". Periode pertama →
+// "Periode pertama yang tercatat".
+export function coopDeltaSentence(delta: CoopDelta | null, previousLabel: string | null | undefined): string {
+  if (!delta || !previousLabel) return 'Periode pertama yang tercatat';
+  if (delta.trend === 'flat') return `Sama dengan ${previousLabel}`;
+  return `${COOP_TREND_META[delta.trend].verb} ${formatRupiah(Math.abs(delta.delta))} dari ${previousLabel}`;
+}
+
+// --- `tagihan_koperasi` di detail personel (`GET /catalog/personnel/{id}`) ---
+
+export interface CoopPersonnelPeriodView {
+  key: string;
+  label: string;
+  monthShort: string;
+  year: string;
+  total: number;
+  totalLabel: string;
+  categories: CoopCategoryAmount[];
+}
+
+type Loose = Record<string, unknown>;
+
+function isLoose(value: unknown): value is Loose {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function looseNumber(value: unknown): number {
+  const parsed = typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : NaN;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function looseString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+// Nominal per jenis bisa berupa array `{key,label,amount,amount_formatted}` (sama seperti `/me`)
+// atau peta `{ toko: 150000 }` / `{ toko: { amount, amount_formatted } }` — dua-duanya diterima.
+function looseCategoryAmounts(value: unknown, catalog?: CoopCategoryRef[] | null): CoopCategoryAmount[] {
+  const labelFor = (key: string) =>
+    catalog?.find(ref => ref.key === key)?.label ?? DEFAULT_LABELS[key as CoopCategoryKey] ?? key;
+  const toAmount = (key: string, item: unknown): CoopCategoryAmount => {
+    const record = isLoose(item) ? item : {};
+    const amount = looseNumber(isLoose(item) ? record.amount ?? record.total : item);
+    return {
+      key,
+      label: looseString(record.label) ?? labelFor(key),
+      amount,
+      amount_formatted: looseString(record.amount_formatted) ?? formatRupiah(amount),
+    };
+  };
+  if (Array.isArray(value)) {
+    return value.filter(isLoose).map(item => toAmount(String(item.key ?? ''), item));
+  }
+  if (isLoose(value)) return Object.entries(value).map(([key, item]) => toAmount(key, item));
+  return [];
+}
+
+// Periode tagihan personel → siap tampil, terbaru dulu (bila bulan/tahun tersedia untuk diurut).
+export function normalizePersonnelCoopPeriods(
+  periods: Loose[] | null | undefined,
+  catalog?: CoopCategoryRef[] | null,
+): CoopPersonnelPeriodView[] {
+  const items = (periods ?? []).filter(isLoose).map((raw, index) => {
+    const period = isLoose(raw.period) ? raw.period : {};
+    const label =
+      looseString(period.label) ?? looseString(raw.period_label) ?? looseString(raw.label) ?? `Periode ${index + 1}`;
+    const monthLabel = looseString(period.month_label) ?? label.split(' ')[0] ?? '';
+    const year = String(period.year ?? raw.period_year ?? label.split(' ').slice(-1)[0] ?? '');
+    const chip = periodChipParts(monthLabel, year);
+    const total = looseNumber(raw.total ?? raw.total_amount);
+    return {
+      sortKey: looseNumber(period.year ?? raw.period_year) * 100 + looseNumber(period.month ?? raw.period_month),
+      view: {
+        key: String(raw.id ?? raw.row_id ?? `${label}-${index}`),
+        label,
+        monthShort: chip.month,
+        year: chip.year,
+        total,
+        totalLabel: looseString(raw.total_formatted) ?? looseString(raw.total_amount_formatted) ?? formatRupiah(total),
+        categories: looseCategoryAmounts(raw.categories, catalog),
+      },
+    };
+  });
+  const sortable = items.every(item => item.sortKey > 100);
+  if (sortable) items.sort((a, b) => b.sortKey - a.sortKey);
+  return items.map(item => item.view);
 }

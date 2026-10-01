@@ -63,12 +63,19 @@ export const ROUTES = {
   healthRecordInput: 'HealthRecordInput',
   healthRecordDetail: 'HealthRecordDetail',
   healthMyHistory: 'HealthMyHistory',
-  rollCallList: 'RollCallList',
-  rollCallCreate: 'RollCallCreate',
-  rollCallDetail: 'RollCallDetail',
-  rollCallSearch: 'RollCallSearch',
-  rollCallScan: 'RollCallScan',
-  rollCallEntry: 'RollCallEntry',
+  // --- Kekuatan Apel (agenda piket + pengisian per kompi) ---
+  rollCallAgendas: 'RollCallAgendas',
+  rollCallAgendaCreate: 'RollCallAgendaCreate',
+  rollCallAgendaDetail: 'RollCallAgendaDetail',
+  rollCallCompanyAgendas: 'RollCallCompanyAgendas',
+  rollCallCompanyForm: 'RollCallCompanyForm',
+  rollCallSettings: 'RollCallSettings',
+  rollCallSessions: 'RollCallSessions',
+  rollCallSessionForm: 'RollCallSessionForm',
+  rollCallOfficers: 'RollCallOfficers',
+  rollCallRepresentatives: 'RollCallRepresentatives',
+  rollCallAppoint: 'RollCallAppoint',
+  rollCallStats: 'RollCallStats',
   // --- Patroli ---
   patrol: 'Patrol',
   patrolRouteDetail: 'PatrolRouteDetail',
@@ -87,8 +94,10 @@ export const ROUTES = {
   incomingLetterCreate: 'IncomingLetterCreate',
   incomingLetterDetail: 'IncomingLetterDetail',
   // --- Tagihan Koperasi ---
-  coopBills: 'CoopBills',
+  // Satu menu untuk semua peran — isinya mengikuti `mode` dari GET /coop-salary-report.
+  coop: 'Coop',
   coopBillDetail: 'CoopBillDetail',
-  coopReports: 'CoopReports',
   coopReportDetail: 'CoopReportDetail',
+  coopJuyars: 'CoopJuyars',
+  coopJuyarAppoint: 'CoopJuyarAppoint',
 } as const;

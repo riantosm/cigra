@@ -2,15 +2,24 @@ import type { ReactElement } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import Icon from '@/components/atoms/Icon';
+import PressableScale from '@/components/atoms/PressableScale';
 import Card from '@/components/molecules/Card';
+import CoopCategoryBreakdown from '@/components/molecules/CoopCategoryBreakdown';
+import CoopDeltaPill from '@/components/molecules/CoopDeltaPill';
 import CoopPeriodRow from '@/components/molecules/CoopPeriodRow';
 import StatDividerRow from '@/components/molecules/StatDividerRow';
 import TrendBarChart from '@/components/molecules/TrendBarChart';
 import { colors } from '@/theme/colors';
 import { cardShadowRaised } from '@/theme/shadows';
 import type { CoopMyBills } from '@/types';
-import { coopCategorySummary, periodChipParts, trendBarItems } from '@/utils/coopSalary';
-import { cleanValue } from '@/utils/format';
+import {
+  coopCategoryLines,
+  coopCategorySummary,
+  coopDeltaFromSeries,
+  coopDeltaPillLabel,
+  periodChipParts,
+  trendBarItems,
+} from '@/utils/coopSalary';
 
 export interface CoopMyBillsListProps {
   data: CoopMyBills | null;
@@ -21,25 +30,27 @@ export interface CoopMyBillsListProps {
   onRefresh: () => void;
   onEndReached: () => void;
   onOpenRow: (rowId: number) => void;
-  // Elemen di atas ringkasan (mis. segmented control di layar Rekap Satuan).
+  // Elemen di atas kartu utama (mis. toggle Rekap Satuan / Tagihan Saya di menu pengelola).
   header?: ReactElement | null;
 }
 
-// Isi daftar "Tagihan Saya" (`GET /coop-salary-report/me`): kartu total seluruh periode, grafik
-// tren, lalu kartu per periode (terbaru lebih dulu). Presentational — data dari `useCoopMyBills`.
+// Isi "Tagihan Saya" di menu Tagihan Koperasi (`GET /coop-salary-report/me`): kartu periode
+// terbaru (nominal, selisih vs periode sebelumnya, alokasi per jenis) → grafik tren + ringkasan →
+// riwayat periode. Presentational — data dari `useCoopMyBills`.
 export default function CoopMyBillsList(props: CoopMyBillsListProps) {
   const { data, isLoading, isRefreshing, isLoadingMore, errorMessage, onRefresh, onEndReached, onOpenRow, header } =
     props;
 
   const rows = data?.rows ?? [];
-  // `identity.rank` sering null dari backend — pangkat diambil dari `rank_name` baris tagihan.
-  const identityName = data?.identity
-    ? [cleanValue(data.identity.rank ?? rows[0]?.rank_name), cleanValue(data.identity.full_name)]
-        .filter(Boolean)
-        .join(' ')
-    : '';
-  const latestTotal = data?.summary.latest?.total_formatted ?? rows[0]?.total_formatted ?? '-';
-  const trendItems = trendBarItems(data?.trend.labels, data?.trend.values);
+  const latest = rows[0] ?? null;
+  const trendValues = data?.trend.values ?? [];
+  const trendLabels = data?.trend.labels ?? [];
+  const delta = coopDeltaFromSeries(trendValues);
+  const previousLabel = trendLabels[trendLabels.length - 2];
+  const trendItems = trendBarItems(trendLabels, trendValues);
+  const hasCategories = (latest?.categories ?? []).some(item => item.amount > 0);
+  // Akun Persit/keluarga otomatis memakai data prajurit yang tertaut (`identity.source = persit`).
+  const isPersit = data?.identity?.source === 'persit';
 
   return (
     <FlatList
@@ -53,42 +64,83 @@ export default function CoopMyBillsList(props: CoopMyBillsListProps) {
       ListHeaderComponent={
         <View>
           {header}
+          {isPersit ? (
+            <View style={styles.persitStrip}>
+              <Icon name="users" size={16} color={colors.academyAkademikText} />
+              <Text style={styles.persitText}>Menampilkan tagihan prajurit yang tertaut dengan akun Anda</Text>
+            </View>
+          ) : null}
           {isLoading ? (
             <ActivityIndicator style={styles.loader} color={colors.primary} />
-          ) : data && (data.summary.periods > 0 || rows.length > 0) ? (
+          ) : data && latest ? (
             <>
-              <View style={styles.summaryCard}>
-                <View style={styles.kickerRow}>
-                  <Icon name="wallet" size={16} color={colors.primary} />
-                  <Text style={styles.kicker}>Total Seluruh Periode</Text>
+              <PressableScale scaleTo={0.98} onPress={() => onOpenRow(latest.id)} contentStyle={styles.heroCard}>
+                <View style={styles.heroBody}>
+                  <View style={styles.kickerRow}>
+                    <Text style={styles.kicker} numberOfLines={1}>
+                      Tagihan {latest.period.label}
+                    </Text>
+                    <View style={styles.latestBadge}>
+                      <Text style={styles.latestBadgeText}>TERBARU</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
+                    {latest.total_formatted}
+                  </Text>
+                  {delta && previousLabel ? (
+                    <View style={styles.compareRow}>
+                      <CoopDeltaPill trend={delta.trend} label={coopDeltaPillLabel(delta)} />
+                      <Text style={styles.compareText}>vs {previousLabel}</Text>
+                    </View>
+                  ) : (
+                    <Text style={[styles.compareText, styles.compareSolo]}>Periode pertama yang tercatat</Text>
+                  )}
+                  {hasCategories ? (
+                    <CoopCategoryBreakdown
+                      lines={coopCategoryLines(latest.categories)}
+                      variant="compact"
+                      maxLegend={4}
+                      style={styles.breakdown}
+                    />
+                  ) : null}
                 </View>
-                <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
-                  {data.summary.total_amount_formatted}
-                </Text>
-                <Text style={styles.totalMeta}>
-                  {[identityName, `${data.summary.periods} periode tercatat`].filter(Boolean).join(' · ')}
-                </Text>
-                <StatDividerRow
-                  items={[
-                    { label: 'Terbaru', value: latestTotal },
-                    { label: 'Rata-rata', value: data.summary.average_amount_formatted },
-                    { label: 'Tertinggi', value: data.summary.highest_amount_formatted },
-                  ]}
-                />
-              </View>
+                <View style={styles.heroFooter}>
+                  <Text style={styles.heroLink}>Lihat rincian per jenis</Text>
+                  <Icon name="chevron-right" size={16} color={colors.primary} />
+                </View>
+              </PressableScale>
 
-              {trendItems.length > 0 ? (
-                <Card style={styles.trendCard}>
-                  <View style={styles.trendHead}>
+              {trendItems.length > 1 ? (
+                <Card style={styles.card}>
+                  <View style={styles.cardHead}>
                     <Text style={styles.cardTitle}>Tren Tagihan</Text>
-                    <Text style={styles.trendHint}>per periode</Text>
+                    <Text style={styles.cardHint}>{data.summary.periods} periode</Text>
                   </View>
                   <TrendBarChart items={trendItems} />
+                  <StatDividerRow
+                    style={styles.trendStats}
+                    items={[
+                      { label: 'Total', value: data.summary.total_amount_formatted },
+                      { label: 'Rata-rata', value: data.summary.average_amount_formatted },
+                      { label: 'Tertinggi', value: data.summary.highest_amount_formatted },
+                    ]}
+                  />
                 </Card>
-              ) : null}
+              ) : (
+                <Card style={styles.card}>
+                  <StatDividerRow
+                    border="none"
+                    items={[
+                      { label: 'Total', value: data.summary.total_amount_formatted },
+                      { label: 'Rata-rata', value: data.summary.average_amount_formatted },
+                      { label: 'Periode', value: String(data.summary.periods), flex: 0.7 },
+                    ]}
+                  />
+                </Card>
+              )}
 
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Daftar Periode</Text>
+                <Text style={styles.sectionTitle}>Riwayat Periode</Text>
                 <Text style={styles.sectionMeta}>{data.meta.total} periode</Text>
               </View>
             </>
@@ -103,7 +155,7 @@ export default function CoopMyBillsList(props: CoopMyBillsListProps) {
             </View>
             <Text style={styles.emptyTitle}>{errorMessage ? 'Gagal memuat' : 'Belum ada tagihan koperasi'}</Text>
             <Text style={styles.emptyText}>
-              {errorMessage ?? 'Tagihan muncul di sini setelah pengelola koperasi mengunggah rekap bulanan.'}
+              {errorMessage ?? 'Tagihan muncul di sini setelah rekap bulanan diunggah.'}
             </Text>
           </View>
         )
@@ -149,45 +201,104 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 48,
   },
-  summaryCard: {
-    padding: 18,
+  persitStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: colors.academyAkademikSurface,
+    marginBottom: 14,
+  },
+  persitText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.academyAkademikText,
+  },
+  heroCard: {
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
-    marginBottom: 14,
+    overflow: 'hidden',
     ...cardShadowRaised,
+  },
+  heroBody: {
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 16,
   },
   kickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   kicker: {
+    flexShrink: 1,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
     color: colors.primary,
   },
+  latestBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: colors.primarySurface,
+  },
+  latestBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    color: colors.primary,
+  },
   total: {
-    fontSize: 30,
-    lineHeight: 34,
+    fontSize: 32,
+    lineHeight: 36,
     fontWeight: '800',
     letterSpacing: -0.5,
     color: colors.heading,
+    marginBottom: 10,
   },
-  totalMeta: {
+  compareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  compareText: {
     fontSize: 12,
     color: colors.textMuted,
-    marginTop: 2,
-    marginBottom: 16,
   },
-  trendCard: {
-    marginBottom: 8,
+  compareSolo: {
+    marginTop: -4,
   },
-  trendHead: {
+  breakdown: {
+    marginTop: 16,
+  },
+  heroFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+  },
+  heroLink: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  card: {
+    marginTop: 14,
+  },
+  cardHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -198,15 +309,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.heading,
   },
-  trendHint: {
+  cardHint: {
     fontSize: 11,
     color: colors.placeholder,
+  },
+  trendStats: {
+    marginTop: 14,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 16,
+    marginTop: 24,
     marginBottom: 12,
   },
   sectionTitle: {

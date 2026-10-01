@@ -14,6 +14,7 @@ import CollapsingTabsDetail from '@/components/organisms/CollapsingTabsDetail';
 import type { CollapsingTabDef } from '@/components/organisms/CollapsingTabsDetail';
 import LocationPanel from '@/components/organisms/LocationPanel';
 import { usePersonnelLocation } from '@/hooks/usePersonnelLocation';
+import PersonnelCoopTab from '@/screens/CatalogDetail/PersonnelCoopTab';
 import { ROUTES } from '@/navigation/paths';
 import type { RootStackParamList } from '@/navigation/types';
 import { getWeaponAssignmentsListApi } from '@/services/api/catalog.service';
@@ -29,7 +30,7 @@ import {
   titleCase,
 } from '@/utils/format';
 
-type PersonnelTabName = 'info' | 'visitor' | 'weapon-loan' | 'location';
+type PersonnelTabName = 'info' | 'visitor' | 'weapon-loan' | 'location' | 'coop';
 
 export interface PersonnelTabsProps {
   detail: PersonnelDetail;
@@ -43,7 +44,7 @@ function toPersonnelTabName(name: string | undefined): PersonnelTabName {
   // `movement` = nama lama tab "Riwayat Keluar Masuk" (kini "Riwayat visitor") — dipetakan supaya
   // deep-link lama (mis. shortcut "Riwayat Pergerakan" di MemberHome) tetap membuka tab yang benar.
   if (name === 'movement') return 'visitor';
-  return name === 'visitor' || name === 'weapon-loan' || name === 'location' ? name : 'info';
+  return name === 'visitor' || name === 'weapon-loan' || name === 'location' || name === 'coop' ? name : 'info';
 }
 
 interface InfoTabProps {
@@ -225,6 +226,17 @@ export default function PersonnelTabs(props: PersonnelTabsProps) {
           />
         ),
       },
+      // Tab Koperasi hanya bila modul `coop_salary_report` aktif (`tagihan_koperasi` tidak null).
+      ...(detail.tagihan_koperasi
+        ? [
+            {
+              name: 'coop',
+              icon: 'wallet' as const,
+              label: 'Koperasi',
+              render: () => (detail.tagihan_koperasi ? <PersonnelCoopTab data={detail.tagihan_koperasi} /> : null),
+            },
+          ]
+        : []),
     ],
     [detail, weapons, isLoadingWeapons, locationDetail, isLoadingLocation],
   );

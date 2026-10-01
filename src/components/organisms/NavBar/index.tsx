@@ -15,10 +15,15 @@ export interface NavBarProps {
   right?: ReactNode;
   onBack?: () => void;
   variant?: NavBarVariant;
+  /**
+   * Canvas only: a smaller 17/800 title that may wrap to 2 lines — for long titles such as a
+   * Buku Saku chapter name ("BAB IV: LEMBAR CATATAN & …") that would be cut off at 22px.
+   */
+  compactTitle?: boolean;
 }
 
 export default function NavBar(props: NavBarProps) {
-  const { title, subtitle, right, onBack, variant = 'plain' } = props;
+  const { title, subtitle, right, onBack, variant = 'plain', compactTitle = false } = props;
   const isCanvas = variant === 'canvas';
 
   return (
@@ -39,7 +44,9 @@ export default function NavBar(props: NavBarProps) {
           </View>
         )}
         <View style={styles.titleGroup}>
-          <Text style={isCanvas ? styles.titleCanvas : styles.title} numberOfLines={1}>
+          <Text
+            style={isCanvas ? [styles.titleCanvas, compactTitle && styles.titleCanvasCompact] : styles.title}
+            numberOfLines={isCanvas && compactTitle ? 2 : 1}>
             {title}
           </Text>
           {isCanvas && subtitle ? (
@@ -119,6 +126,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.4,
     color: colors.heading,
+  },
+  titleCanvasCompact: {
+    fontSize: 17,
+    lineHeight: 22,
+    letterSpacing: -0.3,
   },
   subtitle: {
     marginTop: 2,

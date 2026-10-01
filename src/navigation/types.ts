@@ -11,7 +11,7 @@ import type {
   PatrolMonitoringSession,
   PatrolRoute,
   PersonnelSearchItem,
-  RollCallEntryStatus,
+  RollCallSessionType,
 } from '@/types';
 
 /** Surat masuk terpilih yang di-pass ke layar Buat Disposisi (subset ringan). */
@@ -89,21 +89,30 @@ export type RootStackParamList = {
   [ROUTES.healthRecordDetail]: { recordId: number; record?: HealthRecordDetail; readOnly?: boolean };
   [ROUTES.healthMyHistory]: undefined;
   // --- Kekuatan Apel ---
-  [ROUTES.rollCallList]: undefined;
-  [ROUTES.rollCallCreate]: undefined;
-  [ROUTES.rollCallDetail]: { id: number };
-  // `status` menentukan alur setelah pilih personel: 'present' → langsung dicatat hadir,
-  // 'absent' → menuju form keterangan.
-  [ROUTES.rollCallSearch]: { sessionId: number; status: RollCallEntryStatus };
-  [ROUTES.rollCallScan]: { sessionId: number; status: RollCallEntryStatus };
-  [ROUTES.rollCallEntry]: {
-    sessionId: number;
-    personnelId: number;
-    personnelName: string;
-    personnelPhoto?: string | null;
-    serviceNumber?: string;
-    status: RollCallEntryStatus;
-  };
+  [ROUTES.rollCallAgendas]: undefined;
+  [ROUTES.rollCallAgendaCreate]: undefined;
+  // `deadline` (ISO) dibawa dari daftar agenda — GET /roll-calls/agenda/{id} tidak membawanya.
+  // Tanpa param (mis. dibuka dari tempat lain) baris "Batas pengisian" disembunyikan.
+  [ROUTES.rollCallAgendaDetail]: { id: number; deadline?: string | null };
+  [ROUTES.rollCallCompanyAgendas]: undefined;
+  [ROUTES.rollCallCompanyForm]: { agendaId: number; unitId: number; companyName?: string };
+  [ROUTES.rollCallSettings]: undefined;
+  [ROUTES.rollCallSessions]: undefined;
+  // `session` diisi = mode ubah; kosong = tambah sesi baru.
+  [ROUTES.rollCallSessionForm]: { session?: RollCallSessionType } | undefined;
+  [ROUTES.rollCallOfficers]: undefined;
+  [ROUTES.rollCallRepresentatives]: undefined;
+  // Menunjuk petugas piket, atau perwakilan satu kompi (`current` = perwakilan lama yang akan
+  // otomatis digantikan).
+  [ROUTES.rollCallAppoint]:
+    | { kind: 'officer' }
+    | {
+        kind: 'representative';
+        unitId: number;
+        companyName: string;
+        current?: { name: string; username: string | null; isActive: boolean } | null;
+      };
+  [ROUTES.rollCallStats]: undefined;
   // --- Patroli ---
   [ROUTES.patrol]: undefined;
   // Rute lengkap di-pass supaya daftar checkpoint tampil tanpa fetch ulang; layar ini juga
@@ -150,14 +159,15 @@ export type RootStackParamList = {
   [ROUTES.incomingLetterCreate]: undefined;
   [ROUTES.incomingLetterDetail]: { id: number; pickerMode?: boolean };
   // --- Tagihan Koperasi ---
-  [ROUTES.coopBills]: undefined;
+  [ROUTES.coop]: undefined;
   // Tanpa `reportId` → tagihan milik sendiri (`/me/{row}`, bisa ekspor). Dengan `reportId` →
   // tampilan pengelola (`/{report}/members/{row}`, tanpa ekspor).
   [ROUTES.coopBillDetail]: { rowId: number; reportId?: number; periodLabel?: string };
-  [ROUTES.coopReports]: undefined;
   // `canExport` = `capabilities.can_export` dari `GET /coop-salary-report` (detail rekap tak membawa
   // capabilities sendiri).
   [ROUTES.coopReportDetail]: { reportId: number; periodLabel?: string; canExport?: boolean };
+  [ROUTES.coopJuyars]: undefined;
+  [ROUTES.coopJuyarAppoint]: undefined;
 };
 
 export type MainTabParamList = {

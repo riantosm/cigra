@@ -9,8 +9,13 @@ import {
   unsubscribeFromTopic,
 } from '@react-native-firebase/messaging';
 import type { RemoteMessage } from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance, AndroidVisibility, AuthorizationStatus } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidVisibility, AuthorizationStatus, EventType } from '@notifee/react-native';
+import type { Event } from '@notifee/react-native';
+import DeviceInfo from 'react-native-device-info';
 
+import { ROUTES } from '@/navigation/paths';
+import { navigationRef, runWhenNavigationReady } from '@/navigation/navigationRef';
+import { getAuthToken } from '@/services/api/axiosInstance';
 import { registerFcmTokenApi, unregisterFcmTokenApi } from '@/services/api/device.service';
 import { clearPatrolOngoingNotification } from '@/utils/patrolNotification';
 
@@ -69,18 +74,41 @@ export async function isNotificationPermissionGranted(): Promise<boolean> {
   return settings.authorizationStatus === AuthorizationStatus.AUTHORIZED;
 }
 
-async function showAlertNotification(title: string | undefined, body: string | undefined, channelId: string): Promise<void> {
+// pressAction khusus notifikasi sirene — tap-nya membuka layar sesuai `source` payload
+// (lihat openAlertTarget). Notifikasi biasa tetap `'default'` (cuma membuka app).
+const ALERT_PRESS_ACTION_ID = 'alert-open';
+
+// Kunci payload push darurat yang disimpan ke notifikasi lokal supaya bisa dibaca lagi saat
+// di-tap. Semua string (FCM data selalu string).
+const ALERT_DATA_KEYS = ['source', 'id', 'panic_button_id', 'directive_id', 'directive_recipient_id'] as const;
+
+function pickAlertData(data: RemoteMessage['data']): Record<string, string> {
+  const picked: Record<string, string> = {};
+  for (const key of ALERT_DATA_KEYS) {
+    const value = data?.[key];
+    if (typeof value === 'string' && value) picked[key] = value;
+  }
+  return picked;
+}
+
+async function showAlertNotification(
+  title: string | undefined,
+  body: string | undefined,
+  channelId: string,
+  alertData?: Record<string, string>,
+): Promise<void> {
   const isSiren = channelId === SIREN_CHANNEL_ID;
   await notifee.displayNotification({
     title,
     body,
+    data: alertData,
     android: {
       channelId,
       importance: AndroidImportance.HIGH,
       // Diset ulang di level notifikasi (bukan cuma channel) — beberapa ROM (mis. Samsung One
       // UI) kadang tidak konsisten mewarisi sound/vibrationPattern dari channel saja.
       ...(isSiren ? { sound: SIREN_SOUND, vibrationPattern: SIREN_VIBRATION_PATTERN } : {}),
-      pressAction: { id: 'default' },
+      pressAction: isSiren ? { id: ALERT_PRESS_ACTION_ID, launchActivity: 'default' } : { id: 'default' },
     },
   });
 }
@@ -88,8 +116,10 @@ async function showAlertNotification(title: string | undefined, body: string | u
 // Dipakai baik oleh onMessage (foreground, `isForeground: true`) maupun
 // setBackgroundMessageHandler (index.js, background/killed — `isForeground` diabaikan/false).
 //
-// Notifikasi darurat (panic button) dikirim backend sebagai pesan DATA-ONLY (`data.type ===
-// 'emergency'`, TANPA field `notification`) — supaya Android tidak pernah auto-display-kan
+// Notifikasi sirene dikirim backend sebagai pesan DATA-ONLY (`data.type === 'emergency'`, TANPA
+// field `notification`). `data.source` membedakan asalnya: `panic_button` (sinyal darurat) atau
+// `directive` (Perintah Tugas prioritas high/urgent) — keduanya bersirene, bedanya cuma tujuan
+// saat di-tap (openAlertTarget) — supaya Android tidak pernah auto-display-kan
 // sendiri lewat channel default saat app background/killed; app SELALU yang tampilkan manual di
 // semua state (data-only TIDAK PERNAH di-auto-display Android, apapun state-nya), jadi sirene
 // konsisten bunyi baik app lagi kebuka atau tidak.
@@ -110,12 +140,62 @@ export async function displayRemoteMessage(
   if (data?.type === 'emergency') {
     const title = typeof data.title === 'string' ? data.title : notification?.title;
     const body = typeof data.body === 'string' ? data.body : notification?.body;
-    await showAlertNotification(title, body, SIREN_CHANNEL_ID);
+    await showAlertNotification(title, body, SIREN_CHANNEL_ID, pickAlertData(data));
     return;
   }
 
   if (!notification || !options?.isForeground) return;
   await showAlertNotification(notification.title, notification.body, NORMAL_CHANNEL_ID);
+}
+
+// Tujuan tap notifikasi sirene: `directive` → layar Notifikasi (belum ada layar/endpoint
+// Perintah Tugas di app); `panic_button` (atau payload lama tanpa `source`) → detail sinyal
+// darurat, atau daftarnya kalau payload tidak membawa id.
+function openAlertTarget(data: Record<string, unknown> | undefined): void {
+  const source = typeof data?.source === 'string' ? data.source : 'panic_button';
+  const rawId = data?.panic_button_id ?? data?.id;
+  const panicId = typeof rawId === 'string' && rawId ? rawId : null;
+
+  runWhenNavigationReady(() => {
+    // Sesi sudah logout — jangan buka layar yang butuh login.
+    const current = navigationRef.getCurrentRoute()?.name;
+    if (current === ROUTES.login || current === ROUTES.forgotPassword) return;
+
+    if (source === 'directive') {
+      navigationRef.navigate(ROUTES.notifications as never);
+    } else if (panicId) {
+      navigationRef.navigate(ROUTES.emergencyDetail, { id: panicId });
+    } else {
+      navigationRef.navigate(ROUTES.emergencyList as never);
+    }
+  });
+}
+
+function isAlertPress(event: Event): boolean {
+  return event.type === EventType.PRESS && event.detail.pressAction?.id === ALERT_PRESS_ACTION_ID;
+}
+
+// Tap notifikasi sirene saat app di foreground. Dipanggil sekali dari App; mengembalikan
+// fungsi unsubscribe.
+export function registerAlertNotificationForegroundHandler(): () => void {
+  return notifee.onForegroundEvent(event => {
+    if (isAlertPress(event)) openAlertTarget(event.detail.notification?.data);
+  });
+}
+
+// Tap notifikasi sirene saat app di background/killed. Dipanggil dari index.js.
+export async function handleAlertNotificationBackgroundEvent(event: Event): Promise<void> {
+  if (isAlertPress(event)) openAlertTarget(event.detail.notification?.data);
+}
+
+// App dibuka dari keadaan mati (killed) lewat tap notifikasi sirene.
+export async function consumeAlertInitialNotification(): Promise<void> {
+  try {
+    const initial = await notifee.getInitialNotification();
+    if (initial?.pressAction?.id === ALERT_PRESS_ACTION_ID) openAlertTarget(initial.notification.data);
+  } catch {
+    // abaikan
+  }
 }
 
 // Single-flight: initializePushNotifications bisa dipanggil beruntun (RootNavigator memanggilnya
@@ -131,13 +211,23 @@ let subscribedTopics: string[] = [];
 // sama tiap kali initializePushNotifications dipanggil (mis. saat role berubah).
 let registeredFcmToken: string | null = null;
 
-// Daftarkan / perbarui FCM token milik user aktif ke backend (`POST /devices/firebase-token`),
-// dipakai untuk push notification yang dikirim per-user (mis. disposisi surat). Best-effort:
-// kegagalan tidak boleh mengganggu setup push lainnya.
+// Daftarkan / perbarui FCM token perangkat ini ke backend (`POST /devices/firebase-token`),
+// dipakai untuk push yang dikirim per-user (disposisi, pengumuman, darurat). Backend menyimpan
+// token per perangkat (dikunci `device_id`), jadi token perangkat lain milik user yang sama
+// (tablet, web) tidak tertimpa. Best-effort: kegagalan tidak boleh mengganggu setup push lainnya.
 async function registerFcmTokenWithBackend(token: string | null | undefined): Promise<void> {
   if (!token || token === registeredFcmToken) return;
   try {
-    await registerFcmTokenApi(token);
+    const [deviceId, deviceName] = await Promise.all([
+      DeviceInfo.getUniqueId(),
+      DeviceInfo.getDeviceName().catch(() => ''),
+    ]);
+    await registerFcmTokenApi({
+      fcm_token: token,
+      platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      device_id: deviceId,
+      device_name: deviceName || DeviceInfo.getModel() || undefined,
+    });
     registeredFcmToken = token;
   } catch {
     // Backend belum siap / offline — coba lagi saat init berikutnya atau saat token di-refresh.
@@ -224,21 +314,40 @@ export async function initializePushNotifications(roles: string[] = []): Promise
   }
 }
 
+// Token FCM perangkat saat ini, atau null kalau Firebase belum terkonfigurasi / lambat —
+// dibatasi 5 dtk supaya logout (yang menunggu teardown) tidak tertahan.
+async function readCurrentFcmToken(): Promise<string | null> {
+  if (Platform.OS !== 'android') return null;
+  try {
+    const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 5000));
+    return (await Promise.race([getToken(getMessaging()), timeout])) || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function teardownPushNotifications(): Promise<void> {
   // Notifikasi "Patroli berjalan" tidak boleh menggantung setelah logout.
   await clearPatrolOngoingNotification();
 
-  // Hapus FCM token milik user di backend (`DELETE /devices/firebase-token`) supaya server tidak
-  // mengirim push ke device ini setelah logout. Harus dipanggil SEBELUM token auth dibersihkan
-  // (lihat urutan di authSlice.logout). Best-effort.
-  if (registeredFcmToken) {
+  // Lepas token perangkat INI di backend (`DELETE /devices/firebase-token` + `{ token }`) supaya
+  // server tidak mengirim push ke device ini setelah logout — perangkat lain milik user (tablet,
+  // web) tetap terdaftar. Token diambil ulang dari SDK kalau pendaftaran sebelumnya gagal /
+  // belum terjadi di sesi app ini, supaya device yang logout tidak tetap menerima push. Tanpa
+  // token sama sekali → DELETE dilewati (DELETE tanpa body melepas SEMUA perangkat user).
+  // Harus dipanggil SEBELUM token auth dibersihkan (lihat urutan di authSlice.logout). Best-effort.
+  // Tanpa token auth (sesi sudah dihapus, mis. logout karena 401) DELETE juga dilewati — backend
+  // pasti membalas 401 dan tidak ada gunanya.
+  const hasSession = !!(await getAuthToken());
+  const tokenToRemove = hasSession ? registeredFcmToken ?? (await readCurrentFcmToken()) : null;
+  if (tokenToRemove) {
     try {
-      await unregisterFcmTokenApi();
+      await unregisterFcmTokenApi(tokenToRemove);
     } catch {
       // abaikan — sesi mungkin sudah tidak valid.
     }
-    registeredFcmToken = null;
   }
+  registeredFcmToken = null;
 
   if (Platform.OS !== 'android' || !firebaseReadyPromise) return;
 

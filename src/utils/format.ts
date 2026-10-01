@@ -67,6 +67,15 @@ export function formatDateShort(date: string | null | undefined): string {
   return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// "14 Maret 1995" — tanggal panjang Bahasa Indonesia (backend kadang mengirim `*_formatted` dalam
+// Bahasa Inggris, mis. "01 January 1995", jadi diformat ulang di klien dari tanggal mentahnya).
+export function formatDateLong(date: string | null | undefined): string | null {
+  if (!date) return null;
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return cleanValue(date);
+  return parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 // Return null (bukan '-') kalau kosong — dipakai di tempat yang mau menyembunyikan baris intinya
 // kalau datanya tidak ada (mis. "Terakhir diperbarui" di Profile), bukan menampilkan dash.
 export function formatDateTime(date: string | null | undefined): string | null {

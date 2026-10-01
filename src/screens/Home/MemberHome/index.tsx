@@ -16,16 +16,20 @@ import MessageDetailSheet from '@/components/organisms/MessageDetailSheet';
 import QrIdentityModal from '@/components/organisms/QrIdentityModal';
 import AssetCard from '@/screens/Home/MemberHome/AssetCard';
 import CoopBillCard from '@/screens/Home/CoopBillCard';
+import CoopReportCard from '@/screens/Home/CoopReportCard';
 import FamilyMemberRow from '@/components/molecules/FamilyMemberRow';
 import AssetDetailSheet from '@/screens/Home/MemberHome/AssetDetailSheet';
 import type { AssetDetailSheetData } from '@/screens/Home/MemberHome/AssetDetailSheet';
 import NoticeRow from '@/screens/Home/MemberHome/NoticeRow';
-import ShortcutButton from '@/screens/Home/MemberHome/ShortcutButton';
+import { canManageRollCall, isRollCallRepresentative } from '@/utils/rollCall';
 import StatusTile from '@/screens/Home/MemberHome/StatusTile';
 import TimelineRow from '@/screens/Home/MemberHome/TimelineRow';
 import HomeHeader from '@/screens/Home/HomeHeader';
 import HomeWeatherWidget from '@/screens/Home/HomeWeatherWidget';
 import type { HomeWeatherWidgetHandle } from '@/screens/Home/HomeWeatherWidget';
+import QuickActionButton from '@/screens/Home/QuickActionButton';
+import type { QuickActionButtonProps } from '@/screens/Home/QuickActionButton';
+import QuickActionSheet from '@/screens/Home/QuickActionSheet';
 import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
 import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
@@ -38,14 +42,14 @@ import {
   getMyMovementsApi,
   getMyStatusApi,
 } from '@/services/api/me.service';
-import { getMyCoopBillsApi } from '@/services/api/coopSalary.service';
+import { getCoopOverviewApi } from '@/services/api/coopSalary.service';
 import { getActivePatrolSessionApi } from '@/services/api/patrol.service';
 import { colors } from '@/theme/colors';
 import { cardShadow, cardShadowRaised } from '@/theme/shadows';
 import type {
   Announcement,
   AuthUser,
-  CoopMyBills,
+  CoopOverview,
   MeAssets,
   MeIdCard,
   MeMovement,
@@ -55,6 +59,7 @@ import type {
 } from '@/types';
 import type { BadgeVariant } from '@/components/atoms/Badge';
 import type { IconName } from '@/components/atoms/Icon';
+import { isCoopManagerView } from '@/utils/coopSalary';
 import { cleanValue, formatDateShort, formatDateTime, formatRelativeTime, joinFields, titleCase } from '@/utils/format';
 import { contentEnterTransition } from '@/utils/motion';
 import { patrolDurationLabel, patrolProgressPercent } from '@/utils/patrol';
@@ -239,6 +244,11 @@ function clockLabel(iso: string | null | undefined): string {
   return parsed.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Grid "Quick Action" = maks 2 baris x 4 kartu (sama dengan CommanderHome). Kalau aksinya > 8,
+// 7 pertama tampil + kartu "Lainnya" (bottom sheet berisi semuanya).
+const QUICK_ACTION_COLUMNS = 4;
+const MAX_QUICK_ACTION_CELLS = QUICK_ACTION_COLUMNS * 2;
+
 export default function MemberHome(props: MemberHomeProps) {
   const { user, navigation, onRefresh } = props;
   const baseBottomPadding = useTabScreenBottomPadding();
@@ -246,6 +256,7 @@ export default function MemberHome(props: MemberHomeProps) {
   const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
   const [assetSheet, setAssetSheet] = useState<AssetDetailSheetData | null>(null);
   const [isQrModalVisible, setIsQrModalVisible] = useState(false);
+  const [isQuickActionSheetVisible, setIsQuickActionSheetVisible] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
   const [idCard, setIdCard] = useState<MeIdCard | null>(null);
@@ -254,7 +265,10 @@ export default function MemberHome(props: MemberHomeProps) {
   const [movements, setMovements] = useState<MeMovement[]>([]);
   const [activePatrol, setActivePatrol] = useState<PatrolSession | null>(null);
   // null = section "Tagihan Saya" disembunyikan (modul koperasi nonaktif/403, belum dimuat, gagal).
-  const [coopBills, setCoopBills] = useState<CoopMyBills | null>(null);
+  // Tagihan Koperasi (`GET /coop-salary-report`): kartu mengikuti `mode`, bukan role — Juyar
+  // (petugas_laporan_koperasi) ber-mode manager dan melihat kartu rekap satuan. null = modul
+  // nonaktif (403) → section + shortcut Koperasi disembunyikan.
+  const [coopOverview, setCoopOverview] = useState<CoopOverview | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const weatherRef = useRef<HomeWeatherWidgetHandle>(null);
   const insets = useSafeAreaInsets();
@@ -285,14 +299,14 @@ export default function MemberHome(props: MemberHomeProps) {
       getMyStatusApi(),
       getMyAssetsApi(),
       getMyMovementsApi({ per_page: 3 }),
-      getMyCoopBillsApi({ per_page: 1 }),
+      getCoopOverviewApi({ per_page: 1 }),
     ]);
     if (idCardResult.status === 'fulfilled') setIdCard(idCardResult.value);
     if (statusResult.status === 'fulfilled') setStatus(statusResult.value);
     if (assetsResult.status === 'fulfilled') setAssets(assetsResult.value);
     if (movementsResult.status === 'fulfilled') setMovements(movementsResult.value.items);
     // Modul koperasi bisa nonaktif untuk satuan (403) → section disembunyikan, bukan error.
-    setCoopBills(coopResult.status === 'fulfilled' ? coopResult.value : null);
+    setCoopOverview(coopResult.status === 'fulfilled' ? coopResult.value : null);
   }, []);
 
   useEffect(() => {
@@ -392,38 +406,88 @@ export default function MemberHome(props: MemberHomeProps) {
     navigation.navigate(ROUTES.myMovements);
   }
 
-  const shortcuts = [
+  // Warna/gradient disamakan dengan item padanannya di Quick Action CommanderHome.
+  const quickActions: QuickActionButtonProps[] = [
     {
-      icon: 'handbook' as const,
-      color: colors.success,
+      icon: 'handbook',
       label: 'Buku Saku',
+      color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.bukuSaku),
     },
     {
-      icon: 'route' as const,
-      color: colors.primary,
+      icon: 'route',
       label: 'Patroli',
+      color: colors.success,
+      gradientColors: [colors.gradientSuccessStart, colors.success],
       onPress: () => navigation.navigate(ROUTES.patrol),
     },
+    // Kekuatan Apel — hanya untuk petugas piket (kelola agenda) atau perwakilan kompi (isi
+    // kehadiran kompinya). Role ini diberikan otomatis saat ditunjuk di Pengaturan Apel.
+    ...(canManageRollCall(user?.roles) || isRollCallRepresentative(user?.roles)
+      ? [
+          {
+            icon: 'clipboard-check' as const,
+            label: 'Apel',
+            color: colors.primary,
+            gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd] as const,
+            onPress: () =>
+              canManageRollCall(user?.roles)
+                ? navigation.navigate(ROUTES.rollCallAgendas)
+                : navigation.navigate(ROUTES.rollCallCompanyAgendas),
+          },
+        ]
+      : []),
     {
-      icon: 'mail' as const,
-      color: colors.primary,
+      icon: 'mail',
       label: 'Disposisi',
+      color: colors.primary,
+      gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
       onPress: () => navigation.navigate(ROUTES.dispositionList),
     },
+    ...(coopOverview
+      ? [
+          {
+            icon: 'wallet' as const,
+            label: 'Koperasi',
+            color: colors.success,
+            gradientColors: [colors.gradientSuccessStart, colors.success] as const,
+            onPress: () => navigation.navigate(ROUTES.coop),
+          },
+        ]
+      : []),
     {
-      icon: 'megaphone' as const,
-      color: colors.warning,
+      icon: 'megaphone',
       label: 'Pengumuman',
+      color: colors.warning,
+      gradientColors: [colors.gradientWarnStart, colors.warning],
       onPress: () => navigation.navigate(ROUTES.announcements),
     },
     {
-      icon: 'phone' as const,
-      color: colors.danger,
+      icon: 'phone',
       label: 'Kontak Darurat',
+      color: colors.danger,
+      gradientColors: [colors.gradientDangerStart, colors.danger],
       onPress: () => navigation.navigate(ROUTES.emergencyContacts),
     },
   ];
+  const hasMoreQuickActions = quickActions.length > MAX_QUICK_ACTION_CELLS;
+  const gridActions: QuickActionButtonProps[] = hasMoreQuickActions
+    ? [
+        ...quickActions.slice(0, MAX_QUICK_ACTION_CELLS - 1),
+        {
+          icon: 'grid',
+          label: 'Lainnya',
+          color: colors.primary,
+          gradientColors: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
+          onPress: () => setIsQuickActionSheetVisible(true),
+        },
+      ]
+    : quickActions;
+  const quickActionRows: QuickActionButtonProps[][] = [];
+  for (let i = 0; i < gridActions.length; i += QUICK_ACTION_COLUMNS) {
+    quickActionRows.push(gridActions.slice(i, i + QUICK_ACTION_COLUMNS));
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -446,6 +510,30 @@ export default function MemberHome(props: MemberHomeProps) {
           <SyncStrip syncedLabel={syncedLabel} onPress={handleRefresh} style={styles.syncStrip} />
 
           <HomeWeatherWidget ref={weatherRef} style={styles.weatherWidget} />
+
+          <View style={[styles.sectionHeader, styles.sectionHeaderFirst]}>
+            <Text style={styles.sectionTitle}>Quick Action</Text>
+          </View>
+          <View style={styles.quickActionGrid}>
+            {quickActionRows.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.quickActionRow}>
+                {row.map(action => (
+                  <QuickActionButton
+                    key={action.label}
+                    icon={action.icon}
+                    label={action.label}
+                    color={action.color}
+                    gradientColors={action.gradientColors}
+                    onPress={action.onPress}
+                    style={styles.quickActionCell}
+                  />
+                ))}
+                {Array.from({ length: QUICK_ACTION_COLUMNS - row.length }).map((_, spacerIndex) => (
+                  <View key={`spacer-${spacerIndex}`} style={styles.quickActionCell} />
+                ))}
+              </View>
+            ))}
+          </View>
 
           <MemberIdCard
             photoPath={personnel?.photo}
@@ -491,16 +579,36 @@ export default function MemberHome(props: MemberHomeProps) {
             />
           </View>
 
-          {coopBills ? (
+          {coopOverview && isCoopManagerView(coopOverview) ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Tagihan Koperasi</Text>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coop)}>
+                  <Text style={styles.sectionLink}>Lihat Semua</Text>
+                </PressableScale>
+              </View>
+              <CoopReportCard
+                overview={coopOverview}
+                onPressReport={(reportId, periodLabel) =>
+                  navigation.navigate(ROUTES.coopReportDetail, {
+                    reportId,
+                    periodLabel,
+                    canExport: coopOverview.capabilities.can_export,
+                  })
+                }
+                onPressOwnBill={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
+              />
+            </>
+          ) : coopOverview?.member ? (
             <>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Tagihan Saya</Text>
-                <PressableScale onPress={() => navigation.navigate(ROUTES.coopBills)}>
+                <PressableScale onPress={() => navigation.navigate(ROUTES.coop)}>
                   <Text style={styles.sectionLink}>Lihat Semua</Text>
                 </PressableScale>
               </View>
               <CoopBillCard
-                data={coopBills}
+                data={coopOverview.member}
                 onPress={rowId => navigation.navigate(ROUTES.coopBillDetail, { rowId })}
               />
             </>
@@ -587,22 +695,6 @@ export default function MemberHome(props: MemberHomeProps) {
               ))
             )}
           </View>
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Akses Cepat</Text>
-          </View>
-          <View style={styles.shortcutRow}>
-            {shortcuts.map(shortcut => (
-              <ShortcutButton
-                key={shortcut.label}
-                icon={shortcut.icon}
-                color={shortcut.color}
-                label={shortcut.label}
-                onPress={shortcut.onPress}
-                style={styles.shortcutCell}
-              />
-            ))}
-          </View>
         </MotiView>
       </ScrollView>
 
@@ -651,6 +743,12 @@ export default function MemberHome(props: MemberHomeProps) {
       />
 
       <AssetDetailSheet data={assetSheet} onClose={() => setAssetSheet(null)} />
+
+      <QuickActionSheet
+        visible={isQuickActionSheetVisible}
+        actions={quickActions}
+        onRequestClose={() => setIsQuickActionSheetVisible(false)}
+      />
 
       <MessageDetailSheet
         visible={selectedNotice !== null}
@@ -704,6 +802,10 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12,
   },
+  // Section pertama (Quick Action) langsung di bawah widget cuaca — tanpa marginTop section.
+  sectionHeaderFirst: {
+    marginTop: 0,
+  },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
@@ -752,11 +854,15 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     paddingVertical: 16,
   },
-  shortcutRow: {
-    flexDirection: 'row',
-    gap: 6,
+  quickActionGrid: {
+    gap: 10,
+    marginBottom: 24,
   },
-  shortcutCell: {
+  quickActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  quickActionCell: {
     flex: 1,
   },
   patrolChipWrap: {

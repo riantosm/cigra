@@ -212,7 +212,7 @@ Dipakai di semua layar non-tab (`MainLayout`). Format:
 - Header **tidak** punya garis bawah / latar nav-bar — duduk langsung di atas latar gradient.
   Padding `20px 20px 12px`.
 - Ikon kanan: tombol kotak putih yang sama (`40×40`, radius `12`, shadow), ikon warna `primary`
-  `20`. **Saat ini hanya layar Profile yang punya ikon kanan** (gerigi → Settings).
+  `20`. Contoh: Profile (gerigi → Settings), halaman Buku Saku (`list` → Daftar Materi, §5.19).
 
 ### 5.2 Home header (tab screen)
 
@@ -400,11 +400,11 @@ ada di `theme/colors.ts` (`gradientPersonnelStart/End`, `gradientFamilyStart/End
 
 **Rollout 2026-09-22 (lanjutan) — chip flat lain di seluruh app ikut dikonversi**, supaya satu
 gaya konsisten di mana pun ada icon-chip (bukan cuma Home): `SendAnnouncement` (`FieldHeader` tiap
-field form + kartu Riwayat Terkirim), `RollCallDetail` ("Input Absen" `ChoiceRow` Hadir/Tidak
-Hadir), `RollCallEntry` (chip "Status Kehadiran" & "Keterangan"), `BukuSaku` (`rowIcon` tiap bab) +
+field form + kartu Riwayat Terkirim), layar Kekuatan Apel versi lama (sejak 2026-09-26 diganti alur
+agenda, lihat §5.18), `BukuSaku` (`rowIcon` tiap bab) +
 `BukuSakuDetail` (`recordIcon` marker `record_display`), `molecules/HealthRecordCard` (dipakai
 `HealthMyHistory`/`HealthDashboard`/`HealthPersonnelProfile` — chip `heartbeat` jadi gradient
-health), `MemberHome` (`ShortcutButton` "Akses Cepat", `StatusTile` "Status Saya", `NoticeRow`
+health), `MemberHome` (`StatusTile` "Status Saya", `NoticeRow`
 "Pengumuman Terbaru", `TimelineRow` "Aktivitas Terbaru", chip patroli mengambang), dan hampir
 seluruh Smart Academy (`AcademyMemberHome` pendingIcon, `AcademyInstructorHome` progIcon/verifIcon,
 `AcademyCommanderOverview`+`AcademyCmdAttention` attentionIcon per-status, `AcademyCmdCompetency`
@@ -414,7 +414,7 @@ success/danger, `AcademyProgramDetail` node timeline "selesai" jadi gradient suc
 (dari array/lookup status→warna yang sudah dipakai lebih dulu) jadi pasangan gradient tanpa perlu
 menulis ulang tiap lookup — dipakai di `MemberHome`'s 4 baris. Tidak disentuh (out of scope): grid
 Quick Action `HealthOfficerHome`-nya sendiri sebenarnya sudah dikonversi di rollout awal;
-`molecules/EmptyState`, `RollCallList`/`RollCallScan`/`RollCallSearch`, dan hampir semua layar
+`molecules/EmptyState`, dan hampir semua layar
 Academy assessment/attempt (tak punya pola icon-chip flat — ikonnya inline di pill/banner, bukan
 kotak/lingkaran ber-tint terpisah) sengaja dibiarkan flat.
 
@@ -508,6 +508,86 @@ Dari canvas "Tagihan Koperasi" (2026-09-24). Pola untuk layar yang menampilkan *
   Batang flat — tidak pakai gradient (§7).
 - Nominal selalu memakai teks `*_formatted` dari backend; hanya selisih yang dihitung klien
   (`formatRupiah`, format sama: `Rp 150.000` / `-Rp 150.000`).
+
+**Redesign 2026-09-26** (canvas "Redesign Tagihan Koperasi"):
+
+- **Kartu utama menu** (periode terbaru di menu `Coop`) — kartu menonjol (`cardShadowRaised`), kicker
+  `12/700` UPPERCASE `primary` + badge `TERBARU`, nominal `30–32/800`, baris `CoopDeltaPill` berlabel
+  lengkap (`-Rp 150.000 · -37,5%`, `coopDeltaPillLabel`) + "vs {periode}", isi (alokasi compact maks 4
+  jenis / peringatan amber), lalu **baris link penutup** bergaris atas (`13/600 primary` + chevron) —
+  seluruh kartu satu `PressableScale`.
+- **Kartu Home mode manager** (`CoopReportCard`) — rekap + baris "Tagihan Saya" digabung **dalam satu
+  kartu** (dipisah garis `borderSoft`), bukan kartu terpisah.
+- **Toggle pill di layar non-Auth** — `AuthToggle` dengan prop `style` = track `surface` + border
+  `borderSoft` + `smallButtonShadow` (track bawaan putih transparan hanya terbaca di atas gradient Auth).
+- **Accordion per periode** (tab Koperasi detail personel) — kartu per bulan: chip tanggal + judul +
+  "N dari M jenis" + nominal + chevron atas/bawah; isi = `CoopCategoryBreakdown` full di bawah garis.
+- **Quick Action anggota** (2026-09-27, menggantikan baris "Akses Cepat" + `ShortcutButton` yang dihapus) —
+  memakai grid yang sama persis dengan CommanderHome: kartu `QuickActionButton` + `gradientColors`, 4 per
+  baris (`flex: 1` + spacer), maks 2 baris (> 8 aksi → 7 + "Lainnya"), diletakkan di atas Kartu Anggota.
+
+### 5.18 Kekuatan Apel — agenda, isi per kompi, pengaturan
+
+Dari canvas "Redesign Kekuatan Apel" (2026-09-26). Bagian bersama ada di `src/screens/RollCall/shared`.
+
+- **Badge status agenda** (`AgendaStateBadge`): `TERBUKA` = Badge `success` (titik) · `TERKUNCI` (lewat
+  jam berakhir sesi) = `neutral` + ikon `clock` · `DITUTUP` = `neutral` + ikon `lock`.
+- **Kartu agenda berjalan**: kartu menonjol (`cardShadowRaised`), badge + "Batas HH.MM", judul sesi `20/800`,
+  progres kompi (teks + persen `primary` + `ProgressBar` 8px di track `chipSurface`), `StatDividerRow`
+  (Anggota / Hadir / Tidak Hadir / Kehadiran), lalu baris penutup amber "N kompi belum mengirim" / hijau
+  "Semua kompi sudah mengirim" + link "Rangkuman ›".
+- **Warna persen kehadiran** (`attendanceColor`): ≥90 `success`, ≥75 `warningText`, di bawahnya `danger`.
+- **Baris anggota di form kompi**: avatar gradient (biru = hadir, amber `gradientWarnStart→warning` = tidak
+  hadir) + nama/pangkat·NRP + kotak centang 26 radius 8. Mode "Catat Tidak Hadir" → kotak terisi amber +
+  ikon `close`; mode "Catat Hadir" → terisi `success` + `check`. Yang tidak hadir punya **pill alasan** di
+  bawahnya: kosong = border putus-putus `warning` + "Pilih alasan"; terisi = `warningSurface` + teks
+  `warningText` + ikon `edit`. Satu kompi = rangkaian baris yang menyambung jadi satu kartu (baris pertama/
+  terakhir yang membulat), bukan kartu per anggota.
+- **Pilihan tunggal (radio row)** — sesi piket, alasan, hasil pencarian prajurit: baris radius 14; aktif =
+  `notifUnreadSurface` + border `notifUnreadBorder` + radio `primary` (ring 2px + titik 10).
+- **Switch aktif/nonaktif** (`ToggleSwitch`): RN `Switch`, track `primary` / `dividerOnGradient`, thumb
+  `surface`. Baris nonaktif dipudarkan (opacity 0.55–0.7), avatar ungu nonaktif (§5.8).
+- **Aksi destruktif di baris** (akhiri penugasan): kotak 40 `dangerSurfaceSoft` + ikon `user-x` `danger`,
+  selalu lewat `StatusModal` konfirmasi varian error. Menu banyak aksi per baris = tombol `more-vertical`
+  (kotak `chipSurface`) → `BottomSheet` berisi baris aksi (chip ikon 36 + judul + deskripsi).
+- **Bar sebaran alasan** (Statistik): bar bertumpuk tanpa lib chart (gap 2, pill) + legenda titik 8.
+  Warna = `ROLL_CALL_REASON_PALETTE` (token aksen yang sudah ada, urut dari alasan terbanyak).
+
+### 5.19 Buku Saku — halaman E-Book (materi, biodata, nilai kemampuan)
+
+Dari canvas "Redesign Buku Saku" (2026-09-26). Komponen di `src/screens/BukuSakuDetail/*`.
+
+- **Header judul panjang**: `MainLayout variant="canvas" compactTitle` — judul `17/800`, boleh 2 baris
+  (default canvas `22/800` satu baris). Ikon kanan = tombol kotak putih `40×40` ikon `list` `primary`
+  → sheet "Daftar Materi".
+- **Kartu halaman**: satu kartu (§5.3) per halaman — kicker `11/700` UPPERCASE `primary`
+  letter-spacing `0.6` (MATERI / BIODATA / REKAM NILAI) + judul halaman `20/800` + garis `borderSoft`,
+  lalu isi. Blok di dalam kartu = border `borderSoft` radius `14` **tanpa** shadow; blok "identitas"
+  dan strip kemampuan berlatar `attachmentRowSurface`.
+- **Section data** (biodata): header strip `attachmentRowSurface` + ikon `16` + judul `12/700`
+  UPPERCASE `primary`, lalu grid 2 kolom label-atas-nilai (label `12` muted, nilai `14/600`); baris
+  alamat penuh selebar kartu. NRP memakai font monospace.
+- **Nilai kemampuan** (riwayat): strip kemampuan → kotak ringkasan `StatDividerRow` (Penilaian N× /
+  Nilai terakhir / Terverifikasi) → judul "Riwayat Penilaian" `14/700` → satu kartu per penilaian
+  (border `borderSoft` radius `14`, tanpa shadow, gap `10`, terbaru dulu). Isi kartu: Badge status
+  (`success` Terverifikasi + `check`, `warning` Menunggu Verifikasi + `clock`, `danger` Perlu Revisi +
+  `alert-triangle`) + tanggal; "Nilai akhir" ukurannya mengikuti isi (`abilityValueSize`): angka `32/800`
+  + satuan `14/600` muted · teks pendek ≤16 huruf `24/800` · teks panjang paragraf `16/700` yang
+  membungkus; kosong → "–" warna `dividerOnGradient` + keterangan. Lalu `StatDividerRow` Nilai diajukan /
+  Diverifikasi (daftar label-atas-nilai kalau nilai diajukan >14 huruf), baris "Instruktur: **nama**"
+  `12` muted + ikon `profile`, kotak catatan instruktur (`pageGradientMid`, label `11/700` UPPERCASE),
+  dan kotak alasan penolakan (`dangerSurfaceSoft` + border `dangerBorderSoft`, teks `dangerText`,
+  "Alasan:" tebal). Belum pernah dinilai → kotak putus-putus `border` di atas `pageGradientStart` + chip
+  ikon `chipSurface` 52.
+- **Footer halaman**: "Sebelumnya" = pill sekunder (§5.6) · "Selanjutnya" = `GradientButton` dengan
+  ikon di kanan (`iconPosition="end"`); di halaman terakhir diganti pill datar `chipSurface` + teks
+  `placeholder`.
+- **Sheet Daftar Materi**: baris radius `14` = nomor bulat `28` (`chipSurface`/`primary` teks) + judul
+  1 baris + jenis halaman; baris aktif = `notifUnreadSurface` + border `notifUnreadBorder` + nomor
+  terisi `primary` + label "Dibaca".
+- **Hasil pencarian daftar bab**: halaman yang cocok berjejer di bawah kartu babnya (strip
+  `attachmentRowSurface`, garis atas `borderSoft`), nomor halaman dalam kotak putih `26` radius `8`,
+  potongan teks yang cocok diberi latar `primarySurface`.
 
 ---
 

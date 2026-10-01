@@ -1,3 +1,5 @@
+import type { CoopPersonnelTagihan } from './coopSalary.types';
+
 export interface PaginationMeta {
   current_page: number;
   last_page: number;
@@ -88,6 +90,8 @@ export interface PersonnelDetail {
   last_status_location: string | null;
   visitor_log_history: PersonnelVisitorLogEntry[];
   weapon_loan_history: PersonnelWeaponLoanEntry[];
+  // Tagihan Koperasi personel ini — null/absen bila modul `coop_salary_report` nonaktif.
+  tagihan_koperasi?: CoopPersonnelTagihan | null;
 }
 
 // --- Persit (keluarga) ---

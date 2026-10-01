@@ -7,7 +7,7 @@ import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebas
 import notifee from '@notifee/react-native';
 import App from './App';
 import { name as appName } from './app.json';
-import { displayRemoteMessage } from '@/utils/pushNotifications';
+import { displayRemoteMessage, handleAlertNotificationBackgroundEvent } from '@/utils/pushNotifications';
 import { handlePatrolNotificationBackgroundEvent } from '@/utils/patrolNotification';
 
 // Wajib didaftarkan di sini (bukan di dalam komponen React) — ini yang dipanggil Firebase saat
@@ -22,9 +22,11 @@ try {
   // Firebase belum dikonfigurasi — abaikan, push notification baru aktif setelah setup selesai.
 }
 
-// Tap notifikasi "Patroli berjalan" saat app di background/killed → buka layar Sesi Berjalan.
+// Tap notifikasi saat app di background/killed: "Patroli berjalan" → layar Sesi Berjalan;
+// sirene darurat → detail sinyal darurat / layar Notifikasi (Perintah Tugas).
 notifee.onBackgroundEvent(async event => {
   await handlePatrolNotificationBackgroundEvent(event);
+  await handleAlertNotificationBackgroundEvent(event);
 });
 
 AppRegistry.registerComponent(appName, () => App);

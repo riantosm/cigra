@@ -12,6 +12,8 @@ export interface GradientAvatarProps {
   size?: number;
   /** Colour of the small status dot pinned bottom-right; omit for no dot. */
   dotColor?: string;
+  /** Corner radius of the fill. Defaults to a full circle (`size / 2`). */
+  radius?: number;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -25,6 +27,7 @@ export default function GradientAvatar(props: GradientAvatarProps) {
     gradientEnd,
     size = 52,
     dotColor,
+    radius,
     style,
   } = props;
   const gradientId = `av-${gradientStart}-${gradientEnd}`.replace(/[^a-zA-Z0-9-]/g, '');
@@ -38,7 +41,7 @@ export default function GradientAvatar(props: GradientAvatarProps) {
             <Stop offset="1" stopColor={gradientEnd} />
           </LinearGradient>
         </Defs>
-        <Rect width={size} height={size} rx={size / 2} fill={`url(#${gradientId})`} />
+        <Rect width={size} height={size} rx={radius ?? size / 2} fill={`url(#${gradientId})`} />
       </Svg>
       <Text style={[styles.label, { fontSize: size * 0.38 }]}>{label}</Text>
       {dotColor ? <View style={[styles.dot, { backgroundColor: dotColor }]} /> : null}

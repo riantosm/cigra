@@ -4,30 +4,25 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import GradientIconChip from '@/components/atoms/GradientIconChip';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import CoopCategoryBreakdown from '@/components/molecules/CoopCategoryBreakdown';
 import CoopDeltaPill from '@/components/molecules/CoopDeltaPill';
 import StatDividerRow from '@/components/molecules/StatDividerRow';
 import { colors } from '@/theme/colors';
 import { cardShadow } from '@/theme/shadows';
 import type { CoopMyBills } from '@/types';
-import {
-  COOP_TREND_META,
-  coopCategoryLines,
-  coopDeltaFromSeries,
-  formatPercent,
-  formatRupiah,
-} from '@/utils/coopSalary';
+import { coopDeltaFromSeries, coopDeltaSentence, formatPercent } from '@/utils/coopSalary';
 
 export interface CoopBillCardProps {
-  // Hasil `GET /coop-salary-report/me?per_page=1` — `rows[0]` = periode terbaru (+ categories).
-  data: CoopMyBills;
+  // Blok `member` dari `GET /coop-salary-report` (bentuknya sama dengan `/me`) — `rows[0]` = periode
+  // terbaru.
+  data: Pick<CoopMyBills, 'summary' | 'trend' | 'rows'>;
   onPress: (rowId: number) => void;
   style?: StyleProp<ViewStyle>;
 }
 
-// Kartu "Tagihan Saya" di Home (MemberHome di bawah "Aset Saya"; CommanderHome kalau komandan
-// ber-mode member). Total periode terbaru + naik/turun vs periode sebelumnya (dari 2 nilai terakhir
-// `trend.values`) + alokasi per jenis + rata-rata/tertinggi/jumlah periode.
+// Kartu "Tagihan Saya" di Home (mode member — MemberHome di bawah "Aset Saya", CommanderHome kalau
+// komandan ber-mode member). Total periode terbaru + naik/turun vs periode sebelumnya (dari 2 nilai
+// terakhir `trend.values`) + rata-rata/tertinggi/jumlah periode. Rincian per jenis ada di layar
+// rincian (kartu ini sengaja ringkas dan cukup dari satu panggilan `GET /coop-salary-report`).
 export default function CoopBillCard(props: CoopBillCardProps) {
   const { data, onPress, style } = props;
   const latest = data.rows[0];
@@ -41,7 +36,7 @@ export default function CoopBillCard(props: CoopBillCardProps) {
         <View style={styles.emptyBody}>
           <Text style={styles.emptyTitle}>Belum ada tagihan koperasi</Text>
           <Text style={styles.emptyText}>
-            Tagihan muncul di sini setelah pengelola koperasi mengunggah rekap bulanan.
+            Tagihan muncul di sini setelah rekap bulanan diunggah.
           </Text>
         </View>
       </View>
@@ -50,16 +45,7 @@ export default function CoopBillCard(props: CoopBillCardProps) {
 
   const delta = coopDeltaFromSeries(data.trend?.values);
   const previousLabel = data.trend?.labels?.[data.trend.labels.length - 2];
-  const lines = coopCategoryLines(latest.categories);
-  const hasCategories = (latest.categories ?? []).some(item => item.amount > 0);
-
-  let deltaText = 'Periode pertama yang tercatat';
-  if (delta && previousLabel) {
-    deltaText =
-      delta.trend === 'flat'
-        ? `Sama dengan ${previousLabel}`
-        : `${COOP_TREND_META[delta.trend].verb} ${formatRupiah(Math.abs(delta.delta))} dari ${previousLabel}`;
-  }
+  const deltaText = coopDeltaSentence(delta, previousLabel);
 
   return (
     <PressableScale scaleTo={0.98} onPress={() => onPress(latest.id)} style={style} contentStyle={styles.card}>
@@ -69,7 +55,7 @@ export default function CoopBillCard(props: CoopBillCardProps) {
           <Text style={styles.headerTitle} numberOfLines={1}>
             Koperasi · {latest.period.label}
           </Text>
-          <Text style={styles.headerSub}>Tagihan periode terbaru</Text>
+          <Text style={styles.headerSub}>Periode terbaru</Text>
         </View>
         <Icon name="chevron-right" size={18} color={colors.placeholder} />
       </View>
@@ -83,8 +69,6 @@ export default function CoopBillCard(props: CoopBillCardProps) {
         ) : null}
       </View>
       <Text style={styles.deltaText}>{deltaText}</Text>
-
-      {hasCategories ? <CoopCategoryBreakdown lines={lines} variant="compact" maxLegend={3} style={styles.breakdown} /> : null}
 
       <StatDividerRow
         items={[
@@ -149,9 +133,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginBottom: 14,
-  },
-  breakdown: {
-    marginBottom: 8,
   },
   emptyCard: {
     flexDirection: 'row',
