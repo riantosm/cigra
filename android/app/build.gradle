@@ -128,8 +128,8 @@ android {
         applicationId "com.${smartBattalionBrand}.smartbattalion"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
-        versionName "1.1.0"
+        versionCode 12
+        versionName "1.2.0"
     }
     // Hanya bawa string terjemahan library (AndroidX, Play Services, Firebase, dll.) untuk bahasa
     // Inggris & Indonesia — UI app sendiri sudah hard-coded bahasa Indonesia di JS, jadi puluhan

@@ -29,6 +29,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+## v1.2.0 (versionCode 12)
+
+_2026-10-02_
+
 ### Ditingkatkan
 
 - Home anggota: "Akses Cepat" jadi **Quick Action** — tampilan kartu sama seperti Home komandan
