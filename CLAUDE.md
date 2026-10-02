@@ -1461,15 +1461,22 @@ Consumers: `MemberIdCard`, `HomeHeader`, `Profile`, `CatalogDetail` header. `res
   `state.notifications.unreadTotal`). **Real `GET /notifications`** via `notificationSlice` — list, pull-to-
   refresh, `onEndReached` "muat lebih banyak" (via `meta`), header "Tandai semua" → `markAllNotificationsRead`.
   Tap row → `markNotificationRead` + **`organisms/MessageDetailSheet`** (read-full bottom sheet — rows are
-  clamped to 1–2 lines; no detail endpoint, all text is from the list payload). If the item has an `action`,
-  the sheet shows a button (`emergency` → `emergencyDetail`, `emergency_list` → `emergencyList`). Used by
-  **both komandan and anggota**. Contract `API_CONTRACT.md` §3. Row icon chip: `emergency`/
-  `announcement`/`info` render `atoms/GradientIconChip` (DESIGN_SYSTEM.md §5.13b); any type whose
-  string **contains** `"disposition"` (backend sends several inconsistent ones — `disposition_completed`,
-  `disposition_recipient_completed`, `disposition_follow_up`, `letter_disposition`, none of them
-  documented in `API_CONTRACT.md` — checked via substring, not an exact list, so a future variant is
-  covered automatically) also gets a gradient chip (`mail` icon, personnel gradient); `system` stays
-  the old flat tint chip on purpose (no strong colour identity).
+  clamped to 1–2 lines; no detail endpoint, all text is from the list payload). Used by **both komandan and
+  anggota**. Contract `API_CONTRACT.md` §3. **Everything type/`action`-specific lives in
+  `src/utils/notificationAction.ts`** (tested in `utils/__tests__/notificationAction.test.ts`) — never read
+  `item.action` in the screen. The backend's raw `type`s are inconsistent (`panic_button`,
+  `disposition_follow_up`, `disposition_recipient_completed`, `roll_call_dibuka`, …) and ids arrive as
+  strings, so `notificationCategory(item)` groups by `type` + `action.type` (substring `disposition`,
+  prefix `roll_call`) into `emergency | announcement | disposition | roll_call | info | system`, which keys
+  the screen's icon/colour/gradient `Record`s (`system` = flat tint chip on purpose, everything else a
+  `GradientIconChip`). `resolveNotificationLink(item, roles)` → `{ label, open(navigation) } | null` = the
+  sheet's action button, reading the real per-type id fields (live API 2026-10-02): `panic_button_id` →
+  `emergencyDetail` (no id / `emergency_list` → `emergencyList`; `source: 'directive'` → no button, no
+  screen yet); `disposition_id` → `dispositionDetail` (`disposition_list` → `dispositionList`);
+  `roll_call` + `agenda_id` → by role — `perwakilan_kompi` on an opened agenda (`event: 'dibuka'`) →
+  `rollCallCompanyAgendas`, komandan/piket → `rollCallAgendaDetail`, other roles → no button;
+  `announcement` → `announcements`. The legacy `{ type, id }` shape is still accepted. Add a new
+  notification kind there (+ a test case), not in the screen.
 - `src/screens/Announcements/index.tsx` — `ROUTES.announcements`, opened from "Lihat Semua" under
   "Pengumuman Terbaru" on **both** Homes + the MemberHome "Pengumuman" quick action (no longer points at
   Notifications). Full `GET /announcements` list via `announcementSlice` — pull-to-refresh, "muat lebih

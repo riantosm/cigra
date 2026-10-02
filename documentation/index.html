@@ -850,7 +850,7 @@ Request gagal → diabaikan diam-diam.
 
 > [!DONE] Halaman Notifikasi (ikon lonceng), **semua role**. Daftar + tarik-untuk-refresh + "muat lebih banyak" (via `meta`), badge lonceng = `meta.unread_total`. Diverifikasi API live 2026-09-02: `per_page`, `only_unread=true`, `type=emergency` semua bekerja.
 >
-> Catatan: `action` non-darurat (mis. `announcement`) belum menuju ke mana-mana, isinya tetap terbaca di pop-up.
+> Catatan: tombol di pop-up mengikuti `action` (bentuk asli dicek 2026-10-02, **id dikirim sebagai string**): `panic_button_id` → detail sinyal darurat, `disposition_id` (`action: "open_disposition"`) → detail disposisi, `roll_call` + `agenda_id` → agenda apel (komandan/piket) atau pengisian kompi (perwakilan kompi), `announcement` → daftar pengumuman. `type` notifikasi tidak seragam (`panic_button`, `disposition_follow_up`, `disposition_recipient_completed`, `roll_call_dibuka`, …) — **berbeda dari daftar `type` di query** (`emergency` / `announcement` / `info` / `system`). Bentuk lama `{ type, id }` tetap didukung FE.
 
 `GET /notifications`
 
@@ -870,24 +870,58 @@ Request gagal → diabaikan diam-diam.
   "success": true,
   "data": [
     {
-      "id": 501,
-      "type": "emergency",
-      "title": "Sinyal Darurat Baru",
-      "body": "Praka Rizky Maulana menekan tombol darurat di Pos Timur.",
-      "read": false,
-      "created_at": "2026-08-30T15:03:00+07:00",
+      "id": 21,
+      "type": "panic_button",
+      "title": "Sinyal Darurat",
+      "body": "Mayor DEMO KOMANDAN dari Tonban Kipan A mengirimkan sinyal darurat! Lokasi: -6.94298416, 107.58668276.",
+      "read": true,
+      "created_at": "2026-10-02T14:39:15+07:00",
       "action": {
         "type": "emergency",
-        "id": 88
+        "source": "panic_button",
+        "panic_button_id": "41",
+        "sender_name": "Mayor DEMO KOMANDAN",
+        "unit": "Tonban Kipan A",
+        "latitude": "-6.94298416",
+        "longitude": "107.58668276",
+        "maps_url": "https://www.google.com/maps?q=-6.94298416,107.58668276"
+      }
+    },
+    {
+      "id": 17,
+      "type": "disposition_follow_up",
+      "title": "📝 Tindak Lanjut Disposisi",
+      "body": "DEMO PERSONNEL (ANGGOTA) memberikan tindak lanjut pada disposisi: ASDASDASD",
+      "read": false,
+      "created_at": "2026-09-30T21:53:02+07:00",
+      "action": {
+        "type": "disposition_follow_up",
+        "action": "open_disposition",
+        "disposition_id": "1",
+        "follow_up_id": "1"
+      }
+    },
+    {
+      "id": 5,
+      "type": "roll_call_dibuka",
+      "title": "Apel Malam dibuka",
+      "body": "Agenda apel Apel Malam tanggal 30 Sep 2026 sudah dibuka. Mohon isi kehadiran kompi Anda sebelum sesi berakhir.",
+      "read": false,
+      "created_at": "2026-09-30T21:21:14+07:00",
+      "action": {
+        "type": "roll_call",
+        "event": "dibuka",
+        "status": "open",
+        "agenda_id": "6"
       }
     }
   ],
   "meta": {
     "current_page": 1,
-    "last_page": 4,
+    "last_page": 1,
     "per_page": 20,
-    "total": 68,
-    "unread_total": 4
+    "total": 7,
+    "unread_total": 6
   }
 }
 ```

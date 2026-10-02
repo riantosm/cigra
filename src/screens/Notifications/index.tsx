@@ -19,61 +19,56 @@ import {
 import { colors } from '@/theme/colors';
 import type { AppNotification } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
+import { notificationCategory, resolveNotificationLink } from '@/utils/notificationAction';
+import type { NotificationCategory } from '@/utils/notificationAction';
 
 type Props = RootStackScreenProps<typeof ROUTES.notifications>;
 
-// Backend mengirim beberapa varian type khusus disposisi yang belum ada di API_CONTRACT.md dan
-// tidak konsisten namanya (`disposition_completed` / `disposition_recipient_completed` /
-// `disposition_follow_up` / `letter_disposition` / dst) — dicek lewat substring "disposition"
-// (bukan daftar tetap / prefix) supaya varian baru ikut kepetakan otomatis, ke ikon+gradient "mail"
-// yang sama dengan quick action Disposisi Surat.
-function isDispositionType(type: string): boolean {
-  return type.includes('disposition');
-}
-
-const typeIcon: Record<string, IconName> = {
+// Ikon/warna per kelompok — `type` mentah dari backend dikelompokkan dulu oleh
+// `notificationCategory` (mis. `panic_button` → emergency, `disposition_follow_up` → disposition).
+const categoryIcon: Record<NotificationCategory, IconName> = {
   emergency: 'emergency',
   announcement: 'megaphone',
+  disposition: 'mail',
+  roll_call: 'clipboard-check',
   info: 'info',
   system: 'settings',
 };
 
-const typeColor: Record<string, string> = {
+const categoryColor: Record<NotificationCategory, string> = {
   emergency: colors.danger,
   announcement: colors.warning,
+  disposition: colors.primary,
+  roll_call: colors.primary,
   info: colors.primary,
   system: colors.textMuted,
 };
 
-const typeSurface: Record<string, string> = {
+const categorySurface: Record<NotificationCategory, string> = {
   emergency: colors.dangerSurface,
   announcement: colors.chipSurface,
+  disposition: colors.primarySurface,
+  roll_call: colors.primarySurface,
   info: colors.primarySurface,
   system: colors.chipSurface,
 };
 
-// "Aksen Gradient" (DESIGN_SYSTEM.md) — samakan dengan chip ikon Home/Pengumuman. `system` sengaja
-// tidak punya gradient (notifikasi generik, tanpa identitas warna kuat) — tetap chip tint flat.
-const typeGradient: Partial<Record<string, readonly [string, string]>> = {
+// "Aksen Gradient" (DESIGN_SYSTEM.md) — samakan dengan chip ikon Home/Pengumuman (disposisi & apel =
+// gradient quick action-nya). `system` sengaja tidak punya gradient (notifikasi generik, tanpa
+// identitas warna kuat) — tetap chip tint flat.
+const categoryGradient: Partial<Record<NotificationCategory, readonly [string, string]>> = {
   emergency: [colors.gradientDangerStart, colors.danger],
   announcement: [colors.gradientWarnStart, colors.warning],
+  disposition: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
+  roll_call: [colors.gradientPersonnelStart, colors.gradientPersonnelEnd],
   info: [colors.gradientPrimaryStart, colors.gradientPrimaryEnd],
 };
-
-function iconFor(type: string): IconName {
-  if (isDispositionType(type)) return 'mail';
-  return typeIcon[type] ?? 'info';
-}
-
-function gradientFor(type: string): readonly [string, string] | undefined {
-  if (isDispositionType(type)) return [colors.gradientPersonnelStart, colors.gradientPersonnelEnd];
-  return typeGradient[type];
-}
 
 export default function NotificationsScreen(props: Props) {
   const { navigation } = props;
   const dispatch = useAppDispatch();
   const { items, meta, status, unreadTotal } = useAppSelector(state => state.notifications);
+  const roles = useAppSelector(state => state.auth.user?.roles);
   const [selected, setSelected] = useState<AppNotification | null>(null);
 
   const load = useCallback(
@@ -88,6 +83,7 @@ export default function NotificationsScreen(props: Props) {
   }, [load]);
 
   const isLoading = status === 'loading';
+  const selectedCategory: NotificationCategory = selected ? notificationCategory(selected) : 'info';
   const canLoadMore = meta ? meta.current_page < meta.last_page : false;
 
   function handlePress(item: AppNotification) {
@@ -96,44 +92,15 @@ export default function NotificationsScreen(props: Props) {
   }
 
   function actionFor(item: AppNotification): { label: string; onPress: () => void } | undefined {
-    const action = item.action;
-    if (action?.type === 'emergency') {
-      return {
-        label: 'Buka Detail Darurat',
-        onPress: () => {
-          setSelected(null);
-          navigation.navigate(ROUTES.emergencyDetail, { id: String(action.id) });
-        },
-      };
-    }
-    if (action?.type === 'emergency_list') {
-      return {
-        label: 'Buka Daftar Darurat',
-        onPress: () => {
-          setSelected(null);
-          navigation.navigate(ROUTES.emergencyList);
-        },
-      };
-    }
-    if (action?.type === 'disposition') {
-      return {
-        label: 'Buka Detail Disposisi',
-        onPress: () => {
-          setSelected(null);
-          navigation.navigate(ROUTES.dispositionDetail, { id: Number(action.id) });
-        },
-      };
-    }
-    if (action?.type === 'disposition_list') {
-      return {
-        label: 'Buka Daftar Disposisi',
-        onPress: () => {
-          setSelected(null);
-          navigation.navigate(ROUTES.dispositionList);
-        },
-      };
-    }
-    return undefined;
+    const link = resolveNotificationLink(item, roles);
+    if (!link) return undefined;
+    return {
+      label: link.label,
+      onPress: () => {
+        setSelected(null);
+        link.open(navigation);
+      },
+    };
   }
 
   return (
@@ -173,17 +140,16 @@ export default function NotificationsScreen(props: Props) {
           ) : undefined
         }
         renderItem={({ item }) => {
-          const color = typeColor[item.type] ?? colors.primary;
-          const surface = typeSurface[item.type] ?? colors.primarySurface;
-          const gradient = gradientFor(item.type);
+          const category = notificationCategory(item);
+          const gradient = categoryGradient[category];
           return (
             <PressableScale scaleTo={0.98} onPress={() => handlePress(item)}>
               <Card style={[styles.row, !item.read && styles.rowUnread]}>
                 {gradient ? (
-                  <GradientIconChip icon={iconFor(item.type)} colors={gradient} size={40} iconSize={18} radius={12} />
+                  <GradientIconChip icon={categoryIcon[category]} colors={gradient} size={40} iconSize={18} radius={12} />
                 ) : (
-                  <View style={[styles.iconCircle, { backgroundColor: surface }]}>
-                    <Icon name={iconFor(item.type)} size={18} color={color} />
+                  <View style={[styles.iconCircle, { backgroundColor: categorySurface[category] }]}>
+                    <Icon name={categoryIcon[category]} size={18} color={categoryColor[category]} />
                   </View>
                 )}
                 <View style={styles.textGroup}>
@@ -205,10 +171,10 @@ export default function NotificationsScreen(props: Props) {
       <MessageDetailSheet
         visible={selected !== null}
         onRequestClose={() => setSelected(null)}
-        icon={selected ? iconFor(selected.type) : 'info'}
-        iconColor={(selected && typeColor[selected.type]) || colors.primary}
-        iconSurface={(selected && typeSurface[selected.type]) || colors.primarySurface}
-        gradientColors={selected ? gradientFor(selected.type) : typeGradient.info}
+        icon={categoryIcon[selectedCategory]}
+        iconColor={categoryColor[selectedCategory]}
+        iconSurface={categorySurface[selectedCategory]}
+        gradientColors={categoryGradient[selectedCategory]}
         title={selected?.title ?? ''}
         body={selected?.body ?? ''}
         metaLines={[selected ? formatRelativeTime(selected.created_at) ?? undefined : undefined]}
