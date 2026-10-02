@@ -52,7 +52,9 @@ Gradle automatically, but check `android/app/build.gradle` / `MainApplication` i
 Native deps with no extra wiring (autolinked): `react-native-blob-util` (health-attachment downloads),
 `@react-native-community/datetimepicker` (native date/time picker — `src/components/molecules/DateTimeField`,
 used by `HealthRecordInput`) — both under "Health module" below — and `@react-native-documents/picker`
-(pilih lampiran — `src/utils/filePicker.ts`, dipakai modul "Disposisi Surat"). Note: `bundle exec pod install` on this
+(pilih lampiran — `src/utils/filePicker.ts`, dipakai modul "Disposisi Surat"), plus the plain Gradle dep
+`com.caverock:androidsvg-aar` (BMKG weather icon in the location-tracking notification —
+`android/.../TrackingWeather.kt`). Note: `bundle exec pod install` on this
 machine needs `LANG=en_US.UTF-8` set, and
 currently fails on a `FirebaseCoreInternal`/`GoogleUtilities` static-Swift-lib error — iOS Pods need that
 resolved separately; Android (the primary test target) is unaffected and picks blob-util up on the next
@@ -73,7 +75,9 @@ all in `android/app/build.gradle` + `android/app/proguard-rules.pro`:
   a release APK. Current extra rules: react-native-config (`com.cigrasmartbattalionapps.BuildConfig`,
   read via `Class.forName`), react-native-fast-image/Glide, react-native-device-info (Install Referrer
   reflection). Everything else ships consumer rules (react-android keeps every `NativeModule`/
-  `@DoNotStrip`, plus Notifee, Reanimated, Worklets, SVG, Firebase, Play Services, ML Kit).
+  `@DoNotStrip`, plus Notifee, Reanimated, Worklets, SVG, Firebase, Play Services, ML Kit);
+  AndroidSVG (`com.caverock:androidsvg-aar`) needs no rule either — release APK verified on device
+  2026-10-02 (BMKG icon renders in the tracking notification).
 - Resources referenced **only by name** at runtime (`getIdentifier`) must be listed in
   `android/app/src/main/res/raw/keep_app.xml` (`tools:keep`) or the shrinker drops them — today
   `@raw/siren` (Notifee builds `android.resource://<pkg>/raw/siren` for the siren channel). JS
@@ -647,6 +651,29 @@ error, or `success: false` in a 200) is treated as an unrecoverable failure → 
   clears its own token copy (`TrackingPrefs`) and stops itself — it can't dispatch a Redux `logout()` from
   native, so the app only formally logs out once JS notices (next cold start's refresh attempt fails the same
   way).
+  Its persistent notification ("CIGRA APPS ACTIVE", channel `location_tracking_channel`, id `4821`) can be
+  swiped away on Android 14+ even with `setOngoing(true)` — the service keeps running. After every
+  successful `POST /locations` the service calls `restoreNotificationIfDismissed()`, which re-posts the
+  **same** `Notification` object under the **same** id only when it's missing from `activeNotifications`
+  (never stacks, `setOnlyAlertOnce`, skipped without `POST_NOTIFICATIONS`, and a `destroyed` flag under
+  `notificationLock` stops a late upload from re-posting after `onDestroy`).
+  Tapping it opens the **Emergency tab**: the `contentIntent` is an explicit `MainActivity` intent with
+  `ACTION_VIEW` + data `smartbattalion://tracking-notification` (no manifest intent-filter needed — RN only
+  forwards a URL to `Linking` for `ACTION_VIEW` intents), handled by `src/utils/trackingNotification.ts`
+  `registerTrackingNotificationHandler()` (wired in `App.tsx`: `Linking.getInitialURL()` for a cold start +
+  the `'url'` event via `onNewIntent`/`singleTask` for a running app) → `runWhenNavigationReady` →
+  `navigate(Main, { screen: Emergency })` (Home if the tab is ever missing); skipped unless
+  `isLogin && appChecked && !requiresPasswordChange` so the auth guards stay in charge. Keep the URL
+  constant identical in both files.
+  **Expanded = BMKG weather** (collapsed stays the plain title + "Status siaga darurat aktif.", no icon):
+  `TrackingWeather.kt` `TrackingWeatherFetcher.fetch()` mirrors `src/hooks/useWeather.ts` — service's
+  last GPS fix → `GET /weather/reverse-geocode` → `GET /weather?latitude=&longitude=` with the region's
+  coords (fallback raw GPS; no fix → `GET /weather`), ignoring Home's session-only manual region. Run on
+  the executor every 30 min (backend cache) / 5 min after a failure; the BMKG `icon_url` SVG is rasterised
+  with **AndroidSVG** (`com.caverock:androidsvg-aar`, cached per URL) because RemoteViews can't show SVG.
+  `buildNotification()` only adds `DecoratedCustomViewStyle` + `setCustomBigContentView`
+  (`res/layout/notification_tracking_weather.xml`) once weather exists; `when` is pinned to service start
+  so a refresh doesn't reorder the shade.
 - Because native can rotate the token independently of JS, `RootNavigator.tsx`'s `isLogin` effect **reads
   native's token back** (`locationTracking.getStoredAuthToken()`) and adopts it over the JS/AsyncStorage copy
   whenever they differ, instead of unconditionally pushing JS's (possibly stale/dead) token down to native like

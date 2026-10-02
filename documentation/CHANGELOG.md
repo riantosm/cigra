@@ -29,11 +29,19 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 ## Belum dirilis
 
+### Ditingkatkan
+
+- Tap notifikasi pelacakan lokasi ("APPS ACTIVE") kini langsung membuka layar **Emergency**.
+- Notifikasi pelacakan lokasi, saat dibuka (expand), kini menampilkan **cuaca BMKG** saat ini —
+  ikon, suhu, kondisi, lokasi, kelembapan/angin/jarak pandang — sama dengan widget cuaca di Home.
+
 ### Perbaikan
 
 - Notifikasi: tombol di pop-up kini membuka layar yang tepat — sinyal darurat ke detail sinyalnya,
   disposisi ke detail disposisi, agenda apel ke agenda/pengisian kompi, pengumuman ke daftar
   pengumuman.
+- Notifikasi pelacakan lokasi yang digeser hilang kini muncul lagi setelah lokasi berikutnya
+  terkirim (pelacakan sendiri tetap berjalan walau notifikasinya dihapus).
 
 ## v1.2.0 (versionCode 12)
 

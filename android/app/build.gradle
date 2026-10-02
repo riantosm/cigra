@@ -210,6 +210,10 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // Menggambar ikon cuaca BMKG (SVG) jadi bitmap untuk notifikasi pelacakan lokasi
+    // (TrackingWeather.kt) — RemoteViews notifikasi tidak bisa menampilkan SVG langsung.
+    implementation("com.caverock:androidsvg-aar:1.4")
 }
 
 // google-services.json belum ada sampai project Firebase dibuat di console dan file-nya

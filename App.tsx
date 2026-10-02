@@ -21,16 +21,19 @@ import {
   consumeAlertInitialNotification,
   registerAlertNotificationForegroundHandler,
 } from '@/utils/pushNotifications';
+import { registerTrackingNotificationHandler } from '@/utils/trackingNotification';
 
 function App() {
   useEffect(() => {
     const unsubscribePatrol = registerPatrolNotificationForegroundHandler();
     const unsubscribeAlert = registerAlertNotificationForegroundHandler();
+    const unsubscribeTracking = registerTrackingNotificationHandler();
     consumePatrolInitialNotification();
     consumeAlertInitialNotification();
     return () => {
       unsubscribePatrol();
       unsubscribeAlert();
+      unsubscribeTracking();
     };
   }, []);
 
