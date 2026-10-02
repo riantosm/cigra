@@ -61,6 +61,36 @@ resolved separately; Android (the primary test target) is unaffected and picks b
 Changing `.env` requires a full native rebuild (`npm run ios` / `npm run android`), not just a JS reload —
 `react-native-config` bakes env values into the native build.
 
+### Release APK size (R8, resource shrinking, compressed `.so`)
+
+Release builds are size-optimised since 2026-10-02 (72.9 MB → 30.5 MB, no feature removed) —
+all in `android/app/build.gradle` + `android/app/proguard-rules.pro`:
+
+- `enableProguardInReleaseBuilds = true` → release runs R8 (`minifyEnabled`) + `shrinkResources`.
+  Debug builds don't, so **a missing keep rule only shows up in a release build** (logcat
+  `ClassNotFoundException` / `NoSuchMethodException`, or `Config` arriving in JS as `{}`). When adding a
+  native library, check its README for ProGuard/R8 rules, add them to `proguard-rules.pro`, and smoke-test
+  a release APK. Current extra rules: react-native-config (`com.cigrasmartbattalionapps.BuildConfig`,
+  read via `Class.forName`), react-native-fast-image/Glide, react-native-device-info (Install Referrer
+  reflection). Everything else ships consumer rules (react-android keeps every `NativeModule`/
+  `@DoNotStrip`, plus Notifee, Reanimated, Worklets, SVG, Firebase, Play Services, ML Kit).
+- Resources referenced **only by name** at runtime (`getIdentifier`) must be listed in
+  `android/app/src/main/res/raw/keep_app.xml` (`tools:keep`) or the shrinker drops them — today
+  `@raw/siren` (Notifee builds `android.resource://<pkg>/raw/siren` for the siren channel). JS
+  `require()` images need nothing: RN's bundler generates its own `raw/keep.xml` for them (that's why
+  ours isn't named `keep.xml`).
+- `packaging.jniLibs.useLegacyPackaging true` — `.so` files are compressed inside the APK (it's
+  side-loaded, so download size matters; Android extracts them once at install).
+- `androidResources.localeFilters = ["en", "in"]` — library translations limited to English +
+  Indonesian (the app's own UI is hard-coded Indonesian in JS).
+- Crashlytics: the plugin uploads `build/outputs/mapping/release/mapping.txt` on every release build
+  (needs network) so obfuscated stack traces are readable in the Console.
+- RN's JS-bundle task only tracks `.js/.ts/.tsx` for Gradle's up-to-date check — a release where
+  **only an image asset** changed won't re-bundle it. Run `npm run android-c` first (or
+  `./gradlew :app:createBundleReleaseJsAndAssets --rerun assembleRelease`).
+- Keep in-app images near their display size: `src/assets/logo/LogoCigra.png` is 400×400 (largest
+  use is 92dp ≈ 368px at xxxhdpi); the original 1254px file weighed 2.2 MB.
+
 ## Architecture
 
 Bare React Native CLI app (not Expo) — TypeScript strict-ish (`noUnusedLocals`, `noUnusedParameters`,

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resource yang hanya dirujuk lewat NAMA saat runtime (getIdentifier), jadi tidak terlihat oleh
+     resource shrinker dan bakal ikut dibuang kalau tidak di-keep di sini:
+     - raw/siren: sound channel notifikasi darurat, dirujuk dari JS (`sound: 'siren'` di
+       src/utils/pushNotifications.ts) → Notifee membangun URI android.resource://<pkg>/raw/siren.
+     Gambar `require()` dari JS tidak perlu didaftarkan — bundler React Native sudah membuat
+     keep.xml sendiri untuk itu (build/generated/res/react/release/raw/keep.xml).
+     Nama file sengaja bukan `keep.xml` supaya tidak bentrok/tertimpa keep.xml milik React Native.
+     File ini tidak ikut dipaketkan ke APK release. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/siren" />

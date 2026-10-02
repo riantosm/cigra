@@ -94,8 +94,13 @@ react {
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ *
+ * Aktif: R8 membuang kode Java/Kotlin library yang tidak terpakai (dex turun drastis) dan
+ * `shrinkResources` membuang resource yang tidak dirujuk. Keep rule untuk library yang butuh
+ * refleksi ada di proguard-rules.pro; resource yang hanya dirujuk lewat nama dari JS (gambar
+ * `require()`, sound notifikasi) dijaga oleh src/main/res/raw/keep.xml.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -126,6 +131,20 @@ android {
         versionCode 11
         versionName "1.1.0"
     }
+    // Hanya bawa string terjemahan library (AndroidX, Play Services, Firebase, dll.) untuk bahasa
+    // Inggris & Indonesia — UI app sendiri sudah hard-coded bahasa Indonesia di JS, jadi puluhan
+    // bahasa lain di resources.arsc cuma bobot mati. HP dengan bahasa lain jatuh ke teks Inggris.
+    androidResources {
+        localeFilters += ["en", "in"]
+    }
+    // Native library (.so) dikompres di dalam APK — default AGP menyimpannya tanpa kompresi supaya
+    // bisa di-mmap langsung, tapi APK ini dibagikan sebagai file (bukan lewat Play Store/AAB),
+    // jadi ukuran unduhan lebih penting. Hasilnya .so diekstrak sekali saat install.
+    packaging {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -143,6 +162,7 @@ android {
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
