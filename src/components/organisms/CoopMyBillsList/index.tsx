@@ -66,7 +66,7 @@ export default function CoopMyBillsList(props: CoopMyBillsListProps) {
           {header}
           {isPersit ? (
             <View style={styles.persitStrip}>
-              <Icon name="users" size={16} color={colors.academyAkademikText} />
+              <Icon name="users" size={16} color={colors.persitText} />
               <Text style={styles.persitText}>Menampilkan tagihan prajurit yang tertaut dengan akun Anda</Text>
             </View>
           ) : null}
@@ -208,14 +208,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: colors.academyAkademikSurface,
+    backgroundColor: colors.persitSurface,
     marginBottom: 14,
   },
   persitText: {
     flex: 1,
     fontSize: 12,
     fontWeight: '600',
-    color: colors.academyAkademikText,
+    color: colors.persitText,
   },
   heroCard: {
     borderRadius: 16,

@@ -219,11 +219,11 @@ Dipakai di semua layar non-tab (`MainLayout`). Format:
 Latar `rgba(255,255,255,0.72)` + shadow kartu (tanpa border). Kiri: logo polos `44×44` (langsung
 `<Image>`, **tanpa** kartu/badge putih/shadow di belakangnya — direvisi 2026-09-22 supaya logo baru
 tampil penuh, bukan terkurung kotak) + `Selamat {pagi/siang/sore/malam}, {Role}` `12` muted / nama
-`15/700` `heading` / satuan `12` muted. Kanan: tombol lonceng (`40`, radius `14`, `chipSurface`,
-badge angka merah) + avatar (`40` lingkaran, gradient primary, inisial putih `16/700`). Pola logo
-polos ini (bukan kartu) juga dipakai `AcademyHeader` (`44×44`), `NavBar` (`44×44`, sudah dari
-awal tanpa kartu), dan logo splash besar di `Login`/`AppBootstrap` (`92×92`/`88×88`, langsung
-`<Image>` tanpa kartu putih + shadow).
+`15/700` `heading` / satuan `12` muted. Kanan: tombol lonceng saja (`40`, radius `14`,
+`chipSurface`, badge angka merah) — **tanpa avatar** sejak 2026-10-01: Profile pindah jadi tab ke-5 di
+bar bawah dengan foto user sebagai ikonnya (§5.10). Pola logo polos ini (bukan kartu) juga dipakai
+`NavBar` (`44×44`, sudah dari awal tanpa kartu) dan logo splash besar di `Login`/`AppBootstrap`
+(`92×92`/`88×88`, langsung `<Image>` tanpa kartu putih + shadow).
 
 > **Logo ikut `BRAND` otomatis — `src/assets/logo/`.** Dua file PNG tersimpan: `LogoCigra.png`
 > (crest elang, brand "cigra") dan `LogoSakaraguna.png` (api oranye, brand "sakaraguna" — logo
@@ -235,7 +235,7 @@ awal tanpa kartu), dan logo splash besar di `Login`/`AppBootstrap` (`92×92`/`88
 > ikon launcher, `google-services.json` juga ikut `BRAND` yang sama).
 > **Gaya di sekitar logo (kartu/tanpa-kartu, ukuran) TIDAK ikut brand** — sengaja dibuat satu gaya
 > "polos" (langsung `<Image>`, tanpa kartu/badge/shadow, diperbesar — direvisi 2026-09-22) untuk
-> semua brand di `HomeHeader`/`AcademyHeader`/`NavBar`/`Login`/`AppBootstrap`, supaya menambah
+> semua brand di `HomeHeader`/`NavBar`/`Login`/`AppBootstrap`, supaya menambah
 > brand baru tidak perlu menyentuh style. Kalau suatu brand butuh gaya beda (mis. logo yang lebih
 > ramai secara visual butuh kartu lagi), itu perubahan terpisah yang perlu diminta eksplisit.
 
@@ -315,6 +315,10 @@ Item **aktif**: dibungkus pill gradient primary (`padding 6px 14px`, radius `999
 & teks putih. Item nonaktif: ikon + teks `#94A3B8` `10/600`. **Label 1 baris, tidak boleh
 wrap** (`numberOfLines={1}` di RN) — ukuran `10px` supaya "Buku Saku" muat satu baris.
 Item tengah = tombol Emergency: lingkaran `56`, gradient danger, terangkat `-20px`, shadow danger.
+Urutan: Home · Buku Saku · Emergency · Riwayat · **Profile**. Ikon tab Profile = **foto user**
+(`SecureImage`) dalam lingkaran seukuran ikon lain (`22` aktif / `24` tidak aktif) dengan cincin
+`1.5` — putih saat aktif (di atas pill biru), `borderSoft` saat tidak aktif; tanpa foto → inisial
+`11/700` (putih di atas `primary` saat tidak aktif, `primary` di atas putih saat aktif).
 
 ### 5.11 Tab detail (collapsing tabs)
 
@@ -405,18 +409,13 @@ agenda, lihat §5.18), `BukuSaku` (`rowIcon` tiap bab) +
 `BukuSakuDetail` (`recordIcon` marker `record_display`), `molecules/HealthRecordCard` (dipakai
 `HealthMyHistory`/`HealthDashboard`/`HealthPersonnelProfile` — chip `heartbeat` jadi gradient
 health), `MemberHome` (`StatusTile` "Status Saya", `NoticeRow`
-"Pengumuman Terbaru", `TimelineRow` "Aktivitas Terbaru", chip patroli mengambang), dan hampir
-seluruh Smart Academy (`AcademyMemberHome` pendingIcon, `AcademyInstructorHome` progIcon/verifIcon,
-`AcademyCommanderOverview`+`AcademyCmdAttention` attentionIcon per-status, `AcademyCmdCompetency`
-medal, `AcademyMaterial` fileIcon, `AcademyAttemptResult` badge LULUS/TIDAK LULUS jadi gradient
-success/danger, `AcademyProgramDetail` node timeline "selesai" jadi gradient success + check).
+"Pengumuman Terbaru", `TimelineRow` "Aktivitas Terbaru", chip patroli mengambang). (Layar Smart
+Academy yang dulu ikut dikonversi sudah dipindah ke aplikasi Smart Academy terpisah, 2026-10-01.)
 `src/utils/gradientColor.ts` (`gradientForColor`) menerjemahkan satu warna flat yang sudah ada
 (dari array/lookup status→warna yang sudah dipakai lebih dulu) jadi pasangan gradient tanpa perlu
 menulis ulang tiap lookup — dipakai di `MemberHome`'s 4 baris. Tidak disentuh (out of scope): grid
 Quick Action `HealthOfficerHome`-nya sendiri sebenarnya sudah dikonversi di rollout awal;
-`molecules/EmptyState`, dan hampir semua layar
-Academy assessment/attempt (tak punya pola icon-chip flat — ikonnya inline di pill/banner, bukan
-kotak/lingkaran ber-tint terpisah) sengaja dibiarkan flat.
+`molecules/EmptyState` sengaja dibiarkan flat.
 
 ### 5.14 Latar dekoratif
 

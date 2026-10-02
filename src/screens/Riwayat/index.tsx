@@ -53,7 +53,6 @@ export default function RiwayatScreen(props: RiwayatScreenProps) {
       <ScreenBackground />
       <HomeHeader
         user={user}
-        onAvatarPress={() => navigation.navigate(ROUTES.profile)}
         onBellPress={() => navigation.navigate(ROUTES.notifications)}
       />
 

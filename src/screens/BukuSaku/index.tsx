@@ -96,7 +96,6 @@ export default function BukuSakuScreen(props: BukuSakuScreenProps) {
       <ScreenBackground />
       <HomeHeader
         user={user}
-        onAvatarPress={() => navigation.navigate(ROUTES.profile)}
         onBellPress={() => navigation.navigate(ROUTES.notifications)}
       />
 

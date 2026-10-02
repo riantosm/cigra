@@ -3,20 +3,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import AppVersionGate from '@/components/organisms/AppVersionGate';
 import MainTabNavigator from '@/navigation/MainTabNavigator';
-import AcademyTabNavigator from '@/navigation/AcademyTabNavigator';
-import AcademyProgramDetailScreen from '@/screens/Academy/AcademyProgramDetail';
-import AcademyMaterialScreen from '@/screens/Academy/AcademyMaterial';
-import AcademyAssessmentIntroScreen from '@/screens/Academy/AcademyAssessmentIntro';
-import AcademyAttemptScreen from '@/screens/Academy/AcademyAttempt';
-import AcademyAttemptResultScreen from '@/screens/Academy/AcademyAttemptResult';
-import AcademyPracticalEntryScreen from '@/screens/Academy/AcademyPracticalEntry';
-import AcademyResultDetailScreen from '@/screens/Academy/AcademyResultDetail';
-import AcademyCompetencyDetailScreen from '@/screens/Academy/AcademyCompetencyDetail';
-import AcademyInsProgramDetailScreen from '@/screens/Academy/AcademyInsProgramDetail';
-import AcademyInsVerificationDetailScreen from '@/screens/Academy/AcademyInsVerificationDetail';
-import AcademyCmdAttentionScreen from '@/screens/Academy/AcademyCmdAttention';
-import AcademyCmdProgramDetailScreen from '@/screens/Academy/AcademyCmdProgramDetail';
-import AcademyCmdCompetencyScreen from '@/screens/Academy/AcademyCmdCompetency';
 import { ROUTES } from '@/navigation/paths';
 import RequireAuth from '@/navigation/RequireAuth';
 import RequireGuest from '@/navigation/RequireGuest';
@@ -68,7 +54,6 @@ import PatrolScreen from '@/screens/Patrol';
 import PersonnelMapScreen from '@/screens/PersonnelMap';
 import PersonnelTrackingScreen from '@/screens/PersonnelTracking';
 import EditProfileScreen from '@/screens/EditProfile';
-import ProfileScreen from '@/screens/Profile';
 import RollCallAgendaCreateScreen from '@/screens/RollCall/AgendaCreate';
 import RollCallAgendaDetailScreen from '@/screens/RollCall/AgendaDetail';
 import RollCallAgendasScreen from '@/screens/RollCall/Agendas';
@@ -192,46 +177,8 @@ export default function RootNavigator() {
             </RequireAuth>
           )}
         </Stack.Screen>
-        <Stack.Screen name={ROUTES.academyRoot} component={AcademyTabNavigator} />
-        <Stack.Screen name={ROUTES.academyProgramDetail} component={AcademyProgramDetailScreen} />
-        <Stack.Screen name={ROUTES.academyMaterial} component={AcademyMaterialScreen} />
-        <Stack.Screen
-          name={ROUTES.academyAssessmentIntro}
-          component={AcademyAssessmentIntroScreen}
-        />
-        <Stack.Screen
-          name={ROUTES.academyAttempt}
-          component={AcademyAttemptScreen}
-          options={{ gestureEnabled: false }}
-        />
-        <Stack.Screen
-          name={ROUTES.academyAttemptResult}
-          component={AcademyAttemptResultScreen}
-          options={{ gestureEnabled: false }}
-        />
-        <Stack.Screen name={ROUTES.academyPracticalEntry} component={AcademyPracticalEntryScreen} />
-        <Stack.Screen name={ROUTES.academyResultDetail} component={AcademyResultDetailScreen} />
-        <Stack.Screen
-          name={ROUTES.academyCompetencyDetail}
-          component={AcademyCompetencyDetailScreen}
-        />
-        <Stack.Screen
-          name={ROUTES.academyInsProgramDetail}
-          component={AcademyInsProgramDetailScreen}
-        />
-        <Stack.Screen
-          name={ROUTES.academyInsVerificationDetail}
-          component={AcademyInsVerificationDetailScreen}
-        />
-        <Stack.Screen name={ROUTES.academyCmdAttention} component={AcademyCmdAttentionScreen} />
-        <Stack.Screen
-          name={ROUTES.academyCmdProgramDetail}
-          component={AcademyCmdProgramDetailScreen}
-        />
-        <Stack.Screen name={ROUTES.academyCmdCompetency} component={AcademyCmdCompetencyScreen} />
         <Stack.Screen name={ROUTES.catalogList} component={CatalogListScreen} />
         <Stack.Screen name={ROUTES.catalogDetail} component={CatalogDetailScreen} />
-        <Stack.Screen name={ROUTES.profile} component={ProfileScreen} />
         <Stack.Screen name={ROUTES.editProfile} component={EditProfileScreen} />
         <Stack.Screen name={ROUTES.settings} component={SettingsScreen} />
         <Stack.Screen name={ROUTES.comingSoon} component={ComingSoonScreen} />

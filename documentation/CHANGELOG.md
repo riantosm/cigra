@@ -33,6 +33,10 @@ ter-deploy (`.vercelignore`). Yang di-commit hanya berkas `.md`/`.html`.
 
 - Home anggota: "Akses Cepat" jadi **Quick Action** — tampilan kartu sama seperti Home komandan
   (4 per baris, maks 2 baris) dan kini berada di atas Kartu Anggota.
+- **Profile** kini jadi tab ke-5 di bar bawah dengan foto Anda sebagai ikonnya; ikon profil di
+  header layar dihapus.
+- Menu **Academy** dipindah ke aplikasi terpisah **Smart Academy** dan dihapus dari Smart
+  Battalion.
 
 ## v1.1.0 (versionCode 11)
 

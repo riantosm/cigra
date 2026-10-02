@@ -494,7 +494,6 @@ export default function MemberHome(props: MemberHomeProps) {
       <ScreenBackground />
       <HomeHeader
         user={user}
-        onAvatarPress={() => navigation.navigate(ROUTES.profile)}
         onBellPress={() => navigation.navigate(ROUTES.notifications)}
       />
 

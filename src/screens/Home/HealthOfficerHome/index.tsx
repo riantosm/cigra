@@ -121,7 +121,6 @@ export default function HealthOfficerHome(props: HealthOfficerHomeProps) {
       <ScreenBackground />
       <HomeHeader
         user={user}
-        onAvatarPress={() => navigation.navigate(ROUTES.profile)}
         onBellPress={() => navigation.navigate(ROUTES.notifications)}
       />
 

@@ -16,7 +16,7 @@ Dipakai oleh **semua peran** (anggota, komandan, petugas kesehatan) — tidak ad
 
 Ada 3 jalan masuk, semuanya menuju layar yang sama (`ROUTES.bukuSaku`):
 
-1. **Tab bar utama** — tab "Buku Saku" (bottom tab ke-4 dari 5: Home · Riwayat · Emergency · **Buku Saku** · Academy).
+1. **Tab bar utama** — tab "Buku Saku" (bottom tab ke-2 dari 5: Home · **Buku Saku** · Emergency · Riwayat · Profile).
 2. **Quick Action "Buku Saku"** di `CommanderHome` (grid Quick Action komandan).
 3. **Shortcut "Buku Saku"** di baris "Akses Cepat" `MemberHome`.
 

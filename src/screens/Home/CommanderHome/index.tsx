@@ -328,7 +328,6 @@ export default function CommanderHome(props: CommanderHomeProps) {
       <ScreenBackground />
       <HomeHeader
         user={user}
-        onAvatarPress={() => navigation.navigate(ROUTES.profile)}
         onBellPress={() => navigation.navigate(ROUTES.notifications)}
       />
 

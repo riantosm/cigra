@@ -1,28 +1,24 @@
-import { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { logo } from '@/assets';
 import Icon from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
-import SecureImage from '@/components/atoms/SecureImage';
 import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
-import { headerShadow, smallButtonShadow } from '@/theme/shadows';
+import { headerShadow } from '@/theme/shadows';
 import type { AuthUser } from '@/types';
-import { isDisplayablePhoto } from '@/utils/avatar';
 import { cleanValue, greetingForHour, titleCase } from '@/utils/format';
 
 export interface HomeHeaderProps {
   user: AuthUser | null;
-  onAvatarPress: () => void;
   onBellPress?: () => void;
 }
 
 // Header dashboard Home — dipakai oleh SEMUA role (CommanderHome & MemberHome) supaya identitas
-// visual di layar utama konsisten, bukan cuma khusus komandan.
+// visual di layar utama konsisten, bukan cuma khusus komandan. Tidak ada avatar → Profile di sini:
+// Profile sekarang tab ke-5 di bar bawah, ikonnya foto user (lihat CustomTabBar).
 export default function HomeHeader(props: HomeHeaderProps) {
-  const { user, onAvatarPress, onBellPress } = props;
-  const [photoFailed, setPhotoFailed] = useState(false);
+  const { user, onBellPress } = props;
   const unreadCount = useAppSelector(state => state.notifications.unreadTotal);
   const personnel = user?.personnel;
   const displayName = personnel
@@ -30,7 +26,6 @@ export default function HomeHeader(props: HomeHeaderProps) {
     : (user?.name ?? '-');
   const unitLabel = cleanValue(personnel?.current_assignment?.unit) ?? '-';
   const roleLabel = titleCase(user?.roles?.[0]) ?? 'Prajurit';
-  const photoPath = personnel?.photo;
 
   return (
     <View style={styles.header}>
@@ -61,19 +56,6 @@ export default function HomeHeader(props: HomeHeaderProps) {
               <Text style={styles.bellBadgeLabel}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
             </View>
           ) : null}
-        </PressableScale>
-        <PressableScale onPress={onAvatarPress}>
-          {isDisplayablePhoto(photoPath) && !photoFailed ? (
-            <SecureImage
-              path={photoPath}
-              style={styles.avatarImage}
-              onLoadError={() => setPhotoFailed(true)}
-            />
-          ) : (
-            <View style={styles.avatarFallback}>
-              <Text style={styles.avatarFallbackLabel}>{(personnel?.full_name ?? user?.name ?? 'U').charAt(0).toUpperCase()}</Text>
-            </View>
-          )}
         </PressableScale>
       </View>
     </View>
@@ -146,27 +128,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: colors.dangerForeground,
-  },
-  avatarImage: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    backgroundColor: colors.neutralSurface,
-  },
-  avatarFallback: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    ...smallButtonShadow,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.28,
-  },
-  avatarFallbackLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primaryForeground,
   },
 });

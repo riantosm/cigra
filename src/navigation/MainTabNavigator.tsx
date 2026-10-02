@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { CommonActions } from '@react-navigation/native';
 import { MotiView } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,10 +8,10 @@ import { ROUTES } from '@/navigation/paths';
 import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
 import CustomTabBar from '@/navigation/CustomTabBar';
 import type { MainTabParamList } from '@/navigation/types';
-import AcademyScreen from '@/screens/Academy';
 import BukuSakuScreen from '@/screens/BukuSaku';
 import EmergencyScreen from '@/screens/Emergency';
 import HomeScreen from '@/screens/Home';
+import ProfileScreen from '@/screens/Profile';
 import RiwayatScreen from '@/screens/Riwayat';
 import { colors } from '@/theme/colors';
 import { pressTransition } from '@/utils/motion';
@@ -43,20 +42,9 @@ export default function MainTabNavigator() {
         <Tab.Screen name={ROUTES.bukuSaku} component={BukuSakuScreen} options={{ title: 'Buku Saku' }} />
         <Tab.Screen name={ROUTES.emergency} component={EmergencyScreen} options={{ title: 'Emergency' }} />
         <Tab.Screen name={ROUTES.riwayat} component={RiwayatScreen} options={{ title: 'Riwayat' }} />
-        <Tab.Screen
-          name={ROUTES.academy}
-          component={AcademyScreen}
-          options={{ title: 'Academy' }}
-          // Academy bukan tab biasa — ia "sub-app" dengan bottom-tab-nya sendiri. Pola react-navigation
-          // resmi untuk "tab yang membuka layar lain": batalkan fokus tab, lalu push `AcademyRoot`
-          // (lihat AcademyTabNavigator). `AcademyScreen` sendiri hanya stub kosong yang tak pernah tampil.
-          listeners={({ navigation }) => ({
-            tabPress: event => {
-              event.preventDefault();
-              navigation.dispatch(CommonActions.navigate(ROUTES.academyRoot));
-            },
-          })}
-        />
+        {/* Ikon tab ini = foto profil user (fallback inisial) — digambar di CustomTabBar. Header
+            layar lain tidak lagi punya avatar → Profile. */}
+        <Tab.Screen name={ROUTES.profile} component={ProfileScreen} options={{ title: 'Profile' }} />
       </Tab.Navigator>
 
       {toastMessage ? (

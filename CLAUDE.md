@@ -199,7 +199,7 @@ needed (missing `.env` value).
 - **In-app logo (`src/assets/logo/`)** — `index.ts` exports `LogoIcon` via a lookup keyed by
   `Config.BRAND` (`react-native-config`): `{ sakaraguna: require('./LogoSakaraguna.png'), cigra:
   require('./LogoCigra.png') }`, falling back to `sakaraguna`. Adding a brand = adding one entry here; no
-  caller (`HomeHeader`, `AcademyHeader`, `NavBar`, `Login`, `AppBootstrap`) needs touching. The chrome around
+  caller (`HomeHeader`, `NavBar`, `Login`, `AppBootstrap`) needs touching. The chrome around
   the logo (plain enlarged `<Image>`, no card/shadow — see `DESIGN_SYSTEM.md` §5.2) is deliberately the same
   for every brand, not brand-switched.
 - **App display name (`APP_NAME` in `.env`)** — the string shown under the launcher icon and in recents.
@@ -219,110 +219,38 @@ needed (missing `.env` value).
 
 - `src/navigation/paths.ts` — `ROUTES` is the single source of truth for every route name (stack **and** tab).
 - `src/navigation/types.ts` — `RootStackParamList` (stack: Login, ForgotPassword, ChangePassword, AppBootstrap, Main,
-  CatalogList, CatalogDetail, Profile, EditProfile, Settings, ComingSoon, PersonnelMap, PersonnelTracking, Notifications,
+  CatalogList, CatalogDetail, EditProfile, Settings, ComingSoon, PersonnelMap, PersonnelTracking, Notifications,
   EmergencyList, EmergencyDetail, EmergencyContacts, Announcements, MyMovements, ActivityMovements, SendAnnouncement, AlarmSatuan, HealthDashboard, HealthPersonnelSearch,
   HealthPersonnelProfile, HealthRecordInput, HealthRecordDetail, HealthMyHistory, RollCallAgendas,
   RollCallAgendaCreate, RollCallAgendaDetail, RollCallCompanyAgendas, RollCallCompanyForm, RollCallSettings,
   RollCallSessions, RollCallSessionForm, RollCallOfficers, RollCallRepresentatives, RollCallAppoint,
   RollCallStats, Patrol, PatrolRouteDetail,
-  PatrolActive, PatrolScan, PatrolPhoto, PatrolMonitoring, PatrolMonitoringDetail, BukuSakuDetail, AcademyRoot,
-  AcademyProgramDetail, AcademyMaterial, AcademyAssessmentIntro, AcademyAttempt,
-  AcademyAttemptResult, AcademyPracticalEntry, AcademyResults, AcademyResultDetail, AcademyCompetencies,
-  AcademyCompetencyDetail, AcademyInsProgramDetail, AcademyInsVerificationDetail, AcademyCmdAttention,
-  AcademyCmdProgramDetail, AcademyCmdCompetency, Coop, CoopBillDetail, CoopReportDetail, CoopJuyars,
-  CoopJuyarAppoint) and
-  `MainTabParamList` (tabs: Home, Riwayat, Emergency, BukuSaku, Academy),
+  PatrolActive, PatrolScan, PatrolPhoto, PatrolMonitoring, PatrolMonitoringDetail, BukuSakuDetail, Coop,
+  CoopBillDetail, CoopReportDetail, CoopJuyars, CoopJuyarAppoint, …) and
+  `MainTabParamList` (tabs: Home, BukuSaku, Emergency, Riwayat, Profile). `Main`'s param is
+  `NavigatorScreenParams<MainTabParamList> | undefined`, so a root-stack screen can open a tab with
+  `navigation.navigate(ROUTES.main, { screen: ROUTES.profile })` (a bare `navigate(ROUTES.profile)` only
+  works from inside the tab navigator),
   plus typed prop helpers (`RootStackScreenProps`, `MainTabScreenProps`).
 - `src/navigation/RootNavigator.tsx` — top-level native-stack. `Login` and `ForgotPassword` are guest-only
   (wrapped in `RequireGuest`); `ChangePassword` and `Main` (renders `MainTabNavigator`) are auth-only
   (`RequireAuth` — see the forced-password-change note below for why `ChangePassword` passes
-  `skipPasswordChangeGate`); `CatalogList`, `CatalogDetail`, `Profile`, `EditProfile`, `Settings`, `ComingSoon`, and
+  `skipPasswordChangeGate`); `CatalogList`, `CatalogDetail`, `EditProfile`, `Settings`, `ComingSoon`, and
   `PersonnelMap`, `PersonnelTracking`, `Notifications`, `Announcements`, `MyMovements`, `ActivityMovements`, `EmergencyList`, `EmergencyDetail` are plain stack screens with no guard
   (reachable from within the tab navigator via a composite nav type — see the `Home`/`Profile` pattern below).
   `Settings` is a **root-stack** screen (not a tab),
-  reached from the gear icon in `Profile`'s `MainLayout` header (`right` prop). The 5th tab is `Academy`
-  (route `ROUTES.academy`, icon `'academy'` graduation-cap) — its `Tab.Screen` has a
-  `listeners={{ tabPress: e => { e.preventDefault(); navigation.dispatch(CommonActions.navigate(
-  ROUTES.academyRoot)); } }}` (canonical "tab opens another screen"). `src/screens/Academy/index.tsx` is
-  an empty `<View/>` stub for the tab slot — never shown. See "Smart Academy" below.
-- **Smart Academy** (`src/screens/Academy/*`) — modul belajar / ujian / monitoring, dari
-  `smart-academy-mobile-brief-2.md` + endpoint `/api/academy/*` (canvas "Academy v2"). Light-mode &
-  administratif per `DESIGN_SYSTEM.md` (bukan gaya dark-hero Academy lama — **modul Academy TKD/Psikologi/
-  Jasmani/Riwayat + nested bottom-tab lama dihapus total 2026-09-09**). Pola RollCall/Patrol/Disposisi:
-  **tanpa Redux slice**, state lokal per layar.
-  - **Entry**: tab "Academy" bar utama → `academyRoot` (plain root-stack, no guard) yang me-render
-    **`src/navigation/AcademyTabNavigator.tsx`** — `createBottomTabNavigator` yang **set tab-nya
-    menyesuaikan peran** (`academyPovFor(user.roles)` di `src/screens/Academy/shared/roles.ts`):
-    - Anggota → **Home · Program Saya · Hasil · Kemampuan**
-    - Instruktur (`academy_instructor`) → **Home · Program Saya · Verifikasi**
-    - Komandan (`komandan`) → **Overview · Program**
-    (Tab "Penilaian" instruktur & "Anggota" komandan **dihapus 2026-09-10** — kontrak backend
-    tidak punya endpoint daftar peserta per program; instruktur menilai lewat antrean Verifikasi.)
-    Nama role instruktur = **`academy_instructor`** (`shared/roles.ts` `ACADEMY_INSTRUCTOR_ROLE` —
-    dikonfirmasi ke tim backend, versi Inggris dari "instruktur_akademik"). Chrome tetap
-    `src/screens/Academy/AcademyHeader` (logo + "Smart Academy" + subtitle peran + avatar → Profile,
-    tanpa back). Bar bawah `src/navigation/AcademyTabBar.tsx` — style **identik `CustomTabBar`**
-    (§5.10) tapi 2–4 item setara tanpa tombol Emergency. `AcademyTabParamList` di `navigation/types.ts`
-    (`academyRoot` param = `NavigatorScreenParams<AcademyTabParamList>` untuk nested-navigate). Keluar
-    Academy = back Android dari tab pertama (pop `academyRoot` → Main; bottom-tabs bawa balik ke tab
-    pertama dulu dari tab lain).
-  - **Tab "Program"** dipakai 3 POV (`my` / `instructor` / `commander`) lewat satu komponen
-    `AcademyProgramsTab` `{pov}` — `GET /academy/programs?type=…`. Kartu membuka detail program per POV
-    (read-only untuk instruktur & komandan). POV Anggota: kartu `ProgramCard` + filter status peserta
-    di klien.
-  - **Layar TAB** (`AcademyMemberHome` / `InstructorHome` / `CommanderOverview` / `AcademyProgramsTab` /
-    `AcademyResults` / `AcademyCompetencies` / `AcademyInsVerifications`) pakai scaffold
-    **`shared/AcademyTabScreen`** (TANPA header — chrome disediakan navigator; ScrollView + state
-    loading/error/refresh, `paddingBottom` besar untuk tab bar). Navigasi via
-    `useNavigation<AcademyTabNav>()` (`shared/types.ts` — composite tab + root-stack).
-  - **Layar DETAIL / stack** (ProgramDetail, Material, Attempt, Result, PracticalEntry, Ins*, Cmd*,
-    CompetencyDetail, ResultDetail — di-push di atas tab) pakai scaffold **`shared/AcademyScreen`**
-    (`MainLayout variant="canvas"` + header `[← judul]` + footer pinned). `shared/ProgramCard` =
-    kartu program POV Anggota.
-  - **Tipe / service / helper**: `src/types/academy.types.ts` (barrel — **hanya field yang benar-benar
-    ada di response**, tak ada field spekulatif), `src/services/api/academy.service.ts` (satu fungsi per
-    endpoint kontrak; `normalizeMeta` gaya disposition), `src/utils/academy.ts` (`programStatusBadge` /
-    `resultStatusBadge` / `verificationStatusBadge` / `competencyStatusBadge` / `componentStatusBadge` /
-    `attemptRemainingSeconds` (basis `server_time`, bukan jam device) / `formatCountdown` / `formatScore` /
-    `formatPercent` / `daysUntilLabel`).
-  - **Endpoint = persis kontrak backend (dikonfirmasi 2026-09-09), diselaraskan ke kode 2026-09-10.**
-    Daftar lengkap di header `academy.service.ts`. **Tidak ada** endpoint daftar peserta per program
-    atau drilldown personel komandan → layar/tab terkait dihapus. `POST /academy/instructor/practical-results`
-    ada di kontrak & di service (`submitAcademyInstructorScoreApi`) tapi **belum dipakai layar** (tak ada
-    pencarian personel di modul academy).
-  - **Layar Anggota**: AcademyMemberHome (`/academy/me/summary` `member`) · AcademyProgramsTab `{pov:'my'}` ·
-    AcademyProgramDetail (kurikulum timeline; centang & progress dari `components[].is_completed`, badge
-    kaya dari `components[].status`; **tak ada lock/prasyarat**; komponen → Materi/Assessment/Praktik) ·
-    AcademyMaterial (`GET /academy/materials/{id}`; `content` HTML via `RichTextContent` + kartu tautan
-    **menampilkan URL** bila ada `file_url` / `external_url`; "Tandai Sudah Dipelajari" →
-    `POST /academy/materials/{id}/complete`) · AcademyAssessmentIntro (`GET /academy/assessments/{id}` —
-    menit + passing + kuota attempt; tombol "Mulai Assessment") → AcademyAttempt (**full-screen**;
-    `POST /academy/assessments/{id}/attempts` → `{attempt_id}`, lalu `GET /academy/attempts/{id}`;
-    timer basis `server_time` + auto-submit; `PUT .../responses/{q}` autosave; `POST .../submit`
-    → replace Result) · AcademyAttemptResult (`GET .../result` → `passing_status` LULUS/TIDAK LULUS +
-    nilai + benar/salah; **satu layout untuk semua tipe assessment** — kontrak tak membedakan) ·
-    AcademyPracticalEntry (`GET /academy/practical-assessments/{id}` → `metrics[]` dinamis; anggota
-    selalu bisa input mandiri selama belum kirim / ditolak — backend yang memutuskan final;
-    `POST .../results` `{metric_values, notes}`) · AcademyResults
-    (`GET /academy/me/results`) · AcademyResultDetail (`GET /academy/programs/{id}` `participant`) ·
-    AcademyCompetencies / AcademyCompetencyDetail (`GET /academy/me/competencies` — tanpa riwayat skor).
-  - **Layar Instruktur**: AcademyInstructorHome (`instructor_pending_verifications` + `GET /academy/programs
-    ?type=instructor`; hanya "N program ditangani" + "N menunggu verifikasi" + 3 program terbaru) ·
-    AcademyInsProgramDetail (`GET /academy/programs/{id}` — info program + kurikulum read-only + tombol ke
-    antrean Verifikasi) · AcademyInsVerifications (`GET /academy/instructor/pending-verifications`) ·
-    AcademyInsVerificationDetail (bawa item lewat params; [Verifikasi]/[Tolak] via `BottomSheet` →
-    `POST /academy/instructor/verify-result/{id}` `{action:'verify'|'reject', score?, rejection_reason?,
-    notes?}` — koreksi = verify dengan score disesuaikan; instruktur menetapkan nilai resmi di sini).
-  - **Layar Komandan**: AcademyCommanderOverview (`GET /academy/commander/overview` — KPI agregasi +
-    `top_competencies`; angka "Perlu Perhatian" dari `me/summary` `commander_overview`
-    `not_completed + failed + pending_verifications`) · AcademyCmdAttention (3 baris dari
-    `me/summary.commander_overview`) · AcademyCmdProgramDetail (`GET /academy/programs/{id}` — info program +
-    kurikulum read-only; **tak ada rekap peserta** karena tak ada endpointnya) · AcademyCmdCompetency
-    (dari `commander/overview.top_competencies` — **tak ada** endpoint `commander/competencies` terpisah).
-  - Angka contoh di artboard **tidak** di-hardcode; layar menampilkan data API apa adanya + empty state.
-  - Tidak ada dependency native baru → perubahan JS-only. Token `academy*` lama di `colors.ts` +
-    `GradientButton` tone `'akademik'` + `StatusModal` icon `'clock'` **dibiarkan** (tidak dipakai layar baru
-    tapi tak merusak; `academyWarnSurface`/`academyAkademik*` masih dipakai `DispositionDetail`/`GradientButton`).
+  reached from the gear icon in `Profile`'s `MainLayout` header (`right` prop).
+- **Profile = 5th bottom tab** (since 2026-10-01, replacing the old "Academy" tab — the Academy module was
+  moved out to the separate **Smart Academy** app, sibling repo `../CigraSmartacademyApps`; nothing
+  academy-related remains here). `src/screens/Profile/index.tsx` is a tab screen: composite nav type
+  (`MainTabScreenProps<'Profile'>` + root-stack) to push `EditProfile` / `Settings` / `MeFamilyDetail`, no
+  back button, `useTabScreenBottomPadding()` for the absolute tab bar, and — because tab screens stay
+  mounted — data reloads on **focus** (`useFocusEffect`: location silently after the first load +
+  `refreshUser()`), not just on mount. Its tab icon is the **user's photo**: `ProfileTabIcon` in
+  `CustomTabBar.tsx` (`SecureImage` of `user.personnel.photo` gated by `isDisplayablePhoto`, ring white
+  when focused / `borderSoft` when not, 22/24 px like the other icons, initials fallback; static per-size
+  photo styles because FastImage only accepts static numeric styles). Consequently **`HomeHeader` has no
+  avatar any more** (prop `onAvatarPress` removed) — only logo + greeting + bell.
 - A tab screen that needs to push a root-stack screen (e.g. `Profile` → `Settings`, `Home` → `CatalogList`)
   types its `useNavigation()` call as
   `CompositeNavigationProp<MainTabScreenProps<'X'>['navigation'], NativeStackNavigationProp<RootStackParamList>>`
@@ -600,10 +528,8 @@ needed (missing `.env` value).
   toggle without either a permissions library or an actual location fetch.
 - `src/hooks/useDoubleBackToExit.ts` — Android-only hardware-back-button guard for stack-root screens (`Login`,
   `Home`, `AppBootstrap`, `ChangePassword`) that would otherwise exit the app on a single back press with no
-  confirmation: first press shows a `ToastAndroid` message, a second press within 2s actually exits. Optional
-  2nd arg `onConfirm` — when given, the 2nd press calls it instead of `BackHandler.exitApp()` (Academy's
-  Beranda passes `() => navigation.goBack()` so "keluar" pops back to the main app, not closes the app; message
-  "Tekan sekali lagi untuk keluar dari Academy"). Uses `useFocusEffect` so it only intercepts back presses
+  confirmation: first press shows a `ToastAndroid` message, a second press within 2s actually exits. Uses
+  `useFocusEffect` so it only intercepts back presses
   while that specific screen is focused. No-op on iOS (no hardware back button there).
 - `src/screens/Home/index.tsx` — besides the welcome copy, this screen owns a **forced** location gate: on
   mount (and again whenever `AppState` returns to `'active'`, e.g. after the user backgrounds the app to
@@ -698,8 +624,8 @@ error, or `success: false` in a 200) is treated as an unrecoverable failure → 
   spurious logout the next time the app is opened.
 - "Check session on open" is implemented by dispatching the existing `refreshUser()` thunk (`authSlice.ts`,
   calls `getMeApi()`) at `RootNavigator`'s startup effect and in `Home`'s mount/`AppState`-active effects
-  (Home is otherwise the only screen that never calls an API). `Profile` already calls an API on mount so it's
-  covered for free. No other screen needs special-casing — any screen calling `axiosInstance` gets refresh-and-
+  (Home is otherwise the only screen that never calls an API). The `Profile` tab also dispatches it each time
+  it regains focus. No other screen needs special-casing — any screen calling `axiosInstance` gets refresh-and-
   retry automatically; add a `refreshUser()`-style dispatch only if a new screen otherwise never hits the API.
 - Deliberately no proactive/timer-based refresh using `expires_in` — only reactive-on-401 plus the mount-time
   checks above.
@@ -1328,7 +1254,7 @@ opening `QuickActionSheet`; items: Buku Saku, Patroli, **Apel** (only for role `
 — see "Kekuatan Apel"), Disposisi, **Koperasi** (only when the coop overview isn't 403), Pengumuman →
 `ROUTES.announcements`, Kontak Darurat; gradients match the same item on CommanderHome), the **Kartu Anggota**
 (`src/components/organisms/MemberIdCard`), "Status Saya"
-(horizontal-scroll `StatusTile` row, "Lihat Detail" → `ROUTES.profile`), "Aset Saya" (two `AssetCard`s,
+(horizontal-scroll `StatusTile` row), "Aset Saya" (two `AssetCard`s,
 "Lihat Semua" → `ComingSoon`), **"Keluarga (Persit)"** (only when `user.family` is non-empty), "Aktivitas
 Terbaru" (`TimelineRow` list), "Pengumuman Terbaru" (`NoticeRow`
 list, "Lihat Semua" → `ROUTES.announcements`). (The old bottom "Akses Cepat" `ShortcutButton` row is

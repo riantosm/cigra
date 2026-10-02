@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
@@ -6,18 +7,57 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@/components/atoms/Icon';
 import type { IconName } from '@/components/atoms/Icon';
 import PressableScale from '@/components/atoms/PressableScale';
+import SecureImage from '@/components/atoms/SecureImage';
 import EmergencyTabButton from '@/components/organisms/EmergencyTabButton';
 import { ROUTES } from '@/navigation/paths';
 import { TAB_BAR_HEIGHT } from '@/navigation/tabBar';
+import { useAppSelector } from '@/store/hooks';
 import { colors } from '@/theme/colors';
 import { tabBarShadow } from '@/theme/shadows';
+import { isDisplayablePhoto } from '@/utils/avatar';
+import { cleanValue } from '@/utils/format';
 
 const iconByRoute: Partial<Record<string, IconName>> = {
   [ROUTES.home]: 'home',
   [ROUTES.riwayat]: 'history',
   [ROUTES.bukuSaku]: 'handbook',
-  [ROUTES.academy]: 'academy',
 };
+
+// Ikon tab Profile = foto user (fallback inisial) dalam lingkaran seukuran ikon tab lain — cincin
+// putih saat aktif (di atas pill biru), cincin lembut saat tidak aktif. Menggantikan avatar di
+// header layar (HomeHeader sudah tidak punya avatar → Profile).
+function ProfileTabIcon(props: { focused: boolean }) {
+  const { focused } = props;
+  const user = useAppSelector(state => state.auth.user);
+  const photoPath = user?.personnel?.photo;
+  const [failedPath, setFailedPath] = useState<string | null>(null);
+  const initial = (cleanValue(user?.personnel?.full_name) ?? cleanValue(user?.name) ?? 'U')
+    .charAt(0)
+    .toUpperCase();
+  const showPhoto = isDisplayablePhoto(photoPath) && failedPath !== photoPath;
+
+  return (
+    <View
+      style={[
+        styles.avatar,
+        focused ? styles.avatarFocused : styles.avatarIdle,
+        !showPhoto && (focused ? styles.avatarInitialFocused : styles.avatarInitialIdle),
+      ]}>
+      {showPhoto ? (
+        <SecureImage
+          path={photoPath}
+          // FastImage hanya menerima style statis bernilai angka — satu style per ukuran.
+          style={focused ? styles.avatarPhotoFocused : styles.avatarPhotoIdle}
+          onLoadError={() => setFailedPath(photoPath ?? null)}
+        />
+      ) : (
+        <Text style={[styles.avatarInitial, focused && styles.avatarInitialTextFocused]}>
+          {initial}
+        </Text>
+      )}
+    </View>
+  );
+}
 
 export interface CustomTabBarProps extends BottomTabBarProps {
   // Pesan "ketuk N kali lagi" dari EmergencyTabButton — di-render sebagai sibling di MainTabNavigator
@@ -93,7 +133,11 @@ export default function CustomTabBar(props: CustomTabBarProps) {
                 <Rect width="100%" height="100%" rx={26} ry={26} fill="url(#tabPill)" />
               </Svg>
             ) : null}
-            {iconName ? <Icon name={iconName} size={focused ? 22 : 24} color={tint} /> : null}
+            {route.name === ROUTES.profile ? (
+              <ProfileTabIcon focused={focused} />
+            ) : iconName ? (
+              <Icon name={iconName} size={focused ? 22 : 24} color={tint} />
+            ) : null}
             <Text
               style={[styles.label, { color: tint }, focused && styles.labelActive]}
               numberOfLines={1}>
@@ -151,5 +195,51 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     fontWeight: '700',
+  },
+  // Lingkaran avatar tab Profile — ukuran sama dengan ikon tab lain (22 aktif / 24 tidak aktif).
+  avatar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    backgroundColor: colors.neutralSurface,
+  },
+  avatarFocused: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderColor: colors.primaryForeground,
+  },
+  avatarIdle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderColor: colors.borderSoft,
+  },
+  // Ukuran foto = lingkaran dikurangi cincin (2 × 1.5).
+  avatarPhotoFocused: {
+    width: 19,
+    height: 19,
+    borderRadius: 9.5,
+  },
+  avatarPhotoIdle: {
+    width: 21,
+    height: 21,
+    borderRadius: 10.5,
+  },
+  avatarInitialIdle: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  avatarInitialFocused: {
+    backgroundColor: colors.primaryForeground,
+  },
+  avatarInitial: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primaryForeground,
+  },
+  avatarInitialTextFocused: {
+    color: colors.primary,
   },
 });

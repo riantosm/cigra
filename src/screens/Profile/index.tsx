@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MotiView } from 'moti';
 
 import Badge from '@/components/atoms/Badge';
@@ -15,8 +18,9 @@ import SectionCard from '@/components/molecules/SectionCard';
 import StatusModal from '@/components/organisms/StatusModal';
 import type { StatusModalAction, StatusModalVariant } from '@/components/organisms/StatusModal';
 import MainLayout from '@/components/templates/MainLayout';
+import { useTabScreenBottomPadding } from '@/hooks/useTabScreenBottomPadding';
 import { ROUTES } from '@/navigation/paths';
-import type { RootStackScreenProps } from '@/navigation/types';
+import type { MainTabScreenProps, RootStackParamList } from '@/navigation/types';
 import { getMyLocationApi, sendLocationApi } from '@/services/api/location.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
@@ -28,7 +32,16 @@ import { extractErrorMessage, formatBirth, formatDateShort, formatDateTime, gend
 import { contentEnterTransition } from '@/utils/motion';
 import { getCurrentCoordinates, LocationUnavailableError, openAppSettings, openLocationSettings } from '@/utils/location';
 
-export type ProfileScreenProps = RootStackScreenProps<typeof ROUTES.profile>;
+// Tab ke-5 bar bawah (bukan lagi root-stack) — composite nav supaya tetap bisa push EditProfile /
+// Settings / MeFamilyDetail yang ada di root-stack.
+type ProfileNavigationProp = CompositeNavigationProp<
+  MainTabScreenProps<'Profile'>['navigation'],
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
+export interface ProfileScreenProps {
+  navigation: ProfileNavigationProp;
+}
 
 interface StatusModalState {
   visible: boolean;
@@ -54,6 +67,7 @@ export default function ProfileScreen(props: ProfileScreenProps) {
   const { navigation } = props;
   const dispatch = useAppDispatch();
   const user = useAppSelector(state => state.auth.user);
+  const bottomPadding = useTabScreenBottomPadding();
   const [myLocation, setMyLocation] = useState<MyLocationResult | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
@@ -70,8 +84,10 @@ export default function ProfileScreen(props: ProfileScreenProps) {
     setModal(closedModalState());
   }
 
-  const loadLocation = useCallback(async () => {
-    setIsLoadingLocation(true);
+  // `silent` = refresh di belakang tanpa mengganti isi kartu dengan "Memuat posisi..." (dipakai
+  // saat tab dibuka lagi — data lama tetap tampil sampai yang baru datang).
+  const loadLocation = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingLocation(true);
     try {
       const result = await getMyLocationApi();
       setMyLocation(result);
@@ -82,9 +98,16 @@ export default function ProfileScreen(props: ProfileScreenProps) {
     }
   }, []);
 
-  useEffect(() => {
-    loadLocation();
-  }, [loadLocation]);
+  // Tab tetap ter-mount antar perpindahan tab, jadi muat ulang tiap tab ini difokuskan (dulu cukup
+  // saat mount karena Profile selalu di-push baru). Juga validasi sesi seperti sebelumnya.
+  const hasLoadedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      loadLocation(hasLoadedRef.current);
+      if (hasLoadedRef.current) dispatch(refreshUser());
+      hasLoadedRef.current = true;
+    }, [dispatch, loadLocation]),
+  );
 
   async function handleRefresh() {
     setIsRefreshing(true);
@@ -141,7 +164,6 @@ export default function ProfileScreen(props: ProfileScreenProps) {
       title="Profile"
       subtitle="Data akun & identitas"
       variant="canvas"
-      onBack={() => navigation.goBack()}
       right={
         <View style={styles.headerActions}>
           <PressableScale
@@ -164,7 +186,7 @@ export default function ProfileScreen(props: ProfileScreenProps) {
       }>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }>
@@ -345,7 +367,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 96,
     paddingTop: 24,
   },
   card: {

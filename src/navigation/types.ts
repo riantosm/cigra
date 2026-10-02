@@ -4,8 +4,6 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { ROUTES } from '@/navigation/paths';
 import type {
-  AcademyVerificationItem,
-  AcademyProgramPov,
   HandbookChapter,
   HealthRecordDetail,
   PatrolMonitoringSession,
@@ -33,25 +31,11 @@ export type RootStackParamList = {
   [ROUTES.forgotPassword]: undefined;
   [ROUTES.changePassword]: undefined;
   [ROUTES.appBootstrap]: undefined;
-  [ROUTES.main]: undefined;
-  // --- Smart Academy --- (`academyRoot` = bottom-tab navigator per peran; layar di bawah = root-stack)
-  [ROUTES.academyRoot]: NavigatorScreenParams<AcademyTabParamList> | undefined;
-  [ROUTES.academyProgramDetail]: { programId: number; pov?: AcademyProgramPov };
-  [ROUTES.academyMaterial]: { programId: number; componentId: number; materialId?: number; title?: string };
-  [ROUTES.academyAssessmentIntro]: { assessmentId: number; programId: number; title?: string };
-  [ROUTES.academyAttempt]: { attemptId: number; assessmentId: number; programId: number };
-  [ROUTES.academyAttemptResult]: { attemptId: number; programId?: number };
-  [ROUTES.academyPracticalEntry]: { practicalId: number; programId: number; title?: string };
-  [ROUTES.academyResultDetail]: { programId: number; title?: string };
-  [ROUTES.academyCompetencyDetail]: { competencyId: number; name?: string };
-  [ROUTES.academyInsProgramDetail]: { programId: number; title?: string };
-  [ROUTES.academyInsVerificationDetail]: { item: AcademyVerificationItem };
-  [ROUTES.academyCmdAttention]: undefined;
-  [ROUTES.academyCmdProgramDetail]: { programId: number; title?: string };
-  [ROUTES.academyCmdCompetency]: undefined;
+  // Tab bawah (Home / Buku Saku / Emergency / Riwayat / Profile) — param untuk nested-navigate
+  // ke tab tertentu dari layar root-stack, mis. `navigate(ROUTES.main, { screen: ROUTES.profile })`.
+  [ROUTES.main]: NavigatorScreenParams<MainTabParamList> | undefined;
   [ROUTES.catalogList]: { resource: CatalogResourceKey };
   [ROUTES.catalogDetail]: { resource: CatalogResourceKey; id: string; initialTab?: string };
-  [ROUTES.profile]: undefined;
   [ROUTES.editProfile]: undefined;
   [ROUTES.settings]: undefined;
   [ROUTES.comingSoon]: { title: string };
@@ -175,16 +159,7 @@ export type MainTabParamList = {
   [ROUTES.riwayat]: undefined;
   [ROUTES.emergency]: undefined;
   [ROUTES.bukuSaku]: undefined;
-  [ROUTES.academy]: undefined;
-};
-
-// Tab internal Smart Academy — subset yang dirender tergantung peran (AcademyTabNavigator).
-export type AcademyTabParamList = {
-  [ROUTES.academyTabHome]: undefined;
-  [ROUTES.academyTabPrograms]: undefined;
-  [ROUTES.academyTabResults]: undefined;
-  [ROUTES.academyTabCompetencies]: undefined;
-  [ROUTES.academyTabVerifications]: undefined;
+  [ROUTES.profile]: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
@@ -192,11 +167,6 @@ export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
 
 export type MainTabScreenProps<RouteName extends keyof MainTabParamList> = BottomTabScreenProps<
   MainTabParamList,
-  RouteName
->;
-
-export type AcademyTabScreenProps<RouteName extends keyof AcademyTabParamList> = BottomTabScreenProps<
-  AcademyTabParamList,
   RouteName
 >;
 

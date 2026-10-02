@@ -9,33 +9,7 @@ export const ROUTES = {
   emergency: 'Emergency',
   bukuSaku: 'BukuSaku',
   bukuSakuDetail: 'BukuSakuDetail',
-  academy: 'Academy',
-  // Smart Academy = "sub-app" sendiri: tab "Academy" di bar utama push root-stack screen
-  // `academyRoot`. Isi `academyRoot` menyesuaikan peran user (Anggota / Instruktur / Komandan)
-  // — semua layar turunannya di bawah ini adalah root-stack biasa (pola sama seperti Patroli /
-  // Disposisi), dijangkau lewat nav internal (SegmentedControl) di layar home masing-masing POV.
-  academyRoot: 'AcademyRoot',
-  // Tab dalam Smart Academy (bottom-tab per peran — lihat AcademyTabNavigator)
-  academyTabHome: 'AcademyTabHome',
-  academyTabPrograms: 'AcademyTabPrograms',
-  academyTabResults: 'AcademyTabResults',
-  academyTabCompetencies: 'AcademyTabCompetencies',
-  academyTabVerifications: 'AcademyTabVerifications',
-  // Layar detail (root-stack, di atas tab)
-  academyProgramDetail: 'AcademyProgramDetail',
-  academyMaterial: 'AcademyMaterial',
-  academyAssessmentIntro: 'AcademyAssessmentIntro',
-  academyAttempt: 'AcademyAttempt',
-  academyAttemptResult: 'AcademyAttemptResult',
-  academyPracticalEntry: 'AcademyPracticalEntry',
-  academyResultDetail: 'AcademyResultDetail',
-  academyCompetencyDetail: 'AcademyCompetencyDetail',
-  academyInsProgramDetail: 'AcademyInsProgramDetail',
-  academyInsVerificationDetail: 'AcademyInsVerificationDetail',
-  // Komandan
-  academyCmdAttention: 'AcademyCmdAttention',
-  academyCmdProgramDetail: 'AcademyCmdProgramDetail',
-  academyCmdCompetency: 'AcademyCmdCompetency',
+  // Tab ke-5 bar bawah (ikonnya foto user — lihat CustomTabBar).
   profile: 'Profile',
   editProfile: 'EditProfile',
   catalogList: 'CatalogList',

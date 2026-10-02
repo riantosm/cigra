@@ -44,7 +44,6 @@ export type IconName =
   | 'clock'
   | 'bar-chart'
   | 'grid'
-  | 'academy'
   | 'brain'
   | 'bulb'
   | 'heart'
@@ -160,7 +159,6 @@ const pathByName: Record<IconName, string> = {
   clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 6v6l4 2',
   'bar-chart': 'M4 20V10M12 20V4M20 20v-7',
   grid: 'M4 4h7v7H4Z M13 4h7v7h-7Z M4 13h7v7H4Z M13 13h7v7h-7Z',
-  academy: 'M2 9l10-4 10 4-10 4L2 9ZM6 11v5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5M22 9v5',
   brain:
     'M12 5.5a3 3 0 0 0-5.9-.7A2.6 2.6 0 0 0 3.6 8 2.6 2.6 0 0 0 4 13a2.6 2.6 0 0 0 2.5 4 2.7 2.7 0 0 0 5.5-.6V5.5ZM12 5.5a3 3 0 0 1 5.9-.7A2.6 2.6 0 0 1 20.4 8 2.6 2.6 0 0 1 20 13a2.6 2.6 0 0 1-2.5 4 2.7 2.7 0 0 1-5.5-.6',
   play: 'M7 4l13 8-13 8V4Z',
