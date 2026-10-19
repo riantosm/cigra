@@ -1,6 +1,9 @@
 import { Linking, PermissionsAndroid, Platform } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 
+import notifee, { AuthorizationStatus } from '@notifee/react-native';
+
+import { locationPermission } from '@/native/locationPermission';
 import { locationTracking } from '@/native/locationTracking';
 
 export interface Coordinates {
@@ -104,7 +107,7 @@ export async function getCurrentCoordinates(options: GetCurrentCoordinatesOption
 const TRACKED_FIX_MAX_AGE_MS = 60_000;
 const TRACKED_FIX_MAX_ACCURACY_M = 50;
 
-// Fix terakhir dari foreground service pelacakan (LocationForegroundService.kt), HANYA kalau
+// Fix terakhir dari pelacakan native (LocationForegroundService.kt / iOS LocationTrackingModule.m), HANYA kalau
 // cukup segar (<= 1 menit) dan akurat (<= 50 m) untuk dipakai sinyal darurat — null kalau tidak
 // ada / tidak memenuhi, supaya pemanggil jatuh ke getCurrentCoordinates(). Fix tanpa nilai akurasi
 // dianggap tidak layak. Batas ini sengaja ketat: koordinat darurat yang salah lebih berbahaya
@@ -124,9 +127,12 @@ export async function getRecentTrackedCoordinates(): Promise<Coordinates | null>
 
 // Cek status izin lokasi tanpa memicu dialog permintaan izin (beda dari ensureAndroidPermission
 // di atas) — dipakai untuk menampilkan status di UI (mis. panel pengaturan di Profile).
-// iOS tidak punya API cek non-invasive setara tanpa library tambahan, jadi dianggap selalu aktif
-// sama seperti fallback iOS lain di file ini (lihat ensureBackgroundTrackingPermissions).
+// iOS lewat modul native LocationPermissionModule (CLLocationManager.authorizationStatus).
 export async function isLocationPermissionGranted(): Promise<boolean> {
+  if (Platform.OS === 'ios') {
+    const status = await locationPermission.getStatus();
+    return status === 'whenInUse' || status === 'always';
+  }
   if (Platform.OS !== 'android') return true;
   return PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
 }
@@ -134,6 +140,7 @@ export async function isLocationPermissionGranted(): Promise<boolean> {
 // Cek izin lokasi latar belakang ("Izinkan sepanjang waktu") tanpa memicu dialog. Android < 10
 // tidak punya izin terpisah (izin foreground sudah mencakup latar belakang).
 export async function isBackgroundLocationPermissionGranted(): Promise<boolean> {
+  if (Platform.OS === 'ios') return (await locationPermission.getStatus()) === 'always';
   if (Platform.OS !== 'android') return true;
   if (Platform.Version < 29 || !PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION) {
     return isLocationPermissionGranted();
@@ -144,6 +151,7 @@ export async function isBackgroundLocationPermissionGranted(): Promise<boolean> 
 // Status toggle layanan lokasi (GPS/Network provider) di level OS — beda dari izin runtime di
 // atas (bisa saja izin sudah diberikan tapi GPS-nya sendiri masih dimatikan user).
 export async function isGpsEnabled(): Promise<boolean> {
+  if (Platform.OS === 'ios') return locationPermission.isLocationServicesEnabled();
   return locationTracking.isLocationServicesEnabled();
 }
 
@@ -178,8 +186,16 @@ function toRequestResult(result: string): PermissionRequestResult {
   return 'denied';
 }
 
-// Izin notifikasi (Android 13+). Tidak pernah melempar — best-effort.
+// Izin notifikasi (Android 13+, iOS lewat notifee). Tidak pernah melempar — best-effort.
 export async function requestNotificationPermission(): Promise<boolean> {
+  if (Platform.OS === 'ios') {
+    try {
+      const settings = await notifee.requestPermission();
+      return settings.authorizationStatus >= AuthorizationStatus.AUTHORIZED;
+    } catch {
+      return false;
+    }
+  }
   if (Platform.OS !== 'android') return true;
   if (Platform.Version < 33 || !PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS) return true;
   const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS, {
@@ -194,6 +210,12 @@ export async function requestNotificationPermission(): Promise<boolean> {
 // Izin lokasi foreground (FINE_LOCATION) versi tidak-melempar — `blocked` = OS tidak mau
 // menampilkan dialog lagi ("jangan tanya lagi"), jadi pengguna harus lewat Pengaturan.
 export async function requestForegroundLocationPermission(): Promise<PermissionRequestResult> {
+  if (Platform.OS === 'ios') {
+    const status = await locationPermission.request('whenInUse');
+    if (status === 'whenInUse' || status === 'always') return 'granted';
+    // iOS tidak pernah menampilkan dialog lagi setelah ditolak — hanya lewat Pengaturan.
+    return status === 'notDetermined' ? 'denied' : 'blocked';
+  }
   if (Platform.OS !== 'android') return 'granted';
   const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
     title: 'Izin Lokasi',
@@ -207,7 +229,13 @@ export async function requestForegroundLocationPermission(): Promise<PermissionR
 // Izin lokasi latar belakang ("Izinkan sepanjang waktu"). Android 10+ menolaknya kalau diminta
 // bersamaan dengan izin foreground, jadi WAJIB diminta terpisah SETELAH izin foreground didapat.
 // Di Android 11+ permintaan ini biasanya melempar pengguna ke halaman Pengaturan izin aplikasi.
+// iOS: dialog "Ubah ke Selalu Izinkan" hanya muncul SEKALI seumur instalasi; setelah itu (atau
+// kalau ditolak) "Selalu" hanya bisa dipilih lewat Pengaturan → 'blocked'.
 export async function requestBackgroundLocationPermission(): Promise<PermissionRequestResult> {
+  if (Platform.OS === 'ios') {
+    const status = await locationPermission.request('always');
+    return status === 'always' ? 'granted' : 'blocked';
+  }
   if (Platform.OS !== 'android') return 'granted';
   if (Platform.Version < 29 || !PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION) return 'granted';
   const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION, {

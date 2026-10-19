@@ -6,7 +6,8 @@ Academy sudah dipindah ke aplikasi terpisah, Smart Academy (repo `CigraSmartacad
 # Panduan Developer
 
 Project ini memakai React Native CLI murni (bukan Expo) + TypeScript. Target utamanya **Android**;
-iOS belum bisa di-build (lihat [iOS](#ios-belum-bisa-di-build)). Dokumen lain yang perlu dibaca:
+iOS sudah bisa di-build dan jalan di simulator, tapi belum diuji penuh (lihat [iOS](#ios)). Dokumen lain
+yang perlu dibaca:
 
 - [`CLAUDE.md`](CLAUDE.md): arsitektur dan konvensi lengkap per fitur. Baca dulu sebelum mengubah kode.
 - [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md): token warna, komponen, dan pola layar.
@@ -61,7 +62,8 @@ APK debug tidak berisi kode JS; kodenya diambil dari Metro. Jadi Metro harus jal
 JS langsung terlihat lewat Fast Refresh. Siapkan emulator (Android Studio → Device Manager) atau HP
 dengan USB debugging aktif, lalu pastikan device muncul di `adb devices`.
 
-1. Terminal 1, jalankan Metro:
+1. Terminal 1, jalankan Metro. Port-nya **8001**, bukan 8081 bawaan RN, supaya bisa jalan bersamaan
+   dengan Smart Academy (8002):
    ```bash
    npm start
    ```
@@ -75,7 +77,7 @@ dengan USB debugging aktif, lalu pastikan device muncul di `adb devices`.
    ```
 4. Hubungkan device ke Metro (wajib untuk HP fisik; tidak masalah dijalankan untuk emulator):
    ```bash
-   adb reverse tcp:8081 tcp:8081
+   adb reverse tcp:8001 tcp:8001
    ```
 5. Buka app. Contoh di bawah untuk brand `sakaraguna`; sesuaikan applicationId dengan brand aktif.
    ```bash
@@ -169,28 +171,54 @@ Catatan penting:
 7. Perbarui data `GET /app-version` di backend (`latest_version`, `latest_build` = versionCode baru,
    `download_url`) supaya app versi lama diminta update.
 
-## iOS (belum bisa di-build)
+## iOS
 
-iOS belum pernah jadi target uji, dan saat ini **belum bisa di-build**:
+iOS sudah bisa di-build dan dijalankan di simulator (dicek 2026-10-19, Xcode 27 / iOS 27.1 Simulator: app
+terbuka sampai layar Login). Fitur lain belum diuji di iOS. Yang masih kurang:
 
-- `pod install` gagal dengan error static Swift library `FirebaseCoreInternal` / `GoogleUtilities`
-  (perlu diperbaiki di `ios/Podfile`).
-- Bundle id, ikon, nama app, dan `GoogleService-Info.plist` belum ikut sistem brand (bundle id masih
-  hardcode `com.cigrasmartbattalionapps`).
+- Belum ada `GoogleService-Info.plist`, jadi Firebase (push notification, Crashlytics) belum aktif di iOS.
+  Selama file ini belum ada, `AppDelegate.swift` melewati `FirebaseApp.configure()` dan script Crashlytics
+  hanya memberi warning (di-patch lewat `patches/@react-native-firebase+crashlytics+*.patch`). Cara
+  mendapatkannya: Firebase Console → tambah app iOS dengan bundle id `com.cigrasmartbattalionapps` → unduh
+  `GoogleService-Info.plist` → tambahkan ke target `CigraSmartbattalionApps` di Xcode.
+- Bundle id dan nama app belum ikut sistem brand (bundle id masih hardcode
+  `com.cigrasmartbattalionapps`). Ikon app **sudah** ikut `BRAND`: build phase "[Brand] App Icon" menyalin
+  `ios/brand-icons/<brand>/` ke AppIcon, sama seperti `android/app/brand-icons/` di Android.
+- Pelacakan lokasi latar belakang belum ada di iOS (modul native-nya baru untuk Android). Halaman
+  pemeriksaan setelah login sudah meminta izin notifikasi, lokasi, dan lokasi "Selalu" di iOS.
 
-Perintah standarnya, setelah masalah di atas beres:
+Sebelum mulai, pastikan Xcode aktif. Kalau `xcode-select -p` masih menunjuk ke `CommandLineTools`,
+jalankan sekali:
+
+```bash
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+```
+
+Lalu:
 
 ```bash
 bundle install
 ```
 
 ```bash
-cd ios && LANG=en_US.UTF-8 bundle exec pod install && cd ..
+npm run ios-pod
 ```
 
 ```bash
 npm run ios
 ```
+
+Catatan:
+
+- `npm run ios-pod` = `cd ios && LANG=en_US.UTF-8 bundle exec pod install`. Jalankan setiap habis
+  `npm install` atau ada perubahan dependency native.
+- `Gemfile.lock` memakai Bundler 4 dan `Gemfile` menyertakan gem `base64`, karena Ruby 4 tidak lagi
+  membawa keduanya secara bawaan.
+- Metro di port 8001. Di iOS, port tidak bisa diatur lewat build setting `RCT_METRO_PORT` karena React
+  Core dipakai prebuilt. Port diatur di `AppDelegate.swift` (`metroPort`); kalau diganti, samakan juga
+  `--port` di script `package.json` dan `reactNativeDevServerPort` di `android/gradle.properties`.
+- App memakai UIScene lifecycle (`SceneDelegate` di `AppDelegate.swift` + `UIApplicationSceneManifest` di
+  `Info.plist`). Ini wajib di SDK iOS 27; tanpanya app crash saat dibuka.
 
 ## Cek kode
 
@@ -213,7 +241,7 @@ npm test
 | `Could not find the correct install APK file` setelah `npm run android` | Build sebenarnya sudah sukses. Install manual dengan `adb install` (lihat langkah 3 di [Menjalankan versi debug](#menjalankan-versi-debug-android)). |
 | `SDK location not found` | Buat `android/local.properties` berisi `sdk.dir=…`, atau set `ANDROID_HOME`. |
 | `resource string/APP_NAME … not found` | `.env` belum dibuat atau tidak berisi `APP_NAME`. |
-| Layar merah `Unable to load script` | Metro belum jalan, atau HP fisik belum menjalankan `adb reverse tcp:8081 tcp:8081`. |
+| Layar merah `Unable to load script` | Metro belum jalan, atau HP fisik belum menjalankan `adb reverse tcp:8001 tcp:8001`. |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Tanda tangan APK berbeda dengan app yang terpasang. Uninstall app lama dulu. |
 | `INSTALL_FAILED_NO_MATCHING_ABIS` | Emulator x86_64. Build dengan `-PreactNativeArchitectures=x86_64`. |
 | Perubahan `.env` tidak berpengaruh | `.env` dibaca saat build native. Build ulang, bukan cuma reload. |
