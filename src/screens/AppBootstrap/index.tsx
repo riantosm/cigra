@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Image, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -38,6 +38,8 @@ type RequiredPermission = 'location' | 'background';
 // mengisi state saat selesai) — kita cuma berhenti menunggunya.
 const SYNC_TIMEOUT_MS = 5000;
 
+const IS_IOS = Platform.OS === 'ios';
+
 // Urutan langkah di layar ini. Hanya langkah API yang punya batas waktu; langkah izin menunggu
 // keputusan pengguna — izin lokasi & lokasi latar belakang WAJIB, layar ini menahan pengguna
 // sampai keduanya diberikan. Izin notifikasi best-effort.
@@ -53,7 +55,9 @@ const STEPS: { key: StepKey; label: string; detail: string; timeoutMs?: number }
   {
     key: 'background',
     label: 'Izin lokasi latar belakang',
-    detail: 'Pilih "Izinkan sepanjang waktu" supaya posisi tetap terkirim saat aplikasi ditutup.',
+    detail: IS_IOS
+      ? 'Pilih "Ubah ke Selalu Izinkan" supaya posisi tetap terkirim saat aplikasi ditutup.'
+      : 'Pilih "Izinkan sepanjang waktu" supaya posisi tetap terkirim saat aplikasi ditutup.',
   },
   { key: 'tracking', label: 'Memulai pelacakan', detail: 'Menyalakan pelacakan lokasi.' },
 ];
@@ -68,7 +72,9 @@ const PERMISSION_POLL_MS = 5000;
 // layar tidak macet selamanya.
 const NATIVE_STEP_TIMEOUT_MS = 15000;
 
-const WAITING_COPY: Record<RequiredPermission, { title: string; message: string; blocked: string; button: string }> = {
+type WaitingCopy = { title: string; message: string; blocked: string; button: string };
+
+const ANDROID_WAITING_COPY: Record<RequiredPermission, WaitingCopy> = {
   location: {
     title: 'Izin Lokasi Diperlukan',
     message: 'Aplikasi memerlukan izin lokasi untuk mengirim sinyal darurat dan melacak posisi.',
@@ -83,6 +89,26 @@ const WAITING_COPY: Record<RequiredPermission, { title: string; message: string;
     button: 'Izinkan Sepanjang Waktu',
   },
 };
+
+// iOS: nama menu Pengaturan berbeda, dan dialog izin tidak muncul lagi setelah ditolak sekali —
+// jadi `blocked` di sini praktis selalu "buka Pengaturan".
+const IOS_WAITING_COPY: Record<RequiredPermission, WaitingCopy> = {
+  location: {
+    title: 'Izin Lokasi Diperlukan',
+    message: 'Aplikasi memerlukan izin lokasi untuk mengirim sinyal darurat dan melacak posisi.',
+    blocked: 'Izin lokasi ditolak. Buka Pengaturan → Lokasi, lalu pilih "Selalu".',
+    button: 'Izinkan Lokasi',
+  },
+  background: {
+    title: 'Izinkan Lokasi Selalu',
+    message:
+      'Posisi harus tetap terkirim meski aplikasi ditutup. Pada dialog izin lokasi, pilih "Ubah ke Selalu Izinkan".',
+    blocked: 'Buka Pengaturan → Lokasi, lalu pilih "Selalu".',
+    button: 'Izinkan Lokasi Selalu',
+  },
+};
+
+const WAITING_COPY = IS_IOS ? IOS_WAITING_COPY : ANDROID_WAITING_COPY;
 
 const PERMISSION_CHECK: Record<RequiredPermission, () => Promise<boolean>> = {
   location: isLocationPermissionGranted,

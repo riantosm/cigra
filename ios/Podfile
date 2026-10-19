@@ -26,6 +26,12 @@ target 'CigraSmartbattalionApps' do
   # autolinking pakai pod ini apa adanya, bukan nambah pod 'react-native-maps' default lagi.
   pod 'react-native-maps', :subspecs => ['Google'], :path => '../node_modules/react-native-maps'
 
+  # Pod Swift Firebase (FirebaseCoreInternal, FirebaseCrashlytics, FirebaseSessions) butuh module
+  # map dari dependency Obj-C ini supaya bisa di-link sebagai static library tanpa use_frameworks!.
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'GoogleDataTransport', :modular_headers => true
+  pod 'nanopb', :modular_headers => true
+
   config = use_native_modules!
 
   use_react_native!(
@@ -41,5 +47,16 @@ target 'CigraSmartbattalionApps' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 27 menolak deployment target < iOS 15; beberapa pod (bundle privacy/resource Firebase,
+    # blob-util, device-info, dll.) masih menyatakan 9.0–13.0. Naikkan ke minimum RN.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_config|
+        current = build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if current.nil? || Gem::Version.new(current) < Gem::Version.new(min_ios_version_supported)
+          build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios_version_supported
+        end
+      end
+    end
   end
 end

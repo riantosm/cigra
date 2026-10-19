@@ -14,9 +14,13 @@ npm install
 
 # iOS native deps (run after any native dependency change)
 bundle install               # first time only, installs CocoaPods itself via Ruby bundler
-cd ios && bundle exec pod install && cd ..
+npm run ios-pod              # = cd ios && LANG=en_US.UTF-8 bundle exec pod install
 
-# Start Metro bundler
+# Start Metro bundler — port 8001, not RN's default 8081 (Smart Academy uses 8002, so both can run at once).
+# The port lives in 4 places, keep them in sync: package.json scripts (`--port` on start/ios/android),
+# android/gradle.properties `reactNativeDevServerPort`, and ios AppDelegate.swift `metroPort` (Debug sets
+# `RCTBundleURLProvider.sharedSettings().jsLocation` = ip.txt host or localhost + port, because React Core is
+# prebuilt on iOS so the `RCT_METRO_PORT` build setting has no effect).
 npm start
 
 # Run on simulator/emulator
@@ -44,6 +48,9 @@ npm run android-r            # assemble release APK
 #     (`documentation/*.apk`) and vercelignored. For a release build, add a new entry to
 #     `documentation/CHANGELOG.md` (sections: Baru / Ditingkatkan / Perbaikan, Claude-changelog
 #     style) and run `python3 documentation/regen-html.py` to rebuild `changelog.html`.
+
+# iOS native helpers
+npm run ios-pod              # bundle exec pod install (run after npm install / native dep change)
 ```
 
 Whenever a native dependency is added/removed/updated, you must run `pod install` for iOS (Android autolinks via
@@ -54,11 +61,34 @@ Native deps with no extra wiring (autolinked): `react-native-blob-util` (health-
 used by `HealthRecordInput`) — both under "Health module" below — and `@react-native-documents/picker`
 (pilih lampiran — `src/utils/filePicker.ts`, dipakai modul "Disposisi Surat"), plus the plain Gradle dep
 `com.caverock:androidsvg-aar` (BMKG weather icon in the location-tracking notification —
-`android/.../TrackingWeather.kt`). Note: `bundle exec pod install` on this
-machine needs `LANG=en_US.UTF-8` set, and
-currently fails on a `FirebaseCoreInternal`/`GoogleUtilities` static-Swift-lib error — iOS Pods need that
-resolved separately; Android (the primary test target) is unaffected and picks blob-util up on the next
-`npm run android`.
+`android/.../TrackingWeather.kt`). Note: `bundle exec pod install` needs `LANG=en_US.UTF-8` (baked into `npm run ios-pod`). The old
+`FirebaseCoreInternal`/`GoogleUtilities` static-Swift-lib error is fixed (2026-10-19) by declaring
+`GoogleUtilities` / `GoogleDataTransport` / `nanopb` with `:modular_headers => true` in `ios/Podfile`. The
+Gemfile also pins `base64` (Ruby 4 dropped it from the default gems; CocoaPods 1.15 / activesupport 6.1
+still require it), and `Gemfile.lock` is `BUNDLED WITH 4.x` — the old 1.17.2 bundler crashes on Ruby 4
+(`undefined method 'untaint'`). `xcode-select -p` must point at `/Applications/Xcode.app` (not
+CommandLineTools), else pod install warns `Unexpected XCode version string`.
+
+iOS builds + launches on the simulator since 2026-10-19 (Xcode 27, reaches Login; nothing else tested on
+iOS). What it took, all still required:
+- `ios/Podfile` `post_install` raises every pod target's `IPHONEOS_DEPLOYMENT_TARGET` to
+  `min_ios_version_supported` — Xcode 27 rejects < 15.0, and several resource/privacy bundle targets
+  (Firebase, blob-util, device-info, AsyncStorage, RNSVG) declare 9.0–13.0.
+- **UIScene lifecycle** — the iOS 27 SDK asserts at launch without it
+  (`UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`). `Info.plist` has a
+  `UIApplicationSceneManifest` pointing at `$(PRODUCT_MODULE_NAME).SceneDelegate`; `SceneDelegate` lives in
+  `AppDelegate.swift` (no pbxproj change) and creates the window + calls `factory.startReactNative`.
+  `AppDelegate` only sets up Firebase/Maps/the factory. Deep links (`openURL`) aren't wired on iOS.
+- `AppDelegate` calls `FirebaseApp.configure()` **only when `GoogleService-Info.plist` is in the bundle**
+  (there is none yet — iOS app not registered in Firebase Console), and
+  `patches/@react-native-firebase+crashlytics+26.3.2.patch` makes RNFB's Crashlytics build script warn +
+  skip instead of failing without that plist. Same "build stays green without Firebase" stance as Android.
+- `RNCConfig.envFor(...)` is imported into Swift as `RNCConfig.env(for:)`.
+- App-owned ObjC modules (`ios/CigraSmartbattalionApps/LocationPermissionModule.m`,
+  `LocationTrackingModule.m`) sit in the `CigraSmartbattalionApps` group (no group path), so the file
+  reference path is `CigraSmartbattalionApps/<File>.m`. Add new ones with the `xcodeproj` gem
+  (`LANG=en_US.UTF-8 bundle exec ruby ...`: `group.new_reference("CigraSmartbattalionApps/X.m")` +
+  `target.source_build_phase.add_file_reference`) rather than hand-editing the pbxproj.
 
 Changing `.env` requires a full native rebuild (`npm run ios` / `npm run android`), not just a JS reload —
 `react-native-config` bakes env values into the native build.
@@ -244,10 +274,17 @@ needed (missing `.env` value).
   switching (`sakaraguna` → `"SAKARAGUNA SMART BATTALION"`, `cigra` → `"CIGRA SMART BATTALION"`).
 - **Not yet brand-aware**: `API_BASE_URL`/`MAPS_API_KEY` (still whatever plain values are in `.env` — nothing
   stops these from *also* varying with `BRAND`, but nothing makes that automatic either, so double-check
-  they're right for the active brand after switching), and iOS entirely (bundle identifier +
-  `GoogleService-Info.plist` + app icon + display name are still hardcoded to
-  `com.cigrasmartbattalionapps`/the single icon set in the Xcode project — lower priority since iOS isn't the
-  active test target, see the `pod install` note above).
+  they're right for the active brand after switching), and on iOS the bundle identifier +
+  `GoogleService-Info.plist` + display name (still hardcoded to `com.cigrasmartbattalionapps` /
+  "CigraSmartbattalionApps" — lower priority since iOS isn't the active test target, see the iOS notes in
+  Commands above).
+  **iOS app icon IS brand-aware** (2026-10-19): `ios/brand-icons/<brand>/AppIcon.appiconset` (committed,
+  opaque PNGs — iOS rejects alpha, so cigra = the crest from `src/assets/logo/LogoCigra.png` on white, 84% of
+  the canvas; only a 400px source exists, so the 1024 marketing icon is upscaled) is copied over
+  `Images.xcassets/AppIcon.appiconset` by the Xcode build phase **"[Brand] App Icon"**
+  (`ios/scripts/brand-app-icon.sh`, runs right before Resources, reads `BRAND` from `../.env`, default
+  `sakaraguna`; a brand without a folder leaves AppIcon as-is). Like Android's `src/main/res`, the
+  committed AppIcon therefore reflects whichever brand was built last.
 
 ### Navigation
 
@@ -435,7 +472,8 @@ needed (missing `.env` value).
   **Location fast path:** before `getCurrentCoordinates()` (which can wait up to 25s for a fresh GPS fix),
   the hook tries `getRecentTrackedCoordinates()` — the last fix recorded by the native
   `LocationForegroundService`, persisted to `TrackingPrefs` (`setLastLocation`) and read via
-  `LocationTrackingModule.getLastLocation()`. It's used only when ≤ 60s old **and** accuracy ≤ 50m (no
+  `LocationTrackingModule.getLastLocation()` (iOS: the same method on `LocationTrackingModule.m`, stored in
+  `NSUserDefaults`). It's used only when ≤ 60s old **and** accuracy ≤ 50m (no
   accuracy = rejected); otherwise it falls back to `getCurrentCoordinates()`. The service's
   `MIN_UPDATE_DISTANCE_M` is `0` on purpose so a stationary user still gets a fresh fix every ~15s —
   a distance filter would leave the stored fix stale and always force the slow path. `isSending` is **shared across
@@ -516,7 +554,17 @@ needed (missing `.env` value).
   → **ACCESS_BACKGROUND_LOCATION / "Izinkan sepanjang waktu" (required)** → `locationTracking.startTracking()`
   → `appCheckCompleted()` + `replace(Main)`. The request helpers are in `utils/location.ts`
   (`requestNotificationPermission` / `requestForegroundLocationPermission` / `requestBackgroundLocationPermission`
-  → `'granted'|'denied'|'blocked'`, plus the non-prompting `isBackgroundLocationPermissionGranted`). While a
+  → `'granted'|'denied'|'blocked'`, plus the non-prompting `isBackgroundLocationPermissionGranted`).
+  **iOS** (2026-10-19) runs the same steps: notification via `notifee.requestPermission()`, location via the
+  app's own native module `ios/CigraSmartbattalionApps/LocationPermissionModule.m` (JS
+  `src/native/locationPermission.ts` — `getStatus` / `request('whenInUse'|'always')` /
+  `isLocationServicesEnabled`; geolocation's `requestAuthorization` can't tell When-In-Use from Always and
+  hangs when the status doesn't change). iOS shows the "Change to Always Allow" prompt only once per install
+  and never re-prompts after a denial, so anything short of the wanted status maps to `'blocked'` → "Buka
+  Pengaturan". `Info.plist` needs `NSLocationAlwaysAndWhenInUseUsageDescription` for the Always request.
+  The `tracking` step starts the iOS `LocationTrackingModule` (background upload) — see the iOS bullet under
+  "Refresh-token flow".
+  While a
   required permission is missing the screen stays in a `'waiting'` phase — re-checked every **5s** + on
   `AppState` active, auto-continues once granted; button re-requests (or opens Settings when `blocked`), plus
   "Buka Pengaturan" + "Logout". **No skip button.** `initializePushNotifications` in `RootNavigator` is gated on
@@ -674,6 +722,34 @@ error, or `success: false` in a 200) is treated as an unrecoverable failure → 
   `buildNotification()` only adds `DecoratedCustomViewStyle` + `setCustomBigContentView`
   (`res/layout/notification_tracking_weather.xml`) once weather exists; `when` is pinned to service start
   so a refresh doesn't reorder the shade.
+- **iOS counterpart** (2026-10-19): `ios/CigraSmartbattalionApps/LocationTrackingModule.m` — same JS interface
+  (`startTracking`/`stopTracking`/`syncAuthToken`/`getStoredAuthToken`/`isLocationServicesEnabled`/
+  `getLastLocation`), so `src/native/locationTracking.ts` uses `NativeModules.LocationTrackingModule` on both
+  platforms. iOS has no foreground service: a singleton `LocationTracker` runs standard `CLLocationManager`
+  updates (`NearestTenMeters`, no distance filter, `pausesLocationUpdatesAutomatically = NO`,
+  `allowsBackgroundLocationUpdates = YES` — **crashes without `location` in `UIBackgroundModes`**, which
+  `Info.plist` now has), which keeps the app alive in the background so a GCD timer can `POST /locations`
+  every 45s (same body as Android, `source: mobile-v<CFBundleShortVersionString>`, base URL from
+  `RNCConfig envFor:@"API_BASE_URL"`). `startMonitoringSignificantLocationChanges` runs alongside so iOS
+  relaunches the app in the background if the process is killed; a `+load` observer of
+  `UIApplicationDidFinishLaunchingNotification` restarts the tracker when tracking is enabled **and** a token
+  is stored (the `BootReceiver` equivalent — no AppDelegate change, JS doesn't start in a scene-less
+  background launch). Uploads/refreshes run on one serial queue inside a `beginBackgroundTask`. Refresh
+  behaviour = Android (401 → `POST /auth/refresh` with the old bearer, store the rotated token, retry once;
+  refresh failure → clear token + stop), plus one guard Android lacks: if JS synced a different token while
+  the upload was in flight, the 401 is ignored instead of refreshing/clearing with the dead old token.
+  Token, enabled flag and last fix live in `NSUserDefaults` (`location_tracking.*` keys — the
+  `TrackingPrefs` equivalent). Logs are `NSLog` prefixed `[LocationTracking]` ("Upload lokasi OK …"); watch
+  them with `xcrun simctl spawn <udid> log stream --predicate 'eventMessage CONTAINS "[LocationTracking]"'`.
+  Needs Always permission for the relaunch path (AppBootstrap already requires it). No persistent
+  notification / BMKG weather on iOS. Verified on the iPhone 18 Pro simulator (2026-10-19) with a
+  `xcrun simctl location <udid> start --speed=15 --interval=5 -` route (waypoints on stdin — a leading `-6.…`
+  argument is parsed as an option): uploads every ~45s while on the home screen; a planted bad token
+  → 401 → refresh rejected → token cleared + "Pelacakan dihentikan", and the next cold start re-syncs the JS
+  token; `simctl terminate` → iOS relaunched the app headless ~25s later and it kept uploading. To plant a
+  value in the app's defaults, `simctl spawn <udid> defaults write <data-container>/Library/Preferences/
+  com.cigrasmartbattalionapps <key> <value>` (the bare bundle-id domain writes somewhere else). Not yet
+  tested: the refresh **success** path (needs an expired-but-refreshable token) and a real device.
 - Because native can rotate the token independently of JS, `RootNavigator.tsx`'s `isLogin` effect **reads
   native's token back** (`locationTracking.getStoredAuthToken()`) and adopts it over the JS/AsyncStorage copy
   whenever they differ, instead of unconditionally pushing JS's (possibly stale/dead) token down to native like
@@ -697,8 +773,7 @@ Backend endpoint is **live** and matches `documentation/API_CONTRACT.md` §1 (en
 - `src/utils/version.ts` — `appVersion` + `appBuildNumber` now come from **`react-native-device-info`**
   (`getVersion()` / `getBuildNumber()`, both sync) — the real native `versionName`/`versionCode`
   (Android) / `CFBundleShortVersionString`/`CFBundleVersion` (iOS), not `package.json`. `react-native-device-info`
-  is a **new native dep** — autolinks on Android (no wiring); iOS needs `pod install` (already broken
-  independently, see Commands). Jest needs its mock (`jest.setup.js`) — but note `__tests__/App.test.tsx` was
+  is a **new native dep** — autolinks on Android (no wiring); iOS needs `npm run ios-pod`. Jest needs its mock (`jest.setup.js`) — but note `__tests__/App.test.tsx` was
   already failing pre-existing on a `@react-navigation` ESM-transform issue.
 - `src/utils/appVersion.ts` — `compareVersions()` (semantic-version compare, `0.2 < 0.3 < 0.10`, **not**
   string compare) + `evaluateUpdateStatus(installedVersion, installedBuild, platformBlock)` →

@@ -23,12 +23,11 @@ const noopModule: LocationTrackingNativeModule = {
   syncAuthToken: () => {},
   getStoredAuthToken: async () => null,
   getLastLocation: async () => null,
-  // iOS belum punya implementasi native-nya sendiri (lihat komentar di bawah) — anggap selalu aktif,
-  // sama seperti fallback iOS lain di utils/location.ts (isLocationPermissionGranted).
   isLocationServicesEnabled: async () => true,
 };
 
-// Modul native baru ada di sisi Android (foreground service + boot receiver).
-// iOS jatuh ke no-op sampai ada implementasi background-location-nya sendiri.
+// Android: LocationForegroundService + BootReceiver (android/.../cigrasmartbattalionapps/).
+// iOS: ios/CigraSmartbattalionApps/LocationTrackingModule.m (CLLocationManager background updates +
+// significant-change relaunch). No-op hanya kalau modulnya tidak ter-link (mis. Jest / platform lain).
 export const locationTracking: LocationTrackingNativeModule =
-  Platform.OS === 'android' ? (NativeModules.LocationTrackingModule ?? noopModule) : noopModule;
+  Platform.OS === 'android' || Platform.OS === 'ios' ? (NativeModules.LocationTrackingModule ?? noopModule) : noopModule;

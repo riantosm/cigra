@@ -3,13 +3,14 @@
   "version": "1.2.0",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "react-native run-android --port 8001",
     "android-c": "cd android/ && ./gradlew clean && cd ../",
     "android-r": "cd android/ && ./gradlew assembleRelease && cd ../",
     "android-d": "cd android/ && ./gradlew assembleDebug --warning-mode all && cd ../",
-    "ios": "react-native run-ios",
+    "ios": "react-native run-ios --port 8001",
+    "ios-pod": "cd ios/ && LANG=en_US.UTF-8 bundle exec pod install && cd ../",
     "lint": "eslint .",
-    "start": "react-native start",
+    "start": "react-native start --port 8001",
     "test": "jest",
     "postinstall": "patch-package"
   },

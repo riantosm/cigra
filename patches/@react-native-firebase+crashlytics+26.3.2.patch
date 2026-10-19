@@ -1,0 +1,19 @@
+diff --git a/node_modules/@react-native-firebase/crashlytics/ios_config.sh b/node_modules/@react-native-firebase/crashlytics/ios_config.sh
+index 5c88b45..87a5d44 100755
+--- a/node_modules/@react-native-firebase/crashlytics/ios_config.sh
++++ b/node_modules/@react-native-firebase/crashlytics/ios_config.sh
+@@ -16,6 +16,14 @@
+ #
+ set -e
+ 
++# Patched (patch-package): skip instead of failing the build when the app has no
++# GoogleService-Info.plist yet — mirrors the Android build, which stays green without Firebase.
++if [[ ! -f "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist" ]] && \
++  [[ -z "$(find "${PROJECT_DIR}" -name GoogleService-Info.plist -not -path '*/Pods/*' -print -quit 2>/dev/null)" ]]; then
++  echo "warning: GoogleService-Info.plist not found. Skipping Crashlytics dSYM upload."
++  exit 0
++fi
++
+ if [[ ${PODS_ROOT} && -f "${PODS_ROOT}/FirebaseCrashlytics/run" ]]; then
+   echo "info: Exec FirebaseCrashlytics Run from Pods"
+   "${PODS_ROOT}/FirebaseCrashlytics/run"
